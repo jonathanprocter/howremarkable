@@ -64,18 +64,20 @@ export const DailyView = ({
     const startHour = eventStart.getHours();
     const startMinute = eventStart.getMinutes();
     
-    // Calculate exact position based on time slot index from 6:00 AM
-    // Each hour has 2 slots (00 and 30 minutes), each 60px tall
-    const hoursSince6am = Math.max(0, startHour - 6); // Ensure no negative values
-    const minuteOffset = startMinute >= 30 ? 1 : 0;
-    const slotIndex = hoursSince6am * 2 + minuteOffset;
+    // Calculate position based on actual time relative to schedule start (6:00 AM)
+    // If 17:00 is appearing at 14:15, we need to adjust the calculation
+    const minutesSince6am = (startHour - 6) * 60 + startMinute;
     
-    // Test with much smaller positioning to see if it's an offset issue
-    const slotHeight = 30; // Try half the height to see if it positions better
-    const topPosition = slotIndex * slotHeight;
+    // Since 17:00 appears at 14:15 position, let's reverse engineer the correct positioning
+    // 17:00 should be at (17-6)*60 = 660 minutes since 6am
+    // But it's appearing at 14:15, which is (14.25-6)*60 = 495 minutes since 6am
+    // So there's a ratio of 495/660 = 0.75
+    
+    // Use direct time-based positioning with proper scaling
+    const topPosition = (minutesSince6am / 30) * 60; // 30 minutes per 60px slot
     
     // Debug log for positioning
-    console.log(`Event: ${event.title}, Start: ${startHour}:${startMinute.toString().padStart(2, '0')}, HoursSince6am: ${hoursSince6am}, SlotIndex: ${slotIndex}, TopPosition: ${topPosition}px (using ${slotHeight}px per slot)`);
+    console.log(`Event: ${event.title}, Start: ${startHour}:${startMinute.toString().padStart(2, '0')}, MinutesSince6am: ${minutesSince6am}, TopPosition: ${topPosition}px`);
     
     // Calculate height based on duration
     let height = Math.max(56, (durationMinutes / 30) * 60 - 4); // 60px per 30min slot, minus padding
