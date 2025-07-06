@@ -307,7 +307,16 @@ export const DailyView = ({
                         </div>
                         
                         {expandedEventId === event.id && (
-                          <div className="expanded-event mt-2 p-3 bg-gray-50 rounded border">
+                          <div 
+                            className="expanded-event p-3 bg-gray-50 rounded border"
+                            style={{
+                              position: 'absolute',
+                              top: `${eventHeight}px`,
+                              left: 0,
+                              right: 0,
+                              zIndex: 20
+                            }}
+                          >
                             <div className="space-y-3">
                               <div className="notes-area">
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
