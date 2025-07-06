@@ -100,20 +100,39 @@ export default function Planner() {
       const event = state.events.find(e => e.id === eventId);
       if (!event) return;
 
-      // If it's a Google Calendar event, update it via the API
-      if (event.source === 'google' && event.sourceId) {
-        await updateCalendarEvent(event.sourceId, newStartTime, newEndTime, 'primary');
-        toast({
-          title: "Event Updated",
-          description: "Event has been moved successfully."
-        });
-      }
-
-      // Update the local state
+      // Update the local state first
       updateEvent(eventId, {
         startTime: newStartTime,
         endTime: newEndTime
       });
+
+      // If it's a Google Calendar event and authenticated, try to update via API
+      if (event.source === 'google' && event.sourceId && authStatus.authenticated) {
+        try {
+          await updateCalendarEvent(event.sourceId, newStartTime, newEndTime, 'primary');
+          toast({
+            title: "Event Updated",
+            description: "Event moved and synced with Google Calendar"
+          });
+        } catch (apiError) {
+          console.error('Google Calendar API update failed:', apiError);
+          toast({
+            title: "Moved Locally",
+            description: "Event moved but couldn't sync with Google Calendar",
+            variant: "destructive"
+          });
+        }
+      } else if (event.source === 'google') {
+        toast({
+          title: "Event Moved",
+          description: "Event moved locally (Google Calendar sync requires authentication)"
+        });
+      } else {
+        toast({
+          title: "Event Moved",
+          description: "Event has been rescheduled"
+        });
+      }
 
     } catch (error) {
       console.error('Failed to move event:', error);

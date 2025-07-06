@@ -100,7 +100,10 @@ The application uses three main entities:
 - July 06, 2025. PDF export functionality for weekly and daily views
 - July 06, 2025. Google Drive upload to "reMarkable Calendars" folder
 - July 06, 2025. Fixed critical daily view timing alignment issues with 0.75 scaling factor
-- July 06, 2025. Extended timeline to full page height (6:00-21:30) with proper grid sizing
+- July 06, 2025. Extended timeline to full page height (6:00-23:30) with proper grid sizing
+- July 06, 2025. **MAJOR FIX**: Resolved daily view appointment positioning using CSS Grid and exact HTML template calculations
+- July 06, 2025. Restored full appointment management: drag-and-drop, create/delete, Google Calendar selection controls
+- July 06, 2025. Implemented proper authentication handling for Google Calendar event updates
 
 ## User Preferences
 
