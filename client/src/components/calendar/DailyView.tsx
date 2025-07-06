@@ -64,7 +64,25 @@ export const DailyView = ({
   const timeSlots = generateTimeSlots();
   const dayEvents = events.filter(event => {
     const eventDate = new Date(event.startTime);
-    return eventDate.toDateString() === selectedDate.toDateString();
+    const selectedDateStr = selectedDate.toDateString();
+    const eventDateStr = eventDate.toDateString();
+    
+    // For all-day events, also check if the date falls within the event's date range
+    const duration = event.endTime.getTime() - event.startTime.getTime();
+    const hours = duration / (1000 * 60 * 60);
+    const isAllDayEvent = (event as any).isAllDay || hours >= 20;
+    
+    if (isAllDayEvent) {
+      // For all-day events, check if the selected date falls within the event range
+      const selectedDateOnly = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+      const eventStartOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+      const eventEndDate = new Date(event.endTime);
+      const eventEndOnly = new Date(eventEndDate.getFullYear(), eventEndDate.getMonth(), eventEndDate.getDate());
+      
+      return selectedDateOnly >= eventStartOnly && selectedDateOnly < eventEndOnly;
+    }
+    
+    return eventDateStr === selectedDateStr;
   });
 
   // Separate all-day events from timed events

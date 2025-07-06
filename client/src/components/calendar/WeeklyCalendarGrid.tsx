@@ -55,10 +55,9 @@ export const WeeklyCalendarGrid = ({
   const getAllDayEventsForDate = (date: Date) => {
     return events.filter(event => {
       const eventDate = new Date(event.startTime);
-      if (eventDate.toDateString() !== date.toDateString()) return false;
       
       // Check if backend marked it as all-day
-      if ((event as any).isAllDay) return true;
+      const isMarkedAllDay = (event as any).isAllDay;
       
       // Check if event is all-day by looking at duration and time patterns
       const duration = event.endTime.getTime() - event.startTime.getTime();
@@ -66,28 +65,38 @@ export const WeeklyCalendarGrid = ({
       const startHour = event.startTime.getHours();
       const startMinute = event.startTime.getMinutes();
       const isFullDay = startHour === 0 && startMinute === 0 && (hours === 24 || hours % 24 === 0);
+      const isAllDayEvent = isMarkedAllDay || isFullDay || hours >= 20;
       
-      // Also check for events that span 20+ hours or are exactly 24 hours
-      return isFullDay || hours >= 20;
+      if (!isAllDayEvent) return false;
+      
+      // For all-day events, check if the date falls within the event range
+      const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const eventStartOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+      const eventEndDate = new Date(event.endTime);
+      const eventEndOnly = new Date(eventEndDate.getFullYear(), eventEndDate.getMonth(), eventEndDate.getDate());
+      
+      return dateOnly >= eventStartOnly && dateOnly < eventEndOnly;
     });
   };
 
   const getEventsForTimeSlot = (date: Date, timeSlot: { time: string; hour: number; minute: number }) => {
     return events.filter(event => {
       const eventDate = new Date(event.startTime);
-      if (eventDate.toDateString() !== date.toDateString()) return false;
       
       // Filter out all-day events from time slots
-      if ((event as any).isAllDay) return false;
-      
+      const isMarkedAllDay = (event as any).isAllDay;
       const duration = event.endTime.getTime() - event.startTime.getTime();
       const hours = duration / (1000 * 60 * 60);
       const startHour = event.startTime.getHours();
       const startMinute = event.startTime.getMinutes();
       const isFullDay = startHour === 0 && startMinute === 0 && (hours === 24 || hours % 24 === 0);
+      const isAllDayEvent = isMarkedAllDay || isFullDay || hours >= 20;
       
-      // Skip all-day events (20+ hours or full day events)
-      if (isFullDay || hours >= 20) return false;
+      // Skip all-day events
+      if (isAllDayEvent) return false;
+      
+      // For timed events, use simple date string comparison
+      if (eventDate.toDateString() !== date.toDateString()) return false;
       
       return isEventInTimeSlot(event, timeSlot);
     });
