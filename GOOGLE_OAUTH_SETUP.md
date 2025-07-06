@@ -33,6 +33,10 @@ The 403 error occurs because the Google Cloud Console project needs proper confi
    - Click "Create Credentials" → "OAuth 2.0 Client ID"
    - Application type: "Web application"
    - Name: "reMarkable Planner"
+   - **Authorized JavaScript origins:** Add this exact URL:
+     ```
+     https://ed4c6ee6-c0f6-458f-9eac-1eadf0569a2c-00-387t3f5z7i1mm.kirk.replit.dev
+     ```
    - **Authorized redirect URIs:** Add this exact URL:
      ```
      https://ed4c6ee6-c0f6-458f-9eac-1eadf0569a2c-00-387t3f5z7i1mm.kirk.replit.dev/api/auth/google/callback
@@ -55,6 +59,12 @@ The 403 error occurs because the Google Cloud Console project needs proper confi
 4. The "Refresh Events" button will then load your calendar events
 
 ### Troubleshooting:
-- If you still get 403, double-check the redirect URI is exactly: `https://ed4c6ee6-c0f6-458f-9eac-1eadf0569a2c-00-387t3f5z7i1mm.kirk.replit.dev/api/auth/google/callback`
+- If you still get 403, double-check both URIs are added:
+  - **JavaScript origins:** `https://ed4c6ee6-c0f6-458f-9eac-1eadf0569a2c-00-387t3f5z7i1mm.kirk.replit.dev`
+  - **Redirect URI:** `https://ed4c6ee6-c0f6-458f-9eac-1eadf0569a2c-00-387t3f5z7i1mm.kirk.replit.dev/api/auth/google/callback`
 - Make sure both Calendar and Drive APIs are enabled
 - Verify the OAuth consent screen is published (not in testing mode)
+
+### IMPORTANT: You need BOTH URLs configured:
+1. **Authorized JavaScript origins** (without /api/auth/google/callback)
+2. **Authorized redirect URIs** (with /api/auth/google/callback)
