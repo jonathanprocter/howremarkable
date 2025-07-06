@@ -84,95 +84,105 @@ export const DailyView = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
-        {/* Schedule Column */}
-        <div className="space-y-4">
-          <div className="border border-gray-300 rounded-lg overflow-hidden">
+      <div className="space-y-6">
+        {/* Schedule Section */}
+        <div className="border border-gray-300 rounded-lg overflow-hidden">
+          <div className="grid grid-cols-2 border-b border-gray-300">
             <div className="time-header p-3 text-sm font-semibold">
-              {formatDate(selectedDate)} Schedule
+              Time
             </div>
+            <div className="time-header p-3 text-sm font-semibold">
+              Event
+            </div>
+          </div>
+          
+          {/* Time slots grid */}
+          {timeSlots.map((timeSlot, index) => {
+            const slotEvents = dayEvents.filter(event => 
+              isEventInTimeSlot(event, timeSlot)
+            );
             
-            <div className="p-4 space-y-3">
-              {dayEvents.map((event) => (
-                <div key={event.id} className="space-y-2">
-                  <div
-                    className={cn(
-                      "event-block cursor-pointer",
-                      `event-block ${event.source}`
-                    )}
-                    onClick={() => toggleEventExpansion(event.id)}
-                  >
-                    <div className="text-sm font-medium text-gray-800">
-                      {event.title}
-                    </div>
-                    <div className="text-xs text-gray-600">
-                      {event.source} • {event.startTime.toLocaleTimeString('en-US', { 
-                        hour: 'numeric', 
-                        minute: '2-digit', 
-                        hour12: true 
-                      })} - {event.endTime.toLocaleTimeString('en-US', { 
-                        hour: 'numeric', 
-                        minute: '2-digit', 
-                        hour12: true 
-                      })}
-                    </div>
-                  </div>
-                  
-                  {expandedEventId === event.id && (
-                    <div className="expanded-event">
-                      <div className="space-y-3">
-                        <div className="notes-area">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Meeting Notes
-                          </label>
-                          <Textarea
-                            value={event.notes || ''}
-                            onChange={(e) => handleEventNotesChange(event.id, 'notes', e.target.value)}
-                            placeholder="Add your meeting notes here..."
-                            className="w-full"
-                            rows={3}
-                          />
+            return (
+              <div key={index} className="grid grid-cols-2 border-b border-gray-300 last:border-b-0">
+                <div className="time-slot p-3 text-sm font-medium text-gray-600 bg-gray-50 border-r border-gray-300">
+                  {timeSlot.time}
+                </div>
+                <div className="time-slot p-3 relative">
+                  {slotEvents.map((event) => (
+                    <div key={event.id} className="space-y-2">
+                      <div
+                        className={cn(
+                          "event-block cursor-pointer",
+                          `event-block ${event.source}`
+                        )}
+                        onClick={() => toggleEventExpansion(event.id)}
+                      >
+                        <div className="text-sm font-medium text-gray-800">
+                          {event.title}
                         </div>
-                        <div className="notes-area">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Action Items
-                          </label>
-                          <Textarea
-                            value={event.actionItems || ''}
-                            onChange={(e) => handleEventNotesChange(event.id, 'actionItems', e.target.value)}
-                            placeholder="Add action items here..."
-                            className="w-full"
-                            rows={2}
-                          />
+                        <div className="text-xs text-gray-600">
+                          {event.source} • {event.startTime.toLocaleTimeString('en-US', { 
+                            hour: 'numeric', 
+                            minute: '2-digit', 
+                            hour12: true 
+                          })} - {event.endTime.toLocaleTimeString('en-US', { 
+                            hour: 'numeric', 
+                            minute: '2-digit', 
+                            hour12: true 
+                          })}
                         </div>
                       </div>
+                      
+                      {expandedEventId === event.id && (
+                        <div className="expanded-event">
+                          <div className="space-y-3">
+                            <div className="notes-area">
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Meeting Notes
+                              </label>
+                              <Textarea
+                                value={event.notes || ''}
+                                onChange={(e) => handleEventNotesChange(event.id, 'notes', e.target.value)}
+                                placeholder="Regular therapy session."
+                                className="w-full"
+                                rows={3}
+                              />
+                            </div>
+                            <div className="notes-area">
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Action Items
+                              </label>
+                              <Textarea
+                                value={event.actionItems || ''}
+                                onChange={(e) => handleEventNotesChange(event.id, 'actionItems', e.target.value)}
+                                placeholder="Process recent events.
+Homework assignment"
+                                className="w-full"
+                                rows={2}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
+                  ))}
                 </div>
-              ))}
-              
-              {dayEvents.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  No events scheduled for this day
-                </div>
-              )}
-            </div>
-          </div>
+              </div>
+            );
+          })}
         </div>
 
-        {/* Daily Notes Column */}
-        <div className="space-y-4">
-          <div className="border border-gray-300 rounded-lg p-4">
-            <h3 className="text-sm font-semibold mb-3 text-gray-900">Daily Notes</h3>
-            <Textarea
-              value={currentNotes}
-              onChange={(e) => setCurrentNotes(e.target.value)}
-              onBlur={handleDailyNotesChange}
-              placeholder="Add your daily notes, reflections, and thoughts here..."
-              className="w-full resize-none"
-              rows={16}
-            />
-          </div>
+        {/* Daily Notes Section */}
+        <div className="border border-gray-300 rounded-lg p-4">
+          <h3 className="text-lg font-semibold mb-3 text-gray-900">Daily Notes</h3>
+          <Textarea
+            value={currentNotes}
+            onChange={(e) => setCurrentNotes(e.target.value)}
+            onBlur={handleDailyNotesChange}
+            placeholder="Add your daily notes, reflections, and thoughts here..."
+            className="w-full resize-none"
+            rows={8}
+          />
         </div>
       </div>
     </div>
