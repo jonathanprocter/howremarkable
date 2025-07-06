@@ -13,43 +13,72 @@ interface CalendarLegendProps {
 }
 
 export const CalendarLegend = ({ calendars, selectedCalendars, onCalendarToggle }: CalendarLegendProps) => {
-  if (calendars.length === 0) {
-    return null;
-  }
+  // Define the three main calendar types to match the screenshot
+  const calendarTypes = [
+    { 
+      key: 'simplepractice', 
+      label: 'SimplePractice', 
+      color: '#4F46E5',
+      selected: true // Always selected for SimplePractice events
+    },
+    { 
+      key: 'google', 
+      label: 'Google Calendar', 
+      color: '#10B981',
+      selected: calendars.some(cal => selectedCalendars.has(cal.id))
+    },
+    { 
+      key: 'personal', 
+      label: 'Personal', 
+      color: '#6B7280',
+      selected: true // Always selected for manual events
+    }
+  ];
 
-  // Filter out duplicate calendar names and keep only the specified ones
-  const filteredCalendars = calendars.filter((calendar, index, self) => {
-    // Keep only calendars with these specific names
-    const allowedNames = ['Holidays in United States', 'Simple Practice', 'Google', 'TrevorAI'];
-    const isAllowed = allowedNames.includes(calendar.name);
-    
-    // Remove duplicates by checking if this is the first occurrence of this name
-    const isFirstOccurrence = self.findIndex(c => c.name === calendar.name) === index;
-    
-    return isAllowed && isFirstOccurrence;
-  });
+  const handleTypeToggle = (type: string) => {
+    if (type === 'google') {
+      // Toggle all Google calendars
+      const googleCalIds = calendars.map(cal => cal.id);
+      const hasAnySelected = googleCalIds.some(id => selectedCalendars.has(id));
+      
+      if (hasAnySelected) {
+        // Deselect all Google calendars
+        googleCalIds.forEach(id => onCalendarToggle?.(id));
+      } else {
+        // Select all Google calendars
+        googleCalIds.forEach(id => {
+          if (!selectedCalendars.has(id)) {
+            onCalendarToggle?.(id);
+          }
+        });
+      }
+    }
+    // SimplePractice and Personal are always on, so no toggle needed
+  };
 
   return (
-    <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-md">
-      <h4 className="text-sm font-medium text-gray-700 mb-2">Calendar Sources</h4>
-      <div className="flex flex-wrap gap-3">
-        {/* Google Calendar sources */}
-        {filteredCalendars.map((calendar) => (
+    <div className="mb-4 p-2 bg-white border border-gray-200 rounded-sm">
+      <div className="flex items-center gap-6">
+        {calendarTypes.map((type) => (
           <div 
-            key={calendar.id}
-            className={`flex items-center space-x-2 cursor-pointer transition-opacity ${
-              selectedCalendars.has(calendar.id) ? 'opacity-100' : 'opacity-40'
+            key={type.key}
+            className={`flex items-center space-x-2 cursor-pointer ${
+              type.key === 'google' ? 'hover:bg-gray-50 px-2 py-1 rounded' : ''
             }`}
-            onClick={() => onCalendarToggle?.(calendar.id)}
+            onClick={() => type.key === 'google' ? handleTypeToggle(type.key) : undefined}
           >
             <div 
-              className="w-3 h-3 rounded-full border-2"
-              style={{ 
-                backgroundColor: selectedCalendars.has(calendar.id) ? calendar.color : 'transparent',
-                borderColor: calendar.color 
-              }}
-            />
-            <span className="text-xs text-gray-600">{calendar.name}</span>
+              className={`w-4 h-4 border-2 rounded-sm flex items-center justify-center ${
+                type.selected ? 'bg-blue-500 border-blue-500' : 'border-gray-300'
+              }`}
+            >
+              {type.selected && (
+                <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              )}
+            </div>
+            <span className="text-sm text-gray-700">{type.label}</span>
           </div>
         ))}
       </div>

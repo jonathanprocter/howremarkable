@@ -338,10 +338,15 @@ export default function Planner() {
         const weekStart = state.currentWeek.startDate;
         const weekEnd = state.currentWeek.endDate;
         
+        console.log('Fetching events for week:', weekStart, 'to', weekEnd);
+        
         const { events, calendars } = await fetchCalendarEvents(
           weekStart.toISOString(),
           weekEnd.toISOString()
         );
+        
+        console.log('Received events:', events);
+        console.log('Received calendars:', calendars);
         
         // Convert Google Calendar events to our format
         const googleEvents: CalendarEvent[] = events.map((event: any) => ({
@@ -356,9 +361,14 @@ export default function Planner() {
           notes: event.calendarName
         }));
         
+        console.log('Converted Google events:', googleEvents);
+        
         // Preserve manually created events and combine with Google Calendar events
         const manualEvents = state.events.filter(event => event.source === 'manual');
         const combinedEvents = [...manualEvents, ...googleEvents];
+        
+        console.log('Combined events:', combinedEvents);
+        
         updateEvents(combinedEvents);
         setGoogleCalendars(calendars);
         
