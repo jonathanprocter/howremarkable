@@ -39,6 +39,19 @@ export const DailyView = ({
     return eventDate.toDateString() === selectedDate.toDateString();
   });
 
+  // Separate all-day events from timed events
+  const allDayEvents = dayEvents.filter(event => {
+    const duration = event.endTime.getTime() - event.startTime.getTime();
+    const hours = duration / (1000 * 60 * 60);
+    return hours >= 20; // Consider events 20+ hours as all-day
+  });
+  
+  const timedEvents = dayEvents.filter(event => {
+    const duration = event.endTime.getTime() - event.startTime.getTime();
+    const hours = duration / (1000 * 60 * 60);
+    return hours < 20;
+  });
+
   const toggleEventExpansion = (eventId: string) => {
     setExpandedEventId(expandedEventId === eventId ? null : eventId);
   };
@@ -102,9 +115,69 @@ export const DailyView = ({
             </div>
           </div>
           
+          {/* All-Day Events Section */}
+          {allDayEvents.length > 0 && (
+            <div className="grid grid-cols-8 border-b border-gray-300 bg-blue-50">
+              <div className="time-slot p-2 text-sm font-medium text-gray-600 bg-blue-100 border-r border-gray-300 text-center">
+                All Day
+              </div>
+              <div className="time-slot p-3 col-span-7 space-y-2">
+                {allDayEvents.map((event) => (
+                  <div key={event.id} className="space-y-2">
+                    <div
+                      className={cn(
+                        "event-block cursor-pointer",
+                        `event-block ${event.source}`
+                      )}
+                      onClick={() => toggleEventExpansion(event.id)}
+                    >
+                      <div className="text-sm font-medium text-gray-800">
+                        {event.title}
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        {event.notes || event.source} • All Day Event
+                      </div>
+                    </div>
+                    
+                    {expandedEventId === event.id && (
+                      <div className="expanded-event mt-2 p-3 bg-gray-50 rounded border">
+                        <div className="space-y-3">
+                          <div className="notes-area">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Event Notes
+                            </label>
+                            <Textarea
+                              value={event.notes || ''}
+                              onChange={(e) => handleEventNotesChange(event.id, 'notes', e.target.value)}
+                              placeholder="All-day event details..."
+                              className="w-full"
+                              rows={3}
+                            />
+                          </div>
+                          <div className="notes-area">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Action Items
+                            </label>
+                            <Textarea
+                              value={event.actionItems || ''}
+                              onChange={(e) => handleEventNotesChange(event.id, 'actionItems', e.target.value)}
+                              placeholder="Tasks and follow-ups..."
+                              className="w-full"
+                              rows={2}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
           {/* Time slots grid */}
           {timeSlots.map((timeSlot, index) => {
-            const slotEvents = dayEvents.filter(event => 
+            const slotEvents = timedEvents.filter(event => 
               isEventInTimeSlot(event, timeSlot)
             );
             

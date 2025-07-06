@@ -25,6 +25,17 @@ const sampleGoogleEvents: CalendarEvent[] = [
     sourceId: 'gcal-2',
     color: '#34a853',
     notes: 'Personal Calendar'
+  },
+  {
+    id: 'google-sample-3',
+    title: 'Conference Day',
+    description: 'Annual tech conference',
+    startTime: new Date(Date.now()), // Today
+    endTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Today + 24 hours (all day)
+    source: 'google',
+    sourceId: 'gcal-3',
+    color: '#4285f4',
+    notes: 'Work Calendar'
   }
 ];
 
