@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { generateTimeSlots, isEventInTimeSlot } from '../../utils/timeSlots';
+import { generateTimeSlots, isEventInTimeSlot, getEventDurationInSlots } from '../../utils/timeSlots';
 import { formatDate } from '../../utils/dateUtils';
 import { CalendarEvent } from '../../types/calendar';
 import { cn } from '@/lib/utils';
@@ -52,29 +52,35 @@ export const DailyView = ({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="mb-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">
-          {formatDate(selectedDate)}
-        </h2>
-        <div className="flex justify-center space-x-4">
-          <Button 
-            variant="outline" 
+    <div className="remarkable-width mx-auto p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onBackToWeek}
+            className="flex items-center"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Week
+          </Button>
+          <h2 className="text-2xl font-bold text-gray-900">
+            {formatDate(selectedDate)}
+          </h2>
+        </div>
+        <div className="flex space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
             onClick={onPreviousDay}
             className="flex items-center"
           >
             <ChevronLeft className="w-4 h-4 mr-2" />
             Previous Day
           </Button>
-          <Button 
-            onClick={onBackToWeek}
-            className="bg-blue-600 hover:bg-blue-700 flex items-center"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Week View
-          </Button>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={onNextDay}
             className="flex items-center"
           >
@@ -117,64 +123,72 @@ export const DailyView = ({
                   {timeSlot.time}
                 </div>
                 <div className="time-slot p-3 relative col-span-7">
-                  {slotEvents.filter(isFirstSlotOfEvent).map((event) => (
-                    <div key={event.id} className="space-y-2">
-                      <div
-                        className={cn(
-                          "event-block cursor-pointer",
-                          `event-block ${event.source}`
-                        )}
-                        onClick={() => toggleEventExpansion(event.id)}
-                      >
-                        <div className="text-sm font-medium text-gray-800">
-                          {event.title}
-                        </div>
-                        <div className="text-xs text-gray-600">
-                          {event.notes || event.source} • {event.startTime.toLocaleTimeString('en-US', { 
-                            hour: 'numeric', 
-                            minute: '2-digit', 
-                            hour12: true 
-                          })} - {event.endTime.toLocaleTimeString('en-US', { 
-                            hour: 'numeric', 
-                            minute: '2-digit', 
-                            hour12: true 
-                          })}
-                        </div>
-                      </div>
-                      
-                      {expandedEventId === event.id && (
-                        <div className="expanded-event">
-                          <div className="space-y-3">
-                            <div className="notes-area">
-                              <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Meeting Notes
-                              </label>
-                              <Textarea
-                                value={event.notes || ''}
-                                onChange={(e) => handleEventNotesChange(event.id, 'notes', e.target.value)}
-                                placeholder="Regular therapy session."
-                                className="w-full"
-                                rows={3}
-                              />
-                            </div>
-                            <div className="notes-area">
-                              <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Action Items
-                              </label>
-                              <Textarea
-                                value={event.actionItems || ''}
-                                onChange={(e) => handleEventNotesChange(event.id, 'actionItems', e.target.value)}
-                                placeholder="Process recent events.
-Homework assignment"
-                                className="w-full"
-                                rows={2}
-                              />
-                            </div>
+                  {slotEvents.filter(isFirstSlotOfEvent).map((event) => {
+                    const duration = getEventDurationInSlots(event);
+                    const eventHeight = duration * 40; // 40px per slot to match time-slot height
+                    
+                    return (
+                      <div key={event.id} className="space-y-2">
+                        <div
+                          className={cn(
+                            "event-block cursor-pointer absolute left-2 right-2 top-0",
+                            `event-block ${event.source}`
+                          )}
+                          style={{ 
+                            height: `${eventHeight}px`,
+                            zIndex: 10
+                          }}
+                          onClick={() => toggleEventExpansion(event.id)}
+                        >
+                          <div className="text-sm font-medium text-gray-800">
+                            {event.title}
+                          </div>
+                          <div className="text-xs text-gray-600">
+                            {event.notes || event.source} • {event.startTime.toLocaleTimeString('en-US', { 
+                              hour: 'numeric', 
+                              minute: '2-digit', 
+                              hour12: true 
+                            })} - {event.endTime.toLocaleTimeString('en-US', { 
+                              hour: 'numeric', 
+                              minute: '2-digit', 
+                              hour12: true 
+                            })}
                           </div>
                         </div>
-                      )}
-                    </div>
-                  ))}
+                        
+                        {expandedEventId === event.id && (
+                          <div className="expanded-event mt-2 p-3 bg-gray-50 rounded border">
+                            <div className="space-y-3">
+                              <div className="notes-area">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Meeting Notes
+                                </label>
+                                <Textarea
+                                  value={event.notes || ''}
+                                  onChange={(e) => handleEventNotesChange(event.id, 'notes', e.target.value)}
+                                  placeholder="Regular therapy session."
+                                  className="w-full"
+                                  rows={3}
+                                />
+                              </div>
+                              <div className="notes-area">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Action Items
+                                </label>
+                                <Textarea
+                                  value={event.actionItems || ''}
+                                  onChange={(e) => handleEventNotesChange(event.id, 'actionItems', e.target.value)}
+                                  placeholder="Process recent events.&#10;Homework assignment"
+                                  className="w-full"
+                                  rows={2}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );
