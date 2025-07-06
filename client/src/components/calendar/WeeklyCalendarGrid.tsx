@@ -34,7 +34,8 @@ export const WeeklyCalendarGrid = ({
     
     return {
       height: `${height}px`,
-      marginBottom: duration > 1 ? '0px' : '2px'
+      marginBottom: duration > 1 ? '0px' : '2px',
+      zIndex: 20 // Ensure events appear above other elements
     };
   };
 
@@ -69,7 +70,13 @@ export const WeeklyCalendarGrid = ({
               const eventStart = new Date(event.startTime);
               const slotStart = new Date(day.date);
               slotStart.setHours(timeSlot.hour, timeSlot.minute, 0, 0);
-              return Math.abs(eventStart.getTime() - slotStart.getTime()) < 30 * 60 * 1000; // Within 30 minutes
+              
+              // Check if this is the exact start time slot for the event
+              const eventStartMinutes = eventStart.getHours() * 60 + eventStart.getMinutes();
+              const slotStartMinutes = timeSlot.hour * 60 + timeSlot.minute;
+              
+              // Return true only if this is the first slot that contains the event start time
+              return eventStartMinutes >= slotStartMinutes && eventStartMinutes < slotStartMinutes + 30;
             };
 
             return (
@@ -85,7 +92,7 @@ export const WeeklyCalendarGrid = ({
                     <div
                       key={eventIndex}
                       className={cn(
-                        "event-block absolute left-0 right-0 top-0 z-10",
+                        "event-block absolute left-1 right-1 top-0",
                         `event-block ${event.source}`
                       )}
                       style={getEventStyle(event)}
