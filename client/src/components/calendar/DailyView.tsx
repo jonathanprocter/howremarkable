@@ -260,7 +260,8 @@ export const DailyView = ({
                   {timeSlot.time}
                 </div>
                 <div 
-                  className="time-slot p-3 relative col-span-7 hover:bg-gray-50"
+                  className="time-slot relative col-span-7 hover:bg-gray-50"
+                  style={{ minHeight: '40px' }}
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, timeSlot)}
                 >
@@ -279,10 +280,11 @@ export const DailyView = ({
                           style={{ 
                             height: `${eventHeight}px`,
                             zIndex: 10,
-                            position: duration > 1 ? 'absolute' : 'relative',
+                            position: 'absolute',
                             top: 0,
                             left: 0,
-                            right: 0
+                            right: 0,
+                            margin: 0
                           }}
                           draggable={event.source === 'google'}
                           onDragStart={(e) => handleDragStart(e, event)}
