@@ -160,8 +160,10 @@ export const exportDailyToPDF = async (
   const timeSlots = generateTimeSlots();
   const slotHeight = 8; // Match the visual height better
   
-  // First, draw all time slots and grid lines
-  const startYPosition = currentY;
+  // Track events that span multiple slots to avoid drawing them multiple times
+  const drawnEvents = new Set();
+  
+  // Draw time grid with events inline (like the actual daily view)
   timeSlots.forEach((timeSlot, index) => {
     if (currentY > pageHeight - 30) {
       pdf.addPage();
@@ -173,80 +175,78 @@ export const exportDailyToPDF = async (
     pdf.setFont('helvetica', 'normal');
     pdf.text(timeSlot.time, 15, currentY + 3);
     
-    // Draw horizontal line
-    pdf.setDrawColor(200, 200, 200);
-    pdf.line(15, currentY + slotHeight, pageWidth - 15, currentY + slotHeight);
-    
-    currentY += slotHeight;
-  });
-  
-  // Now draw events as overlays on top of the grid
-  timedEvents.forEach(event => {
-    const eventStart = new Date(event.startTime);
-    const eventEnd = new Date(event.endTime);
-    
-    // Find which slot this event starts in
-    const eventStartMinutes = eventStart.getHours() * 60 + eventStart.getMinutes();
-    const startSlotIndex = timeSlots.findIndex(slot => {
-      const slotStartMinutes = slot.hour * 60 + slot.minute;
+    // Check for events that START in this time slot
+    const slotEvents = timedEvents.filter(event => {
+      if (drawnEvents.has(event.id)) return false;
+      
+      const eventStart = new Date(event.startTime);
+      const eventStartMinutes = eventStart.getHours() * 60 + eventStart.getMinutes();
+      const slotStartMinutes = timeSlot.hour * 60 + timeSlot.minute;
       return eventStartMinutes >= slotStartMinutes && eventStartMinutes < slotStartMinutes + 30;
     });
     
-    if (startSlotIndex === -1) return; // Event not in our time range
+    // Calculate the height needed for this row (including any events)
+    let rowHeight = slotHeight;
     
-    // Calculate exact position and height using the same logic as the app
-    const eventDurationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
-    const eventDurationInSlots = Math.ceil(eventDurationMinutes / 30);
-    const eventHeightInPixels = eventDurationInSlots * slotHeight;
-    
-    const eventTop = startYPosition + (startSlotIndex * slotHeight);
-    const blockWidth = pageWidth - 50;
-    
-    // Debug: Log event details
-    console.log(`PDF Export - Event: ${event.title}`);
-    console.log(`  Duration: ${eventDurationMinutes} minutes`);
-    console.log(`  Slots: ${eventDurationInSlots}`);
-    console.log(`  Height: ${eventHeightInPixels}px`);
-    console.log(`  Start slot index: ${startSlotIndex}`);
-    
-    // Draw event block background
-    pdf.setFillColor(240, 248, 255); // Light blue background
-    pdf.rect(33, eventTop, blockWidth, eventHeightInPixels, 'F');
-    
-    // Draw event border
-    pdf.setDrawColor(100, 149, 237); // Cornflower blue border
-    pdf.setLineWidth(1.5);
-    pdf.rect(33, eventTop, blockWidth, eventHeightInPixels, 'S');
-    
-    // Event title
-    pdf.setFontSize(9);
-    pdf.setFont('helvetica', 'bold');
-    pdf.setTextColor(0, 0, 0);
-    pdf.text(event.title, 35, eventTop + 4);
-    
-    // Event time range
-    const startTime = eventStart.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit', 
-      hour12: false 
-    });
-    const endTime = eventEnd.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit', 
-      hour12: false 
-    });
-    pdf.setFontSize(7);
-    pdf.setFont('helvetica', 'normal');
-    pdf.setTextColor(70, 70, 70);
-    pdf.text(`${startTime} - ${endTime}`, 35, eventTop + 8);
-    
-    // Event notes (if they fit)
-    if (event.notes && eventHeightInPixels > 12) {
-      pdf.setFontSize(7);
-      pdf.setTextColor(100, 100, 100);
-      const notes = pdf.splitTextToSize(event.notes, pageWidth - 60);
-      pdf.text(notes.slice(0, Math.floor((eventHeightInPixels - 12) / 3)), 35, eventTop + 12);
+    if (slotEvents.length > 0) {
+      slotEvents.forEach(event => {
+        drawnEvents.add(event.id);
+        
+        const eventStart = new Date(event.startTime);
+        const eventEnd = new Date(event.endTime);
+        const eventDurationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
+        const eventDurationInSlots = Math.ceil(eventDurationMinutes / 30);
+        
+        // Calculate how much this event spans beyond the current slot
+        const additionalHeight = (eventDurationInSlots - 1) * slotHeight;
+        rowHeight = Math.max(rowHeight, slotHeight + additionalHeight);
+        
+        // Draw event block that spans the calculated height
+        const blockWidth = pageWidth - 50;
+        const eventTop = currentY;
+        const eventHeight = eventDurationInSlots * slotHeight;
+        
+        // Draw event block background
+        pdf.setFillColor(240, 248, 255); // Light blue background
+        pdf.rect(33, eventTop, blockWidth, eventHeight, 'F');
+        
+        // Draw event border
+        pdf.setDrawColor(100, 149, 237); // Cornflower blue border
+        pdf.setLineWidth(1.0);
+        pdf.rect(33, eventTop, blockWidth, eventHeight, 'S');
+        
+        // Event title
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(0, 0, 0);
+        pdf.text(event.title, 35, eventTop + 4);
+        
+        // Event time and source
+        const startTime = eventStart.toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit', 
+          hour12: false 
+        });
+        const endTime = eventEnd.toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit', 
+          hour12: false 
+        });
+        pdf.setFontSize(7);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(70, 70, 70);
+        pdf.text(`${event.notes || event.source} • ${startTime} - ${endTime}`, 35, eventTop + 8);
+        
+        console.log(`PDF Export - Event: ${event.title}, Duration: ${eventDurationMinutes}min, Slots: ${eventDurationInSlots}, Height: ${eventHeight}px`);
+      });
     }
+    
+    // Draw horizontal line at the bottom of this row
+    pdf.setDrawColor(200, 200, 200);
+    pdf.setLineWidth(0.1);
+    pdf.line(15, currentY + rowHeight, pageWidth - 15, currentY + rowHeight);
+    
+    currentY += rowHeight;
   });
   
   // Reset drawing properties
