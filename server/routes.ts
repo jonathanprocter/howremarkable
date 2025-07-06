@@ -176,8 +176,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const calendarList = await calendar.calendarList.list();
       const calendars = calendarList.data.items || [];
 
-      // Fetch events from all calendars
+      // First, get existing database events for the user
+      const dbEvents = await storage.getEvents(parseInt(user.id));
+      
+      // Fetch events from all calendars and sync to database
       const allEvents: any[] = [];
+      const allCalendarEvents: any[] = [];
       
       for (const cal of calendars) {
         try {
@@ -221,11 +225,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
             };
           });
 
+          // Sync Google Calendar events to database
+          for (const googleEvent of calendarEvents) {
+            try {
+              // Check if event already exists in database
+              const existingEvent = dbEvents.find(e => e.sourceId === googleEvent.id && e.source === 'google');
+              
+              if (!existingEvent) {
+                // Create new event in database
+                await storage.createEvent({
+                  userId: parseInt(user.id),
+                  title: googleEvent.title,
+                  description: googleEvent.description || '',
+                  startTime: new Date(googleEvent.startTime),
+                  endTime: new Date(googleEvent.endTime),
+                  source: 'google',
+                  sourceId: googleEvent.id,
+                  color: googleEvent.color,
+                  notes: '',
+                  actionItems: ''
+                });
+              }
+            } catch (error) {
+              console.error(`Error syncing Google event ${googleEvent.id} to database:`, error);
+            }
+          }
+
           allEvents.push(...calendarEvents);
+          allCalendarEvents.push(...calendarEvents);
         } catch (error) {
           console.error(`Error fetching events from calendar ${cal.summary}:`, error);
         }
       }
+
+      // After syncing, get all database events (both Google and manual)
+      const updatedDbEvents = await storage.getEvents(parseInt(user.id));
+      
+      // Map database events to the expected format
+      const dbEventsMapped = updatedDbEvents.map(e => ({
+        id: e.sourceId || e.id.toString(),
+        title: e.title,
+        description: e.description,
+        startTime: e.startTime,
+        endTime: e.endTime,
+        source: e.source,
+        sourceId: e.sourceId,
+        color: e.color,
+        notes: e.notes,
+        actionItems: e.actionItems,
+        calendarId: e.source === 'google' ? e.sourceId : undefined
+      }));
+
+      // Replace Google Calendar events with database-persisted versions
+      const googleEventIds = new Set(allCalendarEvents.map(e => e.id));
+      const persistedGoogleEvents = dbEventsMapped.filter(e => e.source === 'google' && googleEventIds.has(e.sourceId));
+      const manualEvents = dbEventsMapped.filter(e => e.source !== 'google');
+
+      // Use persisted Google events if available, otherwise use fresh Google events
+      const finalGoogleEvents = persistedGoogleEvents.length > 0 ? persistedGoogleEvents : allCalendarEvents;
+
+      allEvents.splice(0, allEvents.length); // Clear existing events
+      allEvents.push(...finalGoogleEvents, ...manualEvents);
 
       res.json({ 
         events: allEvents,
@@ -238,7 +298,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error('Calendar fetch error:', error);
-      res.status(500).json({ error: "Failed to fetch calendar events" });
+      
+      // Fallback: return database events if Google Calendar fails
+      try {
+        if (!req.user) {
+          return res.status(401).json({ error: "Authentication required" });
+        }
+        const fallbackUser = req.user as any;
+        const dbEvents = await storage.getEvents(parseInt(fallbackUser.id));
+        const dbEventsMapped = dbEvents.map(e => ({
+          id: e.sourceId || e.id.toString(),
+          title: e.title,
+          description: e.description,
+          startTime: e.startTime,
+          endTime: e.endTime,
+          source: e.source,
+          sourceId: e.sourceId,
+          color: e.color,
+          notes: e.notes,
+          actionItems: e.actionItems,
+          calendarId: e.source === 'google' ? e.sourceId : undefined
+        }));
+        
+        res.json({ 
+          events: dbEventsMapped,
+          calendars: [],
+          fallback: true,
+          message: "Loaded events from database (Google Calendar unavailable)"
+        });
+      } catch (dbError) {
+        console.error('Database fallback error:', dbError);
+        res.status(500).json({ error: "Failed to fetch calendar events" });
+      }
     }
   });
 
