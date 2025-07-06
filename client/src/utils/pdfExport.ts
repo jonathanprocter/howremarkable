@@ -17,32 +17,112 @@ export const exportWeeklyToPDF = async (
   });
   
   const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
   
-  pdf.setFont('helvetica', 'normal');
+  pdf.setFont('times', 'normal');
   
-  // Header
-  pdf.setFontSize(16);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('Weekly Planner', 15, 15);
+  // Professional border around entire page
+  pdf.setDrawColor(0, 0, 0);
+  pdf.setLineWidth(2);
+  pdf.rect(2, 2, pageWidth - 4, pageHeight - 4, 'S');
+  
+  // Header section with gray background
+  pdf.setFillColor(248, 248, 248);
+  pdf.rect(2, 2, pageWidth - 4, 25, 'F');
+  
+  // Header content
+  pdf.setFontSize(18);
+  pdf.setFont('times', 'bold');
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('WEEKLY PLANNER', pageWidth / 2, 12, { align: 'center' });
   
   // Week range
   pdf.setFontSize(12);
-  pdf.setFont('helvetica', 'normal');
-  const weekRange = `Week ${weekNumber} — ${formatDateShort(weekStartDate)} - ${formatDateShort(weekEndDate)}`;
-  pdf.text(weekRange, pageWidth - 15, 15, { align: 'right' });
+  pdf.setFont('times', 'normal');
+  const weekRange = `${formatDateShort(weekStartDate)} - ${formatDateShort(weekEndDate)} • Week ${weekNumber}`;
+  pdf.text(weekRange, pageWidth / 2, 20, { align: 'center' });
   
-  // Header line
-  pdf.setLineWidth(0.8);
+  // Header separator
+  pdf.setLineWidth(3);
   pdf.setDrawColor(0, 0, 0);
-  pdf.line(15, 20, pageWidth - 15, 20);
+  pdf.line(2, 27, pageWidth - 2, 27);
   
-  // Generate complete grid with events (06:00 to 23:30)
-  const timeSlots = generateTimeSlots(); // Should generate 06:00-23:30
-  const startY = 30;
-  const headerHeight = 15;
-  const rowHeight = 4.5; // Smaller rows to fit all time slots on page
-  const timeColumnWidth = 30;
-  const dayWidth = (pageWidth - 30 - timeColumnWidth) / 7;
+  // Week statistics section
+  const totalEvents = events.length;
+  const totalHours = events.reduce((sum, event) => {
+    return sum + (new Date(event.endTime).getTime() - new Date(event.startTime).getTime()) / (1000 * 60 * 60);
+  }, 0);
+  
+  const statsY = 32;
+  pdf.setFillColor(248, 248, 248);
+  pdf.rect(2, 27, pageWidth - 4, 12, 'F');
+  
+  pdf.setFontSize(8);
+  pdf.setFont('times', 'normal');
+  
+  const statItems = [
+    { label: 'Total Appointments', value: totalEvents.toString() },
+    { label: 'Scheduled Time', value: `${totalHours.toFixed(1)}h` },
+    { label: 'Daily Average', value: `${(totalHours / 7).toFixed(1)}h` },
+    { label: 'Available Time', value: `${(168 - totalHours).toFixed(0)}h` }
+  ];
+  
+  statItems.forEach((stat, index) => {
+    const x = 15 + (index * (pageWidth - 30) / 4);
+    pdf.setFont('times', 'bold');
+    pdf.setFontSize(12);
+    pdf.text(stat.value, x + 25, statsY + 3);
+    pdf.setFont('times', 'normal');
+    pdf.setFontSize(7);
+    pdf.text(stat.label, x + 25, statsY + 7);
+    
+    if (index < statItems.length - 1) {
+      pdf.setDrawColor(0, 0, 0);
+      pdf.setLineWidth(0.5);
+      pdf.line(x + 50, 27, x + 50, 39);
+    }
+  });
+  
+  // Stats section bottom border
+  pdf.setDrawColor(0, 0, 0);
+  pdf.setLineWidth(2);
+  pdf.line(2, 39, pageWidth - 2, 39);
+  
+  // Legend section
+  const legendY = 45;
+  pdf.setFillColor(248, 248, 248);
+  pdf.rect(2, 39, pageWidth - 4, 8, 'F');
+  
+  pdf.setFontSize(7);
+  pdf.setFont('times', 'normal');
+  const legendItems = [
+    { name: 'SimplePractice', color: [245, 245, 245], border: [100, 149, 237] },
+    { name: 'Google Calendar', color: [224, 224, 224], border: [102, 102, 102] },
+    { name: 'Personal', color: [240, 240, 240], border: [153, 153, 153] }
+  ];
+  
+  legendItems.forEach((item, index) => {
+    const x = 15 + (index * 60);
+    pdf.setFillColor(item.color[0], item.color[1], item.color[2]);
+    pdf.rect(x, legendY - 2, 8, 4, 'F');
+    pdf.setDrawColor(item.border[0], item.border[1], item.border[2]);
+    pdf.setLineWidth(1);
+    pdf.rect(x, legendY - 2, 8, 4, 'S');
+    pdf.setTextColor(0, 0, 0);
+    pdf.text(item.name, x + 12, legendY);
+  });
+  
+  pdf.setDrawColor(0, 0, 0);
+  pdf.setLineWidth(2);
+  pdf.line(2, 47, pageWidth - 2, 47);
+  
+  // Calendar grid setup
+  const timeSlots = generateTimeSlots();
+  const startY = 54;
+  const headerHeight = 12;
+  const rowHeight = 4.2;
+  const timeColumnWidth = 22;
+  const dayWidth = (pageWidth - 22 - 6) / 7;
   
   // Table header
   pdf.setFillColor(240, 240, 240);
@@ -201,28 +281,38 @@ export const exportDailyToPDF = async (
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
   
-  pdf.setFont('helvetica', 'normal');
+  pdf.setFont('times', 'normal');
   
-  // Simple header without "reMarkable" branding
+  // Professional border around entire page
+  pdf.setDrawColor(0, 0, 0);
+  pdf.setLineWidth(2);
+  pdf.rect(2, 2, pageWidth - 4, pageHeight - 4, 'S');
+  
+  // Header section with gray background
+  pdf.setFillColor(248, 248, 248);
+  pdf.rect(2, 2, pageWidth - 4, 25, 'F');
+  
+  // Header content
   pdf.setFontSize(18);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('Daily Planner', 15, 20);
+  pdf.setFont('times', 'bold');
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('DAILY PLANNER', pageWidth / 2, 12, { align: 'center' });
   
-  // Date on right side
-  pdf.setFontSize(14);
-  pdf.setFont('helvetica', 'normal');
+  // Date and navigation info
+  pdf.setFontSize(12);
+  pdf.setFont('times', 'normal');
   const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
   const dateStr = selectedDate.toLocaleDateString('en-US', { 
     month: 'long', 
     day: 'numeric', 
     year: 'numeric' 
   });
-  pdf.text(`${dayName}, ${dateStr}`, pageWidth - 15, 20, { align: 'right' });
+  pdf.text(`${dayName}, ${dateStr}`, pageWidth / 2, 20, { align: 'center' });
   
-  // Header line
-  pdf.setLineWidth(0.8);
+  // Header separator
+  pdf.setLineWidth(3);
   pdf.setDrawColor(0, 0, 0);
-  pdf.line(15, 25, pageWidth - 15, 25);
+  pdf.line(2, 27, pageWidth - 2, 27);
   
   // Time grid layout matching your preferred format
   const timeSlots = generateTimeSlots(); // 06:00 to 23:30
