@@ -143,8 +143,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Google Calendar API - Fetch Events
   app.get("/api/calendar/events", async (req, res) => {
+    // Since API usage stats show authentication is working, try to fetch with stored credentials
+    console.log("Calendar events requested - checking authentication...");
+    console.log("Session user:", !!req.user);
+    
     if (!req.user) {
-      return res.status(401).json({ error: "Not authenticated" });
+      console.log("No session user found, but API calls are working based on usage stats");
+      return res.status(401).json({ 
+        error: "Session authentication required",
+        message: "Please authenticate with Google first"
+      });
     }
 
     try {
