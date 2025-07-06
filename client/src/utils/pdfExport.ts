@@ -158,7 +158,7 @@ export const exportDailyToPDF = async (
   currentY += 10;
   
   const timeSlots = generateTimeSlots();
-  const slotHeight = 6; // Increased height for better visibility
+  const slotHeight = 8; // Match the visual height better
   
   // First, draw all time slots and grid lines
   const startYPosition = currentY;
@@ -194,12 +194,20 @@ export const exportDailyToPDF = async (
     
     if (startSlotIndex === -1) return; // Event not in our time range
     
-    // Calculate exact position and height
+    // Calculate exact position and height using the same logic as the app
     const eventDurationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
-    const eventHeightInPixels = (eventDurationMinutes / 30) * slotHeight;
+    const eventDurationInSlots = Math.ceil(eventDurationMinutes / 30);
+    const eventHeightInPixels = eventDurationInSlots * slotHeight;
     
     const eventTop = startYPosition + (startSlotIndex * slotHeight);
     const blockWidth = pageWidth - 50;
+    
+    // Debug: Log event details
+    console.log(`PDF Export - Event: ${event.title}`);
+    console.log(`  Duration: ${eventDurationMinutes} minutes`);
+    console.log(`  Slots: ${eventDurationInSlots}`);
+    console.log(`  Height: ${eventHeightInPixels}px`);
+    console.log(`  Start slot index: ${startSlotIndex}`);
     
     // Draw event block background
     pdf.setFillColor(240, 248, 255); // Light blue background
