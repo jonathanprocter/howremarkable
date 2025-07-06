@@ -158,7 +158,7 @@ export const exportDailyToPDF = async (
   currentY += 10;
   
   const timeSlots = generateTimeSlots();
-  const slotHeight = 4;
+  const slotHeight = 6; // Increased height for better visibility
   
   // Track events that have already been drawn to avoid duplicates
   const drawnEvents = new Set();
@@ -200,14 +200,20 @@ export const exportDailyToPDF = async (
         const eventDurationSlots = Math.ceil(eventDurationMinutes / 30);
         const eventHeight = eventDurationSlots * slotHeight;
         
-        // Draw event block background
+        // Debug log for troubleshooting
+        console.log(`Event: ${event.title}, Duration: ${eventDurationMinutes}min, Slots: ${eventDurationSlots}, Height: ${eventHeight}px`);
+        
+        // Draw event block background - extend it to ensure visibility
+        const blockWidth = pageWidth - 50;
+        const blockTop = currentY - 2;
+        
         pdf.setFillColor(240, 248, 255); // Light blue background
-        pdf.rect(33, currentY - 2, pageWidth - 50, eventHeight, 'F');
+        pdf.rect(33, blockTop, blockWidth, eventHeight, 'F');
         
         // Draw event border
         pdf.setDrawColor(100, 149, 237); // Cornflower blue border
-        pdf.setLineWidth(0.5);
-        pdf.rect(33, currentY - 2, pageWidth - 50, eventHeight, 'S');
+        pdf.setLineWidth(1.0); // Thicker border for visibility
+        pdf.rect(33, blockTop, blockWidth, eventHeight, 'S');
         
         // Event title
         pdf.setFontSize(9);
