@@ -198,15 +198,19 @@
 
 .appointment {
     position: absolute;
-    left: 8px;
-    right: 8px;
-    background: white;
-    padding: 4px 6px;
-    font-size: 10px;
+    left: 2px;
+    right: 2px;
+    top: 2px;
+    padding: 3px 4px;
+    font-size: 8px;
+    font-weight: bold;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
+    justify-content: center;
+    text-align: center;
     overflow: hidden;
+    border-radius: 2px;
+    z-index: 10;
     cursor: pointer;
     color: black;
 }
@@ -252,18 +256,10 @@
     border-style: double;
 }
 
-/* Duration-based heights - 1 hour = 2 slots = 120px - matching HTML template */
-.appointment.duration-30m {
-    height: 56px; /* 1 slot (60px) minus borders/padding */
-}
-
-.appointment.duration-1h {
-    height: 116px; /* 2 slots (120px) minus borders/padding */
-}
-
-.appointment.duration-90m {
-    height: 176px; /* 3 slots (180px) minus borders/padding */
-}
+/* Height classes for different durations */
+.appointment.duration-30 { height: 32px; }
+.appointment.duration-60 { height: 68px; }
+.appointment.duration-90 { height: 103px; }
 
 /* Appointment header styling - exact match to HTML template */
 .appointment-header {
