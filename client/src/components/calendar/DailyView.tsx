@@ -38,6 +38,13 @@ export const DailyView = ({
   const dayEvents = events.filter(event => 
     new Date(event.startTime).toDateString() === selectedDate.toDateString()
   );
+  
+  // Debug log for events
+  console.log(`Daily view - Selected date: ${selectedDate.toDateString()}`);
+  console.log(`Daily view - Total events: ${events.length}`);
+  console.log(`Daily view - Day events: ${dayEvents.length}`);
+  console.log('All events:', events);
+  console.log('Day events:', dayEvents);
 
   // Calculate daily statistics
   const totalEvents = dayEvents.length;
