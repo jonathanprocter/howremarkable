@@ -34,11 +34,7 @@ export const exportWeeklyToPDF = async (
   const weekRange = `Week ${weekNumber} — ${formatDateShort(weekStartDate)} - ${formatDateShort(weekEndDate)}`;
   pdf.text(weekRange, pageWidth - 15, 15, { align: 'right' });
   
-  // Add navigation reference for bidirectional linking
-  pdf.setFontSize(8);
-  pdf.setFont('helvetica', 'italic');
-  pdf.setTextColor(100, 100, 100);
-  pdf.text('Click any day header to view detailed daily planner', 15, pageHeight - 5);
+  // Clean PDF without footer text for professional appearance
   
   // Draw header line
   pdf.setLineWidth(0.8);
