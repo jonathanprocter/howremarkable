@@ -65,7 +65,7 @@ export const ExportToPDF = ({
           <Button 
             variant="outline" 
             onClick={() => onExportToGoogleDrive('current')}
-            className="w-full text-xs"
+            className="w-full text-xs whitespace-normal leading-tight h-auto py-2"
             size="sm"
           >
             {isGoogleConnected ? 'Export Current View' : 'Export Current View (Connect Google)'}
@@ -73,7 +73,7 @@ export const ExportToPDF = ({
           <Button 
             variant="outline" 
             onClick={() => onExportToGoogleDrive('weekly')}
-            className="w-full text-xs"
+            className="w-full text-xs whitespace-normal leading-tight h-auto py-2"
             size="sm"
           >
             {isGoogleConnected ? 'Export Weekly Package' : 'Export Weekly Package (Connect Google)'}
@@ -81,7 +81,7 @@ export const ExportToPDF = ({
           <Button 
             variant="outline" 
             onClick={() => onExportToGoogleDrive('daily')}
-            className="w-full text-xs"
+            className="w-full text-xs whitespace-normal leading-tight h-auto py-2"
             size="sm"
           >
             {isGoogleConnected ? 'Export Daily View' : 'Export Daily View (Connect Google)'}
@@ -89,7 +89,7 @@ export const ExportToPDF = ({
           <Button 
             variant="outline" 
             onClick={() => onExportToGoogleDrive('month')}
-            className="w-full text-xs"
+            className="w-full text-xs whitespace-normal leading-tight h-auto py-2"
             size="sm"
           >
             {isGoogleConnected ? 'Export Full Month' : 'Export Full Month (Connect Google)'}
