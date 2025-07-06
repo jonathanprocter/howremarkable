@@ -67,36 +67,32 @@ export const ExportToPDF = ({
             onClick={() => onExportToGoogleDrive('current')}
             className="w-full text-xs"
             size="sm"
-            disabled={!isGoogleConnected}
           >
-            Export Current View
+            {isGoogleConnected ? 'Export Current View' : 'Export Current View (Connect Google)'}
           </Button>
           <Button 
             variant="outline" 
             onClick={() => onExportToGoogleDrive('weekly')}
             className="w-full text-xs"
             size="sm"
-            disabled={!isGoogleConnected}
           >
-            Export Weekly Package
+            {isGoogleConnected ? 'Export Weekly Package' : 'Export Weekly Package (Connect Google)'}
           </Button>
           <Button 
             variant="outline" 
             onClick={() => onExportToGoogleDrive('daily')}
             className="w-full text-xs"
             size="sm"
-            disabled={!isGoogleConnected}
           >
-            Export Daily View
+            {isGoogleConnected ? 'Export Daily View' : 'Export Daily View (Connect Google)'}
           </Button>
           <Button 
             variant="outline" 
             onClick={() => onExportToGoogleDrive('month')}
             className="w-full text-xs"
             size="sm"
-            disabled={!isGoogleConnected}
           >
-            Export Full Month
+            {isGoogleConnected ? 'Export Full Month' : 'Export Full Month (Connect Google)'}
           </Button>
         </div>
       </div>
