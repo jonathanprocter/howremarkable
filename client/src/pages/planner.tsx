@@ -8,7 +8,7 @@ import { WeeklyCalendarGrid } from '../components/calendar/WeeklyCalendarGrid';
 import { DailyView } from '../components/calendar/DailyView';
 import { CalendarEvent } from '../types/calendar';
 import { useToast } from '@/hooks/use-toast';
-import { exportWeeklyToPDF, exportDailyToPDF, exportWeeklyPackageToPDF, generateFilename } from '../utils/pdfExport';
+import { exportWeeklyToPDF, exportDailyToPDF, exportWeeklyPackageToPDF, generateFilename } from '../utils/pdfExportNew';
 import { getWeekNumber } from '../utils/dateUtils';
 
 export default function Planner() {
