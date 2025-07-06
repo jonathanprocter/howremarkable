@@ -46,9 +46,9 @@ export const exportWeeklyToPDF = async (
   pdf.line(15, 20, pageWidth - 15, 20);
   
   // Grid layout to match reMarkable Pro example
-  const startY = 30;
-  const headerHeight = 12;
-  const rowHeight = 6.8; // Tight spacing to fit 06:00-23:30
+  const startY = 25;
+  const headerHeight = 10;
+  const rowHeight = 4.8; // Tight spacing to fit 06:00-23:30 (36 slots need ~173mm)
   const timeSlots = generateTimeSlots();
   const timeColumnWidth = 22;
   const dayWidth = (pageWidth - timeColumnWidth - 30) / 7;
@@ -58,12 +58,12 @@ export const exportWeeklyToPDF = async (
   pdf.rect(15, startY, pageWidth - 30, headerHeight, 'F');
   
   // Table headers
-  pdf.setFontSize(10);
+  pdf.setFontSize(9);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(0, 0, 0);
   
   // Time column header
-  pdf.text('Time', 17, startY + 8);
+  pdf.text('Time', 17, startY + 6);
   
   // Day headers with dates
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -73,10 +73,10 @@ export const exportWeeklyToPDF = async (
     const dateStr = `${currentDate.getMonth() + 1}/${currentDate.getDate()}`;
     
     const x = timeColumnWidth + 17 + (index * dayWidth);
-    pdf.text(`${day} ${dateStr}`, x, startY + 6);
-    pdf.setFontSize(8);
-    pdf.text(dateStr, x, startY + 10);
-    pdf.setFontSize(10);
+    pdf.text(`${day} ${dateStr}`, x, startY + 4);
+    pdf.setFontSize(7);
+    pdf.text(dateStr, x, startY + 8);
+    pdf.setFontSize(9);
   });
   
   // Draw table borders
@@ -93,10 +93,10 @@ export const exportWeeklyToPDF = async (
     const y = gridStartY + (index * rowHeight);
     
     // Time column
-    pdf.setFontSize(8);
+    pdf.setFontSize(7);
     pdf.setFont('helvetica', 'normal');
     pdf.setTextColor(0, 0, 0);
-    pdf.text(slot.time, 17, y + 4);
+    pdf.text(slot.time, 17, y + 3);
     
     // Draw horizontal grid lines
     pdf.setDrawColor(200, 200, 200);
@@ -150,13 +150,13 @@ export const exportWeeklyToPDF = async (
         pdf.rect(eventX, y + 0.5, eventWidth, eventHeight, 'S');
         
         // Event text
-        pdf.setFontSize(7);
+        pdf.setFontSize(6);
         pdf.setFont('helvetica', 'normal');
         pdf.setTextColor(0, 0, 0);
         
         // Clean title for display
         const cleanTitle = event.title.replace(/[^\w\s\-\.,;:()\[\]]/g, '');
-        const maxChars = Math.floor(eventWidth / 2.2);
+        const maxChars = Math.floor(eventWidth / 2.0);
         let displayTitle = cleanTitle;
         if (cleanTitle.length > maxChars) {
           const words = cleanTitle.split(' ');
@@ -170,7 +170,7 @@ export const exportWeeklyToPDF = async (
           }
         }
         
-        pdf.text(displayTitle, eventX + 1, y + 3.5);
+        pdf.text(displayTitle, eventX + 0.5, y + 2.5);
       });
     }
   });

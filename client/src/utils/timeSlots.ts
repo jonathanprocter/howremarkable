@@ -14,6 +14,13 @@ export const generateTimeSlots = (): TimeSlot[] => {
     }
   }
   
+  // Add the final 23:30 slot
+  timeSlots.push({
+    time: '23:30',
+    hour: 23,
+    minute: 30
+  });
+  
   return timeSlots;
 };
 
