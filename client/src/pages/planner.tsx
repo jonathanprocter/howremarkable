@@ -356,7 +356,7 @@ export default function Planner() {
           startTime: new Date(event.startTime),
           endTime: new Date(event.endTime),
           source: 'google' as const,
-          sourceId: event.sourceId,
+          sourceId: event.calendarId, // Use calendarId instead of sourceId
           color: event.color,
           notes: event.calendarName
         }));
@@ -518,10 +518,16 @@ export default function Planner() {
   // Filter events based on selected calendars
   const currentEvents = state.events.filter(event => {
     if (event.source === 'google' && event.sourceId) {
-      return selectedCalendars.has(event.sourceId);
+      const isSelected = selectedCalendars.has(event.sourceId);
+      console.log(`Event ${event.title} from calendar ${event.sourceId} - selected: ${isSelected}`);
+      return isSelected;
     }
     return true; // Show all non-Google events
   });
+  
+  console.log('Selected calendars:', Array.from(selectedCalendars));
+  console.log('Total events in state:', state.events.length);
+  console.log('Filtered events:', currentEvents.length);
   
   const currentDateString = state.selectedDate.toISOString().split('T')[0];
   const currentDailyNotes = state.dailyNotes[currentDateString] || '';
