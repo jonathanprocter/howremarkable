@@ -3,7 +3,8 @@ import { TimeSlot } from '../types/calendar';
 export const generateTimeSlots = (): TimeSlot[] => {
   const timeSlots: TimeSlot[] = [];
   
-  for (let hour = 6; hour <= 23; hour++) {
+  // Generate full 24-hour timeline from 00:00 to 23:30
+  for (let hour = 0; hour < 24; hour++) {
     for (let minute = 0; minute < 60; minute += 30) {
       const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
       timeSlots.push({
@@ -13,13 +14,6 @@ export const generateTimeSlots = (): TimeSlot[] => {
       });
     }
   }
-  
-  // Add the final 23:30 slot
-  timeSlots.push({
-    time: '23:30',
-    hour: 23,
-    minute: 30
-  });
   
   return timeSlots;
 };
