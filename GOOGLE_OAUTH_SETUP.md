@@ -27,6 +27,8 @@ The 403 error occurs because the Google Cloud Console project needs proper confi
      - App name: "reMarkable Pro Digital Planner"
      - User support email: your email
      - Developer contact: your email
+   - **IMPORTANT**: After configuring, click "PUBLISH APP" (not just save as draft)
+   - The app must be "In production" status, not "Testing"
 
 4. **Set Up OAuth Credentials**
    - Go to "APIs & Services" → "Credentials"

@@ -40,7 +40,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use(passport.session());
 
   // Google OAuth Routes
-  app.get("/api/auth/google", 
+  app.get("/api/auth/google", (req, res, next) => {
+    console.log("Starting Google OAuth flow...");
     passport.authenticate("google", { 
       scope: [
         "profile", 
@@ -48,19 +49,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "https://www.googleapis.com/auth/drive.file",
         "https://www.googleapis.com/auth/calendar.readonly"
       ]
-    })
-  );
+    })(req, res, next);
+  });
 
-  app.get("/api/auth/google/callback",
+  app.get("/api/auth/google/callback", (req, res, next) => {
+    console.log("Google OAuth callback received", req.query);
+    
+    if (req.query.error) {
+      const error = req.query.error as string;
+      const errorDescription = req.query.error_description as string;
+      console.error("OAuth error:", error, errorDescription);
+      return res.redirect("/?error=auth_failed&details=" + encodeURIComponent(errorDescription || error));
+    }
+
     passport.authenticate("google", { 
       failureRedirect: "/?error=auth_failed",
       session: true
-    }),
-    (req, res) => {
-      console.log("Google OAuth callback successful", req.user);
-      res.redirect("/?connected=true");
-    }
-  );
+    }, (err, user, info) => {
+      if (err) {
+        console.error("Passport authentication error:", err);
+        return res.redirect("/?error=auth_failed&details=" + encodeURIComponent(err.message));
+      }
+      if (!user) {
+        console.error("No user returned from authentication:", info);
+        return res.redirect("/?error=auth_failed&details=no_user");
+      }
+      
+      req.logIn(user, (err) => {
+        if (err) {
+          console.error("Login error:", err);
+          return res.redirect("/?error=auth_failed&details=" + encodeURIComponent(err.message));
+        }
+        console.log("Google OAuth callback successful", user.email);
+        res.redirect("/?connected=true");
+      });
+    })(req, res, next);
+  });
 
   // Error handling for failed authentication
   app.get("/api/auth/error", (req, res) => {
