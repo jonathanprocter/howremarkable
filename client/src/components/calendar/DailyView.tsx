@@ -31,6 +31,7 @@ export const DailyView = ({
   onEventMove
 }: DailyViewProps) => {
   const [currentNotes, setCurrentNotes] = useState(dailyNotes);
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
 
   // Get events for the selected date
   const dayEvents = events.filter(event => 
@@ -59,26 +60,31 @@ export const DailyView = ({
     const eventEnd = new Date(event.endTime);
     const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
     
-    // Calculate position based on start time
+    // Calculate position based on start time - aligned to time slots
     const startHour = eventStart.getHours();
     const startMinute = eventStart.getMinutes();
-    const startSlotIndex = (startHour - 6) * 2 + (startMinute >= 30 ? 1 : 0);
-    const topPosition = startSlotIndex * 60; // 60px per slot
+    
+    // Calculate slot index from 6am starting point
+    const hoursSince6am = startHour - 6;
+    const slotIndex = hoursSince6am * 2 + (startMinute >= 30 ? 1 : 0);
+    const topPosition = slotIndex * 60; // 60px per slot
     
     // Calculate height based on duration
     let height = Math.max(56, (durationMinutes / 30) * 60 - 4); // 60px per 30min slot, minus padding
     
-    // Source-specific styling
+    // Source-specific styling - check if it's a SimplePractice appointment
     let className = 'appointment ';
-    switch (event.source) {
-      case 'simplepractice':
-        className += 'simplepractice ';
-        break;
-      case 'google':
-        className += 'google-calendar ';
-        break;
-      default:
-        className += 'personal ';
+    const isSimplePractice = event.source === 'simplepractice' || 
+                           event.notes?.toLowerCase().includes('simple practice') ||
+                           event.title?.toLowerCase().includes('simple practice') ||
+                           event.description?.toLowerCase().includes('simple practice');
+    
+    if (isSimplePractice) {
+      className += 'simplepractice ';
+    } else if (event.source === 'google') {
+      className += 'google-calendar ';
+    } else {
+      className += 'personal ';
     }
     
     return {
@@ -88,6 +94,14 @@ export const DailyView = ({
         height: `${height}px`
       }
     };
+  };
+
+  const toggleEventExpansion = (eventId: string) => {
+    setExpandedEventId(expandedEventId === eventId ? null : eventId);
+  };
+
+  const handleEventNotesChange = (eventId: string, field: 'notes' | 'actionItems', value: string) => {
+    onUpdateEvent(eventId, { [field]: value });
   };
 
   const formatEventTime = (event: CalendarEvent) => {
@@ -193,26 +207,83 @@ export const DailyView = ({
           {dayEvents.map((event) => {
             const { className, style } = getEventStyle(event);
             return (
-              <div
-                key={event.id}
-                className={className}
-                style={style}
-                onClick={() => onEventClick(event)}
-              >
-                <div className="appointment-header">
-                  <div className="appointment-title">{event.title}</div>
-                  <div className="appointment-time">{formatEventTime(event)}</div>
+              <div key={event.id}>
+                <div
+                  className={className}
+                  style={style}
+                  onClick={() => toggleEventExpansion(event.id)}
+                >
+                  <div className="appointment-header">
+                    <div className="appointment-title">{event.title}</div>
+                    <div className="appointment-time">{formatEventTime(event)}</div>
+                  </div>
+                  <div className="appointment-calendar">{event.source} calendar</div>
+                  {event.description && (
+                    <div className="appointment-description">{event.description}</div>
+                  )}
+                  {event.notes && (
+                    <div className="appointment-notes">{event.notes}</div>
+                  )}
+                  {event.actionItems && (
+                    <div className="appointment-actions">
+                      <div className="action-item">{event.actionItems}</div>
+                    </div>
+                  )}
                 </div>
-                <div className="appointment-calendar">{event.source} calendar</div>
-                {event.description && (
-                  <div className="appointment-description">{event.description}</div>
-                )}
-                {event.notes && (
-                  <div className="appointment-notes">{event.notes}</div>
-                )}
-                {event.actionItems && (
-                  <div className="appointment-actions">
-                    <div className="action-item">{event.actionItems}</div>
+                
+                {/* Expanded event details */}
+                {expandedEventId === event.id && (
+                  <div 
+                    className="expanded-event-details"
+                    style={{
+                      position: 'absolute',
+                      top: `${parseInt(style.top) + parseInt(style.height) + 5}px`,
+                      left: '8px',
+                      right: '8px',
+                      background: '#f8f8f8',
+                      border: '2px solid #ccc',
+                      borderRadius: '4px',
+                      padding: '12px',
+                      zIndex: 1000,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                    }}
+                  >
+                    <div className="space-y-3">
+                      <div className="notes-area">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Event Notes
+                        </label>
+                        <Textarea
+                          value={event.notes || ''}
+                          onChange={(e) => handleEventNotesChange(event.id, 'notes', e.target.value)}
+                          placeholder="Add notes for this appointment..."
+                          className="w-full text-sm"
+                          rows={3}
+                        />
+                      </div>
+                      <div className="notes-area">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Action Items
+                        </label>
+                        <Textarea
+                          value={event.actionItems || ''}
+                          onChange={(e) => handleEventNotesChange(event.id, 'actionItems', e.target.value)}
+                          placeholder="Add action items and follow-ups..."
+                          className="w-full text-sm"
+                          rows={2}
+                        />
+                      </div>
+                      <div className="flex justify-end pt-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setExpandedEventId(null)}
+                          className="text-xs"
+                        >
+                          Close
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

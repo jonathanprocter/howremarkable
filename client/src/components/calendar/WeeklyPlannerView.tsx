@@ -170,9 +170,9 @@ export const WeeklyPlannerView = ({
             const isHour = slot.minute === 0;
             
             return (
-              <React.Fragment key={`${slot.hour}-${slot.minute}`}>
+              <>
                 {/* Time slot label */}
-                <div className={`time-slot ${isHour ? 'hour' : ''}`}>
+                <div key={`time-${slot.hour}-${slot.minute}`} className={`time-slot ${isHour ? 'hour' : ''}`}>
                   {slot.time}
                 </div>
                 
@@ -205,7 +205,7 @@ export const WeeklyPlannerView = ({
                     </div>
                   );
                 })}
-              </React.Fragment>
+              </>
             );
           })}
         </div>
