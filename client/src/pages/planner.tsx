@@ -351,9 +351,10 @@ export default function Planner() {
           startTime: new Date(event.startTime),
           endTime: new Date(event.endTime),
           source: 'google' as const,
-          sourceId: event.calendarId, // Use the calendar ID, not the event ID
+          sourceId: event.sourceId || event.id, // Google event ID
           color: event.color,
-          notes: event.calendarName
+          notes: event.calendarName,
+          calendarId: event.calendarId // Calendar ID for filtering
         }));
         
         // Preserve manually created events and combine with Google Calendar events
@@ -508,10 +509,12 @@ export default function Planner() {
 
   // Filter events based on selected calendars
   const currentEvents = state.events.filter(event => {
-    if (event.source === 'google' && event.sourceId) {
-      return selectedCalendars.has(event.sourceId);
+    if (event.source === 'google') {
+      // Use calendarId for Google Calendar events (not sourceId which is the event ID)
+      const calendarId = (event as any).calendarId || event.sourceId;
+      return selectedCalendars.has(calendarId);
     }
-    return true; // Show all non-Google events
+    return true; // Show all non-Google events (manual, SimplePractice)
   });
   
   const currentDateString = state.selectedDate.toISOString().split('T')[0];

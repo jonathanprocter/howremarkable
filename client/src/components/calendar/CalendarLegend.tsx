@@ -13,72 +13,61 @@ interface CalendarLegendProps {
 }
 
 export const CalendarLegend = ({ calendars, selectedCalendars, onCalendarToggle }: CalendarLegendProps) => {
-  // Define the three main calendar types to match the screenshot
-  const calendarTypes = [
+  // Create calendar items with specific Google calendar names + standard categories
+  const calendarItems = [
     { 
-      key: 'simplepractice', 
-      label: 'SimplePractice', 
+      id: 'simplepractice', 
+      name: 'SimplePractice', 
       color: '#4F46E5',
-      selected: true // Always selected for SimplePractice events
+      selected: true, // Always selected for SimplePractice events
+      type: 'static'
     },
+    ...calendars.map(cal => ({
+      id: cal.id,
+      name: cal.name,
+      color: cal.color || '#10B981',
+      selected: selectedCalendars.has(cal.id),
+      type: 'google'
+    })),
     { 
-      key: 'google', 
-      label: 'Google Calendar', 
-      color: '#10B981',
-      selected: calendars.some(cal => selectedCalendars.has(cal.id))
-    },
-    { 
-      key: 'personal', 
-      label: 'Personal', 
+      id: 'personal', 
+      name: 'Personal', 
       color: '#6B7280',
-      selected: true // Always selected for manual events
+      selected: true, // Always selected for manual events
+      type: 'static'
     }
   ];
 
-  const handleTypeToggle = (type: string) => {
+  const handleCalendarToggle = (calendarId: string, type: string) => {
     if (type === 'google') {
-      // Toggle all Google calendars
-      const googleCalIds = calendars.map(cal => cal.id);
-      const hasAnySelected = googleCalIds.some(id => selectedCalendars.has(id));
-      
-      if (hasAnySelected) {
-        // Deselect all Google calendars
-        googleCalIds.forEach(id => onCalendarToggle?.(id));
-      } else {
-        // Select all Google calendars
-        googleCalIds.forEach(id => {
-          if (!selectedCalendars.has(id)) {
-            onCalendarToggle?.(id);
-          }
-        });
-      }
+      onCalendarToggle?.(calendarId);
     }
     // SimplePractice and Personal are always on, so no toggle needed
   };
 
   return (
     <div className="mb-4 p-2 bg-white border border-gray-200 rounded-sm">
-      <div className="flex items-center gap-6">
-        {calendarTypes.map((type) => (
+      <div className="flex items-center gap-4 flex-wrap">
+        {calendarItems.map((calendar) => (
           <div 
-            key={type.key}
-            className={`flex items-center space-x-2 cursor-pointer ${
-              type.key === 'google' ? 'hover:bg-gray-50 px-2 py-1 rounded' : ''
+            key={calendar.id}
+            className={`flex items-center space-x-2 ${
+              calendar.type === 'google' ? 'cursor-pointer hover:bg-gray-50 px-2 py-1 rounded' : ''
             }`}
-            onClick={() => type.key === 'google' ? handleTypeToggle(type.key) : undefined}
+            onClick={() => handleCalendarToggle(calendar.id, calendar.type)}
           >
             <div 
               className={`w-4 h-4 border-2 rounded-sm flex items-center justify-center ${
-                type.selected ? 'bg-blue-500 border-blue-500' : 'border-gray-300'
+                calendar.selected ? 'bg-blue-500 border-blue-500' : 'border-gray-300'
               }`}
             >
-              {type.selected && (
+              {calendar.selected && (
                 <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
               )}
             </div>
-            <span className="text-sm text-gray-700">{type.label}</span>
+            <span className="text-sm text-gray-700">{calendar.name}</span>
           </div>
         ))}
       </div>

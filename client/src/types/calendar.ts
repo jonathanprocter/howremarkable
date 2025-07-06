@@ -9,6 +9,7 @@ export interface CalendarEvent {
   color: string;
   notes?: string;
   actionItems?: string;
+  calendarId?: string; // For Google Calendar filtering
 }
 
 export interface DailyNote {
