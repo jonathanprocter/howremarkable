@@ -62,15 +62,15 @@ export const DailyView = ({
     const startHour = eventStart.getHours();
     const startMinute = eventStart.getMinutes();
     
-    // Calculate position based on time slots - each slot is 30 minutes and 60px tall
-    // Timeline starts at 6:00, so we calculate minutes since 6:00
+    // Calculate position based on HTML template logic
+    // Each time slot is 60px tall and represents 30 minutes
+    // Timeline starts at 6:00, so we calculate 30-minute slots since 6:00
     const minutesSince6am = (startHour - 6) * 60 + startMinute;
-    
-    // Each 30-minute slot is 60px, so position = (minutes / 30) * 60
-    const topPosition = Math.max(0, (minutesSince6am / 30) * 60);
+    const slotsFromStart = minutesSince6am / 30;
+    const topPosition = Math.max(0, slotsFromStart * 60);
     
     // Debug log for positioning
-    console.log(`Event: ${event.title}, Time: ${startHour}:${startMinute.toString().padStart(2, '0')}, MinutesSince6am: ${minutesSince6am}, Position: ${topPosition}px`);
+    console.log(`Event: ${event.title}, Time: ${startHour}:${startMinute.toString().padStart(2, '0')}, MinutesSince6am: ${minutesSince6am}, Slots: ${slotsFromStart}, Position: ${topPosition}px`);
     
     // Calculate height based on duration
     let height = Math.max(56, (durationMinutes / 30) * 60 - 4); // 60px per 30min slot, minus padding
