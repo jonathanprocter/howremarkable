@@ -43,7 +43,7 @@ export default function Planner() {
         if (response.ok) {
           const dbEvents = await response.json();
           const convertedEvents: CalendarEvent[] = dbEvents.map((event: any) => ({
-            id: `db-${event.id}`,
+            id: event.id, // Use the actual event ID from the API response
             title: event.title,
             description: event.description || '',
             startTime: new Date(event.startTime),
@@ -52,13 +52,35 @@ export default function Planner() {
             sourceId: event.sourceId,
             color: event.color || '#999',
             notes: event.notes || '',
-            actionItems: event.actionItems || ''
+            actionItems: event.actionItems || '',
+            calendarId: event.calendarId // Include the calendarId for filtering
           }));
           
-          // Combine with existing Google Calendar events
-          const googleEvents = state.events.filter(event => event.source === 'google');
-          const combinedEvents = [...googleEvents, ...convertedEvents];
-          updateEvents(combinedEvents);
+          updateEvents(convertedEvents);
+          
+          // Auto-select calendars from database events
+          const googleEvents = convertedEvents.filter(event => event.source === 'google' && event.calendarId);
+          const calendarIds = [...new Set(googleEvents.map(event => event.calendarId))].filter(id => id) as string[];
+          
+          if (calendarIds.length > 0) {
+            setSelectedCalendars(new Set(calendarIds));
+            
+            // Create calendar objects for the legend
+            const calendarsForLegend = calendarIds.map(calendarId => {
+              if (calendarId === 'en.usa#holiday@group.v.calendar.google.com') {
+                return { id: calendarId, name: 'Holidays in United States', color: '#4285F4' };
+              } else if (calendarId === 'jonathan.procter@gmail.com') {
+                return { id: calendarId, name: 'Google', color: '#34A853' };
+              } else if (calendarId === '79dfcb90ce59b1b0345b24f5c8d342bd308eac9521d063a684a8bbd377f2b822@group.calendar.google.com') {
+                return { id: calendarId, name: 'Simple Practice', color: '#EA4335' };
+              } else if (calendarId === 'c2ffec13aa77af8e71cac14a327928e34da57bddaadf18c4e0f669827e1454ff@group.calendar.google.com') {
+                return { id: calendarId, name: 'TrevorAI', color: '#FBBC04' };
+              } else {
+                return { id: calendarId, name: 'Unknown Calendar', color: '#9AA0A6' };
+              }
+            });
+            setGoogleCalendars(calendarsForLegend);
+          }
         }
       } catch (error) {
         console.error('Failed to load events from database:', error);
