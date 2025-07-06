@@ -278,8 +278,12 @@ export const DailyView = ({
                             event.source === 'google' && "cursor-move"
                           )}
                           style={{ 
-                            minHeight: `${eventHeight}px`,
-                            zIndex: 10
+                            height: `${eventHeight}px`,
+                            zIndex: 10,
+                            position: duration > 1 ? 'absolute' : 'relative',
+                            top: 0,
+                            left: 0,
+                            right: 0
                           }}
                           draggable={event.source === 'google'}
                           onDragStart={(e) => handleDragStart(e, event)}
