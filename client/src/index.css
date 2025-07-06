@@ -2,6 +2,277 @@
 @tailwind components;
 @tailwind utilities;
 
+/* PROFESSIONAL PLANNER STYLING - EXACT MATCH TO HTML TEMPLATE */
+
+.planner-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: white;
+    border: 2px solid black;
+    font-family: 'Times New Roman', serif;
+}
+
+.header {
+    border-bottom: 3px solid black;
+    padding: 20px;
+    text-align: center;
+    background: white;
+}
+
+.header h1 {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.week-info {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.week-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-bottom: 2px solid black;
+    background: #f8f8f8;
+}
+
+.stat-card {
+    text-align: center;
+    padding: 15px;
+    border-right: 1px solid black;
+    font-size: 12px;
+}
+
+.stat-card:last-child {
+    border-right: none;
+}
+
+.stat-number {
+    font-size: 18px;
+    font-weight: bold;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.legend {
+    padding: 12px 20px;
+    border-bottom: 2px solid black;
+    font-size: 10px;
+    background: #f8f8f8;
+}
+
+.legend-item {
+    display: inline-block;
+    margin-right: 20px;
+    margin-bottom: 4px;
+}
+
+.legend-symbol {
+    display: inline-block;
+    width: 14px;
+    height: 12px;
+    margin-right: 5px;
+    vertical-align: middle;
+}
+
+.legend-symbol.simplepractice {
+    background: #f5f5f5;
+    border: 2px solid #6495ED;
+    border-left: 6px solid #6495ED;
+}
+
+.legend-symbol.google-calendar {
+    background: #e0e0e0;
+    border: 2px dashed #666;
+}
+
+.legend-symbol.personal {
+    background: #f0f0f0;
+    border: 2px solid #999;
+    border-style: double;
+}
+
+.calendar-container {
+    position: relative;
+    overflow: hidden;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: 80px repeat(7, 1fr);
+    grid-template-rows: 60px repeat(35, 35px);
+    background: white;
+}
+
+.time-header {
+    background: #f0f0f0;
+    padding: 15px 8px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 12px;
+    border-right: 2px solid black;
+    border-bottom: 3px solid black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.day-header {
+    background: #f0f0f0;
+    padding: 10px 8px;
+    text-align: center;
+    font-weight: bold;
+    border-right: 1px solid black;
+    border-bottom: 3px solid black;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.day-header:last-child {
+    border-right: none;
+}
+
+.day-header:hover {
+    background: #e8e8e8;
+}
+
+.day-name {
+    font-size: 12px;
+    margin-bottom: 3px;
+    text-transform: uppercase;
+}
+
+.day-date {
+    font-size: 16px;
+}
+
+.time-slot {
+    background: #f8f8f8;
+    padding: 5px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-right: 2px solid black;
+    border-bottom: 1px solid #ddd;
+}
+
+.time-slot.hour {
+    background: #f0f0f0;
+    border-bottom: 2px solid black;
+    font-size: 11px;
+}
+
+.calendar-cell {
+    background: white;
+    border-right: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+    position: relative;
+    cursor: pointer;
+}
+
+.calendar-cell:last-child {
+    border-right: none;
+}
+
+.calendar-cell.hour {
+    border-bottom: 2px solid black;
+}
+
+.calendar-cell:hover {
+    background: #fafafa;
+}
+
+.appointment {
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    top: 2px;
+    padding: 3px 4px;
+    font-size: 8px;
+    font-weight: bold;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    overflow: hidden;
+    border-radius: 2px;
+    z-index: 10;
+    cursor: pointer;
+}
+
+.appointment:hover {
+    transform: scale(1.02);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.appointment-name {
+    font-size: 7px;
+    line-height: 1.1;
+    margin-bottom: 1px;
+    text-transform: uppercase;
+    font-weight: bold;
+    word-wrap: break-word;
+}
+
+.appointment-time {
+    font-size: 6px;
+    font-weight: normal;
+    opacity: 0.8;
+}
+
+/* Appointment types - exact match to HTML */
+.appointment.simplepractice {
+    background: #f5f5f5;
+    color: black;
+    border: 1px solid #6495ED;
+    border-left: 4px solid #6495ED;
+}
+
+.appointment.google-calendar {
+    background: #e0e0e0;
+    color: black;
+    border: 1px dashed #666;
+}
+
+.appointment.personal {
+    background: #f0f0f0;
+    color: black;
+    border: 1px solid #999;
+    border-style: double;
+}
+
+/* Height classes for different durations */
+.appointment.duration-30 { height: 32px; }
+.appointment.duration-60 { height: 68px; }
+.appointment.duration-90 { height: 103px; }
+
+/* E-ink optimizations */
+@media (max-device-width: 1404px) and (max-device-height: 1872px) {
+    .planner-container {
+        margin: 5px;
+        max-width: none;
+        border-width: 2px;
+    }
+    .calendar-grid {
+        font-size: 8px;
+    }
+    .appointment-name {
+        font-size: 6px;
+    }
+    .appointment-time {
+        font-size: 5px;
+    }
+}
+
 :root {
   --background: hsl(0, 0%, 100%);
   --foreground: hsl(20, 14.3%, 4.1%);

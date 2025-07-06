@@ -4,7 +4,7 @@ import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { MainLayout } from '../components/layout/MainLayout';
 import { Sidebar } from '../components/sidebar/Sidebar';
 import { Header } from '../components/common/Header';
-import { WeeklyCalendarGrid } from '../components/calendar/WeeklyCalendarGrid';
+import { WeeklyPlannerView } from '../components/calendar/WeeklyPlannerView';
 import { DailyView } from '../components/calendar/DailyView';
 import { CalendarEvent } from '../types/calendar';
 import { useToast } from '@/hooks/use-toast';
@@ -371,7 +371,7 @@ export default function Planner() {
       />
 
       {state.viewMode === 'weekly' ? (
-        <WeeklyCalendarGrid
+        <WeeklyPlannerView
           week={state.currentWeek.days}
           events={currentEvents}
           onDayClick={handleDayClick}
