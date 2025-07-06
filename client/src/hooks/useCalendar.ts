@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CalendarState, CalendarEvent, ViewMode } from '../types/calendar';
+import { CalendarState, CalendarEvent, CalendarDay, ViewMode } from '../types/calendar';
 import { getWeekStartDate, getWeekEndDate, isToday, formatWeekRange, addWeeks } from '../utils/dateUtils';
 
 // Sample Google Calendar events to demonstrate working integration
@@ -84,11 +84,11 @@ export const useCalendar = () => {
     localStorage.setItem('calendar_events', JSON.stringify(manualEvents));
   }, [state.events]);
 
-  const updateCurrentWeek = (date: Date) => {
+  const updateCurrentWeek = (date: Date, events = state.events) => {
     const startDate = getWeekStartDate(date);
     const endDate = getWeekEndDate(date);
     
-    const days = [];
+    const days: CalendarDay[] = [];
     for (let i = 0; i < 7; i++) {
       const currentDate = new Date(startDate);
       currentDate.setDate(startDate.getDate() + i);
@@ -97,7 +97,7 @@ export const useCalendar = () => {
         date: currentDate,
         dayOfWeek: currentDate.toLocaleDateString('en-US', { weekday: 'short' }),
         dayNumber: currentDate.getDate(),
-        events: state.events.filter(event => {
+        events: events.filter(event => {
           const eventDate = new Date(event.startTime);
           return eventDate.toDateString() === currentDate.toDateString();
         })
@@ -167,6 +167,8 @@ export const useCalendar = () => {
       ...prev,
       events: events
     }));
+    // Update current week with new events
+    updateCurrentWeek(state.currentDate, events);
   };
 
   const updateEvent = (eventId: string, updates: Partial<CalendarEvent>) => {

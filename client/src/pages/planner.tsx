@@ -56,6 +56,8 @@ export default function Planner() {
             calendarId: event.calendarId // Include the calendarId for filtering
           }));
           
+
+          
           updateEvents(convertedEvents);
           
           // Auto-select calendars from database events
@@ -539,11 +541,15 @@ export default function Planner() {
     if (event.source === 'google') {
       // Use calendarId for Google Calendar events (not sourceId which is the event ID)
       const calendarId = (event as any).calendarId || event.sourceId;
-      return selectedCalendars.has(calendarId);
+      const isSelected = selectedCalendars.has(calendarId);
+
+      return isSelected;
     }
     // Always show manual and SimplePractice events since there are no toggles for them
     return true;
   });
+
+
   
   const currentDateString = state.selectedDate.toISOString().split('T')[0];
   const currentDailyNotes = state.dailyNotes[currentDateString] || '';
