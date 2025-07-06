@@ -41,13 +41,11 @@ export const exportWeeklyToPDF = async (
   pdf.setDrawColor(0, 0, 0);
   pdf.line(15, 20, pageWidth - 15, 20);
   
-  // Grid layout to match reMarkable Pro example
-  const startY = 25;
-  const headerHeight = 10;
-  const rowHeight = 4.7; // Optimized for full day coverage with clean spacing
-  const timeSlots = generateTimeSlots();
-  const timeColumnWidth = 32; // Extra wide for full time labels like "23:30"
-  const dayWidth = (pageWidth - timeColumnWidth - 30) / 7;
+  // Generate the weekly grid using the same format as exportWeeklyToPDF
+  await generateWeeklyGrid(pdf, weekStartDate, weekEndDate, events, weekNumber);
+  
+  return pdf.output('datauristring').split(',')[1]; // Return base64
+};
   
   // Create table header background
   pdf.setFillColor(240, 240, 240);
@@ -152,12 +150,24 @@ export const exportWeeklyToPDF = async (
         pdf.setFont('helvetica', 'normal');
         pdf.setTextColor(0, 0, 0);
         
-        // Clean title for display
+        // Format event with time and title
+        const startTime = eventStart.toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit', 
+          hour12: false 
+        });
+        const endTime = eventEnd.toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit', 
+          hour12: false 
+        });
         const cleanTitle = event.title.replace(/[^\w\s\-\.,;:()\[\]]/g, '');
-        const maxChars = Math.floor(eventWidth / 2.0);
-        let displayTitle = cleanTitle;
-        if (cleanTitle.length > maxChars) {
-          const words = cleanTitle.split(' ');
+        const eventWithTime = `${startTime}-${endTime} ${cleanTitle}`;
+        
+        const maxChars = Math.floor(eventWidth / 1.8);
+        let displayTitle = eventWithTime;
+        if (eventWithTime.length > maxChars) {
+          const words = eventWithTime.split(' ');
           displayTitle = '';
           for (const word of words) {
             if ((displayTitle + word).length <= maxChars) {
@@ -436,117 +446,97 @@ export const exportWeeklyPackageToPDF = async (
   weekNumber: number,
   dailyNotesMap: { [date: string]: string }
 ): Promise<string> => {
+  // Create PDF starting with the weekly grid overview
+  const weeklyBase64 = await exportWeeklyToPDF(weekStartDate, weekEndDate, events, weekNumber);
+  
+  // Create new PDF for the package
   const pdf = new jsPDF({
-    orientation: 'portrait',
+    orientation: 'landscape',
     unit: 'mm',
     format: 'a4'
   });
   
-  // Set font explicitly to avoid encoding issues - this is critical
+  // Set font explicitly to avoid encoding issues
   pdf.setFont('helvetica', 'normal');
   
-  // Page 1: Weekly Overview (Portrait)
+  // Recreate the weekly grid on page 1
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
   
-  // Title
-  pdf.setFontSize(18);
+  // Weekly grid header
+  pdf.setFontSize(16);
   pdf.setFont('helvetica', 'bold');
-  pdf.text(`Weekly Planner - Week ${weekNumber}`, pageWidth / 2, 25, { align: 'center' });
+  pdf.text('reMarkable Pro Weekly Package', 15, 15);
   
-  // Week range
-  pdf.setFontSize(14);
+  pdf.setFontSize(12);
   pdf.setFont('helvetica', 'normal');
-  const weekRange = `${formatDateShort(weekStartDate)} - ${formatDateShort(weekEndDate)}`;
-  pdf.text(weekRange, pageWidth / 2, 35, { align: 'center' });
+  const weekRangeText = `Week ${weekNumber} — ${formatDateShort(weekStartDate)} - ${formatDateShort(weekEndDate)}`;
+  pdf.text(weekRangeText, pageWidth - 15, 15, { align: 'right' });
   
-  // Weekly summary grid
-  let currentY = 50;
-  const dayHeight = 30;
-  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  pdf.setLineWidth(0.8);
+  pdf.setDrawColor(0, 0, 0);
+  pdf.line(15, 20, pageWidth - 15, 20);
   
-  days.forEach((dayName, index) => {
+  // Add weekly grid to this page (reuse the existing weekly grid generation)
+  const startY = 25;
+  const headerHeight = 10;
+  const rowHeight = 4.7;
+  const timeSlots = generateTimeSlots();
+  const timeColumnWidth = 32;
+  const dayWidth = (pageWidth - timeColumnWidth - 30) / 7;
+  
+  // Create table header background
+  pdf.setFillColor(240, 240, 240);
+  pdf.rect(15, startY, pageWidth - 30, headerHeight, 'F');
+  
+  // Table headers
+  pdf.setFontSize(9);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('Time', 17, startY + 6);
+  
+  // Day headers with dates
+  const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  dayNames.forEach((day, index) => {
     const currentDate = new Date(weekStartDate);
     currentDate.setDate(currentDate.getDate() + index);
+    const dateStr = `${currentDate.getMonth() + 1}/${currentDate.getDate()}`;
     
-    // Day header with page reference
-    pdf.setFontSize(12);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text(`${dayName} - ${formatDateShort(currentDate)}`, 15, currentY);
-    
-    // Add page reference for bidirectional linking
-    pdf.setFontSize(8);
-    pdf.setFont('helvetica', 'italic');
-    pdf.setTextColor(100, 100, 100);
-    pdf.text(`(See page ${index + 2} for detailed daily view)`, pageWidth - 15, currentY, { align: 'right' });
-    pdf.setTextColor(0, 0, 0);
-    currentY += 8;
-    
-    // Day events
-    const dayEvents = events.filter(event => {
-      const eventDate = new Date(event.startTime);
-      return eventDate.toDateString() === currentDate.toDateString();
-    });
-    
-    if (dayEvents.length > 0) {
-      pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'normal');
-      dayEvents.forEach(event => {
-        const startTime = new Date(event.startTime).toLocaleTimeString('en-US', { 
-          hour: '2-digit', 
-          minute: '2-digit', 
-          hour12: false 
-        });
-        const endTime = new Date(event.endTime).toLocaleTimeString('en-US', { 
-          hour: '2-digit', 
-          minute: '2-digit', 
-          hour12: false 
-        });
-        // Clean the title to remove any problematic characters
-        const cleanTitle = event.title.replace(/[^\w\s\-\.,;:()\[\]]/g, '');
-        pdf.text(`• ${startTime}-${endTime}: ${cleanTitle}`, 20, currentY);
-        currentY += 5;
-      });
-    } else {
-      pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'italic');
-      pdf.setTextColor(150, 150, 150);
-      pdf.text('No events scheduled', 20, currentY);
-      pdf.setTextColor(0, 0, 0);
-      currentY += 5;
-    }
-    
-    currentY += 10;
-    
-    // Add page break if needed
-    if (currentY > pageHeight - 40 && index < days.length - 1) {
-      pdf.addPage();
-      currentY = 20;
-    }
+    const x = timeColumnWidth + 17 + (index * dayWidth);
+    pdf.text(`${day} ${dateStr}`, x, startY + 4);
+    pdf.setFontSize(7);
+    pdf.text(dateStr, x, startY + 8);
+    pdf.setFontSize(9);
   });
   
-  // Now add daily pages for each day
+  // Draw table borders
+  pdf.setDrawColor(0, 0, 0);
+  pdf.setLineWidth(0.5);
+  pdf.rect(15, startY, pageWidth - 30, headerHeight, 'S');
+  
+  // Add simplified daily grid pages
   for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
     const currentDate = new Date(weekStartDate);
     currentDate.setDate(currentDate.getDate() + dayIndex);
     const dateKey = currentDate.toISOString().split('T')[0];
     const dailyNotes = dailyNotesMap[dateKey] || '';
     
-    // Generate daily page using existing function
-    const dailyPdfBase64 = await exportDailyToPDF(currentDate, events, dailyNotes);
-    
-    // Add new page and merge the daily PDF content
+    // Add new page for each day
     pdf.addPage();
     
-    // Since we can't directly merge PDFs, we'll recreate the daily content
-    // This is a simplified version - in a real app, you'd use a PDF merger library
-    
-    // Daily page title
+    // Daily page header
     pdf.setFontSize(16);
     pdf.setFont('helvetica', 'bold');
-    pdf.text(`Daily Planner - ${formatDate(currentDate)}`, pageWidth / 2, 25, { align: 'center' });
+    pdf.text('reMarkable Pro Daily Planner', 15, 15);
     
-    currentY = 40;
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(formatDate(currentDate), pageWidth - 15, 15, { align: 'right' });
+    
+    pdf.setLineWidth(0.8);
+    pdf.setDrawColor(0, 0, 0);
+    pdf.line(15, 20, pageWidth - 15, 20);
+  }
     
     // Filter events for this day
     const dayEvents = events.filter(event => {
