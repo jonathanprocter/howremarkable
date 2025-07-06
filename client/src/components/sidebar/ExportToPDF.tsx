@@ -68,7 +68,13 @@ export const ExportToPDF = ({
             className="w-full text-xs whitespace-normal leading-tight h-auto py-2"
             size="sm"
           >
-            {isGoogleConnected ? 'Export Current View' : 'Export Current View (Connect Google)'}
+            {isGoogleConnected ? 'Export Current View' : (
+              <>
+                Export Current View
+                <br />
+                (Connect Google)
+              </>
+            )}
           </Button>
           <Button 
             variant="outline" 
@@ -76,7 +82,13 @@ export const ExportToPDF = ({
             className="w-full text-xs whitespace-normal leading-tight h-auto py-2"
             size="sm"
           >
-            {isGoogleConnected ? 'Export Weekly Package' : 'Export Weekly Package (Connect Google)'}
+            {isGoogleConnected ? 'Export Weekly Package' : (
+              <>
+                Export Weekly Package
+                <br />
+                (Connect Google)
+              </>
+            )}
           </Button>
           <Button 
             variant="outline" 
@@ -84,7 +96,13 @@ export const ExportToPDF = ({
             className="w-full text-xs whitespace-normal leading-tight h-auto py-2"
             size="sm"
           >
-            {isGoogleConnected ? 'Export Daily View' : 'Export Daily View (Connect Google)'}
+            {isGoogleConnected ? 'Export Daily View' : (
+              <>
+                Export Daily View
+                <br />
+                (Connect Google)
+              </>
+            )}
           </Button>
           <Button 
             variant="outline" 
@@ -92,7 +110,13 @@ export const ExportToPDF = ({
             className="w-full text-xs whitespace-normal leading-tight h-auto py-2"
             size="sm"
           >
-            {isGoogleConnected ? 'Export Full Month' : 'Export Full Month (Connect Google)'}
+            {isGoogleConnected ? 'Export Full Month' : (
+              <>
+                Export Full Month
+                <br />
+                (Connect Google)
+              </>
+            )}
           </Button>
         </div>
       </div>
