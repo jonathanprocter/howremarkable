@@ -34,43 +34,7 @@ export default function Planner() {
   const [googleCalendars, setGoogleCalendars] = useState<any[]>([]);
   const [selectedCalendars, setSelectedCalendars] = useState<Set<string>>(new Set());
 
-  // Sample events for demonstration
-  const [sampleEvents] = useState<CalendarEvent[]>([
-    {
-      id: '1',
-      title: 'Dan v. Supervision',
-      startTime: new Date(2025, 6, 7, 16, 0), // July 7, 2025, 4:00 PM
-      endTime: new Date(2025, 6, 7, 17, 0),
-      source: 'simplepractice',
-      color: '#6495ED'
-    },
-    {
-      id: '2',
-      title: 'Ruben Spillers Appointment',
-      startTime: new Date(2025, 6, 8, 16, 0), // July 8, 2025, 4:00 PM
-      endTime: new Date(2025, 6, 8, 17, 0),
-      source: 'simplepractice',
-      color: '#6495ED'
-    },
-    {
-      id: '3',
-      title: 'Coffee with Nora',
-      startTime: new Date(2025, 6, 9, 17, 30), // July 9, 2025, 5:30 PM
-      endTime: new Date(2025, 6, 9, 18, 30),
-      source: 'manual',
-      color: '#4299e1'
-    },
-    {
-      id: '4',
-      title: 'Sarah Palladino Appointment',
-      startTime: new Date(2025, 6, 10, 15, 0), // July 10, 2025, 3:00 PM
-      endTime: new Date(2025, 6, 10, 16, 0),
-      source: 'simplepractice',
-      color: '#6495ED',
-      notes: 'Regular therapy session.',
-      actionItems: 'Follow up on homework exercises...'
-    }
-  ]);
+  // Note: Events are now managed through the calendar state (useCalendar hook)
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
@@ -311,8 +275,10 @@ export default function Planner() {
           notes: event.calendarName
         }));
         
-        // Clear existing events and add only Google Calendar events
-        updateEvents(googleEvents);
+        // Preserve manually created events and combine with Google Calendar events
+        const manualEvents = state.events.filter(event => event.source === 'manual');
+        const combinedEvents = [...manualEvents, ...googleEvents];
+        updateEvents(combinedEvents);
         setGoogleCalendars(calendars);
         
         // Auto-select all calendars by default

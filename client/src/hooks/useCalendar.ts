@@ -56,11 +56,33 @@ const initialState: CalendarState = {
 };
 
 export const useCalendar = () => {
-  const [state, setState] = useState<CalendarState>(initialState);
+  const [state, setState] = useState<CalendarState>(() => {
+    // Load persisted events from localStorage
+    const savedEvents = localStorage.getItem('calendar_events');
+    const persistedEvents = savedEvents ? JSON.parse(savedEvents) : [];
+    
+    // Convert string dates back to Date objects
+    const convertedEvents = persistedEvents.map((event: any) => ({
+      ...event,
+      startTime: new Date(event.startTime),
+      endTime: new Date(event.endTime)
+    }));
+    
+    return {
+      ...initialState,
+      events: [...sampleGoogleEvents, ...convertedEvents]
+    };
+  });
 
   useEffect(() => {
     updateCurrentWeek(state.currentDate);
   }, [state.currentDate]);
+
+  // Persist events to localStorage whenever they change
+  useEffect(() => {
+    const manualEvents = state.events.filter(event => event.source === 'manual');
+    localStorage.setItem('calendar_events', JSON.stringify(manualEvents));
+  }, [state.events]);
 
   const updateCurrentWeek = (date: Date) => {
     const startDate = getWeekStartDate(date);
