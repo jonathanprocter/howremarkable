@@ -43,20 +43,20 @@ export default function Planner() {
         if (response.ok) {
           const dbEvents = await response.json();
           const convertedEvents: CalendarEvent[] = dbEvents.map((event: any) => {
-            // Database stores in UTC, convert to EST (UTC-5)
-            const startTimeUTC = new Date(event.startTime + (event.startTime.endsWith('Z') ? '' : 'Z'));
-            const endTimeUTC = new Date(event.endTime + (event.endTime.endsWith('Z') ? '' : 'Z'));
+            // Database stores UTC times, convert to EST by subtracting 4 hours
+            // UTC 22:30 → EST 18:30 (6:30 PM)
+            const startUTC = new Date(event.startTime);
+            const endUTC = new Date(event.endTime);
             
-            // Convert to EST by subtracting 5 hours from UTC
-            const startTimeEST = new Date(startTimeUTC.getTime() - (5 * 60 * 60 * 1000));
-            const endTimeEST = new Date(endTimeUTC.getTime() - (5 * 60 * 60 * 1000));
+            const startEST = new Date(startUTC.getTime() - (4 * 60 * 60 * 1000));
+            const endEST = new Date(endUTC.getTime() - (4 * 60 * 60 * 1000));
             
             return {
               id: event.id,
               title: event.title,
               description: event.description || '',
-              startTime: startTimeEST,
-              endTime: endTimeEST,
+              startTime: startEST,
+              endTime: endEST,
               source: event.source || 'manual',
               sourceId: event.sourceId,
               color: event.color || '#999',
