@@ -160,10 +160,8 @@ export const exportDailyToPDF = async (
   const timeSlots = generateTimeSlots();
   const slotHeight = 6; // Increased height for better visibility
   
-  // Track events that have already been drawn to avoid duplicates
-  const drawnEvents = new Set();
-  
-  // Draw time grid
+  // First, draw all time slots and grid lines
+  const startYPosition = currentY;
   timeSlots.forEach((timeSlot, index) => {
     if (currentY > pageHeight - 30) {
       pdf.addPage();
@@ -173,87 +171,80 @@ export const exportDailyToPDF = async (
     // Time column
     pdf.setFontSize(8);
     pdf.setFont('helvetica', 'normal');
-    pdf.text(timeSlot.time, 15, currentY);
+    pdf.text(timeSlot.time, 15, currentY + 3);
     
     // Draw horizontal line
     pdf.setDrawColor(200, 200, 200);
-    pdf.line(15, currentY + 1, pageWidth - 15, currentY + 1);
-    
-    // Check for events that START in this time slot (to avoid duplicates)
-    const slotEvents = timedEvents.filter(event => {
-      if (drawnEvents.has(event.id)) return false;
-      
-      const eventStart = new Date(event.startTime);
-      const eventStartMinutes = eventStart.getHours() * 60 + eventStart.getMinutes();
-      const slotStartMinutes = timeSlot.hour * 60 + timeSlot.minute;
-      return eventStartMinutes >= slotStartMinutes && eventStartMinutes < slotStartMinutes + 30;
-    });
-    
-    if (slotEvents.length > 0) {
-      slotEvents.forEach((event, eventIndex) => {
-        drawnEvents.add(event.id);
-        
-        // Calculate event duration in slots
-        const eventStart = new Date(event.startTime);
-        const eventEnd = new Date(event.endTime);
-        const eventDurationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
-        const eventDurationSlots = Math.ceil(eventDurationMinutes / 30);
-        const eventHeight = eventDurationSlots * slotHeight;
-        
-        // Debug log for troubleshooting
-        console.log(`Event: ${event.title}, Duration: ${eventDurationMinutes}min, Slots: ${eventDurationSlots}, Height: ${eventHeight}px`);
-        
-        // Draw event block background - extend it to ensure visibility
-        const blockWidth = pageWidth - 50;
-        const blockTop = currentY - 2;
-        
-        pdf.setFillColor(240, 248, 255); // Light blue background
-        pdf.rect(33, blockTop, blockWidth, eventHeight, 'F');
-        
-        // Draw event border
-        pdf.setDrawColor(100, 149, 237); // Cornflower blue border
-        pdf.setLineWidth(1.0); // Thicker border for visibility
-        pdf.rect(33, blockTop, blockWidth, eventHeight, 'S');
-        
-        // Event title
-        pdf.setFontSize(9);
-        pdf.setFont('helvetica', 'bold');
-        pdf.setTextColor(0, 0, 0);
-        pdf.text(event.title, 35, currentY);
-        
-        // Event time range
-        const startTime = eventStart.toLocaleTimeString('en-US', { 
-          hour: '2-digit', 
-          minute: '2-digit', 
-          hour12: false 
-        });
-        const endTime = eventEnd.toLocaleTimeString('en-US', { 
-          hour: '2-digit', 
-          minute: '2-digit', 
-          hour12: false 
-        });
-        pdf.setFontSize(7);
-        pdf.setFont('helvetica', 'normal');
-        pdf.setTextColor(70, 70, 70);
-        pdf.text(`${startTime} - ${endTime}`, 35, currentY + 4);
-        
-        // Event notes (if they fit)
-        if (event.notes && eventHeight > 8) {
-          pdf.setFontSize(7);
-          pdf.setTextColor(100, 100, 100);
-          const notes = pdf.splitTextToSize(event.notes, pageWidth - 60);
-          const notesHeight = Math.min(notes.length * 3, eventHeight - 8);
-          pdf.text(notes.slice(0, Math.floor(notesHeight / 3)), 35, currentY + 8);
-        }
-        
-        pdf.setTextColor(0, 0, 0);
-        pdf.setDrawColor(0, 0, 0);
-        pdf.setLineWidth(0.1);
-      });
-    }
+    pdf.line(15, currentY + slotHeight, pageWidth - 15, currentY + slotHeight);
     
     currentY += slotHeight;
   });
+  
+  // Now draw events as overlays on top of the grid
+  timedEvents.forEach(event => {
+    const eventStart = new Date(event.startTime);
+    const eventEnd = new Date(event.endTime);
+    
+    // Find which slot this event starts in
+    const eventStartMinutes = eventStart.getHours() * 60 + eventStart.getMinutes();
+    const startSlotIndex = timeSlots.findIndex(slot => {
+      const slotStartMinutes = slot.hour * 60 + slot.minute;
+      return eventStartMinutes >= slotStartMinutes && eventStartMinutes < slotStartMinutes + 30;
+    });
+    
+    if (startSlotIndex === -1) return; // Event not in our time range
+    
+    // Calculate exact position and height
+    const eventDurationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
+    const eventHeightInPixels = (eventDurationMinutes / 30) * slotHeight;
+    
+    const eventTop = startYPosition + (startSlotIndex * slotHeight);
+    const blockWidth = pageWidth - 50;
+    
+    // Draw event block background
+    pdf.setFillColor(240, 248, 255); // Light blue background
+    pdf.rect(33, eventTop, blockWidth, eventHeightInPixels, 'F');
+    
+    // Draw event border
+    pdf.setDrawColor(100, 149, 237); // Cornflower blue border
+    pdf.setLineWidth(1.5);
+    pdf.rect(33, eventTop, blockWidth, eventHeightInPixels, 'S');
+    
+    // Event title
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(0, 0, 0);
+    pdf.text(event.title, 35, eventTop + 4);
+    
+    // Event time range
+    const startTime = eventStart.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      hour12: false 
+    });
+    const endTime = eventEnd.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      hour12: false 
+    });
+    pdf.setFontSize(7);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(70, 70, 70);
+    pdf.text(`${startTime} - ${endTime}`, 35, eventTop + 8);
+    
+    // Event notes (if they fit)
+    if (event.notes && eventHeightInPixels > 12) {
+      pdf.setFontSize(7);
+      pdf.setTextColor(100, 100, 100);
+      const notes = pdf.splitTextToSize(event.notes, pageWidth - 60);
+      pdf.text(notes.slice(0, Math.floor((eventHeightInPixels - 12) / 3)), 35, eventTop + 12);
+    }
+  });
+  
+  // Reset drawing properties
+  pdf.setTextColor(0, 0, 0);
+  pdf.setDrawColor(0, 0, 0);
+  pdf.setLineWidth(0.1);
   
   // Daily Notes section
   if (currentY > pageHeight - 50) {
