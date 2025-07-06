@@ -116,6 +116,31 @@ export const useGoogleAuth = () => {
     }
   };
 
+  const updateCalendarEvent = async (eventId: string, startTime: Date, endTime: Date, calendarId: string) => {
+    try {
+      const response = await fetch(`/api/calendar/events/${eventId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          startTime: startTime.toISOString(),
+          endTime: endTime.toISOString(),
+          calendarId
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update calendar event');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Update calendar event failed:', error);
+      throw error;
+    }
+  };
+
   return {
     authStatus,
     isLoading,
@@ -123,6 +148,7 @@ export const useGoogleAuth = () => {
     logout,
     fetchCalendarEvents,
     uploadToDrive,
+    updateCalendarEvent,
     refreshAuthStatus: checkAuthStatus
   };
 };

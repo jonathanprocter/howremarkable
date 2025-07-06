@@ -29,7 +29,7 @@ export default function Planner() {
     isCurrentWeek
   } = useCalendar();
 
-  const { authStatus, connectGoogle, fetchCalendarEvents, uploadToDrive } = useGoogleAuth();
+  const { authStatus, connectGoogle, fetchCalendarEvents, uploadToDrive, updateCalendarEvent } = useGoogleAuth();
   const { toast } = useToast();
   const [googleCalendars, setGoogleCalendars] = useState<any[]>([]);
 
@@ -91,6 +91,37 @@ export default function Planner() {
 
   const handleEventClick = (event: CalendarEvent) => {
     console.log('Event clicked:', event);
+  };
+
+  const handleEventMove = async (eventId: string, newStartTime: Date, newEndTime: Date) => {
+    try {
+      // Find the event to get its source and additional details
+      const event = state.events.find(e => e.id === eventId);
+      if (!event) return;
+
+      // If it's a Google Calendar event, update it via the API
+      if (event.source === 'google' && event.sourceId) {
+        await updateCalendarEvent(event.sourceId, newStartTime, newEndTime, 'primary');
+        toast({
+          title: "Event Updated",
+          description: "Event has been moved successfully."
+        });
+      }
+
+      // Update the local state
+      updateEvent(eventId, {
+        startTime: newStartTime,
+        endTime: newEndTime
+      });
+
+    } catch (error) {
+      console.error('Failed to move event:', error);
+      toast({
+        title: "Error",
+        description: "Failed to move event. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleConnectGoogle = () => {
@@ -326,6 +357,7 @@ export default function Planner() {
           onDayClick={handleDayClick}
           onTimeSlotClick={handleTimeSlotClick}
           onEventClick={handleEventClick}
+          onEventMove={handleEventMove}
         />
       ) : (
         <DailyView
@@ -338,6 +370,7 @@ export default function Planner() {
           onEventClick={handleEventClick}
           onUpdateEvent={updateEvent}
           onUpdateDailyNotes={handleUpdateDailyNotes}
+          onEventMove={handleEventMove}
         />
       )}
     </MainLayout>

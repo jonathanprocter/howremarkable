@@ -9,6 +9,7 @@ interface WeeklyCalendarGridProps {
   onDayClick: (date: Date) => void;
   onTimeSlotClick: (date: Date, time: string) => void;
   onEventClick: (event: CalendarEvent) => void;
+  onEventMove?: (eventId: string, newStartTime: Date, newEndTime: Date) => void;
 }
 
 export const WeeklyCalendarGrid = ({
@@ -16,9 +17,40 @@ export const WeeklyCalendarGrid = ({
   events,
   onDayClick,
   onTimeSlotClick,
-  onEventClick
+  onEventClick,
+  onEventMove
 }: WeeklyCalendarGridProps) => {
   const timeSlots = generateTimeSlots();
+  
+  const handleDragStart = (e: React.DragEvent, event: CalendarEvent) => {
+    e.dataTransfer.setData('text/plain', JSON.stringify({
+      eventId: event.id,
+      originalStartTime: event.startTime.toISOString(),
+      originalEndTime: event.endTime.toISOString(),
+      duration: event.endTime.getTime() - event.startTime.getTime()
+    }));
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent, date: Date, timeSlot: { hour: number; minute: number }) => {
+    e.preventDefault();
+    if (!onEventMove) return;
+
+    try {
+      const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
+      const newStartTime = new Date(date);
+      newStartTime.setHours(timeSlot.hour, timeSlot.minute, 0, 0);
+      
+      const newEndTime = new Date(newStartTime.getTime() + dragData.duration);
+      
+      onEventMove(dragData.eventId, newStartTime, newEndTime);
+    } catch (error) {
+      console.error('Error handling drop:', error);
+    }
+  };
 
   const getEventsForTimeSlot = (date: Date, timeSlot: { time: string; hour: number; minute: number }) => {
     return events.filter(event => {
@@ -84,6 +116,8 @@ export const WeeklyCalendarGrid = ({
                 key={dayIndex}
                 className="time-slot border-r border-gray-300 last:border-r-0 relative cursor-pointer hover:bg-gray-50"
                 onClick={() => onTimeSlotClick(day.date, timeSlot.time)}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, day.date, timeSlot)}
               >
                 {slotEvents.map((event, eventIndex) => {
                   if (!isFirstSlotOfEvent(event)) return null;
@@ -92,10 +126,12 @@ export const WeeklyCalendarGrid = ({
                     <div
                       key={eventIndex}
                       className={cn(
-                        "event-block absolute left-1 right-1 top-0",
+                        "event-block absolute left-1 right-1 top-0 cursor-move",
                         `event-block ${event.source}`
                       )}
                       style={getEventStyle(event)}
+                      draggable={event.source === 'google'}
+                      onDragStart={(e) => handleDragStart(e, event)}
                       onClick={(e) => {
                         e.stopPropagation();
                         onEventClick(event);

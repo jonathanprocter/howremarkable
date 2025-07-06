@@ -240,6 +240,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update Google Calendar Event
+  app.put("/api/calendar/events/:eventId", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const { eventId } = req.params;
+      const { startTime, endTime, calendarId } = req.body;
+      const user = req.user as any;
+
+      const oauth2Client = new google.auth.OAuth2(
+        process.env.GOOGLE_CLIENT_ID,
+        process.env.GOOGLE_CLIENT_SECRET
+      );
+
+      oauth2Client.setCredentials({
+        access_token: user.accessToken,
+        refresh_token: user.refreshToken
+      });
+
+      const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+
+      // First get the existing event to preserve other properties
+      const existingEvent = await calendar.events.get({
+        calendarId: calendarId,
+        eventId: eventId
+      });
+
+      // Update the event with new times
+      const updatedEvent = await calendar.events.update({
+        calendarId: calendarId,
+        eventId: eventId,
+        requestBody: {
+          ...existingEvent.data,
+          start: {
+            dateTime: new Date(startTime).toISOString(),
+            timeZone: existingEvent.data.start?.timeZone || 'America/New_York'
+          },
+          end: {
+            dateTime: new Date(endTime).toISOString(),
+            timeZone: existingEvent.data.end?.timeZone || 'America/New_York'
+          }
+        }
+      });
+
+      res.json({ 
+        success: true, 
+        event: {
+          id: updatedEvent.data.id,
+          title: updatedEvent.data.summary,
+          startTime: updatedEvent.data.start?.dateTime,
+          endTime: updatedEvent.data.end?.dateTime
+        }
+      });
+
+    } catch (error) {
+      console.error('Event update error:', error);
+      res.status(500).json({ error: "Failed to update calendar event" });
+    }
+  });
+
   // Google Drive PDF Upload
   app.post("/api/drive/upload", async (req, res) => {
     if (!req.user) {

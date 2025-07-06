@@ -17,6 +17,7 @@ interface DailyViewProps {
   onEventClick: (event: CalendarEvent) => void;
   onUpdateEvent: (eventId: string, updates: Partial<CalendarEvent>) => void;
   onUpdateDailyNotes: (notes: string) => void;
+  onEventMove?: (eventId: string, newStartTime: Date, newEndTime: Date) => void;
 }
 
 export const DailyView = ({
@@ -28,10 +29,37 @@ export const DailyView = ({
   onBackToWeek,
   onEventClick,
   onUpdateEvent,
-  onUpdateDailyNotes
+  onUpdateDailyNotes,
+  onEventMove
 }: DailyViewProps) => {
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
   const [currentNotes, setCurrentNotes] = useState(dailyNotes);
+  const [draggedEvent, setDraggedEvent] = useState<CalendarEvent | null>(null);
+
+  const handleDragStart = (e: React.DragEvent, event: CalendarEvent) => {
+    setDraggedEvent(event);
+    e.dataTransfer.setData('text/plain', event.id);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent, timeSlot: { hour: number; minute: number }) => {
+    e.preventDefault();
+    
+    if (!draggedEvent || !onEventMove) return;
+    
+    const newStartTime = new Date(selectedDate);
+    newStartTime.setHours(timeSlot.hour, timeSlot.minute, 0, 0);
+    
+    // Calculate the duration of the original event
+    const originalDuration = draggedEvent.endTime.getTime() - draggedEvent.startTime.getTime();
+    const newEndTime = new Date(newStartTime.getTime() + originalDuration);
+    
+    onEventMove(draggedEvent.id, newStartTime, newEndTime);
+    setDraggedEvent(null);
+  };
 
   const timeSlots = generateTimeSlots();
   const dayEvents = events.filter(event => {
@@ -213,7 +241,11 @@ export const DailyView = ({
                 <div className="time-slot p-2 text-sm font-medium text-gray-600 bg-gray-50 border-r border-gray-300 text-center">
                   {timeSlot.time}
                 </div>
-                <div className="time-slot p-3 relative col-span-7">
+                <div 
+                  className="time-slot p-3 relative col-span-7 hover:bg-gray-50"
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDrop(e, timeSlot)}
+                >
                   {slotEvents.filter(isFirstSlotOfEvent).map((event) => {
                     const duration = getEventDurationInSlots(event);
                     const eventHeight = duration * 40; // 40px per slot to match time-slot height
@@ -223,12 +255,15 @@ export const DailyView = ({
                         <div
                           className={cn(
                             "event-block cursor-pointer absolute left-2 right-2 top-0",
-                            `event-block ${event.source}`
+                            `event-block ${event.source}`,
+                            event.source === 'google' && "cursor-move"
                           )}
                           style={{ 
                             height: `${eventHeight}px`,
                             zIndex: 10
                           }}
+                          draggable={event.source === 'google'}
+                          onDragStart={(e) => handleDragStart(e, event)}
                           onClick={() => toggleEventExpansion(event.id)}
                         >
                           <div className="text-sm font-medium text-gray-800">
