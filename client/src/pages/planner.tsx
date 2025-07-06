@@ -8,7 +8,7 @@ import { WeeklyCalendarGrid } from '../components/calendar/WeeklyCalendarGrid';
 import { DailyView } from '../components/calendar/DailyView';
 import { CalendarEvent } from '../types/calendar';
 import { useToast } from '@/hooks/use-toast';
-import { exportWeeklyToPDF, exportDailyToPDF, generateFilename } from '../utils/pdfExport';
+import { exportWeeklyToPDF, exportDailyToPDF, exportWeeklyPackageToPDF, generateFilename } from '../utils/pdfExport';
 import { getWeekNumber } from '../utils/dateUtils';
 
 export default function Planner() {
@@ -145,7 +145,17 @@ export default function Planner() {
       let pdfContent: string;
       let filename: string;
 
-      if (type === 'Weekly Package' || type === 'Current View') {
+      if (type === 'Weekly Package') {
+        const weekNumber = getWeekNumber(state.currentDate);
+        pdfContent = await exportWeeklyPackageToPDF(
+          state.currentWeek.startDate,
+          state.currentWeek.endDate,
+          currentEvents,
+          weekNumber,
+          state.dailyNotes
+        );
+        filename = generateFilename('weekly-package', state.currentWeek.startDate);
+      } else if (type === 'Current View') {
         const weekNumber = getWeekNumber(state.currentDate);
         pdfContent = await exportWeeklyToPDF(
           state.currentWeek.startDate,
@@ -205,7 +215,17 @@ export default function Planner() {
       let pdfContent: string;
       let filename: string;
 
-      if (type === 'weekly' || type === 'current') {
+      if (type === 'weekly') {
+        const weekNumber = getWeekNumber(state.currentDate);
+        pdfContent = await exportWeeklyPackageToPDF(
+          state.currentWeek.startDate,
+          state.currentWeek.endDate,
+          currentEvents,
+          weekNumber,
+          state.dailyNotes
+        );
+        filename = generateFilename('weekly-package', state.currentWeek.startDate);
+      } else if (type === 'current') {
         const weekNumber = getWeekNumber(state.currentDate);
         pdfContent = await exportWeeklyToPDF(
           state.currentWeek.startDate,
