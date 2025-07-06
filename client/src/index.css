@@ -65,6 +65,34 @@
 @layer components {
   .remarkable-width {
     width: 1404px;
+    max-width: 1404px;
+    margin: 0 auto;
+  }
+  
+  /* reMarkable Pro optimizations */
+  .remarkable-optimized {
+    /* Optimize for e-ink display refresh rates */
+    backface-visibility: hidden;
+    transform: translateZ(0);
+    
+    /* Better touch targets for stylus */
+    touch-action: manipulation;
+    
+    /* Disable text selection for better stylus interaction */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
+  
+  /* Allow text selection in editable areas */
+  .remarkable-optimized input,
+  .remarkable-optimized textarea,
+  .remarkable-optimized [contenteditable] {
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
   }
   
   .time-slot {
