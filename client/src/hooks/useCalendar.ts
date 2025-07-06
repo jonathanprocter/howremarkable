@@ -78,7 +78,7 @@ export const useCalendar = () => {
     updateCurrentWeek(state.currentDate);
   }, [state.currentDate]);
 
-  // Persist events to localStorage whenever they change
+  // Persist manual events to localStorage whenever they change
   useEffect(() => {
     const manualEvents = state.events.filter(event => event.source === 'manual');
     localStorage.setItem('calendar_events', JSON.stringify(manualEvents));

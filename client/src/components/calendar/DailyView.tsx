@@ -62,19 +62,33 @@ export const DailyView = ({
     const eventEnd = new Date(event.endTime);
     const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
     
-    // Calculate position based on start time - aligned to time slots exactly
+    // Check if this is an all-day event
+    const isMarkedAllDay = (event as any).isAllDay;
+    const duration = event.endTime.getTime() - event.startTime.getTime();
+    const hours = duration / (1000 * 60 * 60);
     const startHour = eventStart.getHours();
     const startMinute = eventStart.getMinutes();
+    const isFullDay = startHour === 0 && startMinute === 0 && (hours === 24 || hours % 24 === 0);
+    const isAllDayEvent = isMarkedAllDay || isFullDay || hours >= 20;
     
-    // Calculate position based on HTML template logic
-    // Each time slot is 60px tall and represents 30 minutes
+    if (isAllDayEvent) {
+      // All-day events should be positioned at the top, not in the timeline
+      return {
+        className: 'appointment all-day',
+        style: {
+          top: '0px',
+          height: '40px',
+          position: 'relative' as const,
+          marginBottom: '8px'
+        }
+      };
+    }
+    
+    // Calculate position based on start time - aligned to time slots exactly
     // Timeline starts at 6:00, so we calculate 30-minute slots since 6:00
     const minutesSince6am = (startHour - 6) * 60 + startMinute;
     const slotsFromStart = minutesSince6am / 30;
     const topPosition = Math.max(0, slotsFromStart * 60);
-    
-    // Debug log for positioning
-    console.log(`Event: ${event.title}, Time: ${startHour}:${startMinute.toString().padStart(2, '0')}, MinutesSince6am: ${minutesSince6am}, Slots: ${slotsFromStart}, Position: ${topPosition}px`);
     
     // Calculate height based on duration
     let height = Math.max(56, (durationMinutes / 30) * 60 - 4); // 60px per 30min slot, minus padding
@@ -247,6 +261,43 @@ export const DailyView = ({
         </div>
       </div>
 
+      {/* All-Day Events Section */}
+      {dayEvents.filter(event => {
+        const isMarkedAllDay = (event as any).isAllDay;
+        const duration = event.endTime.getTime() - event.startTime.getTime();
+        const hours = duration / (1000 * 60 * 60);
+        const startHour = event.startTime.getHours();
+        const startMinute = event.startTime.getMinutes();
+        const isFullDay = startHour === 0 && startMinute === 0 && (hours === 24 || hours % 24 === 0);
+        return isMarkedAllDay || isFullDay || hours >= 20;
+      }).length > 0 && (
+        <div className="all-day-section mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+          <h4 className="text-sm font-medium text-blue-800 mb-2">All Day</h4>
+          <div className="space-y-2">
+            {dayEvents.filter(event => {
+              const isMarkedAllDay = (event as any).isAllDay;
+              const duration = event.endTime.getTime() - event.startTime.getTime();
+              const hours = duration / (1000 * 60 * 60);
+              const startHour = event.startTime.getHours();
+              const startMinute = event.startTime.getMinutes();
+              const isFullDay = startHour === 0 && startMinute === 0 && (hours === 24 || hours % 24 === 0);
+              return isMarkedAllDay || isFullDay || hours >= 20;
+            }).map((event) => (
+              <div
+                key={event.id}
+                className="all-day-event p-2 bg-blue-100 border border-blue-300 rounded text-sm cursor-pointer hover:bg-blue-200 transition-colors"
+                onClick={() => toggleEventExpansion(event.id)}
+              >
+                <div className="font-medium text-blue-900">{event.title}</div>
+                {event.description && (
+                  <div className="text-blue-700 text-xs mt-1">{event.description}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Schedule Grid - CSS Grid for perfect alignment */}
       <div className="schedule-grid">
         {/* Time Column */}
@@ -272,8 +323,17 @@ export const DailyView = ({
             ></div>
           ))}
 
-          {/* Render events as absolutely positioned elements */}
-          {dayEvents.map((event) => {
+          {/* Render timed events as absolutely positioned elements */}
+          {dayEvents.filter(event => {
+            // Filter out all-day events from the timeline
+            const isMarkedAllDay = (event as any).isAllDay;
+            const duration = event.endTime.getTime() - event.startTime.getTime();
+            const hours = duration / (1000 * 60 * 60);
+            const startHour = event.startTime.getHours();
+            const startMinute = event.startTime.getMinutes();
+            const isFullDay = startHour === 0 && startMinute === 0 && (hours === 24 || hours % 24 === 0);
+            return !(isMarkedAllDay || isFullDay || hours >= 20);
+          }).map((event) => {
             const { className, style } = getEventStyle(event);
             return (
               <div key={event.id}>
