@@ -106,6 +106,8 @@ The application uses three main entities:
 - July 06, 2025. Implemented proper authentication handling for Google Calendar event updates
 - July 06, 2025. **CALENDAR SELECTION FIX**: Fixed event loading and filtering with proper calendar legend showing SimplePractice, Google Calendar, and Personal checkboxes
 - July 06, 2025. Implemented calendar filtering system with proper event-to-calendar ID mapping for Google Calendar events
+- July 06, 2025. **EVENT PERSISTENCE FIX**: Fixed critical issue where Google Calendar fetch was overriding database events, ensuring events persist across page refreshes
+- July 06, 2025. **WEEKLY ANALYTICS**: Updated weekly analytics to filter events strictly by current week date range, ensuring statistics reset properly each week
 
 ## User Preferences
 

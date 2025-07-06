@@ -25,9 +25,21 @@ export const WeeklyPlannerView = ({
   const weekEndDate = week[6]?.date;
   const weekNumber = weekStartDate ? getWeekNumber(weekStartDate) : 1;
   
-  // Calculate statistics
-  const totalEvents = events.length;
-  const totalHours = events.reduce((sum, event) => {
+  // Calculate statistics ONLY for the current week
+  const weekEvents = events.filter(event => {
+    const eventDate = new Date(event.startTime);
+    const weekStart = new Date(weekStartDate);
+    const weekEnd = new Date(weekEndDate);
+    
+    // Set to start/end of day for proper comparison
+    weekStart.setHours(0, 0, 0, 0);
+    weekEnd.setHours(23, 59, 59, 999);
+    
+    return eventDate >= weekStart && eventDate <= weekEnd;
+  });
+  
+  const totalEvents = weekEvents.length;
+  const totalHours = weekEvents.reduce((sum, event) => {
     return sum + (new Date(event.endTime).getTime() - new Date(event.startTime).getTime()) / (1000 * 60 * 60);
   }, 0);
   
