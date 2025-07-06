@@ -512,10 +512,15 @@ export default function Planner() {
     if (event.source === 'google') {
       // Use calendarId for Google Calendar events (not sourceId which is the event ID)
       const calendarId = (event as any).calendarId || event.sourceId;
-      return selectedCalendars.has(calendarId);
+      const isSelected = selectedCalendars.has(calendarId);
+      console.log(`Event: ${event.title}, CalendarId: ${calendarId}, Selected: ${isSelected}, SelectedCalendars:`, Array.from(selectedCalendars));
+      return isSelected;
     }
-    return true; // Show all non-Google events (manual, SimplePractice)
+    // Always show manual and SimplePractice events since there are no toggles for them
+    return true;
   });
+
+  console.log(`Total events: ${state.events.length}, Filtered events: ${currentEvents.length}`);
   
   const currentDateString = state.selectedDate.toISOString().split('T')[0];
   const currentDailyNotes = state.dailyNotes[currentDateString] || '';

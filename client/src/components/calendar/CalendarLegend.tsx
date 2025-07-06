@@ -13,30 +13,14 @@ interface CalendarLegendProps {
 }
 
 export const CalendarLegend = ({ calendars, selectedCalendars, onCalendarToggle }: CalendarLegendProps) => {
-  // Create calendar items with specific Google calendar names + standard categories
-  const calendarItems = [
-    { 
-      id: 'simplepractice', 
-      name: 'SimplePractice', 
-      color: '#4F46E5',
-      selected: true, // Always selected for SimplePractice events
-      type: 'static'
-    },
-    ...calendars.map(cal => ({
-      id: cal.id,
-      name: cal.name,
-      color: cal.color || '#10B981',
-      selected: selectedCalendars.has(cal.id),
-      type: 'google'
-    })),
-    { 
-      id: 'personal', 
-      name: 'Personal', 
-      color: '#6B7280',
-      selected: true, // Always selected for manual events
-      type: 'static'
-    }
-  ];
+  // Only show Google calendar names - no SimplePractice or Personal categories
+  const calendarItems = calendars.map(cal => ({
+    id: cal.id,
+    name: cal.name,
+    color: cal.color || '#10B981',
+    selected: selectedCalendars.has(cal.id),
+    type: 'google'
+  }));
 
   const handleCalendarToggle = (calendarId: string, type: string) => {
     if (type === 'google') {
