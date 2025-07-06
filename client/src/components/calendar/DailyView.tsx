@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { formatDate } from '../../utils/dateUtils';
+import { generateTimeSlots } from '../../utils/timeSlots';
 import { CalendarEvent } from '../../types/calendar';
 
 interface DailyViewProps {
@@ -46,14 +47,11 @@ export const DailyView = ({
   const availableHours = 24 - totalHours;
   const freeTimePercentage = Math.round((availableHours / 24) * 100);
 
-  // Generate time slots from 06:00 to 21:30 (matching HTML template)
-  const timeSlots = [];
-  for (let hour = 6; hour <= 21; hour++) {
-    timeSlots.push({ hour, minute: 0, time: `${hour.toString().padStart(2, '0')}:00`, isHour: true });
-    if (hour < 21) {
-      timeSlots.push({ hour, minute: 30, time: `${hour.toString().padStart(2, '0')}:30`, isHour: false });
-    }
-  }
+  // Use the same time slot generation as weekly view (6:00 to 23:30)
+  const timeSlots = generateTimeSlots().map(slot => ({
+    ...slot,
+    isHour: slot.minute === 0
+  }));
 
   const getEventStyle = (event: CalendarEvent) => {
     const eventStart = new Date(event.startTime);
@@ -64,17 +62,15 @@ export const DailyView = ({
     const startHour = eventStart.getHours();
     const startMinute = eventStart.getMinutes();
     
-    // Calculate position based on actual time relative to schedule start (6:00 AM)
-    // From screenshot: 17:00 appointment appears at 19:00 position
-    // This means appointments are shifted down by 2 hours
-    // So we need to subtract 2 hours from the calculation
+    // Calculate position based on time slots - each slot is 30 minutes and 60px tall
+    // Timeline starts at 6:00, so we calculate minutes since 6:00
+    const minutesSince6am = (startHour - 6) * 60 + startMinute;
     
-    const adjustedHour = startHour - 2; // Subtract 2 hours to compensate for the shift
-    const minutesSince6am = (adjustedHour - 6) * 60 + startMinute;
-    const topPosition = Math.max(0, (minutesSince6am / 30) * 60); // 30 minutes per 60px slot
+    // Each 30-minute slot is 60px, so position = (minutes / 30) * 60
+    const topPosition = Math.max(0, (minutesSince6am / 30) * 60);
     
-    // Debug log for positioning - can be removed in production
-    console.log(`Event: ${event.title}, Original: ${startHour}:${startMinute.toString().padStart(2, '0')}, Adjusted: ${adjustedHour}:${startMinute.toString().padStart(2, '0')}, Position: ${topPosition}px`);
+    // Debug log for positioning
+    console.log(`Event: ${event.title}, Time: ${startHour}:${startMinute.toString().padStart(2, '0')}, MinutesSince6am: ${minutesSince6am}, Position: ${topPosition}px`);
     
     // Calculate height based on duration
     let height = Math.max(56, (durationMinutes / 30) * 60 - 4); // 60px per 30min slot, minus padding
