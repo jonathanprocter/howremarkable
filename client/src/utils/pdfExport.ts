@@ -646,25 +646,51 @@ export const exportWeeklyPackageToPDF = async (
         pdf.setLineWidth(0.5);
         pdf.rect(eventX, y + 1, eventWidth, eventHeight, 'S');
         
-        // Event text with navigation hint
-        pdf.setFontSize(9);
+        // Event text with time and title
+        pdf.setFontSize(8);
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(0, 0, 0);
         
+        // Format time range
+        const startTime = eventStart.toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit', 
+          hour12: false 
+        });
+        const endTime = eventEnd.toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit', 
+          hour12: false 
+        });
+        
+        const timeRange = `${startTime}-${endTime}`;
+        pdf.text(timeRange, eventX + 3, y + 4);
+        
+        // Event title below time
+        pdf.setFontSize(7);
+        pdf.setFont('helvetica', 'normal');
         const cleanTitle = event.title.replace(/[^\w\s\-\.,;:()\[\]]/g, '');
-        const maxChars = Math.floor(eventWidth / 2.5);
+        const maxChars = Math.floor(eventWidth / 2);
         let displayTitle = cleanTitle;
         if (cleanTitle.length > maxChars) {
           displayTitle = cleanTitle.substring(0, maxChars - 3) + '...';
         }
         
-        pdf.text(displayTitle, eventX + 3, y + 4);
+        pdf.text(displayTitle, eventX + 3, y + 7);
+        
+        // Add space for reMarkable notes
+        if (eventHeight > 12) {
+          pdf.setFontSize(6);
+          pdf.setTextColor(150, 150, 150);
+          pdf.text('Notes: ___________________', eventX + 3, y + eventHeight - 3);
+          pdf.setTextColor(0, 0, 0);
+        }
         
         // Add navigation hint to weekly view
-        if (eventHeight > 8) {
-          pdf.setFontSize(6);
+        if (eventHeight > 15) {
+          pdf.setFontSize(5);
           pdf.setTextColor(80, 80, 80);
-          pdf.text('← Weekly View (Page 1)', eventX + 3, y + eventHeight - 2);
+          pdf.text('← Weekly View (Page 1)', eventX + 3, y + eventHeight - 1);
           pdf.setTextColor(0, 0, 0);
         }
       });
@@ -696,6 +722,31 @@ export const exportWeeklyPackageToPDF = async (
           }
         }
       }
+    }
+    
+    // reMarkable optimization section
+    if (notesY + 40 < dailyPageHeight - 30) {
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(0, 0, 0);
+      pdf.text('Quick Actions & Tasks', 15, notesY + 20);
+      
+      // Add checkboxes for task management
+      pdf.setDrawColor(100, 100, 100);
+      pdf.setLineWidth(0.5);
+      for (let task = 0; task < 3; task++) {
+        const taskY = notesY + 30 + (task * 8);
+        pdf.rect(15, taskY - 3, 4, 4, 'S'); // Checkbox
+        pdf.setFontSize(8);
+        pdf.setTextColor(150, 150, 150);
+        pdf.text('Task/Note: ________________________________', 22, taskY);
+      }
+      
+      // Add sync instructions
+      pdf.setFontSize(7);
+      pdf.setFont('helvetica', 'italic');
+      pdf.setTextColor(100, 100, 100);
+      pdf.text('Sync Instructions: Export markups → Upload to app → Auto-sync to Google Calendar', 15, dailyPageHeight - 25);
     }
     
     // Footer navigation
