@@ -242,12 +242,8 @@ export const DailyView = ({
           
           {/* Time slots grid */}
           {timeSlots.map((timeSlot, index) => {
-            const slotEvents = timedEvents.filter(event => 
-              isEventInTimeSlot(event, timeSlot)
-            );
-            
-            // Only show events in their exact starting time slot
-            const isFirstSlotOfEvent = (event: CalendarEvent) => {
+            // Find events that should start in this specific time slot
+            const slotEvents = timedEvents.filter(event => {
               const eventStart = new Date(event.startTime);
               const eventHour = eventStart.getHours();
               const eventMinute = eventStart.getMinutes();
@@ -256,7 +252,7 @@ export const DailyView = ({
               const roundedMinute = eventMinute >= 30 ? 30 : 0;
               
               return timeSlot.hour === eventHour && timeSlot.minute === roundedMinute;
-            };
+            });
             
             return (
               <div key={index} className="grid grid-cols-8 border-b border-gray-300 last:border-b-0">
@@ -268,7 +264,7 @@ export const DailyView = ({
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, timeSlot)}
                 >
-                  {slotEvents.filter(isFirstSlotOfEvent).map((event) => {
+                  {slotEvents.map((event) => {
                     const duration = getEventDurationInSlots(event);
                     const eventHeight = duration * 40; // 40px per slot to match time-slot height
                     
