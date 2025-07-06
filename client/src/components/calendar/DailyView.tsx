@@ -41,15 +41,33 @@ export const DailyView = ({
 
   // Separate all-day events from timed events
   const allDayEvents = dayEvents.filter(event => {
+    // First check if backend marked it as all-day
+    if ((event as any).isAllDay) return true;
+    
+    // Fallback: Check if event is all-day by looking at duration and time patterns
     const duration = event.endTime.getTime() - event.startTime.getTime();
     const hours = duration / (1000 * 60 * 60);
-    return hours >= 20; // Consider events 20+ hours as all-day
+    
+    // Check if event starts at midnight and duration is 24 hours or multiple of 24
+    const startHour = event.startTime.getHours();
+    const startMinute = event.startTime.getMinutes();
+    const isFullDay = startHour === 0 && startMinute === 0 && (hours === 24 || hours % 24 === 0);
+    
+    // Also check for events that span 20+ hours or are exactly 24 hours
+    return isFullDay || hours >= 20;
   });
   
   const timedEvents = dayEvents.filter(event => {
+    // First check if backend marked it as all-day
+    if ((event as any).isAllDay) return false;
+    
     const duration = event.endTime.getTime() - event.startTime.getTime();
     const hours = duration / (1000 * 60 * 60);
-    return hours < 20;
+    const startHour = event.startTime.getHours();
+    const startMinute = event.startTime.getMinutes();
+    const isFullDay = startHour === 0 && startMinute === 0 && (hours === 24 || hours % 24 === 0);
+    
+    return !isFullDay && hours < 20;
   });
 
   const toggleEventExpansion = (eventId: string) => {

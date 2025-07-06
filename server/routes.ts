@@ -190,18 +190,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
             orderBy: 'startTime'
           });
 
-          const calendarEvents = (events.data.items || []).map((event: any) => ({
-            id: event.id,
-            title: event.summary || 'No Title',
-            description: event.description,
-            startTime: event.start?.dateTime || event.start?.date,
-            endTime: event.end?.dateTime || event.end?.date,
-            source: 'google',
-            sourceId: event.id,
-            color: cal.backgroundColor || '#38a169',
-            calendarName: cal.summary,
-            calendarId: cal.id
-          }));
+          const calendarEvents = (events.data.items || []).map((event: any) => {
+            // Detect all-day events - Google Calendar uses 'date' for all-day, 'dateTime' for timed
+            const isAllDay = !event.start?.dateTime && !!event.start?.date;
+            
+            let startTime, endTime;
+            if (isAllDay) {
+              // For all-day events, set to midnight of the day
+              startTime = new Date(event.start.date + 'T00:00:00');
+              endTime = new Date(event.end.date + 'T00:00:00');
+            } else {
+              startTime = event.start?.dateTime || event.start?.date;
+              endTime = event.end?.dateTime || event.end?.date;
+            }
+            
+            return {
+              id: event.id,
+              title: event.summary || 'No Title',
+              description: event.description,
+              startTime,
+              endTime,
+              source: 'google',
+              sourceId: event.id,
+              color: cal.backgroundColor || '#38a169',
+              calendarName: cal.summary,
+              calendarId: cal.id,
+              isAllDay
+            };
+          });
 
           allEvents.push(...calendarEvents);
         } catch (error) {
