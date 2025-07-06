@@ -17,6 +17,8 @@ interface DailyViewProps {
   onUpdateEvent: (eventId: string, updates: Partial<CalendarEvent>) => void;
   onUpdateDailyNotes: (notes: string) => void;
   onEventMove?: (eventId: string, newStartTime: Date, newEndTime: Date) => void;
+  onCreateEvent?: (startTime: Date, endTime: Date) => void;
+  onDeleteEvent?: (eventId: string) => void;
 }
 
 export const DailyView = ({
@@ -29,7 +31,9 @@ export const DailyView = ({
   onEventClick,
   onUpdateEvent,
   onUpdateDailyNotes,
-  onEventMove
+  onEventMove,
+  onCreateEvent,
+  onDeleteEvent
 }: DailyViewProps) => {
   const [currentNotes, setCurrentNotes] = useState(dailyNotes);
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
@@ -38,55 +42,10 @@ export const DailyView = ({
   const dayEvents = events.filter(event => 
     new Date(event.startTime).toDateString() === selectedDate.toDateString()
   );
-  
-  // Add test events for debugging positioning
-  const testEvents = [
-    {
-      id: 'test-1',
-      title: 'Test 9:00 AM',
-      description: 'Test appointment at 9:00 AM',
-      startTime: new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 9, 0),
-      endTime: new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 10, 0),
-      source: 'simplepractice' as const,
-      color: '#6495ED',
-      notes: 'SimplePractice test event'
-    },
-    {
-      id: 'test-2',
-      title: 'Test 2:00 PM',
-      description: 'Test appointment at 2:00 PM',
-      startTime: new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 14, 0),
-      endTime: new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 15, 0),
-      source: 'google' as const,
-      color: '#34a853',
-      notes: 'Google Calendar test event'
-    },
-    {
-      id: 'test-3',
-      title: 'Test 5:30 PM',
-      description: 'Test appointment at 5:30 PM',
-      startTime: new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 17, 30),
-      endTime: new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 18, 30),
-      source: 'manual' as const,
-      color: '#999',
-      notes: 'Personal test event'
-    }
-  ];
-  
-  // Use test events for now to debug positioning
-  const allDayEvents = [...dayEvents, ...testEvents];
-  
-  // Debug log for events
-  console.log(`Daily view - Selected date: ${selectedDate.toDateString()}`);
-  console.log(`Daily view - Total events: ${events.length}`);
-  console.log(`Daily view - Day events: ${dayEvents.length}`);
-  console.log(`Daily view - Test events: ${testEvents.length}`);
-  console.log(`Daily view - All day events: ${allDayEvents.length}`);
-  console.log('All day events:', allDayEvents);
 
   // Calculate daily statistics
-  const totalEvents = allDayEvents.length;
-  const totalHours = allDayEvents.reduce((sum, event) => {
+  const totalEvents = dayEvents.length;
+  const totalHours = dayEvents.reduce((sum, event) => {
     return sum + (new Date(event.endTime).getTime() - new Date(event.startTime).getTime()) / (1000 * 60 * 60);
   }, 0);
   const availableHours = 24 - totalHours;
@@ -146,6 +105,61 @@ export const DailyView = ({
 
   const toggleEventExpansion = (eventId: string) => {
     setExpandedEventId(expandedEventId === eventId ? null : eventId);
+  };
+
+  // Drag and drop handlers
+  const handleDragStart = (e: React.DragEvent, event: CalendarEvent) => {
+    e.dataTransfer.setData('text/plain', JSON.stringify({
+      eventId: event.id,
+      startTime: event.startTime,
+      endTime: event.endTime
+    }));
+  };
+
+  const handleDrop = (e: React.DragEvent, slot: any, slotIndex: number) => {
+    e.preventDefault();
+    try {
+      const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
+      const { eventId, startTime, endTime } = dragData;
+      
+      // Calculate new start time based on slot position
+      const slotHour = Math.floor(slotIndex / 2) + 6; // 6:00 AM start, 2 slots per hour
+      const slotMinute = (slotIndex % 2) * 30;
+      
+      const originalStart = new Date(startTime);
+      const originalEnd = new Date(endTime);
+      const duration = originalEnd.getTime() - originalStart.getTime();
+      
+      const newStartTime = new Date(selectedDate);
+      newStartTime.setHours(slotHour, slotMinute, 0, 0);
+      
+      const newEndTime = new Date(newStartTime.getTime() + duration);
+      
+      if (onEventMove) {
+        onEventMove(eventId, newStartTime, newEndTime);
+      }
+    } catch (error) {
+      console.error('Error processing drop:', error);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleSlotDoubleClick = (slot: any, slotIndex: number) => {
+    if (onCreateEvent) {
+      const slotHour = Math.floor(slotIndex / 2) + 6; // 6:00 AM start, 2 slots per hour
+      const slotMinute = (slotIndex % 2) * 30;
+      
+      const startTime = new Date(selectedDate);
+      startTime.setHours(slotHour, slotMinute, 0, 0);
+      
+      const endTime = new Date(startTime);
+      endTime.setHours(slotHour, slotMinute + 30, 0, 0); // Default 30-minute duration
+      
+      onCreateEvent(startTime, endTime);
+    }
   };
 
   const handleEventNotesChange = (eventId: string, field: 'notes' | 'actionItems', value: string) => {
@@ -248,17 +262,26 @@ export const DailyView = ({
         <div className="appointments-column">
           {/* Empty appointment slots for grid background */}
           {timeSlots.map((slot, index) => (
-            <div key={index} className={`appointment-slot ${slot.isHour ? 'hour' : ''}`}></div>
+            <div 
+              key={index} 
+              className={`appointment-slot ${slot.isHour ? 'hour' : ''}`}
+              onDrop={(e) => handleDrop(e, slot, index)}
+              onDragOver={handleDragOver}
+              onDoubleClick={() => handleSlotDoubleClick(slot, index)}
+              title="Double-click to create new appointment"
+            ></div>
           ))}
 
           {/* Render events as absolutely positioned elements */}
-          {allDayEvents.map((event) => {
+          {dayEvents.map((event) => {
             const { className, style } = getEventStyle(event);
             return (
               <div key={event.id}>
                 <div
                   className={className}
                   style={style}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, event)}
                   onClick={() => toggleEventExpansion(event.id)}
                 >
                   <div className="appointment-header">
@@ -321,7 +344,20 @@ export const DailyView = ({
                           rows={2}
                         />
                       </div>
-                      <div className="flex justify-end pt-2">
+                      <div className="flex justify-between pt-2">
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => {
+                            if (onDeleteEvent) {
+                              onDeleteEvent(event.id);
+                            }
+                            setExpandedEventId(null);
+                          }}
+                          className="text-xs"
+                        >
+                          Delete
+                        </Button>
                         <Button
                           variant="outline"
                           size="sm"

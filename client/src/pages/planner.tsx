@@ -32,6 +32,7 @@ export default function Planner() {
   const { authStatus, connectGoogle, fetchCalendarEvents, uploadToDrive, updateCalendarEvent } = useGoogleAuth();
   const { toast } = useToast();
   const [googleCalendars, setGoogleCalendars] = useState<any[]>([]);
+  const [selectedCalendars, setSelectedCalendars] = useState<Set<string>>(new Set());
 
   // Sample events for demonstration
   const [sampleEvents] = useState<CalendarEvent[]>([
@@ -295,6 +296,10 @@ export default function Planner() {
         updateEvents(googleEvents);
         setGoogleCalendars(calendars);
         
+        // Auto-select all calendars by default
+        const calendarIds = calendars?.map(cal => cal.id) || [];
+        setSelectedCalendars(new Set(calendarIds));
+        
         toast({
           title: "Google Calendar Events Loaded",
           description: `Loaded ${googleEvents.length} events from ${calendars?.length || 0} calendars`
@@ -318,6 +323,19 @@ export default function Planner() {
           });
         }
       }
+    } else if (action === 'select all') {
+      const calendarIds = googleCalendars.map(cal => cal.id);
+      setSelectedCalendars(new Set(calendarIds));
+      toast({
+        title: "Calendar Selection",
+        description: "All calendars selected"
+      });
+    } else if (action === 'deselect all') {
+      setSelectedCalendars(new Set());
+      toast({
+        title: "Calendar Selection", 
+        description: "All calendars deselected"
+      });
     } else {
       toast({
         title: "Quick Action",
@@ -332,6 +350,36 @@ export default function Planner() {
     toast({
       title: "Daily Notes",
       description: "Notes saved successfully!"
+    });
+  };
+
+  const handleCreateEvent = (startTime: Date, endTime: Date) => {
+    const newEvent: CalendarEvent = {
+      id: `manual-${Date.now()}`,
+      title: 'New Appointment',
+      description: '',
+      startTime,
+      endTime,
+      source: 'manual',
+      color: '#999',
+      notes: ''
+    };
+
+    addEvent(newEvent);
+    toast({
+      title: "Event Created",
+      description: "New appointment added. Click to edit details."
+    });
+  };
+
+  const handleDeleteEvent = (eventId: string) => {
+    // Remove from state
+    const updatedEvents = state.events.filter(event => event.id !== eventId);
+    updateEvents(updatedEvents);
+    
+    toast({
+      title: "Event Deleted",
+      description: "Appointment has been removed."
     });
   };
 
@@ -391,6 +439,8 @@ export default function Planner() {
           onUpdateEvent={updateEvent}
           onUpdateDailyNotes={handleUpdateDailyNotes}
           onEventMove={handleEventMove}
+          onCreateEvent={handleCreateEvent}
+          onDeleteEvent={handleDeleteEvent}
         />
       )}
     </MainLayout>
