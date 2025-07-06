@@ -42,6 +42,10 @@ export const useGoogleAuth = () => {
       window.history.replaceState({}, document.title, '/');
       // Refresh auth status
       setTimeout(checkAuthStatus, 100);
+    } else if (urlParams.get('error') === 'auth_failed') {
+      // Handle authentication failure
+      console.error('Google OAuth authentication failed - check Google Cloud Console configuration');
+      window.history.replaceState({}, document.title, '/');
     }
   }, []);
 

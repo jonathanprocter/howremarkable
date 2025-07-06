@@ -11,8 +11,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID!,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    callbackURL: "/api/auth/google/callback"
+    callbackURL: `${process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5000'}/api/auth/google/callback`
   }, async (accessToken, refreshToken, profile, done) => {
+    console.log("Google OAuth callback - Profile:", profile.id, profile.displayName);
+    console.log("Google OAuth callback - Tokens received:", !!accessToken, !!refreshToken);
+    
     // Store tokens in session for later use
     const user = {
       id: profile.id,
@@ -49,11 +52,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   );
 
   app.get("/api/auth/google/callback",
-    passport.authenticate("google", { failureRedirect: "/" }),
+    passport.authenticate("google", { 
+      failureRedirect: "/?error=auth_failed",
+      session: true
+    }),
     (req, res) => {
+      console.log("Google OAuth callback successful", req.user);
       res.redirect("/?connected=true");
     }
   );
+
+  // Error handling for failed authentication
+  app.get("/api/auth/error", (req, res) => {
+    res.status(403).json({ 
+      error: "authentication_failed",
+      message: "Google OAuth authentication failed. Please check your Google Cloud Console configuration.",
+      instructions: [
+        "1. Go to Google Cloud Console (console.cloud.google.com)",
+        "2. Enable Google Calendar API and Google Drive API",
+        "3. Configure OAuth consent screen",
+        "4. Add authorized redirect URI: " + (process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5000') + "/api/auth/google/callback"
+      ]
+    });
+  });
 
   app.get("/api/auth/status", (req, res) => {
     res.json({ 
