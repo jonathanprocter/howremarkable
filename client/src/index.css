@@ -302,16 +302,19 @@
 .schedule-grid {
     display: flex;
     border-collapse: collapse;
+    min-height: calc(100vh - 200px); /* Ensure full height minus header space */
 }
 
 .time-column {
     width: 80px;
     border-right: 2px solid black;
+    min-height: 1920px; /* Match appointments column height */
 }
 
 .appointments-column {
     flex: 1;
     position: relative;
+    min-height: 1920px; /* 32 slots * 60px = 1920px to ensure full coverage */
 }
 
 .appointment-slot {

@@ -3,9 +3,20 @@ import { TimeSlot } from '../types/calendar';
 export const generateTimeSlots = (): TimeSlot[] => {
   const timeSlots: TimeSlot[] = [];
   
-  // Generate practical working hours from 06:00 to 23:30
-  for (let hour = 6; hour < 24; hour++) {
+  // Generate working hours from 06:00 to 21:30 (as per user requirement)
+  for (let hour = 6; hour <= 21; hour++) {
     for (let minute = 0; minute < 60; minute += 30) {
+      // Stop at 21:30 as the last slot
+      if (hour === 21 && minute === 30) {
+        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        timeSlots.push({
+          time: timeString,
+          hour,
+          minute
+        });
+        break;
+      }
+      
       const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
       timeSlots.push({
         time: timeString,
