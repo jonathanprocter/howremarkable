@@ -23,7 +23,7 @@ export const exportWeeklyToPDF = async (
   // Header
   pdf.setFontSize(16);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('reMarkable Pro Weekly Planner', 15, 15);
+  pdf.text('Weekly Planner', 15, 15);
   
   // Week range
   pdf.setFontSize(12);
@@ -156,14 +156,19 @@ export const exportWeeklyToPDF = async (
         const cleanTitle = event.title.replace(/[^\w\s\-\.,;:()\[\]]/g, '');
         const eventWithTime = `${startTime}-${endTime} ${cleanTitle}`;
         
-        // Fit text to available width
-        const maxChars = Math.floor(eventWidth / 1.2);
-        let displayTitle = eventWithTime;
-        if (eventWithTime.length > maxChars) {
-          displayTitle = eventWithTime.substring(0, maxChars - 3) + '...';
-        }
+        // Use PDF's built-in text wrapping for better display
+        const splitText = pdf.splitTextToSize(eventWithTime, eventWidth - 1);
         
-        pdf.text(displayTitle, eventX + 0.5, y + 2.5);
+        // Display multiple lines if text wraps
+        if (Array.isArray(splitText)) {
+          splitText.forEach((line, lineIndex) => {
+            if (lineIndex < Math.floor(eventHeight / 2)) { // Limit lines to fit in event height
+              pdf.text(line, eventX + 0.5, y + 2.5 + (lineIndex * 1.5));
+            }
+          });
+        } else {
+          pdf.text(splitText, eventX + 0.5, y + 2.5);
+        }
       });
     }
   });
