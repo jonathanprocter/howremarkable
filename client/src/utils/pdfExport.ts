@@ -34,12 +34,17 @@ export const exportWeeklyToPDF = async (
   const weekRange = `${formatDateShort(weekStartDate)} - ${formatDateShort(weekEndDate)}`;
   pdf.text(weekRange, pageWidth / 2, 35, { align: 'center' });
   
-  // Optimized layout for reMarkable Pro
-  const startY = 50;
-  const rowHeight = 12; // Increased for better readability
+  // Optimized layout for reMarkable Pro with ALL time slots fitting
+  const startY = 45;
+  const rowHeight = 8; // Reduced to fit all slots from 06:00-23:30
   const timeSlots = generateTimeSlots();
-  const timeColumnWidth = 35; // Wider time column
-  const dayWidth = (pageWidth - timeColumnWidth - 30) / 7; // 7 days with more padding
+  const timeColumnWidth = 30; // Compact time column
+  const dayWidth = (pageWidth - timeColumnWidth - 25) / 7; // 7 days optimized spacing
+  
+  // Calculate if all slots will fit
+  const totalSlotsHeight = timeSlots.length * rowHeight;
+  const availableHeight = pageHeight - startY - 20; // Reserve 20mm for margins
+  console.log(`PDF Layout: ${timeSlots.length} slots, ${totalSlotsHeight}mm needed, ${availableHeight}mm available`);
   
   // Headers with better styling
   pdf.setFontSize(12);
@@ -63,18 +68,15 @@ export const exportWeeklyToPDF = async (
   pdf.setDrawColor(220, 220, 220);
   pdf.setLineWidth(0.2);
   
-  // Time slots and events
+  // Time slots and events - show ALL slots from 06:00-23:30
   timeSlots.forEach((slot, index) => {
     const y = startY + 15 + (index * rowHeight);
     
-    // Skip if we're running out of page space
-    if (y > pageHeight - 20) return;
-    
-    // Time column with better formatting
-    pdf.setFontSize(10);
+    // Time column with compact formatting for reMarkable Pro
+    pdf.setFontSize(8);
     pdf.setFont('helvetica', 'normal');
     pdf.setTextColor(80, 80, 80); // Darker gray for time
-    pdf.text(slot.time, 20, y);
+    pdf.text(slot.time, 18, y);
     
     // Draw light horizontal line
     pdf.setDrawColor(240, 240, 240);
@@ -96,13 +98,13 @@ export const exportWeeklyToPDF = async (
       });
       
       if (dayEvents.length > 0) {
-        pdf.setFontSize(9);
+        pdf.setFontSize(7);
         pdf.setFont('helvetica', 'normal');
         pdf.setTextColor(0, 0, 0); // Black text for events
         
         dayEvents.forEach((event, eventIndex) => {
-          const x = timeColumnWidth + 20 + (dayIndex * dayWidth);
-          const eventY = y + (eventIndex * 4);
+          const x = timeColumnWidth + 18 + (dayIndex * dayWidth);
+          const eventY = y + (eventIndex * 3); // Tighter spacing
           
           // Better text handling - no truncation with "..."
           const maxChars = Math.floor(dayWidth / 2.5); // Estimate characters that fit
