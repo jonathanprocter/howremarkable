@@ -231,7 +231,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               endTime = event.end?.dateTime || event.end?.date;
             }
             
-            return {
+            const eventData = {
               id: event.id,
               title: event.summary || 'No Title',
               description: event.description,
@@ -244,6 +244,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               calendarId: cal.id,
               isAllDay
             };
+            
+            return eventData;
           });
 
           // Sync Google Calendar events to database
@@ -262,6 +264,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   endTime: new Date(googleEvent.endTime),
                   source: 'google',
                   sourceId: googleEvent.id,
+                  calendarId: googleEvent.calendarId, // Store the actual calendar ID
                   color: googleEvent.color,
                   notes: '',
                   actionItems: ''
@@ -294,7 +297,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         color: e.color,
         notes: e.notes,
         actionItems: e.actionItems,
-        calendarId: e.source === 'google' ? e.sourceId : undefined
+        calendarId: e.source === 'google' ? e.calendarId : undefined
       }));
 
       // Replace Google Calendar events with database-persisted versions
@@ -338,7 +341,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           color: e.color,
           notes: e.notes,
           actionItems: e.actionItems,
-          calendarId: e.source === 'google' ? e.sourceId : undefined
+          calendarId: e.source === 'google' ? e.calendarId : undefined
         }));
         
         res.json({ 

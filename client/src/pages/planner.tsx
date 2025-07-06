@@ -366,7 +366,8 @@ export default function Planner() {
         
         // Auto-select all calendars by default
         const calendarIds = calendars?.map((cal: { id: string }) => cal.id) || [];
-        setSelectedCalendars(new Set(calendarIds));
+        const newSelectedCalendars = new Set<string>(calendarIds);
+        setSelectedCalendars(newSelectedCalendars);
         
         toast({
           title: "Google Calendar Events Loaded",
@@ -512,15 +513,11 @@ export default function Planner() {
     if (event.source === 'google') {
       // Use calendarId for Google Calendar events (not sourceId which is the event ID)
       const calendarId = (event as any).calendarId || event.sourceId;
-      const isSelected = selectedCalendars.has(calendarId);
-      console.log(`Event: ${event.title}, CalendarId: ${calendarId}, Selected: ${isSelected}, SelectedCalendars:`, Array.from(selectedCalendars));
-      return isSelected;
+      return selectedCalendars.has(calendarId);
     }
     // Always show manual and SimplePractice events since there are no toggles for them
     return true;
   });
-
-  console.log(`Total events: ${state.events.length}, Filtered events: ${currentEvents.length}`);
   
   const currentDateString = state.selectedDate.toISOString().split('T')[0];
   const currentDailyNotes = state.dailyNotes[currentDateString] || '';

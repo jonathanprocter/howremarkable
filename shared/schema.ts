@@ -20,6 +20,7 @@ export const events = pgTable("events", {
   endTime: timestamp("end_time").notNull(),
   source: text("source").default("manual"), // 'manual', 'google', 'simplepractice'
   sourceId: text("source_id"),
+  calendarId: text("calendar_id"), // For Google Calendar events
   color: text("color").default("#6495ED"),
   notes: text("notes"),
   actionItems: text("action_items"),
