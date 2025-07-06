@@ -11,10 +11,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID!,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    callbackURL: `${process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5000'}/api/auth/google/callback`
+    callbackURL: `https://${process.env.REPLIT_DEV_DOMAIN}/api/auth/google/callback`
   }, async (accessToken, refreshToken, profile, done) => {
-    console.log("Google OAuth callback - Profile:", profile.id, profile.displayName);
-    console.log("Google OAuth callback - Tokens received:", !!accessToken, !!refreshToken);
+    console.log("=== GOOGLE OAUTH STRATEGY CALLED ===");
+    console.log("Profile ID:", profile.id);
+    console.log("Profile Name:", profile.displayName);
+    console.log("Profile Email:", profile.emails?.[0]?.value);
+    console.log("Access Token:", accessToken ? "RECEIVED" : "MISSING");
+    console.log("Refresh Token:", refreshToken ? "RECEIVED" : "MISSING");
     
     // Store tokens in session for later use
     const user = {
@@ -24,6 +28,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       accessToken,
       refreshToken
     };
+    
+    console.log("Returning user object:", { id: user.id, email: user.email, name: user.name });
     return done(null, user);
   }));
 
@@ -107,6 +113,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ 
       authenticated: !!req.user,
       user: req.user || null
+    });
+  });
+
+  // Test endpoint to verify Google credentials
+  app.get("/api/auth/test", (req, res) => {
+    console.log("=== AUTH TEST ENDPOINT ===");
+    console.log("Environment check:");
+    console.log("GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID ? "SET" : "MISSING");
+    console.log("GOOGLE_CLIENT_SECRET:", process.env.GOOGLE_CLIENT_SECRET ? "SET" : "MISSING");
+    console.log("REPLIT_DEV_DOMAIN:", process.env.REPLIT_DEV_DOMAIN);
+    
+    res.json({
+      hasClientId: !!process.env.GOOGLE_CLIENT_ID,
+      hasClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
+      domain: process.env.REPLIT_DEV_DOMAIN,
+      callbackUrl: `https://${process.env.REPLIT_DEV_DOMAIN}/api/auth/google/callback`
     });
   });
 
