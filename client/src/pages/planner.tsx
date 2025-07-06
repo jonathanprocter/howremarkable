@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCalendar } from '../hooks/useCalendar';
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { MainLayout } from '../components/layout/MainLayout';
@@ -6,6 +6,7 @@ import { Sidebar } from '../components/sidebar/Sidebar';
 import { Header } from '../components/common/Header';
 import { WeeklyPlannerView } from '../components/calendar/WeeklyPlannerView';
 import { DailyView } from '../components/calendar/DailyView';
+import { CalendarLegend } from '../components/calendar/CalendarLegend';
 import { CalendarEvent } from '../types/calendar';
 import { useToast } from '@/hooks/use-toast';
 import { exportWeeklyToPDF, exportDailyToPDF, exportWeeklyPackageToPDF, generateFilename } from '../utils/pdfExportNew';
@@ -34,7 +35,38 @@ export default function Planner() {
   const [googleCalendars, setGoogleCalendars] = useState<any[]>([]);
   const [selectedCalendars, setSelectedCalendars] = useState<Set<string>>(new Set());
 
-  // Note: Events are now managed through the calendar state (useCalendar hook)
+  // Load events from database on component mount
+  useEffect(() => {
+    const loadDatabaseEvents = async () => {
+      try {
+        const response = await fetch('/api/events/1'); // TODO: Use actual user ID
+        if (response.ok) {
+          const dbEvents = await response.json();
+          const convertedEvents: CalendarEvent[] = dbEvents.map((event: any) => ({
+            id: `db-${event.id}`,
+            title: event.title,
+            description: event.description || '',
+            startTime: new Date(event.startTime),
+            endTime: new Date(event.endTime),
+            source: event.source || 'manual',
+            sourceId: event.sourceId,
+            color: event.color || '#999',
+            notes: event.notes || '',
+            actionItems: event.actionItems || ''
+          }));
+          
+          // Combine with existing Google Calendar events
+          const googleEvents = state.events.filter(event => event.source === 'google');
+          const combinedEvents = [...googleEvents, ...convertedEvents];
+          updateEvents(combinedEvents);
+        }
+      } catch (error) {
+        console.error('Failed to load events from database:', error);
+      }
+    };
+
+    loadDatabaseEvents();
+  }, []); // Run once on mount
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
@@ -331,7 +363,7 @@ export default function Planner() {
         setGoogleCalendars(calendars);
         
         // Auto-select all calendars by default
-        const calendarIds = calendars?.map(cal => cal.id) || [];
+        const calendarIds = calendars?.map((cal: { id: string }) => cal.id) || [];
         setSelectedCalendars(new Set(calendarIds));
         
         toast({
@@ -399,9 +431,8 @@ export default function Planner() {
   };
 
   const handleCreateEvent = async (startTime: Date, endTime: Date) => {
-    const eventId = `manual-${Date.now()}`;
     const newEvent: CalendarEvent = {
-      id: eventId,
+      id: `temp-${Date.now()}`, // Temporary ID until saved to database
       title: 'New Appointment',
       description: '',
       startTime,
@@ -411,32 +442,46 @@ export default function Planner() {
       notes: ''
     };
 
+    // Add to local state immediately for responsiveness
     addEvent(newEvent);
     
-    // Create in database as well
+    // Create in database and update with real ID
     try {
-      await fetch('/api/events', {
+      const response = await fetch('/api/events', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: 1, // TODO: Use actual user ID from authentication
           title: newEvent.title,
-          description: newEvent.description,
+          description: newEvent.description || '',
           startTime: newEvent.startTime.toISOString(),
           endTime: newEvent.endTime.toISOString(),
           source: newEvent.source,
           color: newEvent.color,
-          notes: newEvent.notes
+          notes: newEvent.notes || ''
         })
       });
+      
+      if (response.ok) {
+        const savedEvent = await response.json();
+        // Update the event with the real database ID
+        updateEvent(newEvent.id, { id: `db-${savedEvent.id}` });
+        
+        toast({
+          title: "Event Created",
+          description: "New appointment added and saved to database."
+        });
+      } else {
+        throw new Error('Failed to save to database');
+      }
     } catch (error) {
       console.error('Failed to create event in database:', error);
+      toast({
+        title: "Event Created",
+        description: "New appointment added locally. Click 'Sync Notes' to save to database.",
+        variant: "destructive"
+      });
     }
-
-    toast({
-      title: "Event Created",
-      description: "New appointment added. Click to edit details."
-    });
   };
 
   const handleDeleteEvent = (eventId: string) => {
@@ -450,7 +495,27 @@ export default function Planner() {
     });
   };
 
-  const currentEvents = state.events;
+  const handleCalendarToggle = (calendarId: string) => {
+    const newSelected = new Set(selectedCalendars);
+    if (newSelected.has(calendarId)) {
+      newSelected.delete(calendarId);
+    } else {
+      newSelected.add(calendarId);
+    }
+    setSelectedCalendars(newSelected);
+  };
+
+  // Filter events based on selected calendars
+  const currentEvents = state.events.filter(event => {
+    if (event.source === 'manual' || event.source === 'simplepractice') {
+      return true; // Always show manual and SimplePractice events
+    }
+    if (event.source === 'google' && event.sourceId) {
+      return selectedCalendars.has(event.sourceId);
+    }
+    return true;
+  });
+  
   const currentDateString = state.selectedDate.toISOString().split('T')[0];
   const currentDailyNotes = state.dailyNotes[currentDateString] || '';
 
@@ -485,6 +550,12 @@ export default function Planner() {
         onNextWeek={goToNextWeek}
       />
 
+      <CalendarLegend
+        calendars={googleCalendars}
+        selectedCalendars={selectedCalendars}
+        onCalendarToggle={handleCalendarToggle}
+      />
+      
       {state.viewMode === 'weekly' ? (
         <WeeklyPlannerView
           week={state.currentWeek.days}
