@@ -107,16 +107,6 @@
     background: white;
 }
 
-/* Extend light background across full row for half-hour slots */
-.calendar-grid > .time-slot:not(.hour) {
-    background: #f8f8f8;
-    grid-column: 1 / -1;
-}
-
-.calendar-grid > .calendar-cell:not(.hour) {
-    background: #f8f8f8;
-}
-
 .time-header {
     background: #f0f0f0;
     padding: 15px 8px;
