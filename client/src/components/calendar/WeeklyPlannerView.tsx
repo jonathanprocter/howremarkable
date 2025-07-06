@@ -42,13 +42,13 @@ export const WeeklyPlannerView = ({
     // All appointments should use SimplePractice styling (cornflower blue left accent)
     className += 'simplepractice ';
     
-    // Duration classes
+    // Duration classes - matching HTML template
     if (durationMinutes >= 90) {
-      className += 'duration-90';
+      className += 'duration-90m';
     } else if (durationMinutes >= 60) {
-      className += 'duration-60';
+      className += 'duration-1h';
     } else {
-      className += 'duration-30';
+      className += 'duration-30m';
     }
     
     return className;
@@ -97,8 +97,11 @@ export const WeeklyPlannerView = ({
             }));
           }}
         >
-          <div className="appointment-name">{event.title}</div>
-          <div className="appointment-time">{startTime}-{endTime}</div>
+          <div className="appointment-header">
+            <div className="appointment-title">{event.title}</div>
+            <div className="appointment-time">{startTime}-{endTime}</div>
+          </div>
+          <div className="appointment-calendar">{event.source} calendar</div>
         </div>
       );
     });

@@ -198,20 +198,17 @@
 
 .appointment {
     position: absolute;
-    left: 2px;
-    right: 2px;
-    top: 2px;
-    padding: 3px 4px;
-    font-size: 8px;
-    font-weight: bold;
+    left: 8px;
+    right: 8px;
+    background: white;
+    padding: 4px 6px;
+    font-size: 10px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    text-align: center;
+    justify-content: flex-start;
     overflow: hidden;
-    border-radius: 2px;
-    z-index: 10;
     cursor: pointer;
+    color: black;
 }
 
 .appointment:hover {
@@ -234,35 +231,76 @@
     opacity: 0.8;
 }
 
-/* Appointment types - optimized for reMarkable e-ink display */
+/* Appointment types - exact match to HTML template */
 .appointment.simplepractice {
-    background: white;
+    background: #f5f5f5;
     color: black;
-    border: 2px solid #333;
-    border-left: 6px solid #000;
-    font-weight: 600;
+    border: 2px solid #6495ED;
+    border-left: 8px solid #6495ED;
 }
 
 .appointment.google-calendar {
-    background: white;
+    background: #e0e0e0;
     color: black;
-    border: 2px solid #333;
-    border-left: 6px solid #666;
-    font-weight: 600;
+    border: 2px dashed #666;
 }
 
 .appointment.personal {
-    background: white;
+    background: #f0f0f0;
     color: black;
-    border: 2px solid #333;
-    border-left: 6px solid #333;
-    font-weight: 600;
+    border: 2px solid #999;
+    border-style: double;
 }
 
-/* Height classes for different durations */
-.appointment.duration-30 { height: 32px; }
-.appointment.duration-60 { height: 68px; }
-.appointment.duration-90 { height: 103px; }
+/* Duration-based heights - 1 hour = 2 slots = 120px - matching HTML template */
+.appointment.duration-30m {
+    height: 56px; /* 1 slot (60px) minus borders/padding */
+}
+
+.appointment.duration-1h {
+    height: 116px; /* 2 slots (120px) minus borders/padding */
+}
+
+.appointment.duration-90m {
+    height: 176px; /* 3 slots (180px) minus borders/padding */
+}
+
+/* Appointment header styling - exact match to HTML template */
+.appointment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 3px;
+    border-bottom: 1px solid rgba(255,255,255,0.3);
+    padding-bottom: 2px;
+}
+
+.appointment.google-calendar .appointment-header,
+.appointment.personal .appointment-header {
+    border-bottom: 1px solid rgba(0,0,0,0.3);
+}
+
+.appointment-title {
+    font-weight: bold;
+    font-size: 11px;
+    text-transform: uppercase;
+    flex: 1;
+}
+
+.appointment-time {
+    font-size: 9px;
+    font-weight: normal;
+    white-space: nowrap;
+    margin-left: 4px;
+}
+
+.appointment-calendar {
+    font-size: 7px;
+    font-weight: normal;
+    opacity: 0.8;
+    text-transform: uppercase;
+    margin-top: 1px;
+}
 
 /* E-ink optimizations */
 @media (max-device-width: 1404px) and (max-device-height: 1872px) {
