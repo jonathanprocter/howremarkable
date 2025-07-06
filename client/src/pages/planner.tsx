@@ -338,15 +338,10 @@ export default function Planner() {
         const weekStart = state.currentWeek.startDate;
         const weekEnd = state.currentWeek.endDate;
         
-        console.log('Fetching events for week:', weekStart, 'to', weekEnd);
-        
         const { events, calendars } = await fetchCalendarEvents(
           weekStart.toISOString(),
           weekEnd.toISOString()
         );
-        
-        console.log('Received events:', events);
-        console.log('Received calendars:', calendars);
         
         // Convert Google Calendar events to our format
         const googleEvents: CalendarEvent[] = events.map((event: any) => ({
@@ -356,18 +351,14 @@ export default function Planner() {
           startTime: new Date(event.startTime),
           endTime: new Date(event.endTime),
           source: 'google' as const,
-          sourceId: event.calendarId, // Use calendarId instead of sourceId
+          sourceId: event.calendarId, // Use the calendar ID, not the event ID
           color: event.color,
           notes: event.calendarName
         }));
         
-        console.log('Converted Google events:', googleEvents);
-        
         // Preserve manually created events and combine with Google Calendar events
         const manualEvents = state.events.filter(event => event.source === 'manual');
         const combinedEvents = [...manualEvents, ...googleEvents];
-        
-        console.log('Combined events:', combinedEvents);
         
         updateEvents(combinedEvents);
         setGoogleCalendars(calendars);
@@ -518,16 +509,10 @@ export default function Planner() {
   // Filter events based on selected calendars
   const currentEvents = state.events.filter(event => {
     if (event.source === 'google' && event.sourceId) {
-      const isSelected = selectedCalendars.has(event.sourceId);
-      console.log(`Event ${event.title} from calendar ${event.sourceId} - selected: ${isSelected}`);
-      return isSelected;
+      return selectedCalendars.has(event.sourceId);
     }
     return true; // Show all non-Google events
   });
-  
-  console.log('Selected calendars:', Array.from(selectedCalendars));
-  console.log('Total events in state:', state.events.length);
-  console.log('Filtered events:', currentEvents.length);
   
   const currentDateString = state.selectedDate.toISOString().split('T')[0];
   const currentDailyNotes = state.dailyNotes[currentDateString] || '';

@@ -104,6 +104,8 @@ The application uses three main entities:
 - July 06, 2025. **MAJOR FIX**: Resolved daily view appointment positioning using CSS Grid and exact HTML template calculations
 - July 06, 2025. Restored full appointment management: drag-and-drop, create/delete, Google Calendar selection controls
 - July 06, 2025. Implemented proper authentication handling for Google Calendar event updates
+- July 06, 2025. **CALENDAR SELECTION FIX**: Fixed event loading and filtering with proper calendar legend showing SimplePractice, Google Calendar, and Personal checkboxes
+- July 06, 2025. Implemented calendar filtering system with proper event-to-calendar ID mapping for Google Calendar events
 
 ## User Preferences
 
