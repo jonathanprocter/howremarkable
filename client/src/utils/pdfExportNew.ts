@@ -377,15 +377,288 @@ export const exportDailyToPDF = async (
   events: CalendarEvent[],
   dailyNotes: string
 ): Promise<string> => {
-  // Will implement with exact HTML structure from daily planner template
   const pdf = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
     format: 'a4'
   });
   
-  pdf.text('Daily planner - exact HTML formatting coming next', 10, 10);
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
   
+  // Get events for the selected date
+  const dayEvents = events.filter(event => 
+    new Date(event.startTime).toDateString() === selectedDate.toDateString()
+  );
+
+  // Calculate daily statistics
+  const totalEvents = dayEvents.length;
+  const totalHours = dayEvents.reduce((sum, event) => {
+    return sum + (new Date(event.endTime).getTime() - new Date(event.startTime).getTime()) / (1000 * 60 * 60);
+  }, 0);
+  const availableHours = 24 - totalHours;
+  const freeTimePercentage = Math.round((availableHours / 24) * 100);
+
+  // EXACT MATCH TO HTML: Times New Roman font, border, backgrounds
+  pdf.setFont('times', 'normal');
+  
+  // Page border - exact match to .planner-container border: 2px solid black
+  pdf.setDrawColor(0, 0, 0);
+  pdf.setLineWidth(0.8);
+  pdf.rect(5, 5, pageWidth - 10, pageHeight - 10, 'S');
+  
+  // Header section - exact match to .header styling
+  pdf.setFillColor(255, 255, 255); // White background
+  pdf.rect(5, 5, pageWidth - 10, 25, 'F');
+  
+  // Header bottom border - exact match to border-bottom: 3px solid black
+  pdf.setLineWidth(1.2);
+  pdf.setDrawColor(0, 0, 0);
+  pdf.line(5, 30, pageWidth - 5, 30);
+  
+  // Header content - exact match to HTML structure
+  pdf.setFontSize(18); // 24px scaled for PDF
+  pdf.setFont('times', 'bold');
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('DAILY PLANNER', pageWidth / 2, 18, { align: 'center' });
+  
+  // Date info - exact match to .date-info
+  pdf.setFontSize(12); // 16px scaled for PDF
+  pdf.setFont('times', 'bold');
+  const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
+  const dateStr = selectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  pdf.text(`${dayName}, ${dateStr}`, pageWidth / 2, 26, { align: 'center' });
+
+  // Daily Statistics - exact match to .daily-stats
+  const statsY = 35;
+  pdf.setFillColor(248, 248, 248); // #f8f8f8 background
+  pdf.rect(5, statsY, pageWidth - 10, 15, 'F');
+  
+  // Stats border
+  pdf.setLineWidth(0.8);
+  pdf.setDrawColor(0, 0, 0);
+  pdf.line(5, statsY + 15, pageWidth - 5, statsY + 15);
+  
+  // Stats content - exact match to .stat-item layout
+  pdf.setFontSize(8);
+  pdf.setFont('times', 'normal');
+  const statSpacing = (pageWidth - 10) / 4;
+  
+  // Appointments stat
+  pdf.setFont('times', 'bold');
+  pdf.setFontSize(14);
+  pdf.text(totalEvents.toString(), 5 + statSpacing * 0.5, statsY + 7, { align: 'center' });
+  pdf.setFont('times', 'normal');
+  pdf.setFontSize(8);
+  pdf.text('Appointments', 5 + statSpacing * 0.5, statsY + 12, { align: 'center' });
+  
+  // Scheduled stat
+  pdf.setFont('times', 'bold');
+  pdf.setFontSize(14);
+  pdf.text(`${totalHours.toFixed(1)}h`, 5 + statSpacing * 1.5, statsY + 7, { align: 'center' });
+  pdf.setFont('times', 'normal');
+  pdf.setFontSize(8);
+  pdf.text('Scheduled', 5 + statSpacing * 1.5, statsY + 12, { align: 'center' });
+  
+  // Available stat
+  pdf.setFont('times', 'bold');
+  pdf.setFontSize(14);
+  pdf.text(`${availableHours.toFixed(1)}h`, 5 + statSpacing * 2.5, statsY + 7, { align: 'center' });
+  pdf.setFont('times', 'normal');
+  pdf.setFontSize(8);
+  pdf.text('Available', 5 + statSpacing * 2.5, statsY + 12, { align: 'center' });
+  
+  // Free Time stat
+  pdf.setFont('times', 'bold');
+  pdf.setFontSize(14);
+  pdf.text(`${freeTimePercentage}%`, 5 + statSpacing * 3.5, statsY + 7, { align: 'center' });
+  pdf.setFont('times', 'normal');
+  pdf.setFontSize(8);
+  pdf.text('Free Time', 5 + statSpacing * 3.5, statsY + 12, { align: 'center' });
+
+  // Legend section - exact match to .legend
+  const legendY = 55;
+  pdf.setFillColor(248, 248, 248); // #f8f8f8 background
+  pdf.rect(5, legendY, pageWidth - 10, 10, 'F');
+  
+  // Legend border
+  pdf.setLineWidth(0.4);
+  pdf.setDrawColor(0, 0, 0);
+  pdf.line(5, legendY + 10, pageWidth - 5, legendY + 10);
+  
+  // Legend content
+  pdf.setFontSize(7);
+  pdf.setFont('times', 'normal');
+  
+  // SimplePractice legend
+  pdf.setFillColor(255, 255, 255);
+  pdf.setDrawColor(100, 149, 237); // cornflower blue
+  pdf.setLineWidth(0.8);
+  pdf.rect(10, legendY + 3, 4, 3, 'FD');
+  pdf.setLineWidth(1.5);
+  pdf.setDrawColor(100, 149, 237);
+  pdf.line(10, legendY + 3, 10, legendY + 6); // Left accent
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('SimplePractice', 16, legendY + 6);
+  
+  // Google Calendar legend
+  pdf.setFillColor(255, 255, 255);
+  pdf.setDrawColor(102, 102, 102);
+  pdf.setLineWidth(0.4);
+  pdf.setLineDashPattern([1, 1], 0);
+  pdf.rect(50, legendY + 3, 4, 3, 'FD');
+  pdf.setLineDashPattern([], 0);
+  pdf.text('Google Calendar', 56, legendY + 6);
+  
+  // Personal legend
+  pdf.setFillColor(255, 255, 255);
+  pdf.setDrawColor(102, 102, 102);
+  pdf.setLineWidth(0.4);
+  pdf.rect(110, legendY + 3, 4, 3, 'FD');
+  pdf.text('Personal', 116, legendY + 6);
+
+  // Schedule Grid - exact match to HTML template
+  const gridStartY = 70;
+  const timeColumnWidth = 20;
+  const appointmentColumnWidth = pageWidth - 10 - timeColumnWidth;
+  const slotHeight = 6; // 60px / 10 for PDF scaling
+
+  // Generate time slots from 06:00 to 21:30
+  const timeSlots = [];
+  for (let hour = 6; hour <= 21; hour++) {
+    timeSlots.push({ hour, minute: 0, time: `${hour.toString().padStart(2, '0')}:00`, isHour: true });
+    if (hour < 21) {
+      timeSlots.push({ hour, minute: 30, time: `${hour.toString().padStart(2, '0')}:30`, isHour: false });
+    }
+  }
+
+  // Draw time column and appointment slots
+  timeSlots.forEach((slot, index) => {
+    const slotY = gridStartY + (index * slotHeight);
+    
+    // Time slot background and border
+    if (slot.isHour) {
+      pdf.setFillColor(240, 240, 240); // Hour slots lighter
+      pdf.setLineWidth(0.8);
+    } else {
+      pdf.setFillColor(255, 255, 255); // Half-hour slots white
+      pdf.setLineWidth(0.4);
+    }
+    
+    // Time column
+    pdf.rect(5, slotY, timeColumnWidth, slotHeight, 'FD');
+    
+    // Appointment column
+    pdf.setFillColor(255, 255, 255);
+    pdf.rect(5 + timeColumnWidth, slotY, appointmentColumnWidth, slotHeight, slot.isHour ? 'FD' : 'D');
+    
+    // Time label
+    pdf.setFontSize(slot.isHour ? 8 : 7);
+    pdf.setFont('times', slot.isHour ? 'bold' : 'normal');
+    pdf.setTextColor(0, 0, 0);
+    pdf.text(slot.time, 15, slotY + 4, { align: 'center' });
+  });
+
+  // Draw vertical line separating time and appointment columns
+  pdf.setLineWidth(0.8);
+  pdf.setDrawColor(0, 0, 0);
+  pdf.line(5 + timeColumnWidth, gridStartY, 5 + timeColumnWidth, gridStartY + (timeSlots.length * slotHeight));
+
+  // Draw events in appointment column
+  dayEvents.forEach(event => {
+    const eventStart = new Date(event.startTime);
+    const eventEnd = new Date(event.endTime);
+    const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
+    
+    // Calculate position
+    const startHour = eventStart.getHours();
+    const startMinute = eventStart.getMinutes();
+    const minutesSince6am = (startHour - 6) * 60 + startMinute;
+    const slotIndex = minutesSince6am / 30;
+    
+    const eventY = gridStartY + (slotIndex * slotHeight);
+    const eventHeight = Math.max(slotHeight - 0.5, (durationMinutes / 30) * slotHeight - 0.5);
+    
+    // Event background and border - matching appointment styles
+    const isSimplePractice = event.source === 'simplepractice' || 
+                           event.notes?.toLowerCase().includes('simple practice');
+    
+    pdf.setFillColor(255, 255, 255); // White background for all
+    
+    if (isSimplePractice) {
+      pdf.setDrawColor(100, 149, 237); // Cornflower blue border
+      pdf.setLineWidth(0.8);
+      pdf.rect(5 + timeColumnWidth + 2, eventY + 0.5, appointmentColumnWidth - 4, eventHeight, 'FD');
+      // Left accent
+      pdf.setLineWidth(2);
+      pdf.line(5 + timeColumnWidth + 2, eventY + 0.5, 5 + timeColumnWidth + 2, eventY + 0.5 + eventHeight);
+    } else if (event.source === 'google') {
+      pdf.setDrawColor(102, 102, 102);
+      pdf.setLineWidth(0.4);
+      pdf.setLineDashPattern([1, 1], 0);
+      pdf.rect(5 + timeColumnWidth + 2, eventY + 0.5, appointmentColumnWidth - 4, eventHeight, 'FD');
+      pdf.setLineDashPattern([], 0);
+    } else {
+      pdf.setDrawColor(153, 153, 153);
+      pdf.setLineWidth(0.4);
+      pdf.rect(5 + timeColumnWidth + 2, eventY + 0.5, appointmentColumnWidth - 4, eventHeight, 'FD');
+    }
+    
+    // Event content
+    pdf.setTextColor(0, 0, 0);
+    pdf.setFont('times', 'bold');
+    pdf.setFontSize(7);
+    
+    // Event title
+    const titleLines = pdf.splitTextToSize(event.title, appointmentColumnWidth - 8);
+    pdf.text(titleLines[0] || event.title, 5 + timeColumnWidth + 4, eventY + 3);
+    
+    // Event time
+    pdf.setFont('times', 'normal');
+    pdf.setFontSize(6);
+    const timeStr = `${eventStart.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}-${eventEnd.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}`;
+    pdf.text(timeStr, pageWidth - 15, eventY + 3, { align: 'right' });
+    
+    // Event source
+    pdf.setFontSize(5);
+    pdf.text(`${event.source} calendar`, 5 + timeColumnWidth + 4, eventY + 5.5);
+    
+    let textY = eventY + 7;
+    
+    // Event description
+    if (event.description && textY < eventY + eventHeight - 1) {
+      pdf.setFontSize(6);
+      pdf.setFont('times', 'normal');
+      const descLines = pdf.splitTextToSize(event.description, appointmentColumnWidth - 8);
+      descLines.slice(0, 1).forEach(line => {
+        pdf.text(line, 5 + timeColumnWidth + 4, textY);
+        textY += 2;
+      });
+    }
+    
+    // Event notes
+    if (event.notes && textY < eventY + eventHeight - 1) {
+      pdf.setFontSize(5);
+      pdf.setFont('times', 'italic');
+      const notesLines = pdf.splitTextToSize(event.notes, appointmentColumnWidth - 8);
+      notesLines.slice(0, 2).forEach(line => {
+        pdf.text(line, 5 + timeColumnWidth + 4, textY);
+        textY += 1.5;
+      });
+    }
+    
+    // Action items
+    if (event.actionItems && textY < eventY + eventHeight - 1) {
+      pdf.setFontSize(5);
+      pdf.setFont('times', 'normal');
+      const actionLines = pdf.splitTextToSize(`• ${event.actionItems}`, appointmentColumnWidth - 10);
+      actionLines.slice(0, 1).forEach(line => {
+        pdf.text(line, 5 + timeColumnWidth + 6, textY);
+        textY += 1.5;
+      });
+    }
+  });
+
   return pdf.output('datauristring').split(',')[1];
 };
 

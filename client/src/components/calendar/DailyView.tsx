@@ -60,14 +60,13 @@ export const DailyView = ({
     const eventEnd = new Date(event.endTime);
     const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
     
-    // Calculate position based on start time - aligned to time slots
+    // Calculate position based on start time - aligned to time slots exactly
     const startHour = eventStart.getHours();
     const startMinute = eventStart.getMinutes();
     
-    // Calculate slot index from 6am starting point
-    const hoursSince6am = startHour - 6;
-    const slotIndex = hoursSince6am * 2 + (startMinute >= 30 ? 1 : 0);
-    const topPosition = slotIndex * 60; // 60px per slot
+    // Calculate exact position based on minutes from 6:00 AM
+    const minutesSince6am = (startHour - 6) * 60 + startMinute;
+    const topPosition = (minutesSince6am / 30) * 60; // 60px per 30-minute slot
     
     // Calculate height based on duration
     let height = Math.max(56, (durationMinutes / 30) * 60 - 4); // 60px per 30min slot, minus padding
