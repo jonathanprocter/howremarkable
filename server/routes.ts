@@ -196,9 +196,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             let startTime, endTime;
             if (isAllDay) {
-              // For all-day events, set to midnight of the day
-              startTime = new Date(event.start.date + 'T00:00:00');
-              endTime = new Date(event.end.date + 'T00:00:00');
+              // For all-day events, interpret the date in EST timezone
+              // Google Calendar provides dates like "2025-07-01" for all-day events
+              startTime = new Date(event.start.date + 'T00:00:00-05:00'); // EST offset
+              endTime = new Date(event.end.date + 'T00:00:00-05:00'); // EST offset
             } else {
               startTime = event.start?.dateTime || event.start?.date;
               endTime = event.end?.dateTime || event.end?.date;
