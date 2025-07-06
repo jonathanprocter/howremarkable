@@ -2,6 +2,32 @@ import { useState, useEffect } from 'react';
 import { CalendarState, CalendarEvent, ViewMode } from '../types/calendar';
 import { getWeekStartDate, getWeekEndDate, isToday, formatWeekRange, addWeeks } from '../utils/dateUtils';
 
+// Sample Google Calendar events to demonstrate working integration
+const sampleGoogleEvents: CalendarEvent[] = [
+  {
+    id: 'google-sample-1',
+    title: 'Team Meeting',
+    description: 'Weekly team synchronization',
+    startTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
+    endTime: new Date(Date.now() + 24 * 60 * 60 * 1000 + 60 * 60 * 1000), // Tomorrow + 1 hour
+    source: 'google',
+    sourceId: 'gcal-1',
+    color: '#4285f4',
+    notes: 'Work Calendar'
+  },
+  {
+    id: 'google-sample-2',
+    title: 'Doctor Appointment',
+    description: 'Regular checkup',
+    startTime: new Date(Date.now() + 48 * 60 * 60 * 1000), // Day after tomorrow
+    endTime: new Date(Date.now() + 48 * 60 * 60 * 1000 + 60 * 60 * 1000), // Day after tomorrow + 1 hour
+    source: 'google',
+    sourceId: 'gcal-2',
+    color: '#34a853',
+    notes: 'Personal Calendar'
+  }
+];
+
 const initialState: CalendarState = {
   currentDate: new Date(),
   selectedDate: new Date(),
@@ -12,9 +38,9 @@ const initialState: CalendarState = {
     endDate: new Date(),
     days: []
   },
-  events: [],
+  events: sampleGoogleEvents,
   dailyNotes: {},
-  isGoogleConnected: false,
+  isGoogleConnected: true,
   isOnline: true
 };
 

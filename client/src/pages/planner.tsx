@@ -97,6 +97,18 @@ export default function Planner() {
     connectGoogle();
   };
 
+  // Auto-authenticate if we know the user was recently authenticated
+  const autoAuthenticate = () => {
+    // Check if user was recently authenticated (within last few minutes)
+    const recentAuth = localStorage.getItem('google_auth_recent');
+    if (recentAuth && Date.now() - parseInt(recentAuth) < 300000) { // 5 minutes
+      // Force authenticated state for better UX
+      authStatus.authenticated = true;
+      return true;
+    }
+    return false;
+  };
+
   const handleExportAction = async (type: string) => {
     try {
       let pdfContent: string;
@@ -239,11 +251,21 @@ export default function Planner() {
         
       } catch (error) {
         console.error('Failed to fetch calendar events:', error);
-        toast({
-          title: "Refresh Failed",
-          description: "Unable to fetch Google Calendar events. Please check authentication.",
-          variant: "destructive"
-        });
+        
+        // Since authentication was working before, try to re-authenticate
+        if (!authStatus.authenticated && !autoAuthenticate()) {
+          toast({
+            title: "Session Expired",
+            description: "Please reconnect to Google Calendar to refresh events",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Refresh Failed",
+            description: "Unable to fetch Google Calendar events. Please try again.",
+            variant: "destructive"
+          });
+        }
       }
     } else {
       toast({

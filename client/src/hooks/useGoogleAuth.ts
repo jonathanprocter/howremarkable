@@ -24,6 +24,11 @@ export const useGoogleAuth = () => {
       const response = await fetch('/api/auth/status');
       const data = await response.json();
       setAuthStatus(data);
+      
+      // Save authentication timestamp for session persistence
+      if (data.authenticated) {
+        localStorage.setItem('google_auth_recent', Date.now().toString());
+      }
     } catch (error) {
       console.error('Auth status check failed:', error);
       setAuthStatus({ authenticated: false, user: null });
