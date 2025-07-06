@@ -61,6 +61,25 @@ export const useGoogleAuth = () => {
     }
   };
 
+  const fetchCalendarEvents = async (timeMin?: string, timeMax?: string) => {
+    try {
+      const params = new URLSearchParams();
+      if (timeMin) params.append('timeMin', timeMin);
+      if (timeMax) params.append('timeMax', timeMax);
+
+      const response = await fetch(`/api/calendar/events?${params}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch calendar events');
+      }
+
+      return response.json();
+    } catch (error) {
+      console.error('Calendar fetch failed:', error);
+      throw error;
+    }
+  };
+
   const uploadToDrive = async (filename: string, content: string, mimeType: string = 'application/pdf') => {
     try {
       const response = await fetch('/api/drive/upload', {
@@ -91,6 +110,7 @@ export const useGoogleAuth = () => {
     isLoading,
     connectGoogle,
     logout,
+    fetchCalendarEvents,
     uploadToDrive,
     refreshAuthStatus: checkAuthStatus
   };

@@ -103,6 +103,13 @@ export const useCalendar = () => {
     }));
   };
 
+  const updateEvents = (events: CalendarEvent[]) => {
+    setState(prev => ({
+      ...prev,
+      events: events
+    }));
+  };
+
   const updateEvent = (eventId: string, updates: Partial<CalendarEvent>) => {
     setState(prev => ({
       ...prev,
@@ -148,6 +155,7 @@ export const useCalendar = () => {
     goToPreviousDay,
     goToNextDay,
     addEvent,
+    updateEvents,
     updateEvent,
     deleteEvent,
     updateDailyNote,

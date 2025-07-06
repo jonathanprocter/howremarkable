@@ -96,6 +96,9 @@ The application uses three main entities:
 ## Changelog
 
 - July 06, 2025. Initial setup
+- July 06, 2025. Google OAuth2 integration with Calendar and Drive APIs
+- July 06, 2025. PDF export functionality for weekly and daily views
+- July 06, 2025. Google Drive upload to "reMarkable Calendars" folder
 
 ## User Preferences
 

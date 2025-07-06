@@ -39,7 +39,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Google OAuth Routes
   app.get("/api/auth/google", 
     passport.authenticate("google", { 
-      scope: ["profile", "email", "https://www.googleapis.com/auth/drive.file"] 
+      scope: [
+        "profile", 
+        "email", 
+        "https://www.googleapis.com/auth/drive.file",
+        "https://www.googleapis.com/auth/calendar.readonly"
+      ]
     })
   );
 
@@ -64,6 +69,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json({ success: true });
     });
+  });
+
+  // Google Calendar API - Fetch Events
+  app.get("/api/calendar/events", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    try {
+      const { timeMin, timeMax } = req.query;
+      const user = req.user as any;
+
+      const oauth2Client = new google.auth.OAuth2(
+        process.env.GOOGLE_CLIENT_ID,
+        process.env.GOOGLE_CLIENT_SECRET
+      );
+
+      oauth2Client.setCredentials({
+        access_token: user.accessToken,
+        refresh_token: user.refreshToken
+      });
+
+      const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+
+      // Get calendar list first
+      const calendarList = await calendar.calendarList.list();
+      const calendars = calendarList.data.items || [];
+
+      // Fetch events from all calendars
+      const allEvents: any[] = [];
+      
+      for (const cal of calendars) {
+        try {
+          if (!cal.id) continue;
+          
+          const events = await calendar.events.list({
+            calendarId: cal.id,
+            timeMin: (timeMin as string) || new Date().toISOString(),
+            timeMax: (timeMax as string) || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            singleEvents: true,
+            orderBy: 'startTime'
+          });
+
+          const calendarEvents = (events.data.items || []).map((event: any) => ({
+            id: event.id,
+            title: event.summary || 'No Title',
+            description: event.description,
+            startTime: event.start?.dateTime || event.start?.date,
+            endTime: event.end?.dateTime || event.end?.date,
+            source: 'google',
+            sourceId: event.id,
+            color: cal.backgroundColor || '#38a169',
+            calendarName: cal.summary,
+            calendarId: cal.id
+          }));
+
+          allEvents.push(...calendarEvents);
+        } catch (error) {
+          console.error(`Error fetching events from calendar ${cal.summary}:`, error);
+        }
+      }
+
+      res.json({ 
+        events: allEvents,
+        calendars: calendars.map(cal => ({
+          id: cal.id,
+          name: cal.summary,
+          color: cal.backgroundColor
+        }))
+      });
+
+    } catch (error) {
+      console.error('Calendar fetch error:', error);
+      res.status(500).json({ error: "Failed to fetch calendar events" });
+    }
   });
 
   // Google Drive PDF Upload

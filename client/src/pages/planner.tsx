@@ -22,14 +22,16 @@ export default function Planner() {
     goToPreviousDay,
     goToNextDay,
     addEvent,
+    updateEvents,
     updateEvent,
     updateDailyNote,
     getWeekRangeString,
     isCurrentWeek
   } = useCalendar();
 
-  const { authStatus, connectGoogle, uploadToDrive } = useGoogleAuth();
+  const { authStatus, connectGoogle, fetchCalendarEvents, uploadToDrive } = useGoogleAuth();
   const { toast } = useToast();
+  const [googleCalendars, setGoogleCalendars] = useState<any[]>([]);
 
   // Sample events for demonstration
   const [sampleEvents] = useState<CalendarEvent[]>([
@@ -200,9 +202,48 @@ export default function Planner() {
     }
   };
 
-  const handleQuickAction = (action: string) => {
+  const handleQuickAction = async (action: string) => {
     if (action === 'today') {
       goToToday();
+    } else if (action === 'refresh events' && authStatus.authenticated) {
+      try {
+        const weekStart = state.currentWeek.startDate;
+        const weekEnd = state.currentWeek.endDate;
+        
+        const { events, calendars } = await fetchCalendarEvents(
+          weekStart.toISOString(),
+          weekEnd.toISOString()
+        );
+        
+        // Convert Google Calendar events to our format
+        const googleEvents: CalendarEvent[] = events.map((event: any) => ({
+          id: event.id,
+          title: event.title,
+          description: event.description,
+          startTime: new Date(event.startTime),
+          endTime: new Date(event.endTime),
+          source: 'google' as const,
+          sourceId: event.sourceId,
+          color: event.color,
+          notes: event.calendarName
+        }));
+        
+        // Update calendar state with Google events
+        const allEvents = [...sampleEvents, ...googleEvents];
+        updateEvents(allEvents);
+        setGoogleCalendars(calendars);
+        
+        toast({
+          title: "Events Refreshed",
+          description: `Loaded ${googleEvents.length} events from Google Calendar`
+        });
+      } catch (error) {
+        toast({
+          title: "Refresh Failed",
+          description: "Unable to fetch Google Calendar events",
+          variant: "destructive"
+        });
+      }
     } else {
       toast({
         title: "Quick Action",
