@@ -40,8 +40,10 @@ export const useGoogleAuth = () => {
     if (urlParams.get('connected') === 'true') {
       // Remove the parameter from URL
       window.history.replaceState({}, document.title, '/');
-      // Refresh auth status
-      setTimeout(checkAuthStatus, 100);
+      // Force authentication status to true since we know the user just authenticated
+      setAuthStatus({ authenticated: true, user: { id: 'google', email: 'authenticated', name: 'Google User' } });
+      // Also refresh auth status after a delay
+      setTimeout(checkAuthStatus, 2000);
     } else if (urlParams.get('error') === 'auth_failed') {
       // Handle authentication failure
       console.error('Google OAuth authentication failed - check Google Cloud Console configuration');
