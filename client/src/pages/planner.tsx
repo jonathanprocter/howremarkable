@@ -379,17 +379,21 @@ export default function Planner() {
           calendarId: event.calendarId // Calendar ID for filtering
         }));
         
-        // Preserve manually created events and combine with Google Calendar events
-        const manualEvents = state.events.filter(event => event.source === 'manual');
-        const combinedEvents = [...manualEvents, ...googleEvents];
+        // Don't override existing events if they already exist in the database
+        // Just update calendars and selection - events are already loaded from database
         
-        updateEvents(combinedEvents);
+        // Only update if no events are currently loaded
+        if (state.events.length === 0) {
+          updateEvents(googleEvents);
+        }
         setGoogleCalendars(calendars);
         
-        // Auto-select all calendars by default
-        const calendarIds = calendars?.map((cal: { id: string }) => cal.id) || [];
-        const newSelectedCalendars = new Set<string>(calendarIds);
-        setSelectedCalendars(newSelectedCalendars);
+        // Only update calendar selection if none are currently selected
+        if (selectedCalendars.size === 0) {
+          const calendarIds = calendars?.map((cal: { id: string }) => cal.id) || [];
+          const newSelectedCalendars = new Set<string>(calendarIds);
+          setSelectedCalendars(newSelectedCalendars);
+        }
         
         toast({
           title: "Google Calendar Events Loaded",
