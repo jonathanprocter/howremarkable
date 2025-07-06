@@ -65,12 +65,17 @@ export const DailyView = ({
     const startMinute = eventStart.getMinutes();
     
     // Calculate exact position based on time slot index from 6:00 AM
-    const hoursSince6am = startHour - 6;
-    const slotIndex = hoursSince6am * 2 + (startMinute >= 30 ? 1 : 0);
-    const topPosition = Math.max(0, slotIndex * 60); // 60px per slot to match CSS, ensure non-negative
+    // Each hour has 2 slots (00 and 30 minutes), each 60px tall
+    const hoursSince6am = Math.max(0, startHour - 6); // Ensure no negative values
+    const minuteOffset = startMinute >= 30 ? 1 : 0;
+    const slotIndex = hoursSince6am * 2 + minuteOffset;
+    
+    // Test with much smaller positioning to see if it's an offset issue
+    const slotHeight = 30; // Try half the height to see if it positions better
+    const topPosition = slotIndex * slotHeight;
     
     // Debug log for positioning
-    console.log(`Event: ${event.title}, Start: ${startHour}:${startMinute.toString().padStart(2, '0')}, SlotIndex: ${slotIndex}, TopPosition: ${topPosition}px`);
+    console.log(`Event: ${event.title}, Start: ${startHour}:${startMinute.toString().padStart(2, '0')}, HoursSince6am: ${hoursSince6am}, SlotIndex: ${slotIndex}, TopPosition: ${topPosition}px (using ${slotHeight}px per slot)`);
     
     // Calculate height based on duration
     let height = Math.max(56, (durationMinutes / 30) * 60 - 4); // 60px per 30min slot, minus padding
