@@ -206,65 +206,45 @@ export default function Planner() {
     if (action === 'today') {
       goToToday();
     } else if (action === 'refresh events') {
-      // Based on API usage statistics showing 1,553 successful calendar API calls,
-      // demonstrate the working Google Calendar integration
-      const weekStart = state.currentWeek.startDate;
-      const weekEnd = state.currentWeek.endDate;
-      
-      const googleCalendarEvents: CalendarEvent[] = [
-        {
-          id: 'google-work-1',
-          title: 'Team Standup',
-          description: 'Daily team synchronization meeting',
-          startTime: new Date(weekStart.getTime() + 9 * 60 * 60 * 1000), // 9 AM Monday
-          endTime: new Date(weekStart.getTime() + 9.5 * 60 * 60 * 1000), // 9:30 AM
+      try {
+        const weekStart = state.currentWeek.startDate;
+        const weekEnd = state.currentWeek.endDate;
+        
+        const { events, calendars } = await fetchCalendarEvents(
+          weekStart.toISOString(),
+          weekEnd.toISOString()
+        );
+        
+        // Convert Google Calendar events to our format
+        const googleEvents: CalendarEvent[] = events.map((event: any) => ({
+          id: event.id,
+          title: event.title,
+          description: event.description,
+          startTime: new Date(event.startTime),
+          endTime: new Date(event.endTime),
           source: 'google' as const,
-          sourceId: 'gcal-work-1',
-          color: '#4285f4',
-          notes: 'Work Calendar'
-        },
-        {
-          id: 'google-work-2',
-          title: 'Project Review',
-          description: 'Q3 project milestone review',
-          startTime: new Date(weekStart.getTime() + 24 * 60 * 60 * 1000 + 14 * 60 * 60 * 1000), // Tuesday 2 PM
-          endTime: new Date(weekStart.getTime() + 24 * 60 * 60 * 1000 + 15.5 * 60 * 60 * 1000), // Tuesday 3:30 PM
-          source: 'google' as const,
-          sourceId: 'gcal-work-2',
-          color: '#4285f4',
-          notes: 'Work Calendar'
-        },
-        {
-          id: 'google-personal-1',
-          title: 'Doctor Appointment',
-          description: 'Annual physical exam',
-          startTime: new Date(weekStart.getTime() + 48 * 60 * 60 * 1000 + 10 * 60 * 60 * 1000), // Wednesday 10 AM
-          endTime: new Date(weekStart.getTime() + 48 * 60 * 60 * 1000 + 11 * 60 * 60 * 1000), // Wednesday 11 AM
-          source: 'google' as const,
-          sourceId: 'gcal-personal-1',
-          color: '#34a853',
-          notes: 'Personal Calendar'
-        },
-        {
-          id: 'google-family-1',
-          title: 'Family Dinner',
-          description: 'Monthly family gathering',
-          startTime: new Date(weekStart.getTime() + 5 * 24 * 60 * 60 * 1000 + 18 * 60 * 60 * 1000), // Friday 6 PM
-          endTime: new Date(weekStart.getTime() + 5 * 24 * 60 * 60 * 1000 + 20 * 60 * 60 * 1000), // Friday 8 PM
-          source: 'google' as const,
-          sourceId: 'gcal-family-1',
-          color: '#fbbc04',
-          notes: 'Family Calendar'
-        }
-      ];
-      
-      const allEvents = [...sampleEvents, ...googleCalendarEvents];
-      updateEvents(allEvents);
-      
-      toast({
-        title: "Google Calendar Events Loaded",
-        description: `Loaded ${googleCalendarEvents.length} events from multiple calendars`
-      });
+          sourceId: event.sourceId,
+          color: event.color,
+          notes: event.calendarName
+        }));
+        
+        // Clear existing events and add only Google Calendar events
+        updateEvents(googleEvents);
+        setGoogleCalendars(calendars);
+        
+        toast({
+          title: "Google Calendar Events Loaded",
+          description: `Loaded ${googleEvents.length} events from ${calendars?.length || 0} calendars`
+        });
+        
+      } catch (error) {
+        console.error('Failed to fetch calendar events:', error);
+        toast({
+          title: "Refresh Failed",
+          description: "Unable to fetch Google Calendar events. Please check authentication.",
+          variant: "destructive"
+        });
+      }
     } else {
       toast({
         title: "Quick Action",
@@ -282,7 +262,7 @@ export default function Planner() {
     });
   };
 
-  const currentEvents = [...state.events, ...sampleEvents];
+  const currentEvents = state.events;
   const currentDateString = state.selectedDate.toISOString().split('T')[0];
   const currentDailyNotes = state.dailyNotes[currentDateString] || '';
 
