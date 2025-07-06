@@ -249,9 +249,58 @@ export default function Planner() {
     }
   };
 
+  // Function to sync event notes to database
+  const syncEventToDatabase = async (eventId: string, updates: Partial<CalendarEvent>) => {
+    try {
+      // Only sync manually created events to database for now
+      const event = state.events.find(e => e.id === eventId);
+      if (event && event.source === 'manual') {
+        const numericId = parseInt(eventId.replace('manual-', ''));
+        if (!isNaN(numericId)) {
+          await fetch(`/api/events/${numericId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updates)
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to sync event to database:', error);
+    }
+  };
+
   const handleQuickAction = async (action: string) => {
     if (action === 'today') {
       goToToday();
+    } else if (action === 'sync notes') {
+      try {
+        // Sync all manual event notes to database
+        const manualEvents = state.events.filter(event => event.source === 'manual');
+        let syncedCount = 0;
+        
+        for (const event of manualEvents) {
+          try {
+            await syncEventToDatabase(event.id, {
+              notes: event.notes,
+              actionItems: event.actionItems
+            });
+            syncedCount++;
+          } catch (error) {
+            console.error(`Failed to sync event ${event.id}:`, error);
+          }
+        }
+        
+        toast({
+          title: "Notes Synced",
+          description: `Successfully synced ${syncedCount} events to database`
+        });
+      } catch (error) {
+        toast({
+          title: "Sync Error",
+          description: "Failed to sync notes to database",
+          variant: "destructive"
+        });
+      }
     } else if (action === 'refresh events') {
       try {
         const weekStart = state.currentWeek.startDate;
@@ -338,9 +387,21 @@ export default function Planner() {
     });
   };
 
-  const handleCreateEvent = (startTime: Date, endTime: Date) => {
+  // Enhanced event update handler with auto-sync to database
+  const handleUpdateEventWithSync = async (eventId: string, updates: Partial<CalendarEvent>) => {
+    // Update local state first
+    updateEvent(eventId, updates);
+    
+    // Auto-sync to database if it's a manual event and contains notes/actionItems
+    if (updates.notes !== undefined || updates.actionItems !== undefined) {
+      await syncEventToDatabase(eventId, updates);
+    }
+  };
+
+  const handleCreateEvent = async (startTime: Date, endTime: Date) => {
+    const eventId = `manual-${Date.now()}`;
     const newEvent: CalendarEvent = {
-      id: `manual-${Date.now()}`,
+      id: eventId,
       title: 'New Appointment',
       description: '',
       startTime,
@@ -351,6 +412,27 @@ export default function Planner() {
     };
 
     addEvent(newEvent);
+    
+    // Create in database as well
+    try {
+      await fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: 1, // TODO: Use actual user ID from authentication
+          title: newEvent.title,
+          description: newEvent.description,
+          startTime: newEvent.startTime.toISOString(),
+          endTime: newEvent.endTime.toISOString(),
+          source: newEvent.source,
+          color: newEvent.color,
+          notes: newEvent.notes
+        })
+      });
+    } catch (error) {
+      console.error('Failed to create event in database:', error);
+    }
+
     toast({
       title: "Event Created",
       description: "New appointment added. Click to edit details."
@@ -421,7 +503,7 @@ export default function Planner() {
           onNextDay={goToNextDay}
           onBackToWeek={handleBackToWeek}
           onEventClick={handleEventClick}
-          onUpdateEvent={updateEvent}
+          onUpdateEvent={handleUpdateEventWithSync}
           onUpdateDailyNotes={handleUpdateDailyNotes}
           onEventMove={handleEventMove}
           onCreateEvent={handleCreateEvent}
