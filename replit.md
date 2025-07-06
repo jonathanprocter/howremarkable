@@ -99,6 +99,8 @@ The application uses three main entities:
 - July 06, 2025. Google OAuth2 integration with Calendar and Drive APIs
 - July 06, 2025. PDF export functionality for weekly and daily views
 - July 06, 2025. Google Drive upload to "reMarkable Calendars" folder
+- July 06, 2025. Fixed critical daily view timing alignment issues with 0.75 scaling factor
+- July 06, 2025. Extended timeline to full page height (6:00-21:30) with proper grid sizing
 
 ## User Preferences
 

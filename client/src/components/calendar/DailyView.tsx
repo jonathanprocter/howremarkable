@@ -65,17 +65,16 @@ export const DailyView = ({
     const startMinute = eventStart.getMinutes();
     
     // Calculate position based on actual time relative to schedule start (6:00 AM)
-    // Since 17:00 appears at 14:15, we need to correct the positioning
-    // 17:00 should be at 11 hours after 6:00 = 11 * 2 slots = slot 22
-    // But it appears at 14:15 = 8.25 hours after 6:00 = 8.25 * 2 = slot 16.5
-    // So we need to scale by 16.5/22 = 0.75
+    // From screenshot: 17:00 appointment appears at 19:00 position
+    // This means appointments are shifted down by 2 hours
+    // So we need to subtract 2 hours from the calculation
     
-    const minutesSince6am = (startHour - 6) * 60 + startMinute;
-    const correctedPosition = (minutesSince6am / 30) * 60 * 0.75; // Apply 0.75 scaling factor
-    const topPosition = Math.max(0, correctedPosition);
+    const adjustedHour = startHour - 2; // Subtract 2 hours to compensate for the shift
+    const minutesSince6am = (adjustedHour - 6) * 60 + startMinute;
+    const topPosition = Math.max(0, (minutesSince6am / 30) * 60); // 30 minutes per 60px slot
     
     // Debug log for positioning - can be removed in production
-    // console.log(`Event: ${event.title}, Start: ${startHour}:${startMinute.toString().padStart(2, '0')}, MinutesSince6am: ${minutesSince6am}, CorrectedPosition: ${topPosition}px`);
+    console.log(`Event: ${event.title}, Original: ${startHour}:${startMinute.toString().padStart(2, '0')}, Adjusted: ${adjustedHour}:${startMinute.toString().padStart(2, '0')}, Position: ${topPosition}px`);
     
     // Calculate height based on duration
     let height = Math.max(56, (durationMinutes / 30) * 60 - 4); // 60px per 30min slot, minus padding
