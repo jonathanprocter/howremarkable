@@ -74,8 +74,8 @@ export const DailyView = ({
     const correctedPosition = (minutesSince6am / 30) * 60 * 0.75; // Apply 0.75 scaling factor
     const topPosition = Math.max(0, correctedPosition);
     
-    // Debug log for positioning
-    console.log(`Event: ${event.title}, Start: ${startHour}:${startMinute.toString().padStart(2, '0')}, MinutesSince6am: ${minutesSince6am}, CorrectedPosition: ${topPosition}px`);
+    // Debug log for positioning - can be removed in production
+    // console.log(`Event: ${event.title}, Start: ${startHour}:${startMinute.toString().padStart(2, '0')}, MinutesSince6am: ${minutesSince6am}, CorrectedPosition: ${topPosition}px`);
     
     // Calculate height based on duration
     let height = Math.max(56, (durationMinutes / 30) * 60 - 4); // 60px per 30min slot, minus padding

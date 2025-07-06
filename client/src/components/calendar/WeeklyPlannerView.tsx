@@ -169,45 +169,47 @@ export const WeeklyPlannerView = ({
           {timeSlots.map((slot, slotIndex) => {
             const isHour = slot.minute === 0;
             
-            return (
-              <>
-                {/* Time slot label */}
-                <div key={`time-${slot.hour}-${slot.minute}`} className={`time-slot ${isHour ? 'hour' : ''}`}>
-                  {slot.time}
-                </div>
-                
-                {/* Calendar cells for each day */}
-                {week.map((day, dayIndex) => {
-                  return (
-                    <div
-                      key={`${slotIndex}-${dayIndex}`}
-                      className={`calendar-cell ${isHour ? 'hour' : 'half-hour'}`}
-                      onClick={() => onTimeSlotClick(day.date, slot.time)}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        if (!onEventMove) return;
-
-                        try {
-                          const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
-                          const newStartTime = new Date(day.date);
-                          newStartTime.setHours(slot.hour, slot.minute, 0, 0);
-                          
-                          const newEndTime = new Date(newStartTime.getTime() + dragData.duration);
-                          
-                          onEventMove(dragData.eventId, newStartTime, newEndTime);
-                        } catch (error) {
-                          console.error('Error handling drop:', error);
-                        }
-                      }}
-                    >
-                      {renderTimeSlotEvents(day.date, slot, slotIndex)}
-                    </div>
-                  );
-                })}
-              </>
+            const slotElements = [];
+            
+            // Time slot label
+            slotElements.push(
+              <div key={`time-${slot.hour}-${slot.minute}`} className={`time-slot ${isHour ? 'hour' : ''}`}>
+                {slot.time}
+              </div>
             );
-          })}
+            
+            // Calendar cells for each day
+            week.forEach((day, dayIndex) => {
+              slotElements.push(
+                <div
+                  key={`${slotIndex}-${dayIndex}`}
+                  className={`calendar-cell ${isHour ? 'hour' : 'half-hour'}`}
+                  onClick={() => onTimeSlotClick(day.date, slot.time)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (!onEventMove) return;
+
+                    try {
+                      const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
+                      const newStartTime = new Date(day.date);
+                      newStartTime.setHours(slot.hour, slot.minute, 0, 0);
+                      
+                      const newEndTime = new Date(newStartTime.getTime() + dragData.duration);
+                      
+                      onEventMove(dragData.eventId, newStartTime, newEndTime);
+                    } catch (error) {
+                      console.error('Error handling drop:', error);
+                    }
+                  }}
+                >
+                  {renderTimeSlotEvents(day.date, slot, slotIndex)}
+                </div>
+              );
+            });
+            
+            return slotElements;
+          }).flat()}
         </div>
       </div>
     </div>
