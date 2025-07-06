@@ -102,13 +102,22 @@ export const DailyView = ({
               isEventInTimeSlot(event, timeSlot)
             );
             
+            // Only show events in their starting time slot
+            const isFirstSlotOfEvent = (event: CalendarEvent) => {
+              const eventStart = new Date(event.startTime);
+              const eventStartMinutes = eventStart.getHours() * 60 + eventStart.getMinutes();
+              const slotStartMinutes = timeSlot.hour * 60 + timeSlot.minute;
+              
+              return eventStartMinutes >= slotStartMinutes && eventStartMinutes < slotStartMinutes + 30;
+            };
+            
             return (
               <div key={index} className="grid grid-cols-8 border-b border-gray-300 last:border-b-0">
                 <div className="time-slot p-2 text-sm font-medium text-gray-600 bg-gray-50 border-r border-gray-300 text-center">
                   {timeSlot.time}
                 </div>
                 <div className="time-slot p-3 relative col-span-7">
-                  {slotEvents.map((event) => (
+                  {slotEvents.filter(isFirstSlotOfEvent).map((event) => (
                     <div key={event.id} className="space-y-2">
                       <div
                         className={cn(
@@ -121,7 +130,7 @@ export const DailyView = ({
                           {event.title}
                         </div>
                         <div className="text-xs text-gray-600">
-                          {event.source} • {event.startTime.toLocaleTimeString('en-US', { 
+                          {event.notes || event.source} • {event.startTime.toLocaleTimeString('en-US', { 
                             hour: 'numeric', 
                             minute: '2-digit', 
                             hour12: true 
