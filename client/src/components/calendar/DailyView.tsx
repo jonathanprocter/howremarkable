@@ -246,13 +246,16 @@ export const DailyView = ({
               isEventInTimeSlot(event, timeSlot)
             );
             
-            // Only show events in their starting time slot
+            // Only show events in their exact starting time slot
             const isFirstSlotOfEvent = (event: CalendarEvent) => {
               const eventStart = new Date(event.startTime);
-              const eventStartMinutes = eventStart.getHours() * 60 + eventStart.getMinutes();
-              const slotStartMinutes = timeSlot.hour * 60 + timeSlot.minute;
+              const eventHour = eventStart.getHours();
+              const eventMinute = eventStart.getMinutes();
               
-              return eventStartMinutes >= slotStartMinutes && eventStartMinutes < slotStartMinutes + 30;
+              // Round event minutes to nearest 30-minute slot
+              const roundedMinute = eventMinute >= 30 ? 30 : 0;
+              
+              return timeSlot.hour === eventHour && timeSlot.minute === roundedMinute;
             };
             
             return (
