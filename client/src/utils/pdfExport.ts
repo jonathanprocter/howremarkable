@@ -482,9 +482,14 @@ export const exportWeeklyPackageToPDF = async (
         pdf.setLineWidth(0.3);
         pdf.rect(eventX, y + 0.5, eventWidth, eventHeight, 'S');
         
-        // Event text with navigation hint
-        pdf.setFontSize(5);
-        pdf.setFont('helvetica', 'normal');
+        // Comprehensive event info for weekly view
+        let weeklyLineY = y + 1.5;
+        const weeklyLineHeight = 1.8;
+        const weeklyMaxWidth = eventWidth - 1;
+        
+        // Time range header
+        pdf.setFontSize(4);
+        pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(0, 0, 0);
         
         const startTime = eventStart.toLocaleTimeString('en-US', { 
@@ -498,26 +503,74 @@ export const exportWeeklyPackageToPDF = async (
           hour12: false 
         });
         
+        pdf.text(`${startTime}-${endTime}`, eventX + 0.5, weeklyLineY);
+        weeklyLineY += weeklyLineHeight;
+        
+        // Event title
+        pdf.setFontSize(4);
+        pdf.setFont('helvetica', 'bold');
         const cleanTitle = event.title.replace(/[^\w\s\-\.,;:()\[\]]/g, '');
-        const eventWithTime = `${startTime}-${endTime} ${cleanTitle}`;
+        const titleLines = pdf.splitTextToSize(cleanTitle, weeklyMaxWidth);
         
-        const splitText = pdf.splitTextToSize(eventWithTime, eventWidth - 1);
-        
-        if (Array.isArray(splitText)) {
-          splitText.forEach((line, lineIndex) => {
-            if (lineIndex < Math.floor(eventHeight / 2)) {
-              pdf.text(line, eventX + 0.5, y + 2.5 + (lineIndex * 1.5));
+        if (Array.isArray(titleLines)) {
+          titleLines.slice(0, Math.floor(eventHeight / 2)).forEach(line => {
+            if (weeklyLineY < y + eventHeight - 1) {
+              pdf.text(line, eventX + 0.5, weeklyLineY);
+              weeklyLineY += weeklyLineHeight;
             }
           });
         } else {
-          pdf.text(splitText, eventX + 0.5, y + 2.5);
+          pdf.text(titleLines, eventX + 0.5, weeklyLineY);
+          weeklyLineY += weeklyLineHeight;
         }
         
-        // Add navigation hint
+        // Critical info (description/notes) if space allows
+        if (eventHeight > 8 && weeklyLineY < y + eventHeight - 3) {
+          pdf.setFontSize(3.5);
+          pdf.setFont('helvetica', 'normal');
+          pdf.setTextColor(60, 60, 60);
+          
+          let criticalInfo = '';
+          if (event.description && event.description.trim()) {
+            criticalInfo = event.description.substring(0, 30) + '...';
+          } else if (event.notes && event.notes.trim()) {
+            criticalInfo = event.notes.substring(0, 30) + '...';
+          }
+          
+          if (criticalInfo) {
+            const infoLines = pdf.splitTextToSize(criticalInfo, weeklyMaxWidth);
+            if (Array.isArray(infoLines)) {
+              infoLines.slice(0, 1).forEach(line => {
+                if (weeklyLineY < y + eventHeight - 1.5) {
+                  pdf.text(line, eventX + 0.5, weeklyLineY);
+                  weeklyLineY += weeklyLineHeight - 0.3;
+                }
+              });
+            } else {
+              pdf.text(infoLines, eventX + 0.5, weeklyLineY);
+              weeklyLineY += weeklyLineHeight;
+            }
+          }
+          pdf.setTextColor(0, 0, 0);
+        }
+        
+        // Action items indicator
+        if (event.actionItems && event.actionItems.trim() && eventHeight > 6) {
+          pdf.setFontSize(3);
+          pdf.setFont('helvetica', 'bold');
+          pdf.setTextColor(120, 0, 0);
+          if (weeklyLineY < y + eventHeight - 1) {
+            pdf.text('⚡ Actions', eventX + 0.5, weeklyLineY);
+          }
+          pdf.setTextColor(0, 0, 0);
+        }
+        
+        // Navigation hint and source
         if (eventHeight > 3) {
-          pdf.setFontSize(4);
+          pdf.setFontSize(3);
           pdf.setTextColor(80, 80, 80);
-          pdf.text(`→ P${dayIndex + 2}`, eventX + 0.5, y + eventHeight - 0.5);
+          const sourceIcon = event.source === 'google' ? '📅' : event.source === 'simplepractice' ? '🏥' : '📝';
+          pdf.text(`${sourceIcon} → P${dayIndex + 2}`, eventX + 0.5, y + eventHeight - 0.5);
           pdf.setTextColor(0, 0, 0);
         }
       });
@@ -646,12 +699,16 @@ export const exportWeeklyPackageToPDF = async (
         pdf.setLineWidth(0.5);
         pdf.rect(eventX, y + 1, eventWidth, eventHeight, 'S');
         
-        // Event text with time and title
-        pdf.setFontSize(8);
+        // Comprehensive event information display
+        let currentLineY = y + 3;
+        const lineHeight = 2.5;
+        const maxWidth = eventWidth - 6;
+        
+        // Time range (bold header)
+        pdf.setFontSize(7);
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(0, 0, 0);
         
-        // Format time range
         const startTime = eventStart.toLocaleTimeString('en-US', { 
           hour: '2-digit', 
           minute: '2-digit', 
@@ -664,33 +721,110 @@ export const exportWeeklyPackageToPDF = async (
         });
         
         const timeRange = `${startTime}-${endTime}`;
-        pdf.text(timeRange, eventX + 3, y + 4);
+        pdf.text(timeRange, eventX + 3, currentLineY);
+        currentLineY += lineHeight + 1;
         
-        // Event title below time
-        pdf.setFontSize(7);
-        pdf.setFont('helvetica', 'normal');
+        // Event title
+        pdf.setFontSize(6);
+        pdf.setFont('helvetica', 'bold');
         const cleanTitle = event.title.replace(/[^\w\s\-\.,;:()\[\]]/g, '');
-        const maxChars = Math.floor(eventWidth / 2);
-        let displayTitle = cleanTitle;
-        if (cleanTitle.length > maxChars) {
-          displayTitle = cleanTitle.substring(0, maxChars - 3) + '...';
+        const titleLines = pdf.splitTextToSize(cleanTitle, maxWidth);
+        
+        if (Array.isArray(titleLines)) {
+          titleLines.slice(0, 2).forEach(line => {
+            if (currentLineY < y + eventHeight - 2) {
+              pdf.text(line, eventX + 3, currentLineY);
+              currentLineY += lineHeight;
+            }
+          });
+        } else {
+          pdf.text(titleLines, eventX + 3, currentLineY);
+          currentLineY += lineHeight;
         }
         
-        pdf.text(displayTitle, eventX + 3, y + 7);
-        
-        // Add space for reMarkable notes
-        if (eventHeight > 12) {
-          pdf.setFontSize(6);
-          pdf.setTextColor(150, 150, 150);
-          pdf.text('Notes: ___________________', eventX + 3, y + eventHeight - 3);
+        // Event description (if available)
+        if (event.description && event.description.trim() && currentLineY < y + eventHeight - 6) {
+          pdf.setFontSize(5);
+          pdf.setFont('helvetica', 'normal');
+          pdf.setTextColor(60, 60, 60);
+          
+          const cleanDescription = event.description.replace(/[^\w\s\-\.,;:()\[\]]/g, '');
+          const descLines = pdf.splitTextToSize(`Desc: ${cleanDescription}`, maxWidth);
+          
+          if (Array.isArray(descLines)) {
+            descLines.slice(0, 2).forEach(line => {
+              if (currentLineY < y + eventHeight - 4) {
+                pdf.text(line, eventX + 3, currentLineY);
+                currentLineY += lineHeight - 0.5;
+              }
+            });
+          } else {
+            pdf.text(descLines, eventX + 3, currentLineY);
+            currentLineY += lineHeight;
+          }
           pdf.setTextColor(0, 0, 0);
         }
         
-        // Add navigation hint to weekly view
-        if (eventHeight > 15) {
+        // Event notes (if available)
+        if (event.notes && event.notes.trim() && currentLineY < y + eventHeight - 4) {
           pdf.setFontSize(5);
+          pdf.setFont('helvetica', 'italic');
           pdf.setTextColor(80, 80, 80);
-          pdf.text('← Weekly View (Page 1)', eventX + 3, y + eventHeight - 1);
+          
+          const cleanNotes = event.notes.replace(/[^\w\s\-\.,;:()\[\]]/g, '');
+          const notesLines = pdf.splitTextToSize(`Notes: ${cleanNotes}`, maxWidth);
+          
+          if (Array.isArray(notesLines)) {
+            notesLines.slice(0, 1).forEach(line => {
+              if (currentLineY < y + eventHeight - 2) {
+                pdf.text(line, eventX + 3, currentLineY);
+                currentLineY += lineHeight - 0.5;
+              }
+            });
+          } else {
+            pdf.text(notesLines, eventX + 3, currentLineY);
+            currentLineY += lineHeight;
+          }
+          pdf.setTextColor(0, 0, 0);
+        }
+        
+        // Action items (if available)
+        if (event.actionItems && event.actionItems.trim() && currentLineY < y + eventHeight - 4) {
+          pdf.setFontSize(5);
+          pdf.setFont('helvetica', 'bold');
+          pdf.setTextColor(120, 0, 0);
+          
+          const cleanActions = event.actionItems.replace(/[^\w\s\-\.,;:()\[\]]/g, '');
+          const actionLines = pdf.splitTextToSize(`Actions: ${cleanActions}`, maxWidth);
+          
+          if (Array.isArray(actionLines)) {
+            actionLines.slice(0, 1).forEach(line => {
+              if (currentLineY < y + eventHeight - 2) {
+                pdf.text(line, eventX + 3, currentLineY);
+                currentLineY += lineHeight - 0.5;
+              }
+            });
+          } else {
+            pdf.text(actionLines, eventX + 3, currentLineY);
+            currentLineY += lineHeight;
+          }
+          pdf.setTextColor(0, 0, 0);
+        }
+        
+        // Source indicator
+        if (currentLineY < y + eventHeight - 2) {
+          pdf.setFontSize(4);
+          pdf.setFont('helvetica', 'normal');
+          pdf.setTextColor(120, 120, 120);
+          const sourceText = event.source === 'google' ? '📅' : event.source === 'simplepractice' ? '🏥' : '📝';
+          pdf.text(`${sourceText} ${event.source}`, eventX + 3, y + eventHeight - 1);
+        }
+        
+        // Navigation hint (if space allows)
+        if (eventHeight > 20) {
+          pdf.setFontSize(4);
+          pdf.setTextColor(80, 80, 80);
+          pdf.text('← Weekly (P1)', eventX + eventWidth - 15, y + eventHeight - 1);
           pdf.setTextColor(0, 0, 0);
         }
       });
