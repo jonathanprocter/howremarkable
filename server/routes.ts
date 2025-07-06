@@ -21,17 +21,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log("Access Token:", accessToken ? "RECEIVED" : "MISSING");
     console.log("Refresh Token:", refreshToken ? "RECEIVED" : "MISSING");
     
-    // Store tokens in session for later use
-    const user = {
-      id: profile.id,
-      email: profile.emails?.[0]?.value,
-      name: profile.displayName,
-      accessToken,
-      refreshToken
-    };
-    
-    console.log("Returning user object:", { id: user.id, email: user.email, name: user.name });
-    return done(null, user);
+    try {
+      // Check if user exists in database
+      let dbUser = await storage.getUserByGoogleId(profile.id);
+      
+      if (!dbUser) {
+        // Create new user in database
+        dbUser = await storage.createGoogleUser(
+          profile.id,
+          profile.emails?.[0]?.value || '',
+          profile.displayName || ''
+        );
+        console.log("Created new user in database:", dbUser.id);
+      } else {
+        console.log("Found existing user in database:", dbUser.id);
+      }
+      
+      // Store tokens and database user ID in session
+      const user = {
+        id: dbUser.id.toString(), // Use database ID instead of Google ID
+        googleId: profile.id, // Keep Google ID for reference
+        email: profile.emails?.[0]?.value,
+        name: profile.displayName,
+        accessToken,
+        refreshToken
+      };
+      
+      console.log("Returning user object:", { id: user.id, email: user.email, name: user.name });
+      return done(null, user);
+    } catch (error) {
+      console.error("Error in Google OAuth strategy:", error);
+      return done(error, false);
+    }
   }));
 
   passport.serializeUser((user: any, done) => {

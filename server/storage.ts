@@ -5,7 +5,9 @@ import { eq, and } from "drizzle-orm";
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByGoogleId(googleId: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  createGoogleUser(googleId: string, email: string, name: string): Promise<User>;
   getEvents(userId: number): Promise<Event[]>;
   createEvent(event: InsertEvent): Promise<Event>;
   updateEvent(eventId: number, updates: Partial<Event>): Promise<Event>;
@@ -25,10 +27,29 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
+  async getUserByGoogleId(googleId: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.googleId, googleId));
+    return user || undefined;
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
       .values(insertUser)
+      .returning();
+    return user;
+  }
+
+  async createGoogleUser(googleId: string, email: string, name: string): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values({
+        username: email,
+        googleId: googleId,
+        email: email,
+        name: name,
+        password: null // No password for Google users
+      })
       .returning();
     return user;
   }
