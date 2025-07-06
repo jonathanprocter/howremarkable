@@ -87,11 +87,11 @@ export const DailyView = ({
       <div className="space-y-6">
         {/* Schedule Section */}
         <div className="border border-gray-300 rounded-lg overflow-hidden">
-          <div className="grid grid-cols-2 border-b border-gray-300">
-            <div className="time-header p-3 text-sm font-semibold">
+          <div className="grid grid-cols-8 border-b border-gray-300">
+            <div className="time-header p-3 text-sm font-semibold text-center">
               Time
             </div>
-            <div className="time-header p-3 text-sm font-semibold">
+            <div className="time-header p-3 text-sm font-semibold col-span-7">
               Event
             </div>
           </div>
@@ -103,11 +103,11 @@ export const DailyView = ({
             );
             
             return (
-              <div key={index} className="grid grid-cols-2 border-b border-gray-300 last:border-b-0">
-                <div className="time-slot p-3 text-sm font-medium text-gray-600 bg-gray-50 border-r border-gray-300">
+              <div key={index} className="grid grid-cols-8 border-b border-gray-300 last:border-b-0">
+                <div className="time-slot p-2 text-sm font-medium text-gray-600 bg-gray-50 border-r border-gray-300 text-center">
                   {timeSlot.time}
                 </div>
-                <div className="time-slot p-3 relative">
+                <div className="time-slot p-3 relative col-span-7">
                   {slotEvents.map((event) => (
                     <div key={event.id} className="space-y-2">
                       <div
