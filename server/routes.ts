@@ -499,7 +499,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = parseInt(req.params.userId);
       const events = await storage.getEvents(userId);
-      res.json(events);
+      
+      // Map database events to the expected format
+      const eventsFormatted = events.map(e => ({
+        id: e.sourceId || e.id.toString(),
+        title: e.title,
+        description: e.description,
+        startTime: e.startTime,
+        endTime: e.endTime,
+        source: e.source,
+        sourceId: e.sourceId,
+        color: e.color,
+        notes: e.notes,
+        actionItems: e.actionItems,
+        calendarId: e.source === 'google' ? e.calendarId : undefined
+      }));
+      
+      res.json(eventsFormatted);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch events" });
     }
