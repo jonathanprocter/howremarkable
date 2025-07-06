@@ -204,18 +204,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allEvents: any[] = [];
       const allCalendarEvents: any[] = [];
       
+      console.log(`Starting calendar sync from January 1, 2025 for ${calendars.length} calendars...`);
+      
       for (const cal of calendars) {
         try {
           if (!cal.id) continue;
           
+          // Fetch events from January 1, 2025 to now for comprehensive sync
+          const startOfYear = new Date('2025-01-01T00:00:00Z').toISOString();
+          const currentDate = new Date().toISOString();
+          
           const events = await calendar.events.list({
             calendarId: cal.id,
-            timeMin: (timeMin as string) || new Date().toISOString(),
-            timeMax: (timeMax as string) || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            timeMin: (timeMin as string) || startOfYear,
+            timeMax: (timeMax as string) || currentDate,
             singleEvents: true,
-            orderBy: 'startTime'
+            orderBy: 'startTime',
+            maxResults: 2500 // Increase max results to handle full year
           });
 
+          console.log(`Calendar ${cal.summary}: Found ${events.data.items?.length || 0} events from Jan 1, 2025 to now`);
+          
           const calendarEvents = (events.data.items || []).map((event: any) => {
             // Detect all-day events - Google Calendar uses 'date' for all-day, 'dateTime' for timed
             const isAllDay = !event.start?.dateTime && !!event.start?.date;
@@ -249,6 +258,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
 
           // Sync Google Calendar events to database
+          let newEventCount = 0;
           for (const googleEvent of calendarEvents) {
             try {
               // Check if event already exists in database
@@ -269,11 +279,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   notes: '',
                   actionItems: ''
                 });
+                newEventCount++;
               }
             } catch (error) {
               console.error(`Error syncing Google event ${googleEvent.id} to database:`, error);
             }
           }
+          
+          console.log(`Calendar ${cal.summary}: Synced ${newEventCount} new events to database`);
 
           allEvents.push(...calendarEvents);
           allCalendarEvents.push(...calendarEvents);
@@ -284,6 +297,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // After syncing, get all database events (both Google and manual)
       const updatedDbEvents = await storage.getEvents(parseInt(user.id));
+      
+      console.log(`Calendar sync complete: Total events in database: ${updatedDbEvents.length}`);
       
       // Map database events to the expected format
       const dbEventsMapped = updatedDbEvents.map(e => ({
