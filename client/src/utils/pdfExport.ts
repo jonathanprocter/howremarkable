@@ -10,56 +10,75 @@ export const exportWeeklyToPDF = async (
   events: CalendarEvent[],
   weekNumber: number
 ): Promise<string> => {
-  const pdf = new jsPDF('landscape', 'mm', 'a4');
+  // Use custom page size optimized for reMarkable Pro (1404px width)
+  const pdf = new jsPDF({
+    orientation: 'landscape',
+    unit: 'mm',
+    format: [297, 210] // A4 landscape, but we'll optimize layout
+  });
+  
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
   
-  // Set font to avoid encoding issues
+  // Set font to avoid encoding issues - this is critical
   pdf.setFont('helvetica', 'normal');
   
   // Title
-  pdf.setFontSize(16);
+  pdf.setFontSize(18);
   pdf.setFont('helvetica', 'bold');
-  pdf.text(`Weekly Planner - Week ${weekNumber}`, pageWidth / 2, 20, { align: 'center' });
+  pdf.text(`Weekly Planner - Week ${weekNumber}`, pageWidth / 2, 25, { align: 'center' });
   
   // Week range
-  pdf.setFontSize(12);
+  pdf.setFontSize(14);
   pdf.setFont('helvetica', 'normal');
   const weekRange = `${formatDateShort(weekStartDate)} - ${formatDateShort(weekEndDate)}`;
-  pdf.text(weekRange, pageWidth / 2, 30, { align: 'center' });
+  pdf.text(weekRange, pageWidth / 2, 35, { align: 'center' });
   
-  // Create a clean weekly grid
-  const startY = 45;
-  const rowHeight = 10;
+  // Optimized layout for reMarkable Pro
+  const startY = 50;
+  const rowHeight = 12; // Increased for better readability
   const timeSlots = generateTimeSlots();
-  const timeColumnWidth = 25;
-  const dayWidth = (pageWidth - timeColumnWidth - 20) / 7; // 7 days
+  const timeColumnWidth = 35; // Wider time column
+  const dayWidth = (pageWidth - timeColumnWidth - 30) / 7; // 7 days with more padding
   
-  // Headers
-  pdf.setFontSize(10);
+  // Headers with better styling
+  pdf.setFontSize(12);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('Time', 15, startY);
+  pdf.text('Time', 20, startY);
   
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  days.forEach((day, index) => {
-    pdf.text(day, timeColumnWidth + 15 + (index * dayWidth), startY);
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const dayAbbrev = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  
+  dayAbbrev.forEach((day, index) => {
+    const x = timeColumnWidth + 20 + (index * dayWidth);
+    pdf.text(day, x, startY);
   });
   
+  // Draw header underline
+  pdf.setDrawColor(0, 0, 0);
+  pdf.setLineWidth(0.5);
+  pdf.line(20, startY + 3, pageWidth - 20, startY + 3);
+  
   // Draw grid lines
-  pdf.setDrawColor(200, 200, 200);
-  pdf.setLineWidth(0.1);
+  pdf.setDrawColor(220, 220, 220);
+  pdf.setLineWidth(0.2);
   
   // Time slots and events
   timeSlots.forEach((slot, index) => {
-    const y = startY + 10 + (index * rowHeight);
+    const y = startY + 15 + (index * rowHeight);
     
-    // Time column
-    pdf.setFontSize(8);
+    // Skip if we're running out of page space
+    if (y > pageHeight - 20) return;
+    
+    // Time column with better formatting
+    pdf.setFontSize(10);
     pdf.setFont('helvetica', 'normal');
-    pdf.text(slot.time, 15, y);
+    pdf.setTextColor(80, 80, 80); // Darker gray for time
+    pdf.text(slot.time, 20, y);
     
-    // Draw horizontal line
-    pdf.line(15, y + 2, pageWidth - 15, y + 2);
+    // Draw light horizontal line
+    pdf.setDrawColor(240, 240, 240);
+    pdf.line(20, y + 2, pageWidth - 20, y + 2);
     
     // Add events for this time slot
     for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
@@ -77,20 +96,46 @@ export const exportWeeklyToPDF = async (
       });
       
       if (dayEvents.length > 0) {
-        pdf.setFontSize(7);
+        pdf.setFontSize(9);
         pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(0, 0, 0); // Black text for events
+        
         dayEvents.forEach((event, eventIndex) => {
-          const x = timeColumnWidth + 15 + (dayIndex * dayWidth);
-          const eventY = y + (eventIndex * 3);
+          const x = timeColumnWidth + 20 + (dayIndex * dayWidth);
+          const eventY = y + (eventIndex * 4);
           
-          // Truncate long titles to fit
-          const maxWidth = dayWidth - 5;
-          const title = event.title.length > 15 ? event.title.substring(0, 15) + '...' : event.title;
+          // Better text handling - no truncation with "..."
+          const maxChars = Math.floor(dayWidth / 2.5); // Estimate characters that fit
+          let title = event.title;
+          if (title.length > maxChars) {
+            // Smart truncation at word boundaries
+            const words = title.split(' ');
+            title = '';
+            for (const word of words) {
+              if ((title + word).length <= maxChars - 1) {
+                title += (title ? ' ' : '') + word;
+              } else {
+                break;
+              }
+            }
+          }
+          
           pdf.text(title, x, eventY);
         });
       }
     }
   });
+  
+  // Draw vertical lines between days
+  pdf.setDrawColor(220, 220, 220);
+  for (let i = 0; i <= 7; i++) {
+    const x = timeColumnWidth + 20 + (i * dayWidth);
+    pdf.line(x - 2, startY + 5, x - 2, Math.min(startY + 15 + (timeSlots.length * rowHeight), pageHeight - 20));
+  }
+  
+  // Reset colors
+  pdf.setTextColor(0, 0, 0);
+  pdf.setDrawColor(0, 0, 0);
   
   return pdf.output('datauristring').split(',')[1]; // Return base64
 };
