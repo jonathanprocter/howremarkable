@@ -1,0 +1,173 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(20, 14.3%, 4.1%);
+  --muted: hsl(60, 4.8%, 95.9%);
+  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(20, 14.3%, 4.1%);
+  --border: hsl(20, 5.9%, 90%);
+  --input: hsl(20, 5.9%, 90%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(60, 4.8%, 95.9%);
+  --secondary-foreground: hsl(24, 9.8%, 10%);
+  --accent: hsl(60, 4.8%, 95.9%);
+  --accent-foreground: hsl(24, 9.8%, 10%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(20, 14.3%, 4.1%);
+  --radius: 0.5rem;
+  --google-color: hsl(142, 47%, 45%);
+  --simplepractice-color: hsl(213, 73%, 69%);
+  --remarkable-color: hsl(215, 28%, 17%);
+}
+
+.dark {
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 3.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(240, 3.7%, 15.9%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(240, 3.7%, 15.9%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@layer components {
+  .remarkable-width {
+    width: 1404px;
+  }
+  
+  .time-slot {
+    min-height: 40px;
+    border-bottom: 1px solid hsl(20, 5.9%, 90%);
+  }
+  
+  .event-block {
+    position: relative;
+    background: white;
+    border-radius: 4px;
+    border: 1px solid hsl(20, 5.9%, 90%);
+    padding: 8px;
+    margin: 2px 0;
+    cursor: pointer;
+    transition: box-shadow 0.2s ease;
+  }
+  
+  .event-block:hover {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .event-block.simplepractice {
+    border-left: 4px solid var(--simplepractice-color);
+  }
+  
+  .event-block.google {
+    border-left: 4px solid var(--google-color);
+  }
+  
+  .event-block.manual {
+    border-left: 4px solid var(--primary);
+  }
+  
+  .calendar-day {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s ease;
+  }
+  
+  .calendar-day:hover {
+    background-color: hsl(60, 4.8%, 95.9%);
+  }
+  
+  .calendar-day.today {
+    font-weight: 700;
+    color: var(--primary);
+  }
+  
+  .calendar-day.current-week {
+    background-color: hsl(207, 90%, 95%);
+    color: hsl(207, 90%, 30%);
+  }
+  
+  .sidebar-section {
+    background: white;
+    border: 1px solid hsl(20, 5.9%, 90%);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .main-content {
+    background: white;
+    border: 1px solid hsl(20, 5.9%, 90%);
+    border-radius: 8px;
+    min-height: 100vh;
+  }
+  
+  .time-header {
+    background: hsl(60, 4.8%, 95.9%);
+    border-bottom: 2px solid hsl(20, 5.9%, 90%);
+    font-weight: 600;
+  }
+  
+  .day-header {
+    background: hsl(60, 4.8%, 95.9%);
+    border-bottom: 2px solid hsl(20, 5.9%, 90%);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .day-header:hover {
+    background: hsl(60, 4.8%, 92%);
+  }
+  
+  .expanded-event {
+    background: hsl(60, 4.8%, 95.9%);
+    border-left: 4px solid var(--primary);
+    padding: 16px;
+    margin-top: 8px;
+    border-radius: 4px;
+  }
+  
+  .notes-area {
+    border-left: 4px solid var(--primary);
+    padding-left: 12px;
+  }
+}
