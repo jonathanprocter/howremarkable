@@ -101,6 +101,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/auth/status", (req, res) => {
+    console.log("Auth status check - Session ID:", req.sessionID);
+    console.log("Auth status check - User:", !!req.user, req.user?.email);
+    console.log("Auth status check - Session data:", req.session);
     res.json({ 
       authenticated: !!req.user,
       user: req.user || null
