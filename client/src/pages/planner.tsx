@@ -507,13 +507,10 @@ export default function Planner() {
 
   // Filter events based on selected calendars
   const currentEvents = state.events.filter(event => {
-    if (event.source === 'manual' || event.source === 'simplepractice') {
-      return true; // Always show manual and SimplePractice events
-    }
     if (event.source === 'google' && event.sourceId) {
       return selectedCalendars.has(event.sourceId);
     }
-    return true;
+    return true; // Show all non-Google events
   });
   
   const currentDateString = state.selectedDate.toISOString().split('T')[0];
