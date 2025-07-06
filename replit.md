@@ -110,6 +110,8 @@ The application uses three main entities:
 - July 06, 2025. **WEEKLY ANALYTICS**: Updated weekly analytics to filter events strictly by current week date range, ensuring statistics reset properly each week
 - July 06, 2025. **COMPREHENSIVE CALENDAR SYNC**: Expanded calendar sync to fetch ALL events from January 1, 2025 to current date with increased API limits (2500 events per calendar)
 - July 06, 2025. **SIMPLEPRACTICE EVENT DETECTION**: Fixed recurring SimplePractice appointment detection and styling across daily, weekly, and calendar grid views using "Appointment" title pattern
+- July 06, 2025. **TIMEZONE CORRECTION**: Fixed critical timezone handling issue where events were displaying 4 hours earlier than correct EST/EDT times by properly parsing UTC database timestamps as local time
+- July 06, 2025. **EVENT DURATION FIX**: Resolved Blake call event duration display showing correct 50-minute duration instead of incorrect 30-minute slots
 
 ## User Preferences
 

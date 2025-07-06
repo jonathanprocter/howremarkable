@@ -42,19 +42,29 @@ export default function Planner() {
         const response = await fetch('/api/events/1'); // TODO: Use actual user ID
         if (response.ok) {
           const dbEvents = await response.json();
-          const convertedEvents: CalendarEvent[] = dbEvents.map((event: any) => ({
-            id: event.id, // Use the actual event ID from the API response
-            title: event.title,
-            description: event.description || '',
-            startTime: new Date(event.startTime),
-            endTime: new Date(event.endTime),
-            source: event.source || 'manual',
-            sourceId: event.sourceId,
-            color: event.color || '#999',
-            notes: event.notes || '',
-            actionItems: event.actionItems || '',
-            calendarId: event.calendarId // Include the calendarId for filtering
-          }));
+          const convertedEvents: CalendarEvent[] = dbEvents.map((event: any) => {
+            // Database stores in UTC, convert to EST (UTC-5)
+            const startTimeUTC = new Date(event.startTime + (event.startTime.endsWith('Z') ? '' : 'Z'));
+            const endTimeUTC = new Date(event.endTime + (event.endTime.endsWith('Z') ? '' : 'Z'));
+            
+            // Convert to EST by subtracting 5 hours from UTC
+            const startTimeEST = new Date(startTimeUTC.getTime() - (5 * 60 * 60 * 1000));
+            const endTimeEST = new Date(endTimeUTC.getTime() - (5 * 60 * 60 * 1000));
+            
+            return {
+              id: event.id,
+              title: event.title,
+              description: event.description || '',
+              startTime: startTimeEST,
+              endTime: endTimeEST,
+              source: event.source || 'manual',
+              sourceId: event.sourceId,
+              color: event.color || '#999',
+              notes: event.notes || '',
+              actionItems: event.actionItems || '',
+              calendarId: event.calendarId
+            };
+          });
           
 
           
@@ -63,6 +73,8 @@ export default function Planner() {
           // Auto-select calendars from database events
           const googleEvents = convertedEvents.filter(event => event.source === 'google' && event.calendarId);
           const calendarIds = [...new Set(googleEvents.map(event => event.calendarId))].filter(id => id) as string[];
+          
+
           
           if (calendarIds.length > 0) {
             setSelectedCalendars(new Set(calendarIds));
@@ -542,6 +554,8 @@ export default function Planner() {
       // Use calendarId for Google Calendar events (not sourceId which is the event ID)
       const calendarId = (event as any).calendarId || event.sourceId;
       const isSelected = selectedCalendars.has(calendarId);
+      
+
 
       return isSelected;
     }
