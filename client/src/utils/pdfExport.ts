@@ -38,7 +38,7 @@ export const exportWeeklyToPDF = async (
   pdf.setFontSize(8);
   pdf.setFont('helvetica', 'italic');
   pdf.setTextColor(100, 100, 100);
-  pdf.text('Click any day header to view detailed daily planner', 15, pageHeight - 10);
+  pdf.text('Click any day header to view detailed daily planner', 15, pageHeight - 5);
   
   // Draw header line
   pdf.setLineWidth(0.8);
@@ -48,9 +48,9 @@ export const exportWeeklyToPDF = async (
   // Grid layout to match reMarkable Pro example
   const startY = 25;
   const headerHeight = 10;
-  const rowHeight = 4.9; // Slightly larger for better readability
+  const rowHeight = 4.7; // Optimized for full day coverage with clean spacing
   const timeSlots = generateTimeSlots();
-  const timeColumnWidth = 28; // Wider for full time labels like "23:30"
+  const timeColumnWidth = 32; // Extra wide for full time labels like "23:30"
   const dayWidth = (pageWidth - timeColumnWidth - 30) / 7;
   
   // Create table header background
@@ -92,11 +92,11 @@ export const exportWeeklyToPDF = async (
   timeSlots.forEach((slot, index) => {
     const y = gridStartY + (index * rowHeight);
     
-    // Time column
+    // Time column - centered alignment
     pdf.setFontSize(7);
     pdf.setFont('helvetica', 'normal');
     pdf.setTextColor(0, 0, 0);
-    pdf.text(slot.time, 17, y + 3.5);
+    pdf.text(slot.time, 18, y + 3.5);
     
     // Draw horizontal grid lines
     pdf.setDrawColor(200, 200, 200);
@@ -177,9 +177,15 @@ export const exportWeeklyToPDF = async (
     }
   });
   
-  // Draw outer table border
+  // Draw final bottom border
+  const finalY = gridStartY + (timeSlots.length * rowHeight);
   pdf.setDrawColor(0, 0, 0);
   pdf.setLineWidth(0.5);
+  pdf.line(15, finalY, pageWidth - 15, finalY);
+  
+  // Draw outer table border
+  pdf.setDrawColor(0, 0, 0);
+  pdf.setLineWidth(0.8);
   pdf.rect(15, startY, pageWidth - 30, headerHeight + (timeSlots.length * rowHeight), 'S');
   
   return pdf.output('datauristring').split(',')[1]; // Return base64
