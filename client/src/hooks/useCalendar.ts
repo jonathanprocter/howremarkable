@@ -88,6 +88,8 @@ export const useCalendar = () => {
     const startDate = getWeekStartDate(date);
     const endDate = getWeekEndDate(date);
     
+    console.log(`Updating week for date: ${date.toDateString()}, week: ${startDate.toDateString()} to ${endDate.toDateString()}`);
+    
     const days: CalendarDay[] = [];
     for (let i = 0; i < 7; i++) {
       const currentDate = new Date(startDate);
@@ -99,7 +101,18 @@ export const useCalendar = () => {
         dayNumber: currentDate.getDate(),
         events: events.filter(event => {
           const eventDate = new Date(event.startTime);
-          return eventDate.toDateString() === currentDate.toDateString();
+          const eventDateStr = eventDate.toDateString();
+          const currentDateStr = currentDate.toDateString();
+          
+          // Debug for Monday events
+          if (eventDate.getDay() === 1 && event.title.includes('David Grossman')) {
+            console.log(`Monday event filter: ${event.title}, eventDate: ${eventDateStr}, currentDate: ${currentDateStr}, match: ${eventDateStr === currentDateStr}`);
+            if (eventDateStr === currentDateStr) {
+              console.log(`✓ MATCH FOUND: ${event.title} will be displayed on ${currentDateStr}`);
+            }
+          }
+          
+          return eventDateStr === currentDateStr;
         })
       });
     }
@@ -168,6 +181,7 @@ export const useCalendar = () => {
       events: events
     }));
     // Update current week with new events
+    console.log('Updating current week with events:', events.length);
     updateCurrentWeek(state.currentDate, events);
   };
 
