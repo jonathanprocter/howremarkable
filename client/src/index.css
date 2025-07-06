@@ -179,6 +179,11 @@
     cursor: pointer;
 }
 
+/* Light background for half-hour slots across all day columns */
+.calendar-cell.half-hour {
+    background: #f8f8f8;
+}
+
 .calendar-cell:last-child {
     border-right: none;
 }

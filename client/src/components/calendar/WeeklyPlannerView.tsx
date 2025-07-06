@@ -181,7 +181,7 @@ export const WeeklyPlannerView = ({
                   return (
                     <div
                       key={`${slotIndex}-${dayIndex}`}
-                      className={`calendar-cell ${isHour ? 'hour' : ''}`}
+                      className={`calendar-cell ${isHour ? 'hour' : 'half-hour'}`}
                       onClick={() => onTimeSlotClick(day.date, slot.time)}
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={(e) => {
