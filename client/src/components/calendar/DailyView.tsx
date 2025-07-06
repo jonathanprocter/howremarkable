@@ -132,18 +132,28 @@ export const DailyView = ({
     <div className="remarkable-width mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onBackToWeek}
-            className="flex items-center"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Week
-          </Button>
-          <h2 className="text-2xl font-bold text-gray-900">
-            {formatDate(selectedDate)}
-          </h2>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onBackToWeek}
+              className="flex items-center hover:bg-blue-50"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Week
+            </Button>
+            <div className="text-sm text-gray-500">
+              / Daily View
+            </div>
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">
+              {formatDate(selectedDate)}
+            </h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Detailed daily planner with time blocks and notes
+            </p>
+          </div>
         </div>
         <div className="flex space-x-2">
           <Button

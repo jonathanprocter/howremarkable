@@ -26,11 +26,14 @@ export const Header = ({
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-xl font-bold text-gray-900">{weekRangeString}</h1>
-          <div className="flex items-center mt-1">
+          <div className="flex items-center space-x-3 mt-1">
             <Badge variant={isOnline ? "default" : "secondary"} className="bg-green-100 text-green-800">
               <div className="w-1.5 h-1.5 bg-green-400 rounded-full mr-1"></div>
               {isOnline ? "Online" : "Offline"}
             </Badge>
+            <span className="text-sm text-gray-500">
+              Weekly Overview • Click any day to view details
+            </span>
           </div>
         </div>
         <Button onClick={onConnectGoogle} className="bg-blue-600 hover:bg-blue-700">
