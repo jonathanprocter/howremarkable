@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useCalendar } from '../hooks/useCalendar';
+import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { MainLayout } from '../components/layout/MainLayout';
 import { Sidebar } from '../components/sidebar/Sidebar';
 import { Header } from '../components/common/Header';
@@ -7,6 +8,8 @@ import { WeeklyCalendarGrid } from '../components/calendar/WeeklyCalendarGrid';
 import { DailyView } from '../components/calendar/DailyView';
 import { CalendarEvent } from '../types/calendar';
 import { useToast } from '@/hooks/use-toast';
+import { exportWeeklyToPDF, exportDailyToPDF, generateFilename } from '../utils/pdfExport';
+import { getWeekNumber } from '../utils/dateUtils';
 
 export default function Planner() {
   const {
@@ -25,6 +28,7 @@ export default function Planner() {
     isCurrentWeek
   } = useCalendar();
 
+  const { authStatus, connectGoogle, uploadToDrive } = useGoogleAuth();
   const { toast } = useToast();
 
   // Sample events for demonstration
@@ -88,17 +92,112 @@ export default function Planner() {
   };
 
   const handleConnectGoogle = () => {
-    toast({
-      title: "Google Calendar Integration",
-      description: "Google Calendar connection feature coming soon!"
-    });
+    connectGoogle();
   };
 
-  const handleExportAction = (type: string) => {
-    toast({
-      title: "PDF Export",
-      description: `${type} export feature coming soon!`
-    });
+  const handleExportAction = async (type: string) => {
+    try {
+      let pdfContent: string;
+      let filename: string;
+
+      if (type === 'Weekly Package' || type === 'Current View') {
+        const weekNumber = getWeekNumber(state.currentDate);
+        pdfContent = await exportWeeklyToPDF(
+          state.currentWeek.startDate,
+          state.currentWeek.endDate,
+          currentEvents,
+          weekNumber
+        );
+        filename = generateFilename('weekly', state.currentWeek.startDate);
+      } else if (type === 'Daily View') {
+        pdfContent = await exportDailyToPDF(
+          state.selectedDate,
+          currentEvents,
+          currentDailyNotes
+        );
+        filename = generateFilename('daily', state.selectedDate);
+      } else {
+        toast({
+          title: "PDF Export",
+          description: `${type} export feature coming soon!`
+        });
+        return;
+      }
+
+      // Create download link
+      const link = document.createElement('a');
+      link.href = `data:application/pdf;base64,${pdfContent}`;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "PDF Export",
+        description: `${filename} downloaded successfully!`
+      });
+
+    } catch (error) {
+      toast({
+        title: "Export Error",
+        description: "Failed to generate PDF. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleExportToGoogleDrive = async (type: string) => {
+    if (!authStatus.authenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please connect to Google first.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      let pdfContent: string;
+      let filename: string;
+
+      if (type === 'weekly' || type === 'current') {
+        const weekNumber = getWeekNumber(state.currentDate);
+        pdfContent = await exportWeeklyToPDF(
+          state.currentWeek.startDate,
+          state.currentWeek.endDate,
+          currentEvents,
+          weekNumber
+        );
+        filename = generateFilename('weekly', state.currentWeek.startDate);
+      } else if (type === 'daily') {
+        pdfContent = await exportDailyToPDF(
+          state.selectedDate,
+          currentEvents,
+          currentDailyNotes
+        );
+        filename = generateFilename('daily', state.selectedDate);
+      } else {
+        toast({
+          title: "Google Drive Export",
+          description: `${type} export feature coming soon!`
+        });
+        return;
+      }
+
+      await uploadToDrive(filename, pdfContent);
+
+      toast({
+        title: "Google Drive Export",
+        description: `${filename} uploaded to Google Drive successfully!`
+      });
+
+    } catch (error) {
+      toast({
+        title: "Upload Error",
+        description: "Failed to upload to Google Drive. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleQuickAction = (action: string) => {
@@ -129,7 +228,7 @@ export default function Planner() {
     <MainLayout
       sidebar={
         <Sidebar
-          state={state}
+          state={{ ...state, isGoogleConnected: authStatus.authenticated }}
           onDateSelect={handleDateSelect}
           onGoToToday={() => handleQuickAction('today')}
           onGoToDate={() => handleQuickAction('go to date')}
@@ -141,7 +240,7 @@ export default function Planner() {
           onExportWeeklyPackage={() => handleExportAction('Weekly Package')}
           onExportDailyView={() => handleExportAction('Daily View')}
           onExportFullMonth={() => handleExportAction('Full Month')}
-          onExportToGoogleDrive={(type) => handleExportAction(`Google Drive ${type}`)}
+          onExportToGoogleDrive={handleExportToGoogleDrive}
           onSaveNotes={handleUpdateDailyNotes}
         />
       }
