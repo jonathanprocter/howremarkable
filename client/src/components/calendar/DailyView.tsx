@@ -269,6 +269,15 @@ export const DailyView = ({
                     const duration = getEventDurationInSlots(event);
                     const eventHeight = duration * 40; // 40px per slot to match time-slot height
                     
+                    // Calculate precise positioning within the time slot
+                    const eventStart = new Date(event.startTime);
+                    const eventMinutes = eventStart.getMinutes();
+                    const slotStartMinutes = timeSlot.minute;
+                    
+                    // Calculate offset within the 30-minute slot (0-29 minutes)
+                    const minuteOffset = eventMinutes - slotStartMinutes;
+                    const pixelOffset = (minuteOffset / 30) * 40; // 40px per 30-minute slot
+                    
                     return (
                       <div key={event.id} className="relative">
                         <div
@@ -281,7 +290,7 @@ export const DailyView = ({
                             height: `${eventHeight}px`,
                             zIndex: 10,
                             position: duration > 1 ? 'absolute' : 'relative',
-                            top: 0,
+                            top: pixelOffset,
                             left: 0,
                             right: 0
                           }}
