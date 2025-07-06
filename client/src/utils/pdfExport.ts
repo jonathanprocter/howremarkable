@@ -48,9 +48,9 @@ export const exportWeeklyToPDF = async (
   // Grid layout to match reMarkable Pro example
   const startY = 25;
   const headerHeight = 10;
-  const rowHeight = 4.8; // Tight spacing to fit 06:00-23:30 (36 slots need ~173mm)
+  const rowHeight = 4.9; // Slightly larger for better readability
   const timeSlots = generateTimeSlots();
-  const timeColumnWidth = 22;
+  const timeColumnWidth = 28; // Wider for full time labels like "23:30"
   const dayWidth = (pageWidth - timeColumnWidth - 30) / 7;
   
   // Create table header background
@@ -96,7 +96,7 @@ export const exportWeeklyToPDF = async (
     pdf.setFontSize(7);
     pdf.setFont('helvetica', 'normal');
     pdf.setTextColor(0, 0, 0);
-    pdf.text(slot.time, 17, y + 3);
+    pdf.text(slot.time, 17, y + 3.5);
     
     // Draw horizontal grid lines
     pdf.setDrawColor(200, 200, 200);
@@ -106,6 +106,8 @@ export const exportWeeklyToPDF = async (
     // Draw vertical grid lines for days
     for (let dayIndex = 0; dayIndex <= 7; dayIndex++) {
       const x = timeColumnWidth + 15 + (dayIndex * dayWidth);
+      pdf.setDrawColor(150, 150, 150);
+      pdf.setLineWidth(0.3);
       pdf.line(x, startY, x, gridStartY + (timeSlots.length * rowHeight));
     }
     
@@ -170,7 +172,7 @@ export const exportWeeklyToPDF = async (
           }
         }
         
-        pdf.text(displayTitle, eventX + 0.5, y + 2.5);
+        pdf.text(displayTitle, eventX + 0.5, y + 3);
       });
     }
   });
