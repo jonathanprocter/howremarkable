@@ -111,6 +111,23 @@ export const WeeklyCalendarGrid = ({
       marginBottom: duration > 1 ? '0px' : '2px',
       zIndex: 20 // Ensure events appear above other elements
     };
+  }
+
+  const getEventSourceClass = (event: CalendarEvent) => {
+    // Check if it's a SimplePractice appointment
+    const isSimplePractice = event.source === 'simplepractice' || 
+                           event.notes?.toLowerCase().includes('simple practice') ||
+                           event.title?.toLowerCase().includes('simple practice') ||
+                           event.description?.toLowerCase().includes('simple practice') ||
+                           event.title?.toLowerCase().includes('appointment'); // SimplePractice appointments sync as "X Appointment"
+    
+    if (isSimplePractice) {
+      return 'event-block simplepractice';
+    } else if (event.source === 'google') {
+      return 'event-block google';
+    } else {
+      return 'event-block manual';
+    }
   };
 
   return (
@@ -198,7 +215,7 @@ export const WeeklyCalendarGrid = ({
                       key={eventIndex}
                       className={cn(
                         "event-block absolute left-1 right-1 top-0 cursor-move",
-                        `event-block ${event.source}`
+                        getEventSourceClass(event)
                       )}
                       style={getEventStyle(event)}
                       draggable={event.source === 'google'}

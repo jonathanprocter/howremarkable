@@ -51,8 +51,20 @@ export const WeeklyPlannerView = ({
     // Base appointment styles matching HTML
     let className = 'appointment ';
     
-    // All appointments should use SimplePractice styling (cornflower blue left accent)
-    className += 'simplepractice ';
+    // Check if it's a SimplePractice appointment
+    const isSimplePractice = event.source === 'simplepractice' || 
+                           event.notes?.toLowerCase().includes('simple practice') ||
+                           event.title?.toLowerCase().includes('simple practice') ||
+                           event.description?.toLowerCase().includes('simple practice') ||
+                           event.title?.toLowerCase().includes('appointment'); // SimplePractice appointments sync as "X Appointment"
+    
+    if (isSimplePractice) {
+      className += 'simplepractice ';
+    } else if (event.source === 'google') {
+      className += 'google-calendar ';
+    } else {
+      className += 'personal ';
+    }
     
     // Duration classes
     if (durationMinutes >= 90) {

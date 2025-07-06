@@ -98,7 +98,8 @@ export const DailyView = ({
     const isSimplePractice = event.source === 'simplepractice' || 
                            event.notes?.toLowerCase().includes('simple practice') ||
                            event.title?.toLowerCase().includes('simple practice') ||
-                           event.description?.toLowerCase().includes('simple practice');
+                           event.description?.toLowerCase().includes('simple practice') ||
+                           event.title?.toLowerCase().includes('appointment'); // SimplePractice appointments sync as "X Appointment"
     
     if (isSimplePractice) {
       className += 'simplepractice ';
