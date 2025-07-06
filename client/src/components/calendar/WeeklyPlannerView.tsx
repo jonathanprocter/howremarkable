@@ -39,17 +39,8 @@ export const WeeklyPlannerView = ({
     // Base appointment styles matching HTML
     let className = 'appointment ';
     
-    // Source-specific styling - exact match to HTML CSS
-    switch (event.source) {
-      case 'simplepractice':
-        className += 'simplepractice ';
-        break;
-      case 'google':
-        className += 'google-calendar ';
-        break;
-      default:
-        className += 'personal ';
-    }
+    // All appointments should use SimplePractice styling (cornflower blue left accent)
+    className += 'simplepractice ';
     
     // Duration classes
     if (durationMinutes >= 90) {
@@ -182,7 +173,7 @@ export const WeeklyPlannerView = ({
               <React.Fragment key={`${slot.hour}-${slot.minute}`}>
                 {/* Time slot label */}
                 <div className={`time-slot ${isHour ? 'hour' : ''}`}>
-                  {isHour ? slot.time : slot.time.substring(3)}
+                  {slot.time}
                 </div>
                 
                 {/* Calendar cells for each day */}
