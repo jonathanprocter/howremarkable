@@ -101,18 +101,18 @@ export const WeeklyCalendarGrid = ({
                         onEventClick(event);
                       }}
                     >
-                      <div className="text-xs font-medium text-gray-800 truncate">
+                      <div className="text-xs font-medium text-gray-800 leading-tight break-words">
                         {event.title}
                       </div>
-                      <div className="text-xs text-gray-600 truncate">
+                      <div className="text-xs text-gray-600 leading-tight">
                         {event.startTime.toLocaleTimeString('en-US', { 
-                          hour: 'numeric', 
+                          hour: '2-digit', 
                           minute: '2-digit', 
-                          hour12: true 
+                          hour12: false 
                         })} - {event.endTime.toLocaleTimeString('en-US', { 
-                          hour: 'numeric', 
+                          hour: '2-digit', 
                           minute: '2-digit', 
-                          hour12: true 
+                          hour12: false 
                         })}
                       </div>
                     </div>

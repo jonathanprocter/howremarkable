@@ -236,13 +236,13 @@ export const DailyView = ({
                           </div>
                           <div className="text-xs text-gray-600">
                             {event.notes || event.source} • {event.startTime.toLocaleTimeString('en-US', { 
-                              hour: 'numeric', 
+                              hour: '2-digit', 
                               minute: '2-digit', 
-                              hour12: true 
+                              hour12: false 
                             })} - {event.endTime.toLocaleTimeString('en-US', { 
-                              hour: 'numeric', 
+                              hour: '2-digit', 
                               minute: '2-digit', 
-                              hour12: true 
+                              hour12: false 
                             })}
                           </div>
                         </div>
