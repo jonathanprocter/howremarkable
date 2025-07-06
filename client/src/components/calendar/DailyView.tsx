@@ -39,16 +39,54 @@ export const DailyView = ({
     new Date(event.startTime).toDateString() === selectedDate.toDateString()
   );
   
+  // Add test events for debugging positioning
+  const testEvents = [
+    {
+      id: 'test-1',
+      title: 'Test 9:00 AM',
+      description: 'Test appointment at 9:00 AM',
+      startTime: new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 9, 0),
+      endTime: new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 10, 0),
+      source: 'simplepractice' as const,
+      color: '#6495ED',
+      notes: 'SimplePractice test event'
+    },
+    {
+      id: 'test-2',
+      title: 'Test 2:00 PM',
+      description: 'Test appointment at 2:00 PM',
+      startTime: new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 14, 0),
+      endTime: new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 15, 0),
+      source: 'google' as const,
+      color: '#34a853',
+      notes: 'Google Calendar test event'
+    },
+    {
+      id: 'test-3',
+      title: 'Test 5:30 PM',
+      description: 'Test appointment at 5:30 PM',
+      startTime: new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 17, 30),
+      endTime: new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 18, 30),
+      source: 'manual' as const,
+      color: '#999',
+      notes: 'Personal test event'
+    }
+  ];
+  
+  // Use test events for now to debug positioning
+  const allDayEvents = [...dayEvents, ...testEvents];
+  
   // Debug log for events
   console.log(`Daily view - Selected date: ${selectedDate.toDateString()}`);
   console.log(`Daily view - Total events: ${events.length}`);
   console.log(`Daily view - Day events: ${dayEvents.length}`);
-  console.log('All events:', events);
-  console.log('Day events:', dayEvents);
+  console.log(`Daily view - Test events: ${testEvents.length}`);
+  console.log(`Daily view - All day events: ${allDayEvents.length}`);
+  console.log('All day events:', allDayEvents);
 
   // Calculate daily statistics
-  const totalEvents = dayEvents.length;
-  const totalHours = dayEvents.reduce((sum, event) => {
+  const totalEvents = allDayEvents.length;
+  const totalHours = allDayEvents.reduce((sum, event) => {
     return sum + (new Date(event.endTime).getTime() - new Date(event.startTime).getTime()) / (1000 * 60 * 60);
   }, 0);
   const availableHours = 24 - totalHours;
@@ -195,7 +233,7 @@ export const DailyView = ({
         </div>
       </div>
 
-      {/* Schedule Grid - exact match to HTML template */}
+      {/* Schedule Grid - CSS Grid for perfect alignment */}
       <div className="schedule-grid">
         {/* Time Column */}
         <div className="time-column">
@@ -214,7 +252,7 @@ export const DailyView = ({
           ))}
 
           {/* Render events as absolutely positioned elements */}
-          {dayEvents.map((event) => {
+          {allDayEvents.map((event) => {
             const { className, style } = getEventStyle(event);
             return (
               <div key={event.id}>
