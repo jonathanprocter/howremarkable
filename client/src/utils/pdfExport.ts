@@ -145,9 +145,16 @@ export const exportDailyToPDF = async (
   events: CalendarEvent[],
   dailyNotes: string
 ): Promise<string> => {
-  const pdf = new jsPDF('portrait', 'mm', 'a4');
+  const pdf = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4'
+  });
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
+  
+  // Set font explicitly to avoid encoding issues - critical
+  pdf.setFont('helvetica', 'normal');
   
   // Title
   pdf.setFontSize(16);
@@ -210,7 +217,8 @@ export const exportDailyToPDF = async (
     allDayEvents.forEach(event => {
       pdf.setFontSize(10);
       pdf.setFont('helvetica', 'normal');
-      pdf.text(`• ${event.title}`, 20, currentY);
+      const cleanTitle = event.title.replace(/[^\w\s\-\.,;:()\[\]]/g, '');
+      pdf.text(`• ${cleanTitle}`, 20, currentY);
       currentY += 6;
       
       if (event.notes) {
@@ -294,7 +302,8 @@ export const exportDailyToPDF = async (
         pdf.setFontSize(9);
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(0, 0, 0);
-        pdf.text(event.title, 35, eventTop + 4);
+        const cleanTitle = event.title.replace(/[^\w\s\-\.,;:()\[\]]/g, '');
+        pdf.text(cleanTitle, 35, eventTop + 4);
         
         // Event time and source
         const startTime = eventStart.toLocaleTimeString('en-US', { 
@@ -364,9 +373,13 @@ export const exportWeeklyPackageToPDF = async (
   weekNumber: number,
   dailyNotesMap: { [date: string]: string }
 ): Promise<string> => {
-  const pdf = new jsPDF('portrait', 'mm', 'a4');
+  const pdf = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4'
+  });
   
-  // Set font to avoid encoding issues
+  // Set font explicitly to avoid encoding issues - this is critical
   pdf.setFont('helvetica', 'normal');
   
   // Page 1: Weekly Overview (Portrait)
@@ -419,7 +432,9 @@ export const exportWeeklyPackageToPDF = async (
           minute: '2-digit', 
           hour12: false 
         });
-        pdf.text(`• ${startTime}-${endTime}: ${event.title}`, 20, currentY);
+        // Clean the title to remove any problematic characters
+        const cleanTitle = event.title.replace(/[^\w\s\-\.,;:()\[\]]/g, '');
+        pdf.text(`• ${startTime}-${endTime}: ${cleanTitle}`, 20, currentY);
         currentY += 5;
       });
     } else {
@@ -485,7 +500,8 @@ export const exportWeeklyPackageToPDF = async (
       allDayEvents.forEach(event => {
         pdf.setFontSize(10);
         pdf.setFont('helvetica', 'normal');
-        pdf.text(`• ${event.title}`, 20, currentY);
+        const cleanTitle = event.title.replace(/[^\w\s\-\.,;:()\[\]]/g, '');
+        pdf.text(`• ${cleanTitle}`, 20, currentY);
         currentY += 6;
       });
       currentY += 5;
@@ -520,7 +536,8 @@ export const exportWeeklyPackageToPDF = async (
         pdf.setFont('helvetica', 'bold');
         pdf.text(`${startTime} - ${endTime}`, 20, currentY);
         pdf.setFont('helvetica', 'normal');
-        pdf.text(event.title, 60, currentY);
+        const cleanTitle = event.title.replace(/[^\w\s\-\.,;:()\[\]]/g, '');
+        pdf.text(cleanTitle, 60, currentY);
         currentY += 6;
         
         if (event.notes) {
