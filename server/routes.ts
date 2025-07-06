@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { Readable } from "stream";
 import { storage } from "./storage";
 import { insertEventSchema, insertDailyNotesSchema } from "@shared/schema";
 import passport from "passport";
@@ -357,7 +358,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const media = {
         mimeType: mimeType || 'application/pdf',
-        body: Buffer.from(content, 'base64')
+        body: Readable.from(Buffer.from(content, 'base64'))
       };
 
       const file = await drive.files.create({
