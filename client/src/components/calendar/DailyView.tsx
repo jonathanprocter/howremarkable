@@ -163,8 +163,8 @@ export const DailyView = ({
           
           {/* All-Day Events Section */}
           {allDayEvents.length > 0 && (
-            <div className="grid grid-cols-8 border-b border-gray-300 bg-blue-50">
-              <div className="time-slot p-2 text-sm font-medium text-gray-600 bg-blue-100 border-r border-gray-300 text-center">
+            <div className="grid grid-cols-8 border-b border-gray-300 bg-red-50">
+              <div className="time-slot p-2 text-sm font-medium text-gray-600 bg-red-100 border-r border-gray-300 text-center">
                 All Day
               </div>
               <div className="time-slot p-3 col-span-7 space-y-2">
@@ -173,7 +173,8 @@ export const DailyView = ({
                     <div
                       className={cn(
                         "event-block cursor-pointer",
-                        `event-block ${event.source}`
+                        `event-block ${event.source}`,
+                        "event-block all-day"
                       )}
                       onClick={() => toggleEventExpansion(event.id)}
                     >
@@ -251,15 +252,15 @@ export const DailyView = ({
                     const eventHeight = duration * 40; // 40px per slot to match time-slot height
                     
                     return (
-                      <div key={event.id} className="space-y-2">
+                      <div key={event.id} className="relative">
                         <div
                           className={cn(
-                            "event-block cursor-pointer absolute left-2 right-2 top-0",
+                            "event-block cursor-pointer",
                             `event-block ${event.source}`,
                             event.source === 'google' && "cursor-move"
                           )}
                           style={{ 
-                            height: `${eventHeight}px`,
+                            minHeight: `${eventHeight}px`,
                             zIndex: 10
                           }}
                           draggable={event.source === 'google'}

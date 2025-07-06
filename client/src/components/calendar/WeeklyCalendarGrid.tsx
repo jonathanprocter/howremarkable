@@ -52,11 +52,44 @@ export const WeeklyCalendarGrid = ({
     }
   };
 
+  const getAllDayEventsForDate = (date: Date) => {
+    return events.filter(event => {
+      const eventDate = new Date(event.startTime);
+      if (eventDate.toDateString() !== date.toDateString()) return false;
+      
+      // Check if backend marked it as all-day
+      if ((event as any).isAllDay) return true;
+      
+      // Check if event is all-day by looking at duration and time patterns
+      const duration = event.endTime.getTime() - event.startTime.getTime();
+      const hours = duration / (1000 * 60 * 60);
+      const startHour = event.startTime.getHours();
+      const startMinute = event.startTime.getMinutes();
+      const isFullDay = startHour === 0 && startMinute === 0 && (hours === 24 || hours % 24 === 0);
+      
+      // Also check for events that span 20+ hours or are exactly 24 hours
+      return isFullDay || hours >= 20;
+    });
+  };
+
   const getEventsForTimeSlot = (date: Date, timeSlot: { time: string; hour: number; minute: number }) => {
     return events.filter(event => {
       const eventDate = new Date(event.startTime);
-      return eventDate.toDateString() === date.toDateString() && 
-             isEventInTimeSlot(event, timeSlot);
+      if (eventDate.toDateString() !== date.toDateString()) return false;
+      
+      // Filter out all-day events from time slots
+      if ((event as any).isAllDay) return false;
+      
+      const duration = event.endTime.getTime() - event.startTime.getTime();
+      const hours = duration / (1000 * 60 * 60);
+      const startHour = event.startTime.getHours();
+      const startMinute = event.startTime.getMinutes();
+      const isFullDay = startHour === 0 && startMinute === 0 && (hours === 24 || hours % 24 === 0);
+      
+      // Skip all-day events (20+ hours or full day events)
+      if (isFullDay || hours >= 20) return false;
+      
+      return isEventInTimeSlot(event, timeSlot);
     });
   };
 
@@ -86,6 +119,35 @@ export const WeeklyCalendarGrid = ({
           {day.dayOfWeek} {formatDateShort(day.date)}
         </div>
       ))}
+
+      {/* All-Day Events Section */}
+      <div className="all-day-header p-2 text-sm font-medium text-gray-600 bg-red-100 border-r border-gray-300 border-b border-gray-300 text-center">
+        All Day
+      </div>
+      {week.map((day, dayIndex) => {
+        const allDayEvents = getAllDayEventsForDate(day.date);
+        return (
+          <div key={`allday-${dayIndex}`} className="all-day-slot p-2 bg-red-50 border-r border-gray-300 border-b border-gray-300 last:border-r-0 min-h-[60px]">
+            {allDayEvents.map((event) => (
+              <div
+                key={event.id}
+                className={cn(
+                  "event-block cursor-pointer mb-1",
+                  "event-block all-day"
+                )}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEventClick(event);
+                }}
+              >
+                <div className="text-xs font-medium text-gray-800 truncate">
+                  {event.title}
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })}
 
       {/* Time slots */}
       {timeSlots.map((timeSlot, slotIndex) => (
