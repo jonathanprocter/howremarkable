@@ -83,9 +83,11 @@ export const exportTemplateMatchPDF = async (
   pdf.setTextColor(0, 0, 0);
   pdf.text('WEEKLY PLANNER', TEMPLATE_CONFIG.pageWidth / 2, 35, { align: 'center' });
   
+  // Complete week information with week number
   pdf.setFontSize(12);
   pdf.setFont('helvetica', 'normal');
-  const weekText = `${formatWeekRange(weekStartDate, weekEndDate)}`;
+  const weekNumber = Math.ceil(((weekStartDate.getTime() - new Date(weekStartDate.getFullYear(), 0, 1).getTime()) / 86400000 + 1) / 7);
+  const weekText = `Week ${weekNumber} - ${formatWeekRange(weekStartDate, weekEndDate)}`;
   pdf.text(weekText, TEMPLATE_CONFIG.pageWidth / 2, 50, { align: 'center' });
   
   // Add legend in the header area - positioned properly
@@ -158,11 +160,11 @@ export const exportTemplateMatchPDF = async (
     pdf.setDrawColor(0, 0, 0);
     pdf.rect(dayX, gridStartY, TEMPLATE_CONFIG.dayColumnWidth, 30);
     
-    // Vertical lines between days - extend from top to bottom of page
+    // Vertical lines between days - DARK lines extending from top to bottom
     if (i > 0) {
-      pdf.setLineWidth(1);
-      pdf.setDrawColor(128, 128, 128);
-      pdf.line(dayX, gridStartY, dayX, TEMPLATE_CONFIG.pageHeight - 20);
+      pdf.setLineWidth(2); // Thicker lines
+      pdf.setDrawColor(64, 64, 64); // Dark grey 
+      pdf.line(dayX, gridStartY, dayX, TEMPLATE_CONFIG.pageHeight - 40); // Extend full height
     }
     
     // Day name
@@ -180,11 +182,11 @@ export const exportTemplateMatchPDF = async (
     pdf.text(dateStr, dayX + (TEMPLATE_CONFIG.dayColumnWidth - dateWidth) / 2, gridStartY + 25);
   }
   
-  // Draw final vertical line at the end of the week
+  // Draw final vertical line at the end of the week - DARK line
   const finalLineX = gridStartX + TEMPLATE_CONFIG.timeColumnWidth + (7 * TEMPLATE_CONFIG.dayColumnWidth);
-  pdf.setLineWidth(1);
-  pdf.setDrawColor(128, 128, 128);
-  pdf.line(finalLineX, gridStartY, finalLineX, TEMPLATE_CONFIG.pageHeight - 20);
+  pdf.setLineWidth(2); // Thicker line
+  pdf.setDrawColor(64, 64, 64); // Dark grey
+  pdf.line(finalLineX, gridStartY, finalLineX, TEMPLATE_CONFIG.pageHeight - 40); // Extend full height
   
   // Draw time slots - full range from 06:00 to 23:30
   const timeSlots = Object.keys(TIME_POSITIONS).sort();
@@ -206,20 +208,20 @@ export const exportTemplateMatchPDF = async (
       pdf.setFillColor(240, 240, 240); // Light grey for hour backgrounds
       pdf.rect(gridStartX, yPosition, TEMPLATE_CONFIG.timeColumnWidth, slotHeight, 'F');
       
-      // Grey background across entire week for hour differentiation
-      pdf.setFillColor(240, 240, 240); // Light grey extending across full week
+      // Grey background across ENTIRE WEEK for hour differentiation 
+      pdf.setFillColor(220, 220, 220); // Darker grey for better visibility
       pdf.rect(gridStartX + TEMPLATE_CONFIG.timeColumnWidth, yPosition, 
-               TEMPLATE_CONFIG.pageWidth - gridStartX - TEMPLATE_CONFIG.timeColumnWidth - 20, 
+               TEMPLATE_CONFIG.pageWidth - gridStartX - TEMPLATE_CONFIG.timeColumnWidth - 40, 
                slotHeight, 'F');
     } else {
       // Light background for :30 slots
       pdf.setFillColor(248, 248, 248);
       pdf.rect(gridStartX, yPosition, TEMPLATE_CONFIG.timeColumnWidth, slotHeight, 'F');
       
-      // Light background for :30 slots across the week
+      // Light background for :30 slots across the ENTIRE WEEK
       pdf.setFillColor(250, 250, 250);
       pdf.rect(gridStartX + TEMPLATE_CONFIG.timeColumnWidth, yPosition, 
-               TEMPLATE_CONFIG.pageWidth - gridStartX - TEMPLATE_CONFIG.timeColumnWidth - 20, 
+               TEMPLATE_CONFIG.pageWidth - gridStartX - TEMPLATE_CONFIG.timeColumnWidth - 40, 
                slotHeight, 'F');
     }
     
