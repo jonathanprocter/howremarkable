@@ -354,3 +354,4 @@ function getWeekNumber(date: Date): number {
 export const generateRemarkableProFilename = (date: Date): string => {
   return `remarkable-pro-perfect-${date.toISOString().split('T')[0]}.pdf`;
 };
+
