@@ -48,14 +48,9 @@ export default function Planner() {
         if (response.ok) {
           const dbEvents = await response.json();
           const convertedEvents: CalendarEvent[] = dbEvents.map((event: any) => {
-            // Parse database time correctly - database has UTC time, convert to EST
-            // Database: 2025-07-07 22:30:00 UTC -> Display: 2025-07-07 18:30:00 EST
+            // Database times are already in correct timezone, just parse them directly
             const startTime = new Date(event.startTime);
             const endTime = new Date(event.endTime);
-            
-            // Convert from UTC to EST (subtract 4 hours for daylight saving time)
-            startTime.setUTCHours(startTime.getUTCHours() - 4);
-            endTime.setUTCHours(endTime.getUTCHours() - 4);
             
             return {
               id: event.id,

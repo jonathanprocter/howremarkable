@@ -104,9 +104,9 @@ export const useCalendar = () => {
           const eventDateStr = eventDate.toDateString();
           const currentDateStr = currentDate.toDateString();
           
-          // Debug for all events with "Appointment" in the title
-          if (event.title.includes('Appointment')) {
-            console.log(`Event filter: ${event.title}, eventDate: ${eventDateStr}, currentDate: ${currentDateStr}, match: ${eventDateStr === currentDateStr}`);
+          // Debug for events that should be in current week (July 7-13, 2025)
+          if (event.title.includes('Appointment') && eventDate >= new Date('2025-07-07') && eventDate <= new Date('2025-07-14')) {
+            console.log(`Current week event filter: ${event.title}, eventDate: ${eventDateStr}, currentDate: ${currentDateStr}, match: ${eventDateStr === currentDateStr}`);
             if (eventDateStr === currentDateStr) {
               console.log(`✓ MATCH FOUND: ${event.title} will be displayed on ${currentDateStr}`);
             }
