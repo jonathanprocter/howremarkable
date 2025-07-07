@@ -205,25 +205,7 @@ export const exportWeeklyRemarkable = async (
     }
   });
   
-  // Statistics
-  const statsY = gridStartY + gridHeight + 5;
-  pdf.setFontSize(8);
-  pdf.setFont('times', 'bold');
-  pdf.text('Weekly Stats:', REMARKABLE_CONFIG.margin + 2, statsY);
-  
-  const weekEvents = events.filter(event => {
-    const eventDate = new Date(event.startTime);
-    return eventDate >= weekStartDate && eventDate <= weekEndDate;
-  });
-  
-  const totalHours = weekEvents.reduce((sum, event) => {
-    return sum + (new Date(event.endTime).getTime() - new Date(event.startTime).getTime()) / (1000 * 60 * 60);
-  }, 0);
-  
-  pdf.setFontSize(7);
-  pdf.setFont('times', 'normal');
-  pdf.text(`Events: ${weekEvents.length}`, REMARKABLE_CONFIG.margin + 2, statsY + 5);
-  pdf.text(`Hours: ${totalHours.toFixed(1)}`, REMARKABLE_CONFIG.margin + 40, statsY + 5);
+  // Clean professional layout - no statistics section
   
   return pdf.output('datauristring').split(',')[1];
 };

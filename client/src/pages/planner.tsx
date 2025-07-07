@@ -223,13 +223,13 @@ export default function Planner() {
         filename = generateFilename('weekly-package', state.currentWeek.startDate);
       } else if (type === 'Current View') {
         const weekNumber = getWeekNumber(state.currentDate);
-        pdfContent = await exportWeeklyToPDF(
+        pdfContent = await exportWeeklyRemarkable(
           state.currentWeek.startDate,
           state.currentWeek.endDate,
           currentEvents,
           weekNumber
         );
-        filename = generateFilename('weekly', state.currentWeek.startDate);
+        filename = generateRemarkableFilename('weekly', state.currentWeek.startDate);
       } else if (type === 'Daily View') {
         pdfContent = await exportDailyToPDF(
           state.selectedDate,
