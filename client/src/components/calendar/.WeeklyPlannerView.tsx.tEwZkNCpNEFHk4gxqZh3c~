@@ -186,11 +186,11 @@ export const WeeklyPlannerView = ({
             }));
           }}
         >
-          <div className="appointment-name" style={{ lineHeight: '1.1', fontSize: '12px', fontWeight: 'bold', color: '#FFFFFF' }}>
-            🔥 {eventName} 🔥
+          <div className="appointment-name" style={{ lineHeight: '1.1', fontSize: '10px', fontWeight: 'bold' }}>
+            {eventName}
           </div>
-          <div className="appointment-time" style={{ fontSize: '10px', color: '#FFFFFF', fontWeight: 'bold' }}>
-            ⚡ {eventStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ⚡
+          <div className="appointment-time" style={{ fontSize: '8px', opacity: 1 }}>
+            {eventStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </div>
         </div>
       );
