@@ -120,7 +120,9 @@ export default function Planner() {
       }
     };
 
-    loadDatabaseEvents();
+    loadDatabaseEvents().catch(error => {
+      console.error('Failed to load events from database:', error);
+    });
   }, []); // Run once on mount
 
   const handleDateSelect = (date: Date) => {

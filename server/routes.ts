@@ -513,6 +513,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/events/:userId", async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
+      if (isNaN(userId)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+      
       const events = await storage.getEvents(userId);
       
       // Map database events to the expected format
@@ -532,7 +536,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(eventsFormatted);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch events" });
+      console.error('Database error in /api/events/:userId:', error);
+      res.status(500).json({ error: "Failed to fetch events", details: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
