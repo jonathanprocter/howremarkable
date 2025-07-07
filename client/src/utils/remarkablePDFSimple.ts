@@ -160,7 +160,7 @@ export const exportWeeklyRemarkable = async (
         // Clean up title - remove "Appointment" and excessive words
         let cleanTitle = event.title
           .replace(/ Appointment$/, '')
-          .replace(/^(.{20}).*/, '$1...')  // Truncate if too long
+          .replace(/^(.{25}).*/, '$1...')  // Slightly longer truncation
           .trim();
         
         // Split title into multiple lines if needed
@@ -169,7 +169,7 @@ export const exportWeeklyRemarkable = async (
         
         // Draw title lines
         for (let i = 0; i < Math.min(titleLines.length, maxLines); i++) {
-          pdf.text(titleLines[i], eventX + 2, eventY + 5 + (i * 4));
+          pdf.text(titleLines[i], eventX + 2, eventY + 6 + (i * 4));
         }
         
         // Event time

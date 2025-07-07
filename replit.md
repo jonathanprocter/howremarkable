@@ -121,6 +121,13 @@ The application uses three main entities:
   - Performance optimizations for e-ink refresh rates
   - reMarkable Pro detection and automatic optimization application
   - Comprehensive export functionality with both standard and reMarkable-optimized PDFs
+- July 07, 2025. **PDF EXPORT FORMATTING PERFECTED**: Fixed critical PDF formatting issues:
+  - Resolved button functionality calling wrong export functions
+  - Improved text readability with optimal font sizes (6px names, 5px times)
+  - Automatic text cleanup: removes "Appointment" suffix and handles long titles
+  - Enhanced multi-line text wrapping for better appointment name display
+  - Proper time stamp positioning at bottom of appointment blocks
+  - Optimized spacing and layout for professional, readable output
 
 ## User Preferences
 
