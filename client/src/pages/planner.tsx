@@ -553,13 +553,27 @@ export default function Planner() {
       const calendarId = (event as any).calendarId || event.sourceId;
       const isSelected = selectedCalendars.has(calendarId);
       
-
+      // Debug logging for Monday events
+      if (event.title.includes('Dan') || event.title.includes('Sherrifa') || event.title.includes('David') || event.title.includes('Steven')) {
+        console.log('Monday event filter check:', {
+          title: event.title,
+          calendarId: calendarId,
+          isSelected: isSelected,
+          selectedCalendars: Array.from(selectedCalendars),
+          eventDate: event.startTime
+        });
+      }
 
       return isSelected;
     }
     // Always show manual and SimplePractice events since there are no toggles for them
     return true;
   });
+
+  // Debug: Log total events and filtered events for Monday
+  console.log('Total events in state:', state.events.length);
+  console.log('Filtered events for display:', currentEvents.length);
+  console.log('Selected calendars:', Array.from(selectedCalendars));
 
 
   

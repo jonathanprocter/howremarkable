@@ -40,8 +40,8 @@ const sampleGoogleEvents: CalendarEvent[] = [
 ];
 
 const initialState: CalendarState = {
-  currentDate: new Date(),
-  selectedDate: new Date(),
+  currentDate: new Date(2025, 6, 7), // July 7, 2025 (Monday)
+  selectedDate: new Date(2025, 6, 7), // July 7, 2025 (Monday)
   viewMode: 'weekly',
   currentWeek: {
     weekNumber: 1,
@@ -77,6 +77,12 @@ export const useCalendar = () => {
   useEffect(() => {
     updateCurrentWeek(state.currentDate);
   }, [state.currentDate]);
+
+  // Force update to July 7, 2025 week on mount
+  useEffect(() => {
+    const targetDate = new Date(2025, 6, 7); // July 7, 2025
+    setCurrentDate(targetDate);
+  }, []);
 
   // Persist manual events to localStorage whenever they change
   useEffect(() => {
