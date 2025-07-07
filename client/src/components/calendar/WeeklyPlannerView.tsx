@@ -198,6 +198,30 @@ export const WeeklyPlannerView = ({
 
       {/* Enhanced Visual Legend */}
       <div className="legend bg-yellow-50 border-t-4 border-yellow-400">
+        <div className="legend-header">
+          <h3>📅 Calendar Legend</h3>
+        </div>
+        <div className="legend-grid">
+          {/* SimplePractice */}
+          <div className="legend-item">
+            <div className="legend-symbol simplepractice" style={{borderLeft: '6px solid #4285F4'}}></div>
+            <span>SimplePractice (274 events)</span>
+          </div>
+          {/* Google Calendar */}
+          <div className="legend-item">
+            <div className="legend-symbol google" style={{border: '3px dashed #34d399'}}></div>
+            <span>Google Calendar (29 events)</span>
+          </div>
+          {/* US Holidays */}
+          <div className="legend-item">
+            <div className="legend-symbol personal" style={{background: '#fbbf24', border: '3px solid #f59e0b'}}></div>
+            <span>US Holidays</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Enhanced Visual Legend */}
+      <div className="legend bg-yellow-50 border-t-4 border-yellow-400">
         <div className="flex items-center justify-center gap-8 py-3">
           <div className="flex items-center gap-2">
             <div className="w-5 h-4 bg-blue-50 border-2 border-blue-500 relative" style={{borderLeft: '6px solid #4285F4'}}>
@@ -282,7 +306,7 @@ export const WeeklyPlannerView = ({
                   }}
                   style={{ position: 'relative', minHeight: '35px' }}
                 >
-                  {dayEvents.length > 0 && dayEvents}
+                  {dayEvents}
                 </div>
               );
             });
