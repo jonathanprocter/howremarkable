@@ -11,14 +11,14 @@ const HTML_TEMPLATE_CONFIG = {
   timeColumnWidth: 60,
   dayColumnWidth: 161, // (1190 - 60) / 7 = ~161 points per day
   
-  // Header sections - more compact for full view
-  headerHeight: 45,
-  statsHeight: 35,
-  legendHeight: 25,
+  // Header sections - optimized spacing
+  headerHeight: 50,
+  statsHeight: 40, 
+  legendHeight: 30,
   
-  // Grid positioning
-  gridStartY: 105, // After header, stats, and legend (more compact)
-  timeSlotHeight: 18, // Height for each 30-minute slot (reduced for compactness)
+  // Grid positioning - centered with better spacing
+  gridStartY: 130, // More space from top for better balance
+  timeSlotHeight: 20, // Slightly increased for better readability
   
   // Colors matching HTML template
   colors: {
@@ -80,42 +80,46 @@ export const exportHTMLTemplatePDF = async (
 };
 
 function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date): void {
-  // Main border
+  // Main border with margin for better centering
+  const margin = 20;
   pdf.setLineWidth(3);
   pdf.setDrawColor(0, 0, 0);
-  pdf.rect(0, 0, HTML_TEMPLATE_CONFIG.pageWidth, HTML_TEMPLATE_CONFIG.pageHeight);
+  pdf.rect(margin, margin, HTML_TEMPLATE_CONFIG.pageWidth - (margin * 2), HTML_TEMPLATE_CONFIG.pageHeight - (margin * 2));
   
-  // Header background
+  // Header background with margin adjustment
+  const contentWidth = HTML_TEMPLATE_CONFIG.pageWidth - (margin * 2);
   pdf.setFillColor(255, 255, 255);
-  pdf.rect(0, 0, HTML_TEMPLATE_CONFIG.pageWidth, HTML_TEMPLATE_CONFIG.headerHeight, 'F');
+  pdf.rect(margin, margin, contentWidth, HTML_TEMPLATE_CONFIG.headerHeight, 'F');
   
   // Header border
   pdf.setLineWidth(3);
-  pdf.line(0, HTML_TEMPLATE_CONFIG.headerHeight, HTML_TEMPLATE_CONFIG.pageWidth, HTML_TEMPLATE_CONFIG.headerHeight);
+  pdf.line(margin, margin + HTML_TEMPLATE_CONFIG.headerHeight, margin + contentWidth, margin + HTML_TEMPLATE_CONFIG.headerHeight);
   
   // Title
   pdf.setFontSize(20);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(0, 0, 0);
-  pdf.text('WEEKLY PLANNER', HTML_TEMPLATE_CONFIG.pageWidth / 2, 20, { align: 'center' });
+  pdf.text('WEEKLY PLANNER', HTML_TEMPLATE_CONFIG.pageWidth / 2, margin + 30, { align: 'center' });
   
   // Week information
   pdf.setFontSize(14);
   pdf.setFont('helvetica', 'bold');
   const weekText = `${weekStartDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${weekEndDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
-  pdf.text(weekText, HTML_TEMPLATE_CONFIG.pageWidth / 2, 40, { align: 'center' });
+  pdf.text(weekText, HTML_TEMPLATE_CONFIG.pageWidth / 2, margin + 50, { align: 'center' });
 }
 
 function drawStats(pdf: jsPDF, events: CalendarEvent[]): void {
-  const statsY = HTML_TEMPLATE_CONFIG.headerHeight;
+  const margin = 20;
+  const contentWidth = HTML_TEMPLATE_CONFIG.pageWidth - (margin * 2);
+  const statsY = margin + HTML_TEMPLATE_CONFIG.headerHeight;
   
   // Stats background
   pdf.setFillColor(255, 255, 255);
-  pdf.rect(0, statsY, HTML_TEMPLATE_CONFIG.pageWidth, HTML_TEMPLATE_CONFIG.statsHeight, 'F');
+  pdf.rect(margin, statsY, contentWidth, HTML_TEMPLATE_CONFIG.statsHeight, 'F');
   
   // Stats border
   pdf.setLineWidth(3);
-  pdf.line(0, statsY + HTML_TEMPLATE_CONFIG.statsHeight, HTML_TEMPLATE_CONFIG.pageWidth, statsY + HTML_TEMPLATE_CONFIG.statsHeight);
+  pdf.line(margin, statsY + HTML_TEMPLATE_CONFIG.statsHeight, margin + contentWidth, statsY + HTML_TEMPLATE_CONFIG.statsHeight);
   
   // Calculate stats
   const totalEvents = events.length;
@@ -157,15 +161,17 @@ function drawStats(pdf: jsPDF, events: CalendarEvent[]): void {
 }
 
 function drawLegend(pdf: jsPDF): void {
-  const legendY = HTML_TEMPLATE_CONFIG.headerHeight + HTML_TEMPLATE_CONFIG.statsHeight;
+  const margin = 20;
+  const contentWidth = HTML_TEMPLATE_CONFIG.pageWidth - (margin * 2);
+  const legendY = margin + HTML_TEMPLATE_CONFIG.headerHeight + HTML_TEMPLATE_CONFIG.statsHeight;
   
   // Legend background
   pdf.setFillColor(255, 255, 255);
-  pdf.rect(0, legendY, HTML_TEMPLATE_CONFIG.pageWidth, HTML_TEMPLATE_CONFIG.legendHeight, 'F');
+  pdf.rect(margin, legendY, contentWidth, HTML_TEMPLATE_CONFIG.legendHeight, 'F');
   
   // Legend border
   pdf.setLineWidth(3);
-  pdf.line(0, legendY + HTML_TEMPLATE_CONFIG.legendHeight, HTML_TEMPLATE_CONFIG.pageWidth, legendY + HTML_TEMPLATE_CONFIG.legendHeight);
+  pdf.line(margin, legendY + HTML_TEMPLATE_CONFIG.legendHeight, margin + contentWidth, legendY + HTML_TEMPLATE_CONFIG.legendHeight);
   
   // Legend items
   const legendItems = [
@@ -174,7 +180,7 @@ function drawLegend(pdf: jsPDF): void {
     { label: 'US Holidays', color: { r: 251, g: 188, b: 4 }, style: 'solid' }
   ];
   
-  let x = 20;
+  let x = margin + 20;
   legendItems.forEach(item => {
     // Legend symbol
     pdf.setFillColor(255, 255, 255);
@@ -211,19 +217,21 @@ function drawLegend(pdf: jsPDF): void {
 }
 
 function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent[]): void {
-  const gridY = HTML_TEMPLATE_CONFIG.gridStartY;
+  const margin = 20;
+  const contentWidth = HTML_TEMPLATE_CONFIG.pageWidth - (margin * 2);
+  const gridY = margin + HTML_TEMPLATE_CONFIG.gridStartY;
   
   // === TIME COLUMN HEADER ===
   pdf.setFillColor(255, 255, 255);
-  pdf.rect(0, gridY, HTML_TEMPLATE_CONFIG.timeColumnWidth, 30, 'F');
+  pdf.rect(margin, gridY, HTML_TEMPLATE_CONFIG.timeColumnWidth, 30, 'F');
   
   pdf.setLineWidth(2);
   pdf.setDrawColor(0, 0, 0);
-  pdf.rect(0, gridY, HTML_TEMPLATE_CONFIG.timeColumnWidth, 30);
+  pdf.rect(margin, gridY, HTML_TEMPLATE_CONFIG.timeColumnWidth, 30);
   
   pdf.setFontSize(12);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('TIME', HTML_TEMPLATE_CONFIG.timeColumnWidth / 2, gridY + 18, { align: 'center' });
+  pdf.text('TIME', margin + HTML_TEMPLATE_CONFIG.timeColumnWidth / 2, gridY + 18, { align: 'center' });
   
   // === DAY HEADERS ===
   const dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -231,22 +239,23 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
     const dayDate = new Date(weekStartDate);
     dayDate.setDate(weekStartDate.getDate() + i);
     
-    const x = HTML_TEMPLATE_CONFIG.timeColumnWidth + (i * HTML_TEMPLATE_CONFIG.dayColumnWidth);
+    const dayColumnWidth = (contentWidth - HTML_TEMPLATE_CONFIG.timeColumnWidth) / 7;
+    const x = margin + HTML_TEMPLATE_CONFIG.timeColumnWidth + (i * dayColumnWidth);
     
     // Day header background
     pdf.setFillColor(255, 255, 255);
-    pdf.rect(x, gridY, HTML_TEMPLATE_CONFIG.dayColumnWidth, 30, 'F');
+    pdf.rect(x, gridY, dayColumnWidth, 30, 'F');
     
     // Day header borders - strong vertical lines
     pdf.setLineWidth(2);
     pdf.setDrawColor(0, 0, 0);
-    pdf.rect(x, gridY, HTML_TEMPLATE_CONFIG.dayColumnWidth, 30);
+    pdf.rect(x, gridY, dayColumnWidth, 30);
     
     // Extra strong vertical borders between day columns
     pdf.setLineWidth(3);
     pdf.line(x, gridY, x, gridY + 30);
     if (i === 6) {
-      pdf.line(x + HTML_TEMPLATE_CONFIG.dayColumnWidth, gridY, x + HTML_TEMPLATE_CONFIG.dayColumnWidth, gridY + 30);
+      pdf.line(x + dayColumnWidth, gridY, x + dayColumnWidth, gridY + 30);
     }
     
     // Day name
