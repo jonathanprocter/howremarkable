@@ -164,14 +164,26 @@ export const exportTemplateMatchPDF = async (
       pdf.rect(gridStartX, yPosition, TEMPLATE_CONFIG.timeColumnWidth, slotHeight, 'F');
     }
     
-    // Time slot border
-    pdf.setLineWidth(isHour ? 2 : 1);
-    pdf.setDrawColor(isHour ? 0 : 221, isHour ? 0 : 221, isHour ? 0 : 221);
-    pdf.line(gridStartX, yPosition + slotHeight, gridStartX + TEMPLATE_CONFIG.timeColumnWidth, yPosition + slotHeight);
+    // Time slot border - extend across entire week for :30 minutes
+    const isHalfHour = timeSlot.endsWith(':30');
+    pdf.setLineWidth(isHalfHour ? 2 : 1);
+    pdf.setDrawColor(isHalfHour ? 180 : 221, isHalfHour ? 180 : 221, isHalfHour ? 180 : 221);
     
-    // Time text
-    pdf.setFontSize(isHour ? 11 : 10);
-    pdf.setFont('helvetica', 'bold');
+    // Draw horizontal line across entire week for :30 minutes
+    if (isHalfHour) {
+      pdf.line(gridStartX, yPosition + slotHeight, TEMPLATE_CONFIG.pageWidth - 20, yPosition + slotHeight);
+      // Add subtle background for :30 slots across the week
+      pdf.setFillColor(250, 250, 250);
+      pdf.rect(gridStartX + TEMPLATE_CONFIG.timeColumnWidth, yPosition, 
+               TEMPLATE_CONFIG.pageWidth - gridStartX - TEMPLATE_CONFIG.timeColumnWidth - 20, 
+               slotHeight, 'F');
+    } else {
+      pdf.line(gridStartX, yPosition + slotHeight, gridStartX + TEMPLATE_CONFIG.timeColumnWidth, yPosition + slotHeight);
+    }
+    
+    // Time text with different font sizes
+    pdf.setFontSize(isHour ? 11 : 8); // Top of hour larger, :30 smaller
+    pdf.setFont('helvetica', isHour ? 'bold' : 'normal');
     pdf.setTextColor(0, 0, 0);
     const timeWidth = pdf.getTextWidth(timeSlot);
     pdf.text(timeSlot, gridStartX + (TEMPLATE_CONFIG.timeColumnWidth - timeWidth) / 2, yPosition + 10);
