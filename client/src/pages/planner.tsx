@@ -38,9 +38,6 @@ export default function Planner() {
 
   // Load events from database on component mount
   useEffect(() => {
-    // Force navigation to week containing July 7, 2025 to show Monday appointments
-    const july7 = new Date(2025, 6, 7); // July 7, 2025
-    setCurrentDate(july7);
     
     const loadDatabaseEvents = async () => {
       try {
