@@ -7,6 +7,8 @@ import { MainLayout } from '../components/layout/MainLayout';
 import { CalendarEvent, ViewMode } from '../types/calendar';
 import { getWeekStartDate, getWeekEndDate, addWeeks, getWeekNumber } from '../utils/dateUtils';
 import { apiRequest } from '../lib/queryClient';
+import { exportWeeklyToPDF, exportDailyToPDF, exportWeeklyPackageToPDF, generateFilename } from '../utils/pdfExportNew';
+import { exportWeeklyForRemarkable, exportDailyForRemarkable, generateRemarkableFilename } from '../utils/pdfExportRemarkable';
 
 export default function PlannerPage() {
   const queryClient = useQueryClient();
@@ -192,6 +194,57 @@ export default function PlannerPage() {
   const weekNumber = getWeekNumber(currentDate);
 
   const isLoading = eventsQueryLoading || eventsLoading;
+
+  const handleExportCurrentView = async () => {
+    try {
+      let pdfBase64: string;
+      let filename: string;
+
+      if (viewMode === 'week') {
+        const weekNumber = getWeekNumber(selectedDate);
+        pdfBase64 = await exportWeeklyForRemarkable(weekStartDate, weekEndDate, calendarEvents, weekNumber);
+        filename = generateRemarkableFilename('weekly', selectedDate);
+      } else {
+        const dateKey = selectedDate.toISOString().split('T')[0];
+        const notes = dailyNotes[dateKey] || '';
+        pdfBase64 = await exportDailyForRemarkable(selectedDate, calendarEvents, notes);
+        filename = generateRemarkableFilename('daily', selectedDate);
+      }
+
+      downloadPDF(pdfBase64, filename);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Failed to export PDF. Please try again.');
+    }
+  };
+
+  const handleExportDailyView = async () => {
+    try {
+      const dateKey = selectedDate.toISOString().split('T')[0];
+      const notes = dailyNotes[dateKey] || '';
+      const pdfBase64 = await exportDailyForRemarkable(selectedDate, calendarEvents, notes);
+      const filename = generateRemarkableFilename('daily', selectedDate);
+
+      downloadPDF(pdfBase64, filename);
+    } catch (error) {
+      console.error('Daily export failed:', error);
+      alert('Failed to export daily PDF. Please try again.');
+    }
+  };
+
+  const handleExportWeeklyPackage = async () => {
+    try {
+      const weekNumber = getWeekNumber(selectedDate);
+      // Use reMarkable weekly for now, can create package version later
+      const pdfBase64 = await exportWeeklyForRemarkable(weekStartDate, weekEndDate, calendarEvents, weekNumber);
+      const filename = `reMarkable_WeeklyPackage_${selectedDate.toISOString().split('T')[0]}.pdf`;
+
+      downloadPDF(pdfBase64, filename);
+    } catch (error) {
+      console.error('Weekly package export failed:', error);
+      alert('Failed to export weekly package PDF. Please try again.');
+    }
+  };
 
   return (
     <MainLayout>
