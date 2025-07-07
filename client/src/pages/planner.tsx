@@ -10,7 +10,14 @@ import { CalendarLegend } from '../components/calendar/CalendarLegend';
 import { CalendarEvent } from '../types/calendar';
 import { useToast } from '@/hooks/use-toast';
 import { exportWeeklyToPDF, exportDailyToPDF, exportWeeklyPackageToPDF, generateFilename } from '../utils/pdfExportNew';
+import { 
+  exportWeeklyRemarkable, 
+  exportDailyRemarkable, 
+  exportMonthlyRemarkable,
+  generateRemarkableFilename 
+} from '../utils/remarkablePDFSimple';
 import { getWeekNumber } from '../utils/dateUtils';
+import { initializeRemarkableOptimizations } from '../utils/remarkableDisplayOptimizer';
 
 export default function Planner() {
   const {
@@ -35,6 +42,11 @@ export default function Planner() {
   const { toast } = useToast();
   const [googleCalendars, setGoogleCalendars] = useState<any[]>([]);
   const [selectedCalendars, setSelectedCalendars] = useState<Set<string>>(new Set(['0np7sib5u30o7oc297j5pb259g'])); // Default to SimplePractice calendar selected
+
+  // Initialize reMarkable Pro optimizations on component mount
+  useEffect(() => {
+    initializeRemarkableOptimizations();
+  }, []);
 
   // Load events from database on component mount
   useEffect(() => {
@@ -195,6 +207,7 @@ export default function Planner() {
       let pdfContent: string;
       let filename: string;
 
+      // Standard PDF exports
       if (type === 'Weekly Package') {
         const weekNumber = getWeekNumber(state.currentDate);
         pdfContent = await exportWeeklyPackageToPDF(
@@ -221,6 +234,28 @@ export default function Planner() {
           currentDailyNotes
         );
         filename = generateFilename('daily', state.selectedDate);
+      }
+      // reMarkable Pro optimized exports
+      else if (type === 'reMarkable Weekly') {
+        const weekNumber = getWeekNumber(state.currentDate);
+        pdfContent = await exportWeeklyRemarkable(
+          state.currentWeek.startDate,
+          state.currentWeek.endDate,
+          currentEvents,
+          weekNumber
+        );
+        filename = generateRemarkableFilename('weekly', state.currentWeek.startDate);
+      } else if (type === 'reMarkable Daily') {
+        pdfContent = await exportDailyRemarkable(
+          state.selectedDate,
+          currentEvents,
+          currentDailyNotes
+        );
+        filename = generateRemarkableFilename('daily', state.selectedDate);
+      } else if (type === 'reMarkable Monthly') {
+        const monthDate = new Date(state.currentDate.getFullYear(), state.currentDate.getMonth(), 1);
+        pdfContent = await exportMonthlyRemarkable(monthDate, currentEvents);
+        filename = generateRemarkableFilename('monthly', monthDate);
       } else {
         toast({
           title: "PDF Export",
