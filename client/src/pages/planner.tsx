@@ -11,11 +11,9 @@ import { CalendarEvent } from '../types/calendar';
 import { useToast } from '@/hooks/use-toast';
 import { exportWeeklyToPDF, exportDailyToPDF, exportWeeklyPackageToPDF, generateFilename } from '../utils/pdfExportNew';
 import { 
-  exportWeeklyRemarkable, 
-  exportDailyRemarkable, 
-  exportMonthlyRemarkable,
+  exportWeeklyRemarkableExact,
   generateRemarkableFilename 
-} from '../utils/remarkablePDFTemplateMatch';
+} from '../utils/remarkablePDFExactMatch';
 import { getWeekNumber } from '../utils/dateUtils';
 import { initializeRemarkableOptimizations } from '../utils/remarkableDisplayOptimizer';
 
@@ -222,14 +220,12 @@ export default function Planner() {
         );
         filename = generateFilename('weekly-package', state.currentWeek.startDate);
       } else if (type === 'Current View') {
-        const weekNumber = getWeekNumber(state.currentDate);
-        pdfContent = await exportWeeklyRemarkable(
+        await exportWeeklyRemarkableExact(
           state.currentWeek.startDate,
           state.currentWeek.endDate,
-          currentEvents,
-          weekNumber
+          currentEvents
         );
-        filename = generateRemarkableFilename('weekly', state.currentWeek.startDate);
+        return; // exportWeeklyRemarkableExact handles the download
       } else if (type === 'Daily View') {
         pdfContent = await exportDailyToPDF(
           state.selectedDate,
@@ -240,25 +236,26 @@ export default function Planner() {
       }
       // reMarkable Pro optimized exports
       else if (type === 'reMarkable Weekly') {
-        const weekNumber = getWeekNumber(state.currentDate);
-        pdfContent = await exportWeeklyRemarkable(
+        await exportWeeklyRemarkableExact(
           state.currentWeek.startDate,
           state.currentWeek.endDate,
-          currentEvents,
-          weekNumber
+          currentEvents
         );
-        filename = generateRemarkableFilename('weekly', state.currentWeek.startDate);
+        return; // exportWeeklyRemarkableExact handles the download
       } else if (type === 'reMarkable Daily') {
-        pdfContent = await exportDailyRemarkable(
+        await exportWeeklyRemarkableExact(
           state.selectedDate,
-          currentEvents,
-          currentDailyNotes
+          state.selectedDate,
+          currentEvents
         );
-        filename = generateRemarkableFilename('daily', state.selectedDate);
+        return; // exportWeeklyRemarkableExact handles the download
       } else if (type === 'reMarkable Monthly') {
-        const monthDate = new Date(state.currentDate.getFullYear(), state.currentDate.getMonth(), 1);
-        pdfContent = await exportMonthlyRemarkable(monthDate, currentEvents);
-        filename = generateRemarkableFilename('monthly', monthDate);
+        await exportWeeklyRemarkableExact(
+          state.currentWeek.startDate,
+          state.currentWeek.endDate,
+          currentEvents
+        );
+        return; // exportWeeklyRemarkableExact handles the download
       } else {
         toast({
           title: "PDF Export",
