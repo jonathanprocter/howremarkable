@@ -161,28 +161,29 @@ export const exportWeeklyRemarkable = async (
       const endHour = eventEnd.getHours();
       const endMinute = eventEnd.getMinutes();
       
-      // More precise slot calculation
+      // Ultra-precise slot calculation matching template exactly
       const startTotalMinutes = (startHour * 60) + startMinute;
       const endTotalMinutes = (endHour * 60) + endMinute;
       const startMinutesSince6AM = startTotalMinutes - (6 * 60);
       const eventDurationMinutes = endTotalMinutes - startTotalMinutes;
       
-      // Calculate exact Y position
+      // Calculate exact Y position with precise time slot alignment
       const minutesPerSlot = 30;
-      const eventY = gridStartY + 20 + (startMinutesSince6AM / minutesPerSlot) * slotHeight;
-      const eventHeight = Math.max(slotHeight * 0.9, (eventDurationMinutes / minutesPerSlot) * slotHeight);
+      const pixelsPerMinute = slotHeight / minutesPerSlot;
+      const eventY = gridStartY + 20 + (startMinutesSince6AM * pixelsPerMinute);
+      const eventHeight = Math.max(slotHeight * 0.85, eventDurationMinutes * pixelsPerMinute);
       
-      // Event box with template-matching blue styling
-      pdf.setFillColor(173, 216, 230); // Light blue like template
+      // Event box with exact template blue styling
+      pdf.setFillColor(135, 206, 235); // Sky blue matching template
       pdf.setDrawColor(70, 130, 180); // Steel blue border
-      pdf.setLineWidth(0.8);
-      pdf.rect(dayX + 1, eventY, dayColumnWidth - 2, eventHeight, 'FD');
+      pdf.setLineWidth(1);
+      pdf.rect(dayX + 0.5, eventY + 0.5, dayColumnWidth - 1, eventHeight - 1, 'FD');
       
       // Event title (remove "Appointment" suffix)
       let eventTitle = event.title.replace(/\s*Appointment\s*$/i, '').trim();
       
-      // Split title into multiple lines if needed
-      const maxCharsPerLine = Math.floor(dayColumnWidth / 2.5);
+      // Split title into multiple lines to match template
+      const maxCharsPerLine = Math.floor(dayColumnWidth / 2);
       const titleLines = [];
       if (eventTitle.length > maxCharsPerLine) {
         const words = eventTitle.split(' ');
@@ -200,29 +201,29 @@ export const exportWeeklyRemarkable = async (
         titleLines.push(eventTitle);
       }
       
-      // Draw title lines
+      // Draw title lines with template styling
       pdf.setTextColor(0, 0, 0);
       pdf.setFontSize(6);
       pdf.setFont('helvetica', 'bold');
       titleLines.slice(0, 2).forEach((line, lineIndex) => {
-        pdf.text(line, dayX + 2, eventY + 6 + (lineIndex * 4));
+        pdf.text(line, dayX + 1.5, eventY + 5 + (lineIndex * 3.5));
       });
       
-      // Event time range
+      // Event time range with template format
       const startTimeStr = `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}`;
       const endTimeStr = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
       const timeRange = `${startTimeStr}-${endTimeStr}`;
       
       pdf.setFontSize(5);
       pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(60, 60, 60);
-      pdf.text(timeRange, dayX + 2, eventY + eventHeight - 6);
+      pdf.setTextColor(40, 40, 40);
+      pdf.text(timeRange, dayX + 1.5, eventY + eventHeight - 4);
       
-      // Duration in minutes
+      // Duration matching template format
       const durationMinutes = Math.round((eventEnd.getTime() - eventStart.getTime()) / (1000 * 60));
-      pdf.setTextColor(100, 100, 100);
-      pdf.setFontSize(5);
-      pdf.text(`${durationMinutes}min`, dayX + 2, eventY + eventHeight - 2);
+      pdf.setTextColor(80, 80, 80);
+      pdf.setFontSize(4.5);
+      pdf.text(`${durationMinutes}min`, dayX + dayColumnWidth - 12, eventY + eventHeight - 1.5);
     }
   });
 
