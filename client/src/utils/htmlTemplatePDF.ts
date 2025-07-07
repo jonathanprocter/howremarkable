@@ -95,14 +95,14 @@ function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date): void {
   pdf.setLineWidth(3);
   pdf.line(margin, margin + HTML_TEMPLATE_CONFIG.headerHeight, margin + contentWidth, margin + HTML_TEMPLATE_CONFIG.headerHeight);
   
-  // Title
-  pdf.setFontSize(20);
+  // Title - scaled down to match layout proportions
+  pdf.setFontSize(14);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(0, 0, 0);
   pdf.text('WEEKLY PLANNER', HTML_TEMPLATE_CONFIG.pageWidth / 2, margin + 25, { align: 'center' });
   
-  // Week information
-  pdf.setFontSize(14);
+  // Week information - slightly smaller for better proportion
+  pdf.setFontSize(12);
   pdf.setFont('helvetica', 'bold');
   const weekText = `${weekStartDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${weekEndDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
   pdf.text(weekText, HTML_TEMPLATE_CONFIG.pageWidth / 2, margin + 45, { align: 'center' });
