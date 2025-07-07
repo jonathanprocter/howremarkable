@@ -42,16 +42,16 @@ const TIME_POSITIONS = {
 };
 
 const TEMPLATE_CONFIG = {
-  // A4 Landscape dimensions in points (1 point = 1/72 inch)
-  pageWidth: 842,
-  pageHeight: 595,
+  // A3 Landscape dimensions to fit full time range (1190x842 points)
+  pageWidth: 1190,
+  pageHeight: 842,
   
-  // Grid layout from your template
-  timeColumnWidth: 60,
-  dayColumnWidth: 110,
-  headerHeight: 80,
-  gridStartY: 80,
-  totalGridHeight: 480,
+  // Grid layout optimized for full time range
+  timeColumnWidth: 80,
+  dayColumnWidth: 150,
+  headerHeight: 60,
+  gridStartY: 60,
+  totalGridHeight: 720, // Full height for all time slots 06:00-23:30
   
   // Template colors - exact match to your CSS
   lightBlue: [135, 206, 235], // #87CEEB
@@ -70,7 +70,7 @@ export const exportTemplateMatchPDF = async (
   const pdf = new jsPDF({
     orientation: 'landscape',
     unit: 'pt',
-    format: 'a4'
+    format: 'a3'
   });
 
   // Set font for the entire document
@@ -141,26 +141,33 @@ export const exportTemplateMatchPDF = async (
     pdf.text(dateStr, dayX + (TEMPLATE_CONFIG.dayColumnWidth - dateWidth) / 2, gridStartY + 25);
   }
   
-  // Draw time slots
-  const timeSlots = Object.keys(TIME_POSITIONS);
+  // Draw time slots - full range from 06:00 to 23:30
+  const timeSlots = Object.keys(TIME_POSITIONS).sort();
+  const totalSlots = timeSlots.length; // 35 slots (17.5 hours × 2)
+  const availableHeight = TEMPLATE_CONFIG.totalGridHeight;
+  const slotHeight = Math.floor(availableHeight / totalSlots); // Dynamic height per slot
+  
   for (let i = 0; i < timeSlots.length; i++) {
     const timeSlot = timeSlots[i];
-    const yPosition = gridStartY + 30 + (i * 15); // 15px per half hour
+    const yPosition = gridStartY + 30 + (i * slotHeight);
+    
+    // Skip if this would go beyond the page height
+    if (yPosition + slotHeight > TEMPLATE_CONFIG.pageHeight - 40) break;
     
     // Time slot background
     const isHour = timeSlot.endsWith(':00');
     if (isHour) {
       pdf.setFillColor(...TEMPLATE_CONFIG.headerGray);
-      pdf.rect(gridStartX, yPosition, TEMPLATE_CONFIG.timeColumnWidth, 15, 'F');
+      pdf.rect(gridStartX, yPosition, TEMPLATE_CONFIG.timeColumnWidth, slotHeight, 'F');
     } else {
       pdf.setFillColor(248, 248, 248);
-      pdf.rect(gridStartX, yPosition, TEMPLATE_CONFIG.timeColumnWidth, 15, 'F');
+      pdf.rect(gridStartX, yPosition, TEMPLATE_CONFIG.timeColumnWidth, slotHeight, 'F');
     }
     
     // Time slot border
     pdf.setLineWidth(isHour ? 2 : 1);
     pdf.setDrawColor(isHour ? 0 : 221, isHour ? 0 : 221, isHour ? 0 : 221);
-    pdf.line(gridStartX, yPosition + 15, gridStartX + TEMPLATE_CONFIG.timeColumnWidth, yPosition + 15);
+    pdf.line(gridStartX, yPosition + slotHeight, gridStartX + TEMPLATE_CONFIG.timeColumnWidth, yPosition + slotHeight);
     
     // Time text
     pdf.setFontSize(isHour ? 11 : 10);
@@ -171,18 +178,30 @@ export const exportTemplateMatchPDF = async (
   }
   
   // Draw day columns and events
+  const actualGridHeight = Math.min(TEMPLATE_CONFIG.totalGridHeight, TEMPLATE_CONFIG.pageHeight - gridStartY - 70);
+  
   for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
     const dayX = gridStartX + TEMPLATE_CONFIG.timeColumnWidth + (dayIndex * TEMPLATE_CONFIG.dayColumnWidth);
     const currentDate = dates[dayIndex];
     
     // Day column background
     pdf.setFillColor(255, 255, 255);
-    pdf.rect(dayX, gridStartY + 30, TEMPLATE_CONFIG.dayColumnWidth, TEMPLATE_CONFIG.totalGridHeight, 'F');
+    pdf.rect(dayX, gridStartY + 30, TEMPLATE_CONFIG.dayColumnWidth, actualGridHeight, 'F');
     
     // Day column border
     pdf.setLineWidth(1);
     pdf.setDrawColor(221, 221, 221);
-    pdf.rect(dayX, gridStartY + 30, TEMPLATE_CONFIG.dayColumnWidth, TEMPLATE_CONFIG.totalGridHeight);
+    pdf.rect(dayX, gridStartY + 30, TEMPLATE_CONFIG.dayColumnWidth, actualGridHeight);
+    
+    // Draw horizontal grid lines for each time slot
+    for (let i = 0; i < timeSlots.length; i++) {
+      const yPos = gridStartY + 30 + (i * slotHeight);
+      if (yPos + slotHeight > TEMPLATE_CONFIG.pageHeight - 40) break;
+      
+      pdf.setLineWidth(0.5);
+      pdf.setDrawColor(240, 240, 240);
+      pdf.line(dayX, yPos + slotHeight, dayX + TEMPLATE_CONFIG.dayColumnWidth, yPos + slotHeight);
+    }
     
     // Filter events for this day
     const dayEvents = events.filter(event => {
@@ -223,13 +242,12 @@ export const exportTemplateMatchPDF = async (
       
       // Calculate event height based on duration (convert to PDF points)
       const durationMinutes = (endTime.getTime() - startTime.getTime()) / (1000 * 60);
-      const eventHeight = Math.max(15, (durationMinutes / 30) * 15); // Each 30min = 15 PDF points
+      const eventHeight = Math.max(slotHeight - 2, (durationMinutes / 30) * slotHeight); // Use dynamic slot height
       
-      // Convert template position to PDF coordinates
-      // Template: 30px per 30min slot = 1px per minute from 6AM
-      // PDF: 15 points per 30min slot = 0.5 points per minute from 6AM
+      // Convert time to slot index
       const minutesSince6AM = (startHour - 6) * 60 + startMinute;
-      const eventY = gridStartY + 30 + (minutesSince6AM * 0.5);
+      const slotIndex = Math.floor(minutesSince6AM / 30); // Which 30-minute slot
+      const eventY = gridStartY + 30 + (slotIndex * slotHeight);
       
       // Draw event box with exact template styling
       pdf.setFillColor(...TEMPLATE_CONFIG.lightBlue);
