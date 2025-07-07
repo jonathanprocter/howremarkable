@@ -325,9 +325,9 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
   });
   
   // === VERTICAL GRID LINES ===
-  // Draw strong vertical lines through entire grid
+  // Draw strong vertical lines through entire grid - FIXED positioning
   for (let i = 0; i <= 7; i++) {
-    const x = HTML_TEMPLATE_CONFIG.timeColumnWidth + (i * HTML_TEMPLATE_CONFIG.dayColumnWidth);
+    const x = margin + HTML_TEMPLATE_CONFIG.timeColumnWidth + (i * HTML_TEMPLATE_CONFIG.dayColumnWidth);
     pdf.setLineWidth(3);
     pdf.setDrawColor(0, 0, 0);
     pdf.line(x, gridY, x, gridY + 30 + (TIME_SLOTS.length * HTML_TEMPLATE_CONFIG.timeSlotHeight));
