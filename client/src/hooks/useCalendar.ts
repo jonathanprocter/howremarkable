@@ -104,9 +104,9 @@ export const useCalendar = () => {
           const eventDateStr = eventDate.toDateString();
           const currentDateStr = currentDate.toDateString();
           
-          // Debug for Monday events
-          if (eventDate.getDay() === 1 && event.title.includes('David Grossman')) {
-            console.log(`Monday event filter: ${event.title}, eventDate: ${eventDateStr}, currentDate: ${currentDateStr}, match: ${eventDateStr === currentDateStr}`);
+          // Debug for all events with "Appointment" in the title
+          if (event.title.includes('Appointment')) {
+            console.log(`Event filter: ${event.title}, eventDate: ${eventDateStr}, currentDate: ${currentDateStr}, match: ${eventDateStr === currentDateStr}`);
             if (eventDateStr === currentDateStr) {
               console.log(`✓ MATCH FOUND: ${event.title} will be displayed on ${currentDateStr}`);
             }
