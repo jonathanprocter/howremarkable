@@ -14,7 +14,7 @@ interface SidebarProps {
   onSyncNotes: () => void;
   onSelectAll: () => void;
   onDeselectAll: () => void;
-  onExportCurrentView: () => void;
+  onExportCurrentView: (type?: string) => void;
   onExportWeeklyPackage: () => void;
   onExportDailyView: () => void;
   onExportFullMonth: () => void;

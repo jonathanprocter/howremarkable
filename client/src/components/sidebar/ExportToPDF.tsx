@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 
 interface ExportToPDFProps {
   isGoogleConnected: boolean;
-  onExportCurrentView: () => void;
+  onExportCurrentView: (type?: string) => void;
   onExportWeeklyPackage: () => void;
   onExportDailyView: () => void;
   onExportFullMonth: () => void;
@@ -27,7 +27,7 @@ export const ExportToPDF = ({
         <div className="space-y-1">
           <Button 
             variant="outline" 
-            onClick={onExportCurrentView}
+            onClick={() => onExportCurrentView()}
             className="w-full text-xs"
             size="sm"
           >
@@ -58,7 +58,7 @@ export const ExportToPDF = ({
         <div className="space-y-1">
           <Button 
             variant="outline" 
-            onClick={() => onExportToGoogleDrive('reMarkable Weekly')}
+            onClick={() => onExportCurrentView('reMarkable Weekly')}
             className="w-full text-xs bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
             size="sm"
           >
@@ -66,7 +66,7 @@ export const ExportToPDF = ({
           </Button>
           <Button 
             variant="outline" 
-            onClick={() => onExportToGoogleDrive('reMarkable Daily')}
+            onClick={() => onExportCurrentView('reMarkable Daily')}
             className="w-full text-xs bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
             size="sm"
           >
@@ -74,7 +74,7 @@ export const ExportToPDF = ({
           </Button>
           <Button 
             variant="outline" 
-            onClick={() => onExportToGoogleDrive('reMarkable Monthly')}
+            onClick={() => onExportCurrentView('reMarkable Monthly')}
             className="w-full text-xs bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
             size="sm"
           >

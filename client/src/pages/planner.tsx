@@ -202,7 +202,7 @@ export default function Planner() {
     return false;
   };
 
-  const handleExportAction = async (type: string) => {
+  const handleExportAction = async (type: string = 'Current View') => {
     try {
       console.log('Starting PDF export for type:', type);
       console.log('Current events count:', currentEvents.length);
