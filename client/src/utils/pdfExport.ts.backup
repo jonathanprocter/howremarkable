@@ -184,7 +184,7 @@ export const exportWeeklyToPDF = async (
   
   // Day headers - exact match to .day-header structure
   const dayHeaders = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-  days.forEach((day, index) => {
+  dayHeaders.forEach((day, index) => {
     const currentDate = new Date(weekStartDate);
     currentDate.setDate(currentDate.getDate() + index);
     const dateNum = currentDate.getDate();
@@ -370,8 +370,8 @@ export const exportWeeklyToPDF = async (
   });
   
   // Time slots grid
-  const gridStartY = startY + headerHeight;
-  const drawnEvents = new Set<string>();
+  const dailyGridStartY = startY + headerHeight;
+  const dailyDrawnEvents = new Set<string>();
   
   // Draw all time slots with grid lines
   timeSlots.forEach((slot, index) => {
