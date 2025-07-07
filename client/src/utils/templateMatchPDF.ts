@@ -87,7 +87,9 @@ export const exportTemplateMatchPDF = async (
   pdf.setFontSize(12);
   pdf.setFont('helvetica', 'normal');
   const weekNumber = Math.ceil(((weekStartDate.getTime() - new Date(weekStartDate.getFullYear(), 0, 1).getTime()) / 86400000 + 1) / 7);
-  const weekText = `Week ${weekNumber} - ${formatWeekRange(weekStartDate, weekEndDate)}`;
+  const startStr = `${weekStartDate.getMonth() + 1}/${weekStartDate.getDate()}/${weekStartDate.getFullYear()}`;
+  const endStr = `${weekEndDate.getMonth() + 1}/${weekEndDate.getDate()}/${weekEndDate.getFullYear()}`;
+  const weekText = `Week ${weekNumber}: ${startStr} - ${endStr}`;
   pdf.text(weekText, TEMPLATE_CONFIG.pageWidth / 2, 50, { align: 'center' });
   
   // Add legend in the header area - positioned properly
