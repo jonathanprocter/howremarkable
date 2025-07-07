@@ -136,7 +136,9 @@ export const exportWeeklyRemarkable = async (
              REMARKABLE_CONFIG.margin + REMARKABLE_CONFIG.contentWidth, y);
   });
   
-  // Events - optimized for e-ink display
+  // Events - optimized for e-ink display with conflict resolution
+  const drawnEvents: { [key: string]: Array<{ startSlot: number, endSlot: number, position: number }> } = {};
+  
   events.forEach((event) => {
     const eventDate = new Date(event.startTime);
     const dayIndex = (eventDate.getDay() + 6) % 7; // Monday = 0
@@ -153,10 +155,46 @@ export const exportWeeklyRemarkable = async (
       );
       
       if (startSlotIndex >= 0) {
-        const eventX = REMARKABLE_CONFIG.margin + timeColumnWidth + (dayIndex * dayColumnWidth);
-        const eventY = gridStartY + 15 + (startSlotIndex * slotHeight);
-        const eventHeight = Math.max((duration / 30) * slotHeight, slotHeight * 0.8);
-        const eventWidth = dayColumnWidth - 2;
+        const endSlotIndex = startSlotIndex + Math.ceil(duration / 30);
+        const dayKey = `day-${dayIndex}`;
+        
+        // Initialize day tracking if not exists
+        if (!drawnEvents[dayKey]) {
+          drawnEvents[dayKey] = [];
+        }
+        
+        // Find available horizontal position
+        let horizontalPosition = 0;
+        const maxPositions = 2; // Maximum 2 events side by side
+        
+        // Check for conflicts with existing events
+        for (let pos = 0; pos < maxPositions; pos++) {
+          const hasConflict = drawnEvents[dayKey].some(existing => 
+            existing.position === pos && 
+            existing.startSlot < endSlotIndex && 
+            existing.endSlot > startSlotIndex
+          );
+          
+          if (!hasConflict) {
+            horizontalPosition = pos;
+            break;
+          }
+        }
+        
+        // Record this event's position
+        drawnEvents[dayKey].push({
+          startSlot: startSlotIndex,
+          endSlot: endSlotIndex,
+          position: horizontalPosition
+        });
+        
+        // Calculate event dimensions with better spacing
+        const baseEventWidth = dayColumnWidth - 3; // More margin
+        const eventWidth = horizontalPosition > 0 ? (baseEventWidth / 2) - 1 : baseEventWidth;
+        const eventX = REMARKABLE_CONFIG.margin + timeColumnWidth + (dayIndex * dayColumnWidth) + 1 + 
+                     (horizontalPosition * (eventWidth + 1));
+        const eventY = gridStartY + 15 + (startSlotIndex * slotHeight) + 1;
+        const eventHeight = Math.max((duration / 30) * slotHeight - 2, slotHeight * 0.6); // Better proportions
         
         // Event styling based on source
         if (event.source === 'google') {
@@ -184,16 +222,17 @@ export const exportWeeklyRemarkable = async (
           .toUpperCase()
           .trim();
         
-        // Limit title length to prevent overlapping
-        if (appointmentTitle.length > 20) {
-          appointmentTitle = appointmentTitle.substring(0, 17) + '...';
+        // Adjust title length based on event width
+        const maxChars = horizontalPosition > 0 ? 10 : 18; // Shorter for narrow events
+        if (appointmentTitle.length > maxChars) {
+          appointmentTitle = appointmentTitle.substring(0, maxChars - 3) + '...';
         }
         
-        // Single line title for cleaner layout
-        pdf.text(appointmentTitle, eventX + 2, eventY + 8);
+        // Position title at top of event block
+        pdf.text(appointmentTitle, eventX + 1, eventY + 6);
         
-        // Event time range
-        pdf.setFontSize(5);
+        // Event time range at bottom
+        pdf.setFontSize(4);
         pdf.setFont('helvetica', 'normal');
         const startTimeStr = eventStart.toLocaleTimeString('en-US', { 
           hour: '2-digit', 
@@ -206,7 +245,7 @@ export const exportWeeklyRemarkable = async (
           hour12: false 
         });
         const timeRangeStr = `${startTimeStr}-${endTimeStr}`;
-        pdf.text(timeRangeStr, eventX + 2, eventY + eventHeight - 2);
+        pdf.text(timeRangeStr, eventX + 1, eventY + eventHeight - 1);
       }
     }
   });
