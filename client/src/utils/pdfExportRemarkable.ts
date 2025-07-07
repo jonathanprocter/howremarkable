@@ -1,4 +1,3 @@
-
 // reMarkable Pro PDF Export Optimization
 // Specialized export functions optimized for E Ink display performance
 // Features: Battery optimization, gesture zones, annotation space, stylus interaction
@@ -589,31 +588,31 @@ export const exportWeeklyForRemarkable = async (
 
   // Add gesture recognition zones for reMarkable Pro
   const gestureZoneWidth = 8;
-  
+
   // Left gesture zone for page navigation
   pdf.setFillColor(...EINK_COLORS.veryLightGray);
   pdf.rect(0, 0, gestureZoneWidth, pageHeight, 'F');
-  
+
   // Right gesture zone for quick actions
   pdf.rect(pageWidth - gestureZoneWidth, 0, gestureZoneWidth, pageHeight, 'F');
-  
+
   // Corner gesture indicators (subtle)
   pdf.setDrawColor(...EINK_COLORS.lightGray);
   pdf.setLineWidth(0.5);
-  
+
   // Top-left: Previous week
   pdf.arc(4, 4, 2, 0, Math.PI/2);
   pdf.text('◀', 2, 6, { align: 'center' });
-  
+
   // Top-right: Next week
   pdf.arc(pageWidth - 4, 4, 2, Math.PI/2, Math.PI);
   pdf.text('▶', pageWidth - 2, 6, { align: 'center' });
-  
+
   // Bottom-right: Export options
   pdf.circle(pageWidth - 4, pageHeight - 4, 1.5, 'S');
   pdf.setFontSize(3);
   pdf.text('⚙', pageWidth - 4, pageHeight - 3, { align: 'center' });
-  
+
   // Add stylus interaction guide in footer
   pdf.setFontSize(5);
   pdf.setFont('helvetica', 'italic');
@@ -835,7 +834,6 @@ export const exportDailyForRemarkable = async (
         });
       } else {
         pdf.text(titleLines, eventX + 1, textY);
-<previous_generation>```tool_code
         textY += 2.5;
       }
 
@@ -1153,7 +1151,7 @@ const generateMinimalTemplate = (pdf: jsPDF, weekStartDate: Date, pageWidth: num
   pdf.setFontSize(8);
   pdf.setTextColor(...EINK_COLORS.darkGray);
   pdf.text('WEEKLY PLANNER', 5, 8);
-  
+
   const weekStr = weekStartDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   pdf.text(weekStr, pageWidth - 5, 8, { align: 'right' });
 
@@ -1175,14 +1173,14 @@ const generateMinimalTemplate = (pdf: jsPDF, weekStartDate: Date, pageWidth: num
 
   // Minimal time grid (every 2 hours)
   const minimalTimeSlots = ['6', '8', '10', '12', '14', '16', '18', '20', '22'];
-  
+
   minimalTimeSlots.forEach((time, index) => {
     const y = gridStartY + 10 + (index * rowHeight);
-    
+
     // Time label
     pdf.setFontSize(5);
     pdf.text(time, timeColumnWidth/2, y + 3, { align: 'center' });
-    
+
     // Horizontal line
     pdf.setDrawColor(...EINK_COLORS.veryLightGray);
     pdf.setLineWidth(0.2);
@@ -1215,11 +1213,11 @@ const generateAnnotatedTemplate = (pdf: jsPDF, weekStartDate: Date, pageWidth: n
   const timeColumnWidth = 15;
   const dayWidth = (pageWidth - timeColumnWidth) / 7;
   const gridStartY = 20;
-  
+
   // Pre-marked annotation areas every few rows
   for (let row = 0; row < 20; row++) {
     const y = gridStartY + (row * 6);
-    
+
     if (row % 4 === 0) {
       // Add annotation symbols
       pdf.setTextColor(...EINK_COLORS.lightGray);
@@ -1246,7 +1244,7 @@ const generateStandardTemplate = (pdf: jsPDF, weekStartDate: Date, pageWidth: nu
 export const optimizePDFForRemarkable = (pdfData: string, targetSizeKB: number = 500): string => {
   // reMarkable Pro has limited storage, so optimize file sizes
   const currentSizeKB = Math.round((pdfData.length * 0.75) / 1024);
-  
+
   if (currentSizeKB <= targetSizeKB) {
     return pdfData; // Already optimized
   }
@@ -1264,7 +1262,7 @@ export const calculateRemarkableStorageUsage = (pdfDataArray: string[]): {
   remainingCapacityGB: number;
 } => {
   const REMARKABLE_STORAGE_GB = 64; // reMarkable Pro storage capacity
-  
+
   const totalSizeBytes = pdfDataArray.reduce((sum, pdfData) => {
     return sum + (pdfData.length * 0.75); // Base64 to bytes conversion
   }, 0);
