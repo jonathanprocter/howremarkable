@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { WeeklyPlannerView } from '../components/calendar/WeeklyPlannerView';
@@ -91,7 +90,7 @@ export default function PlannerPage() {
     const [hours, minutes] = time.split(':').map(Number);
     const startTime = new Date(date);
     startTime.setHours(hours, minutes, 0, 0);
-    
+
     const endTime = new Date(startTime);
     endTime.setHours(hours, minutes + 30, 0, 0);
 
@@ -132,7 +131,7 @@ export default function PlannerPage() {
 
   const handleDeleteEvent = async (eventId: string) => {
     if (!confirm('Are you sure you want to delete this event?')) return;
-    
+
     try {
       await deleteEventMutation.mutateAsync(eventId);
     } catch (error) {
@@ -153,7 +152,7 @@ export default function PlannerPage() {
 
   const handleUpdateDailyNotes = async (notes: string) => {
     const dateKey = selectedDate.toISOString().split('T')[0];
-    
+
     setDailyNotes(prev => ({
       ...prev,
       [dateKey]: notes
@@ -171,8 +170,11 @@ export default function PlannerPage() {
     return dailyNotes[dateKey] || '';
   };
 
-  // Convert API events to CalendarEvent format
-  const calendarEvents: CalendarEvent[] = events.map((event: any) => ({
+  // Convert API events to CalendarEvent format and apply calendar filtering
+  const calendarEvents: CalendarEvent[] = events.filter((event: any) => {
+    const shouldInclude = !selectedCalendars.length || selectedCalendars.includes(event.calendarId);
+    return shouldInclude;
+  }).map((event: any) => ({
     id: event.id,
     title: event.title,
     description: event.description || '',
@@ -207,7 +209,7 @@ export default function PlannerPage() {
           events={calendarEvents}
           onWeekChange={handleWeekChange}
         />
-        
+
         <main className="flex-1 overflow-hidden">
           {viewMode === 'week' ? (
             <WeeklyPlannerView

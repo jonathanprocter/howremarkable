@@ -110,10 +110,7 @@ export const useCalendar = () => {
           const eventDateStr = eventDate.toDateString();
           const currentDateStr = currentDate.toDateString();
           
-          // Debug for Monday July 7th specifically
-          if (eventDateStr === 'Mon Jul 07 2025' && currentDateStr.includes('Jul 07')) {
-            console.log(`✅ MONDAY MATCH: ${event.title} matched with day ${currentDateStr}`);
-          }
+          
           
           return eventDateStr === currentDateStr;
         })
