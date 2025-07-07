@@ -1,79 +1,71 @@
+
 import { MiniCalendar } from './MiniCalendar';
 import { GoogleCalendarIntegration } from './GoogleCalendarIntegration';
 import { QuickActions } from './QuickActions';
 import { ExportToPDF } from './ExportToPDF';
 import { DailyNotes } from './DailyNotes';
-import { CalendarState } from '../../types/calendar';
+import { CalendarEvent, ViewMode } from '../../types/calendar';
 
 interface SidebarProps {
-  state: CalendarState;
-  onDateSelect: (date: Date) => void;
-  onGoToToday: () => void;
-  onGoToDate: () => void;
-  onRefreshEvents: () => void;
-  onSyncNotes: () => void;
-  onSelectAll: () => void;
-  onDeselectAll: () => void;
-  onExportCurrentView: () => void;
-  onExportWeeklyPackage: () => void;
-  onExportDailyView: () => void;
-  onExportFullMonth: () => void;
-  onExportToGoogleDrive: (type: string) => void;
-  onSaveNotes: (notes: string) => void;
+  currentDate: Date;
+  selectedDate: Date;
+  viewMode: ViewMode;
+  dailyNotes: string;
+  onDateChange: (date: Date) => void;
+  onSelectedDateChange: (date: Date) => void;
+  onViewModeChange: (mode: ViewMode) => void;
+  onNotesChange: (notes: string) => void;
+  onCreateEvent: (startTime: Date, endTime: Date) => void;
+  events: CalendarEvent[];
+  onWeekChange: (direction: 'prev' | 'next') => void;
 }
 
 export const Sidebar = ({
-  state,
-  onDateSelect,
-  onGoToToday,
-  onGoToDate,
-  onRefreshEvents,
-  onSyncNotes,
-  onSelectAll,
-  onDeselectAll,
-  onExportCurrentView,
-  onExportWeeklyPackage,
-  onExportDailyView,
-  onExportFullMonth,
-  onExportToGoogleDrive,
-  onSaveNotes
+  currentDate,
+  selectedDate,
+  viewMode,
+  dailyNotes,
+  onDateChange,
+  onSelectedDateChange,
+  onViewModeChange,
+  onNotesChange,
+  onCreateEvent,
+  events,
+  onWeekChange
 }: SidebarProps) => {
-  const currentDateString = state.selectedDate.toISOString().split('T')[0];
-  const dailyNotes = state.dailyNotes[currentDateString] || '';
-
   return (
     <div className="w-64 bg-gray-50 p-4 border-r border-gray-200">
       <MiniCalendar
-        currentDate={state.currentDate}
-        selectedDate={state.selectedDate}
-        onDateSelect={onDateSelect}
+        currentDate={currentDate}
+        selectedDate={selectedDate}
+        onDateSelect={onSelectedDateChange}
       />
       
       <GoogleCalendarIntegration
-        isConnected={state.isGoogleConnected}
-        onSelectAll={onSelectAll}
-        onDeselectAll={onDeselectAll}
+        isConnected={true}
+        onSelectAll={() => {}}
+        onDeselectAll={() => {}}
       />
       
       <QuickActions
-        onGoToToday={onGoToToday}
-        onGoToDate={onGoToDate}
-        onRefreshEvents={onRefreshEvents}
-        onSyncNotes={onSyncNotes}
+        onGoToToday={() => onDateChange(new Date())}
+        onGoToDate={() => {}}
+        onRefreshEvents={() => {}}
+        onSyncNotes={() => {}}
       />
       
       <ExportToPDF
-        isGoogleConnected={state.isGoogleConnected}
-        onExportCurrentView={onExportCurrentView}
-        onExportWeeklyPackage={onExportWeeklyPackage}
-        onExportDailyView={onExportDailyView}
-        onExportFullMonth={onExportFullMonth}
-        onExportToGoogleDrive={onExportToGoogleDrive}
+        isGoogleConnected={true}
+        onExportCurrentView={() => {}}
+        onExportWeeklyPackage={() => {}}
+        onExportDailyView={() => {}}
+        onExportFullMonth={() => {}}
+        onExportToGoogleDrive={() => {}}
       />
       
       <DailyNotes
         notes={dailyNotes}
-        onSaveNotes={onSaveNotes}
+        onSaveNotes={onNotesChange}
       />
     </div>
   );

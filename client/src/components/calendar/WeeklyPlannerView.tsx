@@ -1,29 +1,51 @@
+
 import React from 'react';
 import { generateTimeSlots } from '../../utils/timeSlots';
-import { CalendarEvent, CalendarDay } from '../../types/calendar';
-import { getWeekNumber } from '../../utils/dateUtils';
+import { CalendarEvent } from '../../types/calendar';
+import { getWeekNumber, getWeekStartDate, getWeekEndDate } from '../../utils/dateUtils';
 
 interface WeeklyPlannerViewProps {
-  week: CalendarDay[];
+  currentDate: Date;
   events: CalendarEvent[];
+  onWeekChange: (direction: 'prev' | 'next') => void;
   onDayClick: (date: Date) => void;
   onTimeSlotClick: (date: Date, time: string) => void;
   onEventClick: (event: CalendarEvent) => void;
   onEventMove?: (eventId: string, newStartTime: Date, newEndTime: Date) => void;
+  isLoading?: boolean;
 }
 
 export const WeeklyPlannerView = ({
-  week,
+  currentDate,
   events,
+  onWeekChange,
   onDayClick,
   onTimeSlotClick,
   onEventClick,
-  onEventMove
+  onEventMove,
+  isLoading
 }: WeeklyPlannerViewProps) => {
   const timeSlots = generateTimeSlots();
-  const weekStartDate = week[0]?.date;
-  const weekEndDate = week[6]?.date;
-  const weekNumber = weekStartDate ? getWeekNumber(weekStartDate) : 1;
+  
+  // Generate week days from currentDate
+  const weekStartDate = getWeekStartDate(currentDate);
+  const weekEndDate = getWeekEndDate(currentDate);
+  const weekNumber = getWeekNumber(currentDate);
+  
+  // Generate the week array
+  const week = [];
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(weekStartDate);
+    date.setDate(weekStartDate.getDate() + i);
+    week.push({
+      date,
+      dayOfWeek: date.toLocaleDateString('en-US', { weekday: 'long' }),
+      dayNumber: date.getDate(),
+      events: events.filter(event => 
+        new Date(event.startTime).toDateString() === date.toDateString()
+      )
+    });
+  }
 
   // Calculate statistics ONLY for the current week
   const weekEvents = events.filter(event => {
@@ -138,6 +160,16 @@ export const WeeklyPlannerView = ({
       );
     });
   };
+
+  if (isLoading) {
+    return (
+      <div className="planner-container">
+        <div className="header">
+          <h1>Loading...</h1>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="planner-container">
