@@ -238,25 +238,29 @@
     line-height: 1.0;
 }
 
-/* Appointment types - exact match to HTML template */
+/* Appointment types - enhanced differentiation */
 .appointment.simplepractice {
-    background: white;
-    color: black;
+    background: #f0f8ff;
+    color: #1e3a8a;
     border: 2px solid #6495ED;
     border-left: 8px solid #6495ED;
+    box-shadow: 0 1px 3px rgba(100, 149, 237, 0.3);
 }
 
 .appointment.google-calendar {
-    background: white;
-    color: black;
-    border: 2px dashed #666;
+    background: #f9fafb;
+    color: #374151;
+    border: 2px dashed #9ca3af;
+    border-left: 4px solid #10b981;
+    box-shadow: 0 1px 3px rgba(156, 163, 175, 0.2);
 }
 
 .appointment.personal {
-    background: white;
-    color: black;
-    border: 2px solid #999;
+    background: #fef3c7;
+    color: #92400e;
+    border: 2px solid #f59e0b;
     border-style: double;
+    box-shadow: 0 1px 3px rgba(245, 158, 11, 0.2);
 }
 
 /* Height classes for different durations */

@@ -161,14 +161,27 @@ export const optimizeForEink = () => {
     
     /* SimplePractice event styling */
     .remarkable-optimized .appointment.simplepractice {
-      border-color: var(--remarkable-green);
+      border-color: var(--remarkable-blue);
       background: var(--remarkable-light-gray);
+      border-left: 8px solid var(--remarkable-blue);
+      box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
     }
     
     /* Google Calendar event styling */
-    .remarkable-optimized .appointment.google {
-      border-color: var(--remarkable-blue);
+    .remarkable-optimized .appointment.google-calendar {
+      border-color: var(--remarkable-accent);
+      background: var(--remarkable-background);
+      border-left: 4px solid var(--remarkable-green);
+      border-style: dashed;
+      box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Personal event styling */
+    .remarkable-optimized .appointment.personal {
+      border-color: var(--remarkable-primary);
       background: var(--remarkable-light-gray);
+      border-style: double;
+      border-width: 3px;
     }
     
     /* Typography optimizations */
