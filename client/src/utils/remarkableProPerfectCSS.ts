@@ -79,10 +79,11 @@ const CSS_GRID_SPECS = {
   
   // E-ink optimized styling
   borderWidth: 0.8,  // 3px borders converted to mm
-  lightGray: [248, 248, 248],  // #f8f8f8
-  mediumGray: [240, 240, 240], // #f0f0f0
-  appointmentGray: [245, 245, 245], // #f5f5f5
-  black: [0, 0, 0]
+  lightGray: [248, 248, 248] as [number, number, number],  // #f8f8f8
+  mediumGray: [240, 240, 240] as [number, number, number], // #f0f0f0
+  darkGray: [224, 224, 224] as [number, number, number], // #e0e0e0
+  appointmentGray: [245, 245, 245] as [number, number, number], // #f5f5f5
+  black: [0, 0, 0] as [number, number, number]
 };
 
 export const exportRemarkableProPerfect = async (
