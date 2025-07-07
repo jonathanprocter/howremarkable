@@ -16,12 +16,12 @@ const CSS_GRID_SPECS = {
   timeColumnPx: 100,   // 100px time column
   dayHeaderPx: 80,     // 80px day header row
   hourSlotPx: 60,      // 60px per hour slot
-  totalHours: 16,      // 16 hours (6AM-9PM)
+  totalHours: 18,      // 18 hours (6AM-11:30PM)
   
   // CRITICAL: Exact appointment positioning from CSS classes
   // .appointment.time-06-00 { top: 80px; }
   // .appointment.time-07-00 { top: 140px; }
-  // etc. - each hour increases by 60px
+  // etc. - each hour increases by 60px, extending to 23:30
   timeSlotPositions: {
     6: 80,   // 6AM at 80px
     7: 140,  // 7AM at 140px
@@ -38,7 +38,9 @@ const CSS_GRID_SPECS = {
     18: 800, // 6PM at 800px
     19: 860, // 7PM at 860px
     20: 920, // 8PM at 920px
-    21: 980  // 9PM at 980px
+    21: 980, // 9PM at 980px
+    22: 1040, // 10PM at 1040px
+    23: 1100  // 11PM at 1100px (extends to 23:30)
   },
   
   // Duration height classes from CSS
@@ -88,26 +90,31 @@ export const exportRemarkableProPerfect = async (
   weekEndDate: Date,
   events: CalendarEvent[]
 ): Promise<void> => {
-  console.log('🎯 Creating EXACT CSS Grid PDF matching HTML template');
-  console.log(`📊 Processing ${events.length} events for exact CSS Grid layout`);
-  
-  // Create PDF with exact reMarkable Pro dimensions
-  const pdf = new jsPDF({
-    orientation: 'landscape',
-    unit: 'mm',
-    format: [CSS_GRID_SPECS.pageWidth, CSS_GRID_SPECS.pageHeight]
-  });
-  
-  // Set Times New Roman font for entire document
-  pdf.setFont(CSS_GRID_SPECS.fonts.title.family, CSS_GRID_SPECS.fonts.title.weight);
-  
-  // Generate exact CSS Grid layout
-  await generateExactCSSGrid(pdf, weekStartDate, weekEndDate, events);
-  
-  // Save with descriptive filename
-  const filename = `remarkable-pro-perfect-${weekStartDate.toISOString().split('T')[0]}.pdf`;
-  pdf.save(filename);
-  console.log('✅ EXACT CSS Grid PDF generated matching HTML template');
+  try {
+    console.log('🎯 Creating EXACT CSS Grid PDF matching HTML template');
+    console.log(`📊 Processing ${events.length} events for exact CSS Grid layout`);
+    
+    // Create PDF with exact reMarkable Pro dimensions
+    const pdf = new jsPDF({
+      orientation: 'landscape',
+      unit: 'mm',
+      format: [CSS_GRID_SPECS.pageWidth, CSS_GRID_SPECS.pageHeight]
+    });
+    
+    // Set Times New Roman font for entire document
+    pdf.setFont(CSS_GRID_SPECS.fonts.title.family, CSS_GRID_SPECS.fonts.title.weight);
+    
+    // Generate exact CSS Grid layout
+    await generateExactCSSGrid(pdf, weekStartDate, weekEndDate, events);
+    
+    // Save with descriptive filename
+    const filename = `remarkable-pro-perfect-${weekStartDate.toISOString().split('T')[0]}.pdf`;
+    pdf.save(filename);
+    console.log('✅ EXACT CSS Grid PDF generated matching HTML template');
+  } catch (error) {
+    console.error('❌ PDF Generation Error:', error);
+    throw error;
+  }
 };
 
 async function generateExactCSSGrid(
@@ -261,9 +268,9 @@ function generateAppointments(pdf: jsPDF, weekStartDate: Date, events: CalendarE
     const dayIndex = Math.floor((eventStart.getTime() - weekStartDate.getTime()) / (24 * 60 * 60 * 1000));
     if (dayIndex < 0 || dayIndex > 6) return;
     
-    // Get exact hour (6-21)
+    // Get exact hour (6-23 for extended range to 23:30)
     const startHour = eventStart.getHours();
-    if (startHour < 6 || startHour > 21) return;
+    if (startHour < 6 || startHour > 23) return;
     
     // Use exact CSS positioning values
     const cssTopPosition = timeSlotPositions[startHour as keyof typeof timeSlotPositions];
