@@ -112,6 +112,7 @@ The application uses three main entities:
 - July 06, 2025. **SIMPLEPRACTICE EVENT DETECTION**: Fixed recurring SimplePractice appointment detection and styling across daily, weekly, and calendar grid views using "Appointment" title pattern
 - July 06, 2025. **TIMEZONE CORRECTION**: Fixed critical timezone handling issue where events were displaying 4 hours earlier than correct EST/EDT times by properly parsing UTC database timestamps as local time
 - July 06, 2025. **EVENT DURATION FIX**: Resolved Blake call event duration display showing correct 50-minute duration instead of incorrect 30-minute slots
+- July 07, 2025. **MONDAY APPOINTMENT DISPLAY FIX**: Resolved critical issue where Monday appointments weren't displaying in weekly view by fixing calendar selection initialization and setting default week view to July 7-13, 2025
 
 ## User Preferences
 
