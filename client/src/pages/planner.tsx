@@ -259,7 +259,6 @@ export default function PlannerPage() {
   const handleExportWeeklyPackage = async () => {
     try {
       const weekNumber = getWeekNumber(selectedDate);
-      // Use reMarkable weekly for now, can create package version later
       const pdfBase64 = await exportWeeklyForRemarkable(weekStartDate, weekEndDate, calendarEvents, weekNumber);
       const filename = `reMarkable_WeeklyPackage_${selectedDate.toISOString().split('T')[0]}.pdf`;
 
@@ -267,6 +266,30 @@ export default function PlannerPage() {
     } catch (error) {
       console.error('Weekly package export failed:', error);
       alert('Failed to export weekly package PDF. Please try again.');
+    }
+  };
+
+  const handleExportTemplateCollection = async () => {
+    try {
+      const { exportRemarkableTemplateCollection, calculateRemarkableStorageUsage } = await import('../utils/pdfExportRemarkable');
+      
+      const templates = await exportRemarkableTemplateCollection(selectedDate, 4, ['standard', 'minimal', 'annotated']);
+      
+      // Calculate storage usage
+      const pdfDataArray = templates.map(t => t.data);
+      const storageInfo = calculateRemarkableStorageUsage(pdfDataArray);
+      
+      console.log('Template Collection Storage Usage:', storageInfo);
+      
+      // Download first template as example
+      if (templates.length > 0) {
+        downloadPDF(templates[0].data, templates[0].filename);
+        
+        alert(`Generated ${templates.length} templates. Total size: ${storageInfo.totalSizeMB}MB. Average: ${storageInfo.averageSizeKB}KB per file.`);
+      }
+    } catch (error) {
+      console.error('Template collection export failed:', error);
+      alert('Failed to export template collection. Please try again.');
     }
   };
 
