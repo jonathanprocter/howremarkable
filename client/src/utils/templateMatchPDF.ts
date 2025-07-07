@@ -50,8 +50,8 @@ const TEMPLATE_CONFIG = {
   // Grid layout optimized for full time range
   timeColumnWidth: 80,
   dayColumnWidth: 150,
-  headerHeight: 60,
-  gridStartY: 60,
+  headerHeight: 80,
+  gridStartY: 80,
   totalGridHeight: 720, // Full height for all time slots 06:00-23:30
   
   // Template colors - exact match to your CSS
@@ -88,30 +88,32 @@ export const exportTemplateMatchPDF = async (
   const weekText = `${formatWeekRange(weekStartDate, weekEndDate)}`;
   pdf.text(weekText, TEMPLATE_CONFIG.pageWidth / 2, 50, { align: 'center' });
   
-  // Add legend in the header
-  const legendY = 30;
-  const legendX = TEMPLATE_CONFIG.pageWidth - 300;
+  // Add legend in the header area - positioned properly
+  const legendY = 65;
+  const legendStartX = 50;
+  const legendSpacing = 180;
   
-  // SimplePractice legend
-  pdf.setFontSize(10);
+  pdf.setFontSize(9);
   pdf.setFont('helvetica', 'normal');
-  pdf.setFillColor(0, 102, 255); // Blue
-  pdf.rect(legendX, legendY, 15, 8, 'F');
   pdf.setTextColor(0, 0, 0);
-  pdf.text('SimplePractice', legendX + 20, legendY + 6);
   
-  // Google Calendar legend
-  pdf.setDrawColor(0, 255, 0); // Green
-  pdf.setLineWidth(1);
+  // SimplePractice legend - blue rectangle
+  pdf.setFillColor(70, 130, 180); // Steel blue
+  pdf.rect(legendStartX, legendY, 12, 8, 'F');
+  pdf.text('SimplePractice', legendStartX + 18, legendY + 6);
+  
+  // Google Calendar legend - green dashed border
+  pdf.setDrawColor(34, 139, 34); // Forest green
+  pdf.setLineWidth(1.5);
   pdf.setLineDashPattern([2, 2], 0);
-  pdf.rect(legendX + 100, legendY, 15, 8);
+  pdf.rect(legendStartX + legendSpacing, legendY, 12, 8);
   pdf.setLineDashPattern([], 0);
-  pdf.text('Google Calendar', legendX + 120, legendY + 6);
+  pdf.text('Google Calendar', legendStartX + legendSpacing + 18, legendY + 6);
   
-  // Holidays legend
+  // Holidays legend - yellow square
   pdf.setFillColor(255, 255, 0); // Yellow
-  pdf.rect(legendX + 230, legendY, 8, 8, 'F');
-  pdf.text('Holidays in United States', legendX + 245, legendY + 6);
+  pdf.rect(legendStartX + (legendSpacing * 2), legendY, 8, 8, 'F');
+  pdf.text('Holidays in United States', legendStartX + (legendSpacing * 2) + 15, legendY + 6);
   
   // Draw main border
   pdf.setLineWidth(2);
@@ -184,34 +186,41 @@ export const exportTemplateMatchPDF = async (
     // Skip if this would go beyond the page height
     if (yPosition + slotHeight > TEMPLATE_CONFIG.pageHeight - 40) break;
     
-    // Time slot background
+    // Time slot background - extend grey background across entire week for hour rows
     const isHour = timeSlot.endsWith(':00');
     if (isHour) {
+      // Grey background for time column
       pdf.setFillColor(...TEMPLATE_CONFIG.headerGray);
       pdf.rect(gridStartX, yPosition, TEMPLATE_CONFIG.timeColumnWidth, slotHeight, 'F');
-    } else {
-      pdf.setFillColor(248, 248, 248);
-      pdf.rect(gridStartX, yPosition, TEMPLATE_CONFIG.timeColumnWidth, slotHeight, 'F');
-    }
-    
-    // Time slot border - extend across entire week for :30 minutes
-    const isHalfHour = timeSlot.endsWith(':30');
-    pdf.setLineWidth(isHalfHour ? 2 : 1);
-    pdf.setDrawColor(isHalfHour ? 180 : 221, isHalfHour ? 180 : 221, isHalfHour ? 180 : 221);
-    
-    // Draw horizontal lines across entire week
-    if (isHalfHour) {
-      // :30 minutes - thicker line across entire week
-      pdf.line(gridStartX, yPosition + slotHeight, TEMPLATE_CONFIG.pageWidth - 20, yPosition + slotHeight);
-      // Add subtle background for :30 slots across the week
-      pdf.setFillColor(250, 250, 250);
+      
+      // Grey background across entire week for hour differentiation
+      pdf.setFillColor(...TEMPLATE_CONFIG.headerGray);
       pdf.rect(gridStartX + TEMPLATE_CONFIG.timeColumnWidth, yPosition, 
                TEMPLATE_CONFIG.pageWidth - gridStartX - TEMPLATE_CONFIG.timeColumnWidth - 20, 
                slotHeight, 'F');
     } else {
+      // Light background for :30 slots
+      pdf.setFillColor(248, 248, 248);
+      pdf.rect(gridStartX, yPosition, TEMPLATE_CONFIG.timeColumnWidth, slotHeight, 'F');
+      
+      // Light background for :30 slots across the week
+      pdf.setFillColor(250, 250, 250);
+      pdf.rect(gridStartX + TEMPLATE_CONFIG.timeColumnWidth, yPosition, 
+               TEMPLATE_CONFIG.pageWidth - gridStartX - TEMPLATE_CONFIG.timeColumnWidth - 20, 
+               slotHeight, 'F');
+    }
+    
+    // Draw horizontal lines across entire week
+    const isHalfHour = timeSlot.endsWith(':30');
+    if (isHour) {
       // Top of hour - solid line across entire week for hour differentiation
       pdf.setLineWidth(2);
       pdf.setDrawColor(100, 100, 100); // Darker line for hour breaks
+      pdf.line(gridStartX, yPosition + slotHeight, TEMPLATE_CONFIG.pageWidth - 20, yPosition + slotHeight);
+    } else {
+      // :30 minutes - thinner line
+      pdf.setLineWidth(1);
+      pdf.setDrawColor(200, 200, 200);
       pdf.line(gridStartX, yPosition + slotHeight, TEMPLATE_CONFIG.pageWidth - 20, yPosition + slotHeight);
     }
     
