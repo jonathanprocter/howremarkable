@@ -173,6 +173,7 @@ export const DailyView = ({
       const endTime = new Date(startTime);
       endTime.setHours(slotHour, slotMinute + 30, 0, 0); // Default 30-minute duration
 
+      console.log('Creating new event:', { startTime, endTime });
       onCreateEvent(startTime, endTime);
     }
   };
