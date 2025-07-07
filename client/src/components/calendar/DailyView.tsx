@@ -61,7 +61,7 @@ export const DailyView = ({
     const eventStart = new Date(event.startTime);
     const eventEnd = new Date(event.endTime);
     const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
-    
+
     // Check if this is an all-day event
     const isMarkedAllDay = (event as any).isAllDay;
     const duration = event.endTime.getTime() - event.startTime.getTime();
@@ -70,7 +70,7 @@ export const DailyView = ({
     const startMinute = eventStart.getMinutes();
     const isFullDay = startHour === 0 && startMinute === 0 && (hours === 24 || hours % 24 === 0);
     const isAllDayEvent = isMarkedAllDay || isFullDay || hours >= 20;
-    
+
     if (isAllDayEvent) {
       // All-day events should be positioned at the top, not in the timeline
       return {
@@ -83,16 +83,16 @@ export const DailyView = ({
         }
       };
     }
-    
+
     // Calculate position based on start time - aligned to time slots exactly
     // Timeline starts at 6:00, so we calculate 30-minute slots since 6:00
     const minutesSince6am = (startHour - 6) * 60 + startMinute;
     const slotsFromStart = minutesSince6am / 30;
     const topPosition = Math.max(0, slotsFromStart * 60);
-    
+
     // Calculate height based on duration
     let height = Math.max(56, (durationMinutes / 30) * 60 - 4); // 60px per 30min slot, minus padding
-    
+
     // Source-specific styling - check if it's a SimplePractice appointment
     let className = 'appointment ';
     const isSimplePractice = event.source === 'simplepractice' || 
@@ -100,7 +100,7 @@ export const DailyView = ({
                            event.title?.toLowerCase().includes('simple practice') ||
                            event.description?.toLowerCase().includes('simple practice') ||
                            event.title?.toLowerCase().includes('appointment'); // SimplePractice appointments sync as "X Appointment"
-    
+
     if (isSimplePractice) {
       className += 'simplepractice ';
     } else if (event.source === 'google') {
@@ -108,7 +108,7 @@ export const DailyView = ({
     } else {
       className += 'personal ';
     }
-    
+
     return {
       className,
       style: {
@@ -136,20 +136,20 @@ export const DailyView = ({
     try {
       const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
       const { eventId, startTime, endTime } = dragData;
-      
+
       // Calculate new start time based on slot position
       const slotHour = Math.floor(slotIndex / 2) + 6; // 6:00 AM start, 2 slots per hour
       const slotMinute = (slotIndex % 2) * 30;
-      
+
       const originalStart = new Date(startTime);
       const originalEnd = new Date(endTime);
       const duration = originalEnd.getTime() - originalStart.getTime();
-      
+
       const newStartTime = new Date(selectedDate);
       newStartTime.setHours(slotHour, slotMinute, 0, 0);
-      
+
       const newEndTime = new Date(newStartTime.getTime() + duration);
-      
+
       if (onEventMove) {
         onEventMove(eventId, newStartTime, newEndTime);
       }
@@ -166,13 +166,13 @@ export const DailyView = ({
     if (onCreateEvent) {
       const slotHour = Math.floor(slotIndex / 2) + 6; // 6:00 AM start, 2 slots per hour
       const slotMinute = (slotIndex % 2) * 30;
-      
+
       const startTime = new Date(selectedDate);
       startTime.setHours(slotHour, slotMinute, 0, 0);
-      
+
       const endTime = new Date(startTime);
       endTime.setHours(slotHour, slotMinute + 30, 0, 0); // Default 30-minute duration
-      
+
       onCreateEvent(startTime, endTime);
     }
   };
@@ -362,7 +362,7 @@ export const DailyView = ({
                     </div>
                   )}
                 </div>
-                
+
                 {/* Expanded event details */}
                 {expandedEventId === event.id && (
                   <div 

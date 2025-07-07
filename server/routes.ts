@@ -337,13 +337,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error('Calendar fetch error:', error);
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+        user: !!req.user,
+        userId: req.user ? (req.user as any).id : 'none'
+      });
       
       // Fallback: return database events if Google Calendar fails
       try {
         if (!req.user) {
-          return res.status(401).json({ error: "Authentication required" });
+          console.log("No authenticated user for fallback");
+          return res.status(401).json({ 
+            error: "Authentication required",
+            message: "Please authenticate with Google first to access calendar events"
+          });
         }
         const fallbackUser = req.user as any;
+        console.log(`Attempting database fallback for user ${fallbackUser.id}`);
         const dbEvents = await storage.getEvents(parseInt(fallbackUser.id));
         const dbEventsMapped = dbEvents.map(e => ({
           id: e.sourceId || e.id.toString(),
@@ -359,6 +371,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           calendarId: e.source === 'google' ? e.calendarId : undefined
         }));
         
+        console.log(`Database fallback successful: ${dbEventsMapped.length} events`);
         res.json({ 
           events: dbEventsMapped,
           calendars: [],
@@ -367,7 +380,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } catch (dbError) {
         console.error('Database fallback error:', dbError);
-        res.status(500).json({ error: "Failed to fetch calendar events" });
+        res.status(500).json({ 
+          error: "Failed to fetch calendar events",
+          message: "Both Google Calendar and database access failed",
+          details: error.message
+        });
       }
     }
   });

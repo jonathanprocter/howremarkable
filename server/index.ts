@@ -10,8 +10,8 @@ app.use(express.urlencoded({ extended: false }));
 // Session configuration
 app.use(session({
   secret: process.env.SESSION_SECRET || 'remarkable-planner-secret',
-  resave: true,
-  saveUninitialized: true,
+  resave: false,
+  saveUninitialized: false,
   rolling: true,
   cookie: {
     secure: false, // Set to true in production with HTTPS
