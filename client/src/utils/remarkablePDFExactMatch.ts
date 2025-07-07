@@ -5,33 +5,33 @@ import { formatDate, formatWeekRange } from './dateUtils';
 
 // reMarkable Pro exact specifications matching HTML template CSS
 const REMARKABLE_CONFIG = {
-  // Page dimensions: 11" x 8.5" landscape (reMarkable Pro optimized)
-  pageWidth: 279.4, // 11 inches in mm
-  pageHeight: 215.9, // 8.5 inches in mm
-  margin: 7.6, // 0.3 inches margin
+  // Page dimensions: A4 landscape for better PDF compatibility
+  pageWidth: 297, // A4 width in mm
+  pageHeight: 210, // A4 height in mm
+  margin: 10, // 10mm margin for better proportions
   
   // Content area calculations
   get contentWidth() { return this.pageWidth - (2 * this.margin); },
   get contentHeight() { return this.pageHeight - (2 * this.margin); },
   
-  // CSS Grid layout matching HTML template exactly
-  timeColumnWidth: 25.4, // 100px converted to mm
-  get dayColumnWidth() { return (this.contentWidth - this.timeColumnWidth) / 7; },
-  headerRowHeight: 20.32, // 80px converted to mm
-  hourRowHeight: 15.24, // 60px converted to mm for each hour block
+  // CSS Grid layout matching HTML template exactly with proper scaling
+  get timeColumnWidth() { return this.contentWidth * 0.12; }, // 12% for time column
+  get dayColumnWidth() { return (this.contentWidth - this.timeColumnWidth) / 7; }, // Equal 7 columns
+  get headerRowHeight() { return this.contentHeight * 0.15; }, // 15% for header
+  get hourRowHeight() { return (this.contentHeight - this.headerRowHeight - 40) / 16; }, // Remaining space / 16 hours
   
-  // Typography matching template
+  // Typography matching template with better scaling
   fonts: {
-    header: { size: 16, weight: 'bold' },
-    subheader: { size: 10, weight: 'bold' },
-    dayHeader: { size: 10, weight: 'bold' },
-    dayNumber: { size: 14, weight: 'bold' },
-    timeSlot: { size: 10, weight: 'bold' },
-    appointmentTitle: { size: 7, weight: 'bold' },
-    appointmentTime: { size: 6, weight: 'normal' },
-    stats: { size: 12, weight: 'normal' },
-    statsNumber: { size: 16, weight: 'bold' },
-    legend: { size: 8, weight: 'normal' }
+    header: { size: 14, weight: 'bold' },
+    subheader: { size: 8, weight: 'bold' },
+    dayHeader: { size: 7, weight: 'bold' },
+    dayNumber: { size: 10, weight: 'bold' },
+    timeSlot: { size: 6, weight: 'bold' },
+    appointmentTitle: { size: 5, weight: 'bold' },
+    appointmentTime: { size: 4, weight: 'normal' },
+    stats: { size: 7, weight: 'normal' },
+    statsNumber: { size: 10, weight: 'bold' },
+    legend: { size: 6, weight: 'normal' }
   }
 };
 
@@ -42,11 +42,11 @@ export const exportWeeklyRemarkableExact = async (
 ): Promise<void> => {
   console.log('🎯 Generating exact HTML template match PDF for reMarkable Pro');
   
-  // Create PDF with exact reMarkable Pro landscape dimensions
+  // Create PDF with landscape A4 dimensions for better scaling
   const pdf = new jsPDF({
     orientation: 'landscape',
     unit: 'mm',
-    format: [REMARKABLE_CONFIG.pageWidth, REMARKABLE_CONFIG.pageHeight]
+    format: 'a4'
   });
 
   // Set Times New Roman font family (e-ink optimized)
@@ -91,11 +91,11 @@ async function generateWeeklyLayout(
 }
 
 function generateHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date) {
-  const { margin, contentWidth, fonts } = REMARKABLE_CONFIG;
+  const { margin, contentWidth, contentHeight, fonts } = REMARKABLE_CONFIG;
   
   // Header container with border (matching HTML template)
   const headerY = margin;
-  const headerHeight = 25; // Large header for reMarkable Pro
+  const headerHeight = contentHeight * 0.12; // 12% of content height for header
   
   // Header background (light gray)
   pdf.setFillColor(248, 248, 248);
@@ -103,14 +103,14 @@ function generateHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date) {
   
   // Header border (thick for e-ink)
   pdf.setDrawColor(0, 0, 0);
-  pdf.setLineWidth(3);
+  pdf.setLineWidth(2);
   pdf.rect(margin, headerY, contentWidth, headerHeight, 'S');
   
   // Main title: "WEEKLY PLANNER"
   pdf.setTextColor(0, 0, 0);
   pdf.setFontSize(fonts.header.size);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('WEEKLY PLANNER', margin + contentWidth / 2, headerY + 12, { align: 'center' });
+  pdf.text('WEEKLY PLANNER', margin + contentWidth / 2, headerY + headerHeight * 0.4, { align: 'center' });
   
   // Week info: "July 7-13, 2025 • Week 28"
   const weekRange = formatWeekRange(weekStartDate, weekEndDate);
@@ -119,14 +119,14 @@ function generateHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date) {
   
   pdf.setFontSize(fonts.subheader.size);
   pdf.setFont('helvetica', 'bold');
-  pdf.text(weekInfo, margin + contentWidth / 2, headerY + 20, { align: 'center' });
+  pdf.text(weekInfo, margin + contentWidth / 2, headerY + headerHeight * 0.7, { align: 'center' });
   
   return headerY + headerHeight;
 }
 
 function generateStatistics(pdf: jsPDF, events: CalendarEvent[], weekStartDate: Date, weekEndDate: Date): number {
-  const { margin, contentWidth, fonts } = REMARKABLE_CONFIG;
-  const headerBottom = margin + 25;
+  const { margin, contentWidth, contentHeight, fonts } = REMARKABLE_CONFIG;
+  const headerBottom = margin + (contentHeight * 0.12);
   
   // Calculate real statistics from events
   const totalAppointments = events.length;
@@ -143,7 +143,7 @@ function generateStatistics(pdf: jsPDF, events: CalendarEvent[], weekStartDate: 
   
   // Stats section
   const statsY = headerBottom;
-  const statsHeight = 20;
+  const statsHeight = contentHeight * 0.08; // 8% of content height
   const statWidth = contentWidth / 4;
   
   // Stats background
@@ -152,7 +152,7 @@ function generateStatistics(pdf: jsPDF, events: CalendarEvent[], weekStartDate: 
   
   // Stats border
   pdf.setDrawColor(0, 0, 0);
-  pdf.setLineWidth(3);
+  pdf.setLineWidth(1);
   pdf.rect(margin, statsY, contentWidth, statsHeight, 'S');
   
   // Individual stat cards
@@ -169,7 +169,7 @@ function generateStatistics(pdf: jsPDF, events: CalendarEvent[], weekStartDate: 
     // Stat card border
     if (index < 3) {
       pdf.setDrawColor(0, 0, 0);
-      pdf.setLineWidth(2);
+      pdf.setLineWidth(1);
       pdf.line(statX + statWidth, statsY, statX + statWidth, statsY + statsHeight);
     }
     
@@ -177,12 +177,12 @@ function generateStatistics(pdf: jsPDF, events: CalendarEvent[], weekStartDate: 
     pdf.setTextColor(0, 0, 0);
     pdf.setFontSize(fonts.statsNumber.size);
     pdf.setFont('helvetica', 'bold');
-    pdf.text(stat.number, statX + statWidth / 2, statsY + 10, { align: 'center' });
+    pdf.text(stat.number, statX + statWidth / 2, statsY + statsHeight * 0.4, { align: 'center' });
     
     // Stat label
     pdf.setFontSize(fonts.stats.size);
     pdf.setFont('helvetica', 'normal');
-    pdf.text(stat.label, statX + statWidth / 2, statsY + 16, { align: 'center' });
+    pdf.text(stat.label, statX + statWidth / 2, statsY + statsHeight * 0.7, { align: 'center' });
   });
   
   return statsY + statsHeight;
@@ -243,49 +243,53 @@ function generateLegend(pdf: jsPDF, statsBottom: number): number {
 }
 
 function generateCalendarGrid(pdf: jsPDF, legendBottom: number, weekStartDate: Date, events: CalendarEvent[]) {
-  const { margin, contentWidth, contentHeight, timeColumnWidth, dayColumnWidth, headerRowHeight, hourRowHeight, fonts } = REMARKABLE_CONFIG;
+  const { margin, contentWidth, contentHeight, timeColumnWidth, dayColumnWidth, hourRowHeight, fonts } = REMARKABLE_CONFIG;
   
   const gridY = legendBottom;
-  const gridHeight = contentHeight - (gridY - margin);
+  const availableHeight = contentHeight - (gridY - margin);
+  const gridHeaderHeight = contentHeight * 0.08; // 8% for grid headers
+  const gridHeight = availableHeight;
   
   // Grid container border
   pdf.setDrawColor(0, 0, 0);
-  pdf.setLineWidth(3);
+  pdf.setLineWidth(2);
   pdf.rect(margin, gridY, contentWidth, gridHeight, 'S');
   
   // GRID HEADERS
-  generateGridHeaders(pdf, gridY, weekStartDate);
+  generateGridHeaders(pdf, gridY, weekStartDate, gridHeaderHeight);
   
   // HOURLY TIME SLOTS (6AM - 9PM = 16 hours)
-  generateTimeSlots(pdf, gridY + headerRowHeight);
+  const timeGridY = gridY + gridHeaderHeight;
+  const timeGridHeight = gridHeight - gridHeaderHeight;
+  generateTimeSlots(pdf, timeGridY, timeGridHeight);
   
   // DAY COLUMN SEPARATORS
   generateColumnSeparators(pdf, gridY, gridHeight);
   
   // HOURLY ROW SEPARATORS
-  generateRowSeparators(pdf, gridY + headerRowHeight, gridHeight - headerRowHeight);
+  generateRowSeparators(pdf, timeGridY, timeGridHeight);
   
   // APPOINTMENTS positioned in CSS Grid style
-  generateAppointments(pdf, gridY + headerRowHeight, weekStartDate, events);
+  generateAppointments(pdf, timeGridY, timeGridHeight, weekStartDate, events);
 }
 
-function generateGridHeaders(pdf: jsPDF, gridY: number, weekStartDate: Date) {
-  const { margin, timeColumnWidth, dayColumnWidth, headerRowHeight, fonts } = REMARKABLE_CONFIG;
+function generateGridHeaders(pdf: jsPDF, gridY: number, weekStartDate: Date, headerHeight: number) {
+  const { margin, timeColumnWidth, dayColumnWidth, fonts } = REMARKABLE_CONFIG;
   
   // Header row background
   pdf.setFillColor(240, 240, 240);
-  pdf.rect(margin, gridY, REMARKABLE_CONFIG.contentWidth, headerRowHeight, 'F');
+  pdf.rect(margin, gridY, REMARKABLE_CONFIG.contentWidth, headerHeight, 'F');
   
   // Header row border
   pdf.setDrawColor(0, 0, 0);
-  pdf.setLineWidth(4);
-  pdf.line(margin, gridY + headerRowHeight, margin + REMARKABLE_CONFIG.contentWidth, gridY + headerRowHeight);
+  pdf.setLineWidth(2);
+  pdf.line(margin, gridY + headerHeight, margin + REMARKABLE_CONFIG.contentWidth, gridY + headerHeight);
   
   // TIME header
   pdf.setTextColor(0, 0, 0);
   pdf.setFontSize(fonts.dayHeader.size);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('TIME', margin + timeColumnWidth / 2, gridY + 12, { align: 'center' });
+  pdf.text('TIME', margin + timeColumnWidth / 2, gridY + headerHeight * 0.6, { align: 'center' });
   
   // Day headers
   const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -299,17 +303,20 @@ function generateGridHeaders(pdf: jsPDF, gridY: number, weekStartDate: Date) {
     // Day name
     pdf.setFontSize(fonts.dayHeader.size);
     pdf.setFont('helvetica', 'bold');
-    pdf.text(days[i], dayX + dayColumnWidth / 2, gridY + 8, { align: 'center' });
+    pdf.text(days[i], dayX + dayColumnWidth / 2, gridY + headerHeight * 0.4, { align: 'center' });
     
     // Day number
     pdf.setFontSize(fonts.dayNumber.size);
     pdf.setFont('helvetica', 'bold');
-    pdf.text(dayDate.getDate().toString(), dayX + dayColumnWidth / 2, gridY + 16, { align: 'center' });
+    pdf.text(dayDate.getDate().toString(), dayX + dayColumnWidth / 2, gridY + headerHeight * 0.7, { align: 'center' });
   }
 }
 
-function generateTimeSlots(pdf: jsPDF, timeGridY: number) {
-  const { margin, timeColumnWidth, hourRowHeight, fonts } = REMARKABLE_CONFIG;
+function generateTimeSlots(pdf: jsPDF, timeGridY: number, timeGridHeight: number) {
+  const { margin, timeColumnWidth, fonts } = REMARKABLE_CONFIG;
+  
+  // Calculate hour row height based on available space
+  const hourRowHeight = timeGridHeight / 16; // 16 hours from 6AM to 9PM
   
   // Generate 16 hourly slots (6AM - 9PM)
   for (let hour = 6; hour <= 21; hour++) {
@@ -360,8 +367,11 @@ function generateRowSeparators(pdf: jsPDF, timeGridY: number, timeGridHeight: nu
   }
 }
 
-function generateAppointments(pdf: jsPDF, timeGridY: number, weekStartDate: Date, events: CalendarEvent[]) {
-  const { margin, timeColumnWidth, dayColumnWidth, hourRowHeight, fonts } = REMARKABLE_CONFIG;
+function generateAppointments(pdf: jsPDF, timeGridY: number, timeGridHeight: number, weekStartDate: Date, events: CalendarEvent[]) {
+  const { margin, timeColumnWidth, dayColumnWidth, fonts } = REMARKABLE_CONFIG;
+  
+  // Calculate hour row height based on available space
+  const hourRowHeight = timeGridHeight / 16; // 16 hours from 6AM to 9PM
   
   events.forEach(event => {
     const eventStart = new Date(event.startTime);
