@@ -1,24 +1,24 @@
 import jsPDF from 'jspdf';
 import { CalendarEvent } from '../types/calendar';
 
-// HTML Template Configuration - Exact match to provided template
+// HTML Template Configuration - Full landscape weekly view
 const HTML_TEMPLATE_CONFIG = {
-  // Page dimensions - landscape for weekly view (11in x 8.5in)
-  pageWidth: 792,  // 11in at 72dpi
-  pageHeight: 612, // 8.5in at 72dpi
+  // Page dimensions - A3 landscape for full weekly view (16.5in x 11.7in)
+  pageWidth: 1190,  // A3 landscape width in points
+  pageHeight: 842,  // A3 landscape height in points
   
-  // Grid configuration matching HTML template
-  timeColumnWidth: 80,
-  dayColumnWidth: 102, // (792 - 80) / 7 = 101.7
+  // Grid configuration for full week display
+  timeColumnWidth: 60,
+  dayColumnWidth: 161, // (1190 - 60) / 7 = ~161 points per day
   
-  // Header sections
-  headerHeight: 60,
-  statsHeight: 45,
-  legendHeight: 35,
+  // Header sections - proportionally smaller for full view
+  headerHeight: 50,
+  statsHeight: 40,
+  legendHeight: 30,
   
   // Grid positioning
-  gridStartY: 140, // After header, stats, and legend
-  timeSlotHeight: 20, // Matches @media print .time-slot height
+  gridStartY: 120, // After header, stats, and legend
+  timeSlotHeight: 20, // Height for each 30-minute slot
   
   // Colors matching HTML template
   colors: {
@@ -51,8 +51,8 @@ export const exportHTMLTemplatePDF = async (
     format: [HTML_TEMPLATE_CONFIG.pageWidth, HTML_TEMPLATE_CONFIG.pageHeight]
   });
 
-  // Set default font
-  pdf.setFont('arial', 'normal');
+  // Set default font - use helvetica instead of arial for better compatibility
+  pdf.setFont('helvetica', 'normal');
 
   // === HEADER SECTION ===
   drawHeader(pdf, weekStartDate, weekEndDate);
@@ -88,16 +88,16 @@ function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date): void {
   pdf.line(0, HTML_TEMPLATE_CONFIG.headerHeight, HTML_TEMPLATE_CONFIG.pageWidth, HTML_TEMPLATE_CONFIG.headerHeight);
   
   // Title
-  pdf.setFontSize(24);
-  pdf.setFont('arial', 'bold');
+  pdf.setFontSize(20);
+  pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(0, 0, 0);
-  pdf.text('WEEKLY PLANNER', HTML_TEMPLATE_CONFIG.pageWidth / 2, 25, { align: 'center' });
+  pdf.text('WEEKLY PLANNER', HTML_TEMPLATE_CONFIG.pageWidth / 2, 20, { align: 'center' });
   
   // Week information
-  pdf.setFontSize(16);
-  pdf.setFont('arial', 'bold');
+  pdf.setFontSize(14);
+  pdf.setFont('helvetica', 'bold');
   const weekText = `${weekStartDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${weekEndDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
-  pdf.text(weekText, HTML_TEMPLATE_CONFIG.pageWidth / 2, 50, { align: 'center' });
+  pdf.text(weekText, HTML_TEMPLATE_CONFIG.pageWidth / 2, 40, { align: 'center' });
 }
 
 function drawStats(pdf: jsPDF, events: CalendarEvent[]): void {
@@ -139,14 +139,14 @@ function drawStats(pdf: jsPDF, events: CalendarEvent[]): void {
     }
     
     // Stat number
-    pdf.setFontSize(20);
-    pdf.setFont('arial', 'bold');
-    pdf.text(stat.value, x + cardWidth / 2, statsY + 20, { align: 'center' });
+    pdf.setFontSize(16);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(stat.value, x + cardWidth / 2, statsY + 16, { align: 'center' });
     
     // Stat label
-    pdf.setFontSize(12);
-    pdf.setFont('arial', 'normal');
-    pdf.text(stat.label, x + cardWidth / 2, statsY + 35, { align: 'center' });
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(stat.label, x + cardWidth / 2, statsY + 30, { align: 'center' });
   });
 }
 
@@ -192,10 +192,10 @@ function drawLegend(pdf: jsPDF): void {
     }
     
     // Legend text
-    pdf.setFontSize(11);
-    pdf.setFont('arial', 'normal');
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'normal');
     pdf.setTextColor(0, 0, 0);
-    pdf.text(item.label, x + 22, legendY + 20);
+    pdf.text(item.label, x + 22, legendY + 18);
     
     x += 120;
   });
@@ -212,9 +212,9 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
   pdf.setDrawColor(0, 0, 0);
   pdf.rect(0, gridY, HTML_TEMPLATE_CONFIG.timeColumnWidth, 30);
   
-  pdf.setFontSize(14);
-  pdf.setFont('arial', 'bold');
-  pdf.text('TIME', HTML_TEMPLATE_CONFIG.timeColumnWidth / 2, gridY + 20, { align: 'center' });
+  pdf.setFontSize(12);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('TIME', HTML_TEMPLATE_CONFIG.timeColumnWidth / 2, gridY + 18, { align: 'center' });
   
   // === DAY HEADERS ===
   const dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -234,12 +234,12 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
     pdf.rect(x, gridY, HTML_TEMPLATE_CONFIG.dayColumnWidth, 30);
     
     // Day name
-    pdf.setFontSize(12);
-    pdf.setFont('arial', 'bold');
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'bold');
     pdf.text(dayNames[i], x + HTML_TEMPLATE_CONFIG.dayColumnWidth / 2, gridY + 12, { align: 'center' });
     
     // Day date
-    pdf.setFontSize(16);
+    pdf.setFontSize(14);
     pdf.text(dayDate.getDate().toString(), x + HTML_TEMPLATE_CONFIG.dayColumnWidth / 2, gridY + 25, { align: 'center' });
   }
   
@@ -260,8 +260,8 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
     pdf.setDrawColor(0, 0, 0);
     pdf.rect(0, y, HTML_TEMPLATE_CONFIG.timeColumnWidth, HTML_TEMPLATE_CONFIG.timeSlotHeight);
     
-    pdf.setFontSize(isHour ? 11 : 10);
-    pdf.setFont('arial', 'bold');
+    pdf.setFontSize(isHour ? 9 : 8);
+    pdf.setFont('helvetica', 'bold');
     pdf.text(timeSlot, HTML_TEMPLATE_CONFIG.timeColumnWidth / 2, y + HTML_TEMPLATE_CONFIG.timeSlotHeight / 2 + 3, { align: 'center' });
     
     // Calendar cells for each day
@@ -333,18 +333,18 @@ function drawAppointments(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
     }
     
     // Appointment text
-    pdf.setFontSize(8);
-    pdf.setFont('arial', 'bold');
+    pdf.setFontSize(6);
+    pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(0, 0, 0);
     
     const appointmentName = event.title.replace(' Appointment', '').toUpperCase();
     const lines = pdf.splitTextToSize(appointmentName, width - 4);
     
-    let textY = y + 8;
+    let textY = y + 6;
     lines.forEach((line: string) => {
       if (textY < y + height - 4) {
         pdf.text(line, x + 2, textY);
-        textY += 8;
+        textY += 6;
       }
     });
   });
