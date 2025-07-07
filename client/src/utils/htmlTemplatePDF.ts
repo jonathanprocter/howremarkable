@@ -338,6 +338,8 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
 }
 
 function drawAppointments(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent[], gridY: number): void {
+  const margin = 10; // Add margin to match grid positioning
+  
   events.forEach(event => {
     const eventDate = new Date(event.startTime);
     const dayIndex = Math.floor((eventDate.getTime() - weekStartDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -354,7 +356,7 @@ function drawAppointments(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
     const duration = (event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60);
     const heightInSlots = Math.max(1, Math.round(duration / 30));
     
-    const x = HTML_TEMPLATE_CONFIG.timeColumnWidth + (dayIndex * HTML_TEMPLATE_CONFIG.dayColumnWidth) + 2;
+    const x = margin + HTML_TEMPLATE_CONFIG.timeColumnWidth + (dayIndex * HTML_TEMPLATE_CONFIG.dayColumnWidth) + 2;
     const y = gridY + 30 + (slotIndex * HTML_TEMPLATE_CONFIG.timeSlotHeight) + 2;
     const width = HTML_TEMPLATE_CONFIG.dayColumnWidth - 4;
     const height = (heightInSlots * HTML_TEMPLATE_CONFIG.timeSlotHeight) - 4;
