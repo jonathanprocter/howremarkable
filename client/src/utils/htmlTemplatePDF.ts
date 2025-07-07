@@ -11,14 +11,14 @@ const HTML_TEMPLATE_CONFIG = {
   timeColumnWidth: 60,
   dayColumnWidth: 161, // (1190 - 60) / 7 = ~161 points per day
   
-  // Header sections - proportionally smaller for full view
-  headerHeight: 50,
-  statsHeight: 40,
-  legendHeight: 30,
+  // Header sections - more compact for full view
+  headerHeight: 45,
+  statsHeight: 35,
+  legendHeight: 25,
   
   // Grid positioning
-  gridStartY: 120, // After header, stats, and legend
-  timeSlotHeight: 20, // Height for each 30-minute slot
+  gridStartY: 105, // After header, stats, and legend (more compact)
+  timeSlotHeight: 18, // Height for each 30-minute slot (reduced for compactness)
   
   // Colors matching HTML template
   colors: {
@@ -165,7 +165,7 @@ function drawLegend(pdf: jsPDF): void {
   const legendItems = [
     { label: 'SimplePractice', color: { r: 66, g: 133, b: 244 }, style: 'solid' },
     { label: 'Google Calendar', color: { r: 52, g: 168, b: 83 }, style: 'dashed' },
-    { label: 'Outlook', color: { r: 251, g: 188, b: 4 }, style: 'solid' }
+    { label: 'US Holidays', color: { r: 251, g: 188, b: 4 }, style: 'solid' }
   ];
   
   let x = 20;
@@ -188,6 +188,9 @@ function drawLegend(pdf: jsPDF): void {
         pdf.setDrawColor(item.color.r, item.color.g, item.color.b);
         pdf.setLineWidth(6);
         pdf.line(x, legendY + 12, x, legendY + 24);
+      } else if (item.label === 'US Holidays') {
+        pdf.setFillColor(item.color.r, item.color.g, item.color.b);
+        pdf.rect(x, legendY + 12, 16, 12, 'F');
       }
     }
     
@@ -255,11 +258,11 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
     const isHour = timeSlot.endsWith(':00');
     const y = gridY + 30 + (index * HTML_TEMPLATE_CONFIG.timeSlotHeight);
     
-    // Time slot
+    // Time slot with darker backgrounds for better readability
     if (isHour) {
-      pdf.setFillColor(238, 238, 238);
+      pdf.setFillColor(220, 220, 220); // Darker for hour slots
     } else {
-      pdf.setFillColor(248, 248, 248);
+      pdf.setFillColor(240, 240, 240); // Slightly darker for half-hour slots
     }
     pdf.rect(0, y, HTML_TEMPLATE_CONFIG.timeColumnWidth, HTML_TEMPLATE_CONFIG.timeSlotHeight, 'F');
     
