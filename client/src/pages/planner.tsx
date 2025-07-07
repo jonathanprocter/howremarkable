@@ -15,7 +15,7 @@ import {
   exportDailyRemarkable, 
   exportMonthlyRemarkable,
   generateRemarkableFilename 
-} from '../utils/remarkablePDFProfessional';
+} from '../utils/remarkablePDFTemplateMatch';
 import { getWeekNumber } from '../utils/dateUtils';
 import { initializeRemarkableOptimizations } from '../utils/remarkableDisplayOptimizer';
 
