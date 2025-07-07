@@ -338,26 +338,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Calendar fetch error:', error);
       
-      // Check if it's an authentication error
-      if (error.message?.includes('invalid_grant') || error.message?.includes('unauthorized')) {
-        return res.status(401).json({ 
-          error: "Authentication expired",
-          message: "Please re-authenticate with Google",
-          requiresReauth: true
-        });
-      }
-      
       // Fallback: return database events if Google Calendar fails
       try {
         if (!req.user) {
-          console.log("No authenticated user for fallback");
-          return res.status(401).json({ 
-            error: "Authentication required",
-            message: "Please authenticate with Google first to access calendar events"
-          });
+          return res.status(401).json({ error: "Authentication required" });
         }
         const fallbackUser = req.user as any;
-        console.log(`Attempting database fallback for user ${fallbackUser.id}`);
         const dbEvents = await storage.getEvents(parseInt(fallbackUser.id));
         const dbEventsMapped = dbEvents.map(e => ({
           id: e.sourceId || e.id.toString(),
@@ -373,7 +359,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           calendarId: e.source === 'google' ? e.calendarId : undefined
         }));
         
-        console.log(`Database fallback successful: ${dbEventsMapped.length} events`);
         res.json({ 
           events: dbEventsMapped,
           calendars: [],
@@ -382,11 +367,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } catch (dbError) {
         console.error('Database fallback error:', dbError);
-        res.status(500).json({ 
-          error: "Failed to fetch calendar events",
-          message: "Both Google Calendar and database access failed",
-          details: error.message
-        });
+        res.status(500).json({ error: "Failed to fetch calendar events" });
       }
     }
   });

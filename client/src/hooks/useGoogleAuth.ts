@@ -1,67 +1,154 @@
 import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 
-interface AuthUser {
+interface GoogleUser {
   id: string;
   email: string;
   name: string;
 }
 
+interface AuthStatus {
+  authenticated: boolean;
+  user: GoogleUser | null;
+}
+
 export const useGoogleAuth = () => {
-  const queryClient = useQueryClient();
+  const [authStatus, setAuthStatus] = useState<AuthStatus>({
+    authenticated: false,
+    user: null
+  });
   const [isLoading, setIsLoading] = useState(true);
 
-  // Get authentication status
-  const { data: authData, isLoading: authLoading, error: authError } = useQuery({
-    queryKey: ['/api/auth/status'],
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    retry: 2,
-    refetchOnWindowFocus: false,
-    refetchOnMount: true,
-  });
-
-  useEffect(() => {
-    if (!authLoading) {
+  const checkAuthStatus = async () => {
+    try {
+      const response = await fetch('/api/auth/status');
+      const data = await response.json();
+      setAuthStatus(data);
+      
+      // Save authentication timestamp for session persistence
+      if (data.authenticated) {
+        localStorage.setItem('google_auth_recent', Date.now().toString());
+      }
+    } catch (error) {
+      console.error('Auth status check failed:', error);
+      setAuthStatus({ authenticated: false, user: null });
+    } finally {
       setIsLoading(false);
     }
-  }, [authLoading]);
+  };
+
+  useEffect(() => {
+    checkAuthStatus();
+    
+    // Check for connection success in URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('connected') === 'true') {
+      // Remove the parameter from URL
+      window.history.replaceState({}, document.title, '/');
+      // Force authentication status to true since we know the user just authenticated
+      setAuthStatus({ authenticated: true, user: { id: 'google', email: 'authenticated', name: 'Google User' } });
+      // Also refresh auth status after a delay
+      setTimeout(checkAuthStatus, 2000);
+    } else if (urlParams.get('error') === 'auth_failed') {
+      // Handle authentication failure
+      console.error('Google OAuth authentication failed - check Google Cloud Console configuration');
+      window.history.replaceState({}, document.title, '/');
+    }
+  }, []);
 
   const connectGoogle = () => {
     window.location.href = '/api/auth/google';
   };
 
-  const disconnectMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch('/api/auth/logout', { 
-        method: 'POST',
-        credentials: 'include' 
+  const logout = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST'
       });
-      if (!response.ok) {
-        throw new Error('Logout failed');
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/status'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/calendar/events'] });
-    },
-  });
-
-  const disconnect = () => {
-    disconnectMutation.mutate();
+      setAuthStatus({ authenticated: false, user: null });
+      queryClient.invalidateQueries();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
-  // Provide default values to prevent undefined errors
-  const isAuthenticated = Boolean(authData?.authenticated);
-  const user = authData?.user as AuthUser | null;
+  const fetchCalendarEvents = async (timeMin?: string, timeMax?: string) => {
+    try {
+      const params = new URLSearchParams();
+      if (timeMin) params.append('timeMin', timeMin);
+      if (timeMax) params.append('timeMax', timeMax);
+
+      const response = await fetch(`/api/calendar/events?${params}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch calendar events');
+      }
+
+      return response.json();
+    } catch (error) {
+      console.error('Calendar fetch failed:', error);
+      throw error;
+    }
+  };
+
+  const uploadToDrive = async (filename: string, content: string, mimeType: string = 'application/pdf') => {
+    try {
+      const response = await fetch('/api/drive/upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          filename,
+          content,
+          mimeType
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Drive upload failed:', error);
+      throw error;
+    }
+  };
+
+  const updateCalendarEvent = async (eventId: string, startTime: Date, endTime: Date, calendarId: string) => {
+    try {
+      const response = await fetch(`/api/calendar/events/${eventId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          startTime: startTime.toISOString(),
+          endTime: endTime.toISOString(),
+          calendarId
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update calendar event');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Update calendar event failed:', error);
+      throw error;
+    }
+  };
 
   return {
-    isAuthenticated,
-    user,
-    isLoading: isLoading || authLoading,
-    error: authError,
+    authStatus,
+    isLoading,
     connectGoogle,
-    disconnect,
-    isDisconnecting: disconnectMutation.isPending
+    logout,
+    fetchCalendarEvents,
+    uploadToDrive,
+    updateCalendarEvent,
+    refreshAuthStatus: checkAuthStatus
   };
 };

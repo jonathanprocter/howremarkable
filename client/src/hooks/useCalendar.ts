@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { CalendarState, CalendarEvent, CalendarDay, ViewMode } from '../types/calendar';
 import { getWeekStartDate, getWeekEndDate, isToday, formatWeekRange, addWeeks } from '../utils/dateUtils';
 
@@ -76,7 +76,7 @@ export const useCalendar = () => {
 
   useEffect(() => {
     updateCurrentWeek(state.currentDate);
-  }, [state.currentDate, updateCurrentWeek]);
+  }, [state.currentDate]);
 
   // Force update to July 7, 2025 week on mount
   useEffect(() => {
@@ -90,7 +90,7 @@ export const useCalendar = () => {
     localStorage.setItem('calendar_events', JSON.stringify(manualEvents));
   }, [state.events]);
 
-  const updateCurrentWeek = useCallback((date: Date, events = state.events) => {
+  const updateCurrentWeek = (date: Date, events = state.events) => {
     const startDate = getWeekStartDate(date);
     const endDate = getWeekEndDate(date);
     
@@ -110,6 +110,11 @@ export const useCalendar = () => {
           const eventDateStr = eventDate.toDateString();
           const currentDateStr = currentDate.toDateString();
           
+          // Debug for Monday July 7th specifically
+          if (eventDateStr === 'Mon Jul 07 2025' && currentDateStr.includes('Jul 07')) {
+            console.log(`✅ MONDAY MATCH: ${event.title} matched with day ${currentDateStr}`);
+          }
+          
           return eventDateStr === currentDateStr;
         })
       });
@@ -124,7 +129,7 @@ export const useCalendar = () => {
         days
       }
     }));
-  }, [state.events]);
+  };
 
   const setCurrentDate = (date: Date) => {
     setState(prev => ({ ...prev, currentDate: date }));

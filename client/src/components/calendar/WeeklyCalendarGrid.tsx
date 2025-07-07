@@ -21,7 +21,7 @@ export const WeeklyCalendarGrid = ({
   onEventMove
 }: WeeklyCalendarGridProps) => {
   const timeSlots = generateTimeSlots();
-
+  
   const handleDragStart = (e: React.DragEvent, event: CalendarEvent) => {
     e.dataTransfer.setData('text/plain', JSON.stringify({
       eventId: event.id,
@@ -43,9 +43,9 @@ export const WeeklyCalendarGrid = ({
       const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
       const newStartTime = new Date(date);
       newStartTime.setHours(timeSlot.hour, timeSlot.minute, 0, 0);
-
+      
       const newEndTime = new Date(newStartTime.getTime() + dragData.duration);
-
+      
       onEventMove(dragData.eventId, newStartTime, newEndTime);
     } catch (error) {
       console.error('Error handling drop:', error);
@@ -55,10 +55,10 @@ export const WeeklyCalendarGrid = ({
   const getAllDayEventsForDate = (date: Date) => {
     return events.filter(event => {
       const eventDate = new Date(event.startTime);
-
+      
       // Check if backend marked it as all-day
       const isMarkedAllDay = (event as any).isAllDay;
-
+      
       // Check if event is all-day by looking at duration and time patterns
       const duration = event.endTime.getTime() - event.startTime.getTime();
       const hours = duration / (1000 * 60 * 60);
@@ -66,53 +66,46 @@ export const WeeklyCalendarGrid = ({
       const startMinute = event.startTime.getMinutes();
       const isFullDay = startHour === 0 && startMinute === 0 && (hours === 24 || hours % 24 === 0);
       const isAllDayEvent = isMarkedAllDay || isFullDay || hours >= 20;
-
+      
       if (!isAllDayEvent) return false;
-
+      
       // For all-day events, check if the date falls within the event range
       const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
       const eventStartOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
       const eventEndDate = new Date(event.endTime);
       const eventEndOnly = new Date(eventEndDate.getFullYear(), eventEndDate.getMonth(), eventEndDate.getDate());
-
+      
       return dateOnly >= eventStartOnly && dateOnly < eventEndOnly;
     });
   };
 
   const getEventsForTimeSlot = (date: Date, timeSlot: { time: string; hour: number; minute: number }) => {
-    try {
-      return events.filter(event => {
-        if (!event || !event.startTime || !event.endTime) return false;
-
-        const eventDate = new Date(event.startTime);
-
-        // Filter out all-day events from time slots
-        const isMarkedAllDay = (event as any).isAllDay;
-        const duration = event.endTime.getTime() - event.startTime.getTime();
-        const hours = duration / (1000 * 60 * 60);
-        const startHour = event.startTime.getHours();
-        const startMinute = event.startTime.getMinutes();
-        const isFullDay = startHour === 0 && startMinute === 0 && (hours === 24 || hours % 24 === 0);
-        const isAllDayEvent = isMarkedAllDay || isFullDay || hours >= 20;
-
-        // Skip all-day events
-        if (isAllDayEvent) return false;
-
-        // For timed events, use simple date string comparison
-        if (eventDate.toDateString() !== date.toDateString()) return false;
-
-        return isEventInTimeSlot(event, timeSlot);
-      });
-    } catch (error) {
-      console.error('Error filtering events for time slot:', error);
-      return [];
-    }
+    return events.filter(event => {
+      const eventDate = new Date(event.startTime);
+      
+      // Filter out all-day events from time slots
+      const isMarkedAllDay = (event as any).isAllDay;
+      const duration = event.endTime.getTime() - event.startTime.getTime();
+      const hours = duration / (1000 * 60 * 60);
+      const startHour = event.startTime.getHours();
+      const startMinute = event.startTime.getMinutes();
+      const isFullDay = startHour === 0 && startMinute === 0 && (hours === 24 || hours % 24 === 0);
+      const isAllDayEvent = isMarkedAllDay || isFullDay || hours >= 20;
+      
+      // Skip all-day events
+      if (isAllDayEvent) return false;
+      
+      // For timed events, use simple date string comparison
+      if (eventDate.toDateString() !== date.toDateString()) return false;
+      
+      return isEventInTimeSlot(event, timeSlot);
+    });
   };
 
   const getEventStyle = (event: CalendarEvent) => {
     const duration = getEventDurationInSlots(event);
     const height = duration * 40; // 40px per slot
-
+    
     return {
       height: `${height}px`,
       marginBottom: duration > 1 ? '0px' : '2px',
@@ -127,7 +120,7 @@ export const WeeklyCalendarGrid = ({
                            event.title?.toLowerCase().includes('simple practice') ||
                            event.description?.toLowerCase().includes('simple practice') ||
                            event.title?.toLowerCase().includes('appointment'); // SimplePractice appointments sync as "X Appointment"
-
+    
     if (isSimplePractice) {
       return 'event-block simplepractice';
     } else if (event.source === 'google') {
@@ -189,7 +182,7 @@ export const WeeklyCalendarGrid = ({
           <div className="time-slot p-2 text-sm font-medium text-gray-600 border-r border-gray-300 bg-gray-50">
             {timeSlot.time}
           </div>
-
+          
           {/* Day columns */}
           {week.map((day, dayIndex) => {
             const slotEvents = getEventsForTimeSlot(day.date, timeSlot);
@@ -197,11 +190,11 @@ export const WeeklyCalendarGrid = ({
               const eventStart = new Date(event.startTime);
               const slotStart = new Date(day.date);
               slotStart.setHours(timeSlot.hour, timeSlot.minute, 0, 0);
-
+              
               // Check if this is the exact start time slot for the event
               const eventStartMinutes = eventStart.getHours() * 60 + eventStart.getMinutes();
               const slotStartMinutes = timeSlot.hour * 60 + timeSlot.minute;
-
+              
               // Return true only if this is the first slot that contains the event start time
               return eventStartMinutes >= slotStartMinutes && eventStartMinutes < slotStartMinutes + 30;
             };
@@ -216,7 +209,7 @@ export const WeeklyCalendarGrid = ({
               >
                 {slotEvents.map((event, eventIndex) => {
                   if (!isFirstSlotOfEvent(event)) return null;
-
+                  
                   return (
                     <div
                       key={eventIndex}

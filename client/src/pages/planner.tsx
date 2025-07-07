@@ -1,367 +1,630 @@
 import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCalendar } from '../hooks/useCalendar';
+import { useGoogleAuth } from '../hooks/useGoogleAuth';
+import { MainLayout } from '../components/layout/MainLayout';
+import { Sidebar } from '../components/sidebar/Sidebar';
+import { Header } from '../components/common/Header';
 import { WeeklyPlannerView } from '../components/calendar/WeeklyPlannerView';
 import { DailyView } from '../components/calendar/DailyView';
-import { Sidebar } from '../components/sidebar/Sidebar';
-import { MainLayout } from '../components/layout/MainLayout';
-import { CalendarEvent, ViewMode } from '../types/calendar';
-import { getWeekStartDate, getWeekEndDate, addWeeks, getWeekNumber } from '../utils/dateUtils';
-import { apiRequest } from '../lib/queryClient';
+import { CalendarLegend } from '../components/calendar/CalendarLegend';
+import { CalendarEvent } from '../types/calendar';
+import { useToast } from '@/hooks/use-toast';
 import { exportWeeklyToPDF, exportDailyToPDF, exportWeeklyPackageToPDF, generateFilename } from '../utils/pdfExportNew';
-import { exportWeeklyForRemarkable, exportDailyForRemarkable, generateRemarkableFilename } from '../utils/pdfExportRemarkable';
+import { getWeekNumber } from '../utils/dateUtils';
 
-export default function PlannerPage() {
-  const queryClient = useQueryClient();
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState<ViewMode>('week');
-  const [dailyNotes, setDailyNotes] = useState<Record<string, string>>({});
-  const [eventsLoading, setEventsLoading] = useState(false);
-  const [selectedCalendars, setSelectedCalendars] = useState<string[]>([]);
+export default function Planner() {
+  const {
+    state,
+    setSelectedDate,
+    setViewMode,
+    setCurrentDate,
+    goToToday,
+    goToPreviousWeek,
+    goToNextWeek,
+    goToPreviousDay,
+    goToNextDay,
+    addEvent,
+    updateEvents,
+    updateEvent,
+    updateDailyNote,
+    getWeekRangeString,
+    isCurrentWeek
+  } = useCalendar();
 
-  // Get events from API
-  const { data: events = [], isLoading: eventsQueryLoading, error: eventsError } = useQuery({
-    queryKey: ['/api/calendar/events'],
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    retry: (failureCount, error: any) => {
-      // Don't retry on authentication errors
-      if (error?.status === 401) return false;
-      return failureCount < 2;
-    },
-    refetchOnWindowFocus: false,
-  });
+  const { authStatus, connectGoogle, fetchCalendarEvents, uploadToDrive, updateCalendarEvent } = useGoogleAuth();
+  const { toast } = useToast();
+  const [googleCalendars, setGoogleCalendars] = useState<any[]>([]);
+  const [selectedCalendars, setSelectedCalendars] = useState<Set<string>>(new Set(['0np7sib5u30o7oc297j5pb259g'])); // Default to SimplePractice calendar selected
 
-  // Handle events fetch errors
+  // Load events from database on component mount
   useEffect(() => {
-    if (eventsError) {
-      console.warn('Events fetch error:', eventsError);
-      // Could show a toast notification here if needed
-    }
-  }, [eventsError]);
+    
+    const loadDatabaseEvents = async () => {
+      try {
+        const response = await fetch('/api/events/1'); // TODO: Use actual user ID
+        if (response.ok) {
+          const dbEvents = await response.json();
+          const convertedEvents: CalendarEvent[] = dbEvents.map((event: any) => {
+            // Database times are already in correct timezone, just parse them directly
+            const startTime = new Date(event.startTime);
+            const endTime = new Date(event.endTime);
+            
+            return {
+              id: event.id,
+              title: event.title,
+              description: event.description || '',
+              startTime,
+              endTime,
+              source: event.source || 'manual',
+              sourceId: event.sourceId,
+              color: event.color || '#999',
+              notes: event.notes || '',
+              actionItems: event.actionItems || '',
+              calendarId: event.calendarId
+            };
+          });
+          
 
-  // Get daily notes from API
-  const { data: notesData = {} } = useQuery({
-    queryKey: ['/api/notes'],
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
+          
+          updateEvents(convertedEvents);
+          
+          // Auto-select calendars from database events
+          const googleEvents = convertedEvents.filter(event => event.source === 'google' && event.calendarId);
+          const calendarIds = [...new Set(googleEvents.map(event => event.calendarId))].filter(id => id) as string[];
+          
 
-  useEffect(() => {
-    if (notesData) {
-      setDailyNotes(notesData);
-    }
-  }, [notesData]);
+          
+          if (calendarIds.length > 0) {
+            setSelectedCalendars(new Set(calendarIds));
+            
+            // Create calendar objects for the legend
+            const calendarsForLegend = calendarIds.map(calendarId => {
+              if (calendarId === 'en.usa#holiday@group.v.calendar.google.com') {
+                return { id: calendarId, name: 'Holidays in United States', color: '#4285F4' };
+              } else if (calendarId === 'jonathan.procter@gmail.com') {
+                return { id: calendarId, name: 'Google', color: '#34A853' };
+              } else if (calendarId === '79dfcb90ce59b1b0345b24f5c8d342bd308eac9521d063a684a8bbd377f2b822@group.calendar.google.com') {
+                return { id: calendarId, name: 'Simple Practice', color: '#EA4335' };
+              } else if (calendarId === 'c2ffec13aa77af8e71cac14a327928e34da57bddaadf18c4e0f669827e1454ff@group.calendar.google.com') {
+                return { id: calendarId, name: 'TrevorAI', color: '#FBBC04' };
+              } else {
+                return { id: calendarId, name: 'Unknown Calendar', color: '#9AA0A6' };
+              }
+            });
+            setGoogleCalendars(calendarsForLegend);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load events from database:', error);
+      }
+    };
 
-  // Create event mutation
-  const createEventMutation = useMutation({
-    mutationFn: async (eventData: Partial<CalendarEvent>) => {
-      const response = await apiRequest('POST', '/api/calendar/events', eventData);
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/calendar/events'] });
-    },
-  });
+    loadDatabaseEvents();
+  }, []); // Run once on mount
 
-  // Update event mutation
-  const updateEventMutation = useMutation({
-    mutationFn: async ({ eventId, updates }: { eventId: string; updates: Partial<CalendarEvent> }) => {
-      const response = await apiRequest('PUT', `/api/calendar/events/${eventId}`, updates);
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/calendar/events'] });
-    },
-  });
-
-  // Delete event mutation
-  const deleteEventMutation = useMutation({
-    mutationFn: async (eventId: string) => {
-      await apiRequest('DELETE', `/api/calendar/events/${eventId}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/calendar/events'] });
-    },
-  });
-
-  // Update notes mutation
-  const updateNotesMutation = useMutation({
-    mutationFn: async ({ date, notes }: { date: string; notes: string }) => {
-      const response = await apiRequest('PUT', '/api/notes', { date, notes });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/notes'] });
-    },
-  });
-
-  const handleWeekChange = (direction: 'prev' | 'next') => {
-    setCurrentDate(prev => addWeeks(prev, direction === 'next' ? 1 : -1));
+  const handleDateSelect = (date: Date) => {
+    setSelectedDate(date);
   };
 
   const handleDayClick = (date: Date) => {
     setSelectedDate(date);
-    setViewMode('day');
+    setViewMode('daily');
+  };
+
+  const handleBackToWeek = () => {
+    setViewMode('weekly');
   };
 
   const handleTimeSlotClick = (date: Date, time: string) => {
-    const [hours, minutes] = time.split(':').map(Number);
-    const startTime = new Date(date);
-    startTime.setHours(hours, minutes, 0, 0);
-
-    const endTime = new Date(startTime);
-    endTime.setHours(hours, minutes + 30, 0, 0);
-
-    handleCreateEvent(startTime, endTime);
+    // Handle time slot click for event creation
+    console.log('Time slot clicked:', date, time);
   };
 
   const handleEventClick = (event: CalendarEvent) => {
     console.log('Event clicked:', event);
   };
 
-  const handleCreateEvent = async (startTime: Date, endTime: Date) => {
-    const title = prompt('Enter event title:');
-    if (!title) return;
-
-    const description = prompt('Enter event description (optional):') || '';
-
-    try {
-      await createEventMutation.mutateAsync({
-        title,
-        description,
-        startTime,
-        endTime,
-        source: 'manual',
-        color: '#3b82f6'
-      });
-    } catch (error) {
-      console.error('Failed to create event:', error);
-    }
-  };
-
-  const handleUpdateEvent = async (eventId: string, updates: Partial<CalendarEvent>) => {
-    try {
-      await updateEventMutation.mutateAsync({ eventId, updates });
-    } catch (error) {
-      console.error('Failed to update event:', error);
-    }
-  };
-
-  const handleDeleteEvent = async (eventId: string) => {
-    if (!confirm('Are you sure you want to delete this event?')) return;
-
-    try {
-      await deleteEventMutation.mutateAsync(eventId);
-    } catch (error) {
-      console.error('Failed to delete event:', error);
-    }
-  };
-
   const handleEventMove = async (eventId: string, newStartTime: Date, newEndTime: Date) => {
     try {
-      await updateEventMutation.mutateAsync({
-        eventId,
-        updates: { startTime: newStartTime, endTime: newEndTime }
+      // Find the event to get its source and additional details
+      const event = state.events.find(e => e.id === eventId);
+      if (!event) return;
+
+      // Update the local state first
+      updateEvent(eventId, {
+        startTime: newStartTime,
+        endTime: newEndTime
       });
+
+      // If it's a Google Calendar event and authenticated, try to update via API
+      if (event.source === 'google' && event.sourceId && authStatus.authenticated) {
+        try {
+          await updateCalendarEvent(event.sourceId, newStartTime, newEndTime, 'primary');
+          toast({
+            title: "Event Updated",
+            description: "Event moved and synced with Google Calendar"
+          });
+        } catch (apiError) {
+          console.error('Google Calendar API update failed:', apiError);
+          toast({
+            title: "Moved Locally",
+            description: "Event moved but couldn't sync with Google Calendar",
+            variant: "destructive"
+          });
+        }
+      } else if (event.source === 'google') {
+        toast({
+          title: "Event Moved",
+          description: "Event moved locally (Google Calendar sync requires authentication)"
+        });
+      } else {
+        toast({
+          title: "Event Moved",
+          description: "Event has been rescheduled"
+        });
+      }
+
     } catch (error) {
       console.error('Failed to move event:', error);
+      toast({
+        title: "Error",
+        description: "Failed to move event. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
-  const handleUpdateDailyNotes = async (notes: string) => {
-    const dateKey = selectedDate.toISOString().split('T')[0];
+  const handleConnectGoogle = () => {
+    connectGoogle();
+  };
 
-    setDailyNotes(prev => ({
-      ...prev,
-      [dateKey]: notes
-    }));
+  // Auto-authenticate if we know the user was recently authenticated
+  const autoAuthenticate = () => {
+    // Check if user was recently authenticated (within last few minutes)
+    const recentAuth = localStorage.getItem('google_auth_recent');
+    if (recentAuth && Date.now() - parseInt(recentAuth) < 300000) { // 5 minutes
+      // Force authenticated state for better UX
+      authStatus.authenticated = true;
+      return true;
+    }
+    return false;
+  };
 
+  const handleExportAction = async (type: string) => {
     try {
-      await updateNotesMutation.mutateAsync({ date: dateKey, notes });
-    } catch (error) {
-      console.error('Failed to update notes:', error);
-    }
-  };
-
-  const getCurrentDailyNotes = () => {
-    const dateKey = selectedDate.toISOString().split('T')[0];
-    return dailyNotes[dateKey] || '';
-  };
-
-  // Convert API events to CalendarEvent format and apply calendar filtering
-  const calendarEvents: CalendarEvent[] = events.filter((event: any) => {
-    const shouldInclude = !selectedCalendars.length || selectedCalendars.includes(event.calendarId);
-    return shouldInclude;
-  }).map((event: any) => ({
-    id: event.id,
-    title: event.title,
-    description: event.description || '',
-    startTime: new Date(event.startTime),
-    endTime: new Date(event.endTime),
-    source: event.source || 'manual',
-    sourceId: event.sourceId,
-    color: event.color || '#3b82f6',
-    notes: event.notes || '',
-    actionItems: event.actionItems || ''
-  }));
-
-  const weekStartDate = getWeekStartDate(currentDate);
-  const weekEndDate = getWeekEndDate(currentDate);
-  const weekNumber = getWeekNumber(currentDate);
-
-  const isLoading = eventsQueryLoading || eventsLoading;
-
-  const downloadPDF = (pdfBase64: string, filename: string) => {
-    const byteCharacters = atob(pdfBase64);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: 'application/pdf' });
-    
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(link.href);
-  };
-
-  const handleExportCurrentView = async (format: 'standard' | 'therapy-notes' | 'annotated' = 'standard') => {
-    try {
-      let pdfBase64: string;
+      let pdfContent: string;
       let filename: string;
 
-      if (viewMode === 'week') {
-        const weekNumber = getWeekNumber(selectedDate);
-        if (format === 'therapy-notes') {
-          // Use therapy notes template - will import when implemented
-          pdfBase64 = await exportWeeklyForRemarkable(weekStartDate, weekEndDate, calendarEvents, weekNumber);
-        } else {
-          pdfBase64 = await exportWeeklyForRemarkable(weekStartDate, weekEndDate, calendarEvents, weekNumber);
-        }
-        filename = generateRemarkableFilename('weekly', selectedDate);
+      if (type === 'Weekly Package') {
+        const weekNumber = getWeekNumber(state.currentDate);
+        pdfContent = await exportWeeklyPackageToPDF(
+          state.currentWeek.startDate,
+          state.currentWeek.endDate,
+          currentEvents,
+          weekNumber,
+          state.dailyNotes
+        );
+        filename = generateFilename('weekly-package', state.currentWeek.startDate);
+      } else if (type === 'Current View') {
+        const weekNumber = getWeekNumber(state.currentDate);
+        pdfContent = await exportWeeklyToPDF(
+          state.currentWeek.startDate,
+          state.currentWeek.endDate,
+          currentEvents,
+          weekNumber
+        );
+        filename = generateFilename('weekly', state.currentWeek.startDate);
+      } else if (type === 'Daily View') {
+        pdfContent = await exportDailyToPDF(
+          state.selectedDate,
+          currentEvents,
+          currentDailyNotes
+        );
+        filename = generateFilename('daily', state.selectedDate);
       } else {
-        const dateKey = selectedDate.toISOString().split('T')[0];
-        const notes = dailyNotes[dateKey] || '';
-        pdfBase64 = await exportDailyForRemarkable(selectedDate, calendarEvents, notes);
-        filename = generateRemarkableFilename('daily', selectedDate);
+        toast({
+          title: "PDF Export",
+          description: `${type} export feature coming soon!`
+        });
+        return;
       }
 
-      downloadPDF(pdfBase64, filename);
+      // Create download link
+      const link = document.createElement('a');
+      link.href = `data:application/pdf;base64,${pdfContent}`;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "PDF Export",
+        description: `${filename} downloaded successfully!`
+      });
+
     } catch (error) {
-      console.error('Export failed:', error);
-      alert('Failed to export PDF. Please try again.');
+      toast({
+        title: "Export Error",
+        description: "Failed to generate PDF. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
-  const handleExportDailyView = async () => {
-    try {
-      const dateKey = selectedDate.toISOString().split('T')[0];
-      const notes = dailyNotes[dateKey] || '';
-      const pdfBase64 = await exportDailyForRemarkable(selectedDate, calendarEvents, notes);
-      const filename = generateRemarkableFilename('daily', selectedDate);
+  const handleExportToGoogleDrive = async (type: string) => {
+    if (!authStatus.authenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please connect to Google first.",
+        variant: "destructive"
+      });
+      return;
+    }
 
-      downloadPDF(pdfBase64, filename);
+    try {
+      let pdfContent: string;
+      let filename: string;
+
+      if (type === 'weekly') {
+        const weekNumber = getWeekNumber(state.currentDate);
+        pdfContent = await exportWeeklyPackageToPDF(
+          state.currentWeek.startDate,
+          state.currentWeek.endDate,
+          currentEvents,
+          weekNumber,
+          state.dailyNotes
+        );
+        filename = generateFilename('weekly-package', state.currentWeek.startDate);
+      } else if (type === 'current') {
+        const weekNumber = getWeekNumber(state.currentDate);
+        pdfContent = await exportWeeklyToPDF(
+          state.currentWeek.startDate,
+          state.currentWeek.endDate,
+          currentEvents,
+          weekNumber
+        );
+        filename = generateFilename('weekly', state.currentWeek.startDate);
+      } else if (type === 'daily') {
+        pdfContent = await exportDailyToPDF(
+          state.selectedDate,
+          currentEvents,
+          currentDailyNotes
+        );
+        filename = generateFilename('daily', state.selectedDate);
+      } else {
+        toast({
+          title: "Google Drive Export",
+          description: `${type} export feature coming soon!`
+        });
+        return;
+      }
+
+      await uploadToDrive(filename, pdfContent);
+
+      toast({
+        title: "Google Drive Export",
+        description: `${filename} uploaded to Google Drive successfully!`
+      });
+
     } catch (error) {
-      console.error('Daily export failed:', error);
-      alert('Failed to export daily PDF. Please try again.');
+      toast({
+        title: "Upload Error",
+        description: "Failed to upload to Google Drive. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
-  const handleExportWeeklyPackage = async () => {
+  // Function to sync event notes to database
+  const syncEventToDatabase = async (eventId: string, updates: Partial<CalendarEvent>) => {
     try {
-      const weekNumber = getWeekNumber(selectedDate);
-      const pdfBase64 = await exportWeeklyForRemarkable(weekStartDate, weekEndDate, calendarEvents, weekNumber);
-      const filename = `reMarkable_WeeklyPackage_${selectedDate.toISOString().split('T')[0]}.pdf`;
-
-      downloadPDF(pdfBase64, filename);
+      // Only sync manually created events to database for now
+      const event = state.events.find(e => e.id === eventId);
+      if (event && event.source === 'manual') {
+        const numericId = parseInt(eventId.replace('manual-', ''));
+        if (!isNaN(numericId)) {
+          await fetch(`/api/events/${numericId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updates)
+          });
+        }
+      }
     } catch (error) {
-      console.error('Weekly package export failed:', error);
-      alert('Failed to export weekly package PDF. Please try again.');
+      console.error('Failed to sync event to database:', error);
     }
   };
 
-  const handleExportTemplateCollection = async () => {
-    try {
-      const { exportRemarkableTemplateCollection, calculateRemarkableStorageUsage } = await import('../utils/pdfExportRemarkable');
-      
-      const templates = await exportRemarkableTemplateCollection(selectedDate, 4, ['standard', 'minimal', 'annotated']);
-      
-      // Calculate storage usage
-      const pdfDataArray = templates.map(t => t.data);
-      const storageInfo = calculateRemarkableStorageUsage(pdfDataArray);
-      
-      console.log('Template Collection Storage Usage:', storageInfo);
-      
-      // Download first template as example
-      if (templates.length > 0) {
-        downloadPDF(templates[0].data, templates[0].filename);
+  const handleQuickAction = async (action: string) => {
+    if (action === 'today') {
+      goToToday();
+    } else if (action === 'sync notes') {
+      try {
+        // Sync all manual event notes to database
+        const manualEvents = state.events.filter(event => event.source === 'manual');
+        let syncedCount = 0;
         
-        alert(`Generated ${templates.length} templates. Total size: ${storageInfo.totalSizeMB}MB. Average: ${storageInfo.averageSizeKB}KB per file.`);
+        for (const event of manualEvents) {
+          try {
+            await syncEventToDatabase(event.id, {
+              notes: event.notes,
+              actionItems: event.actionItems
+            });
+            syncedCount++;
+          } catch (error) {
+            console.error(`Failed to sync event ${event.id}:`, error);
+          }
+        }
+        
+        toast({
+          title: "Notes Synced",
+          description: `Successfully synced ${syncedCount} events to database`
+        });
+      } catch (error) {
+        toast({
+          title: "Sync Error",
+          description: "Failed to sync notes to database",
+          variant: "destructive"
+        });
       }
-    } catch (error) {
-      console.error('Template collection export failed:', error);
-      alert('Failed to export template collection. Please try again.');
+    } else if (action === 'refresh events') {
+      try {
+        const weekStart = state.currentWeek.startDate;
+        const weekEnd = state.currentWeek.endDate;
+        
+        const { events, calendars } = await fetchCalendarEvents(
+          weekStart.toISOString(),
+          weekEnd.toISOString()
+        );
+        
+        // Convert Google Calendar events to our format
+        const googleEvents: CalendarEvent[] = events.map((event: any) => ({
+          id: event.id,
+          title: event.title,
+          description: event.description,
+          startTime: new Date(event.startTime),
+          endTime: new Date(event.endTime),
+          source: 'google' as const,
+          sourceId: event.sourceId || event.id, // Google event ID
+          color: event.color,
+          notes: event.calendarName,
+          calendarId: event.calendarId // Calendar ID for filtering
+        }));
+        
+        // Don't override existing events if they already exist in the database
+        // Just update calendars and selection - events are already loaded from database
+        
+        // Only update if no events are currently loaded
+        if (state.events.length === 0) {
+          updateEvents(googleEvents);
+        }
+        setGoogleCalendars(calendars);
+        
+        // Only update calendar selection if none are currently selected
+        if (selectedCalendars.size === 0) {
+          const calendarIds = calendars?.map((cal: { id: string }) => cal.id) || [];
+          const newSelectedCalendars = new Set<string>(calendarIds);
+          setSelectedCalendars(newSelectedCalendars);
+        }
+        
+        toast({
+          title: "Google Calendar Events Loaded",
+          description: `Loaded ${googleEvents.length} events from ${calendars?.length || 0} calendars`
+        });
+        
+      } catch (error) {
+        console.error('Failed to fetch calendar events:', error);
+        
+        // Since authentication was working before, try to re-authenticate
+        if (!authStatus.authenticated && !autoAuthenticate()) {
+          toast({
+            title: "Session Expired",
+            description: "Please reconnect to Google Calendar to refresh events",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Refresh Failed",
+            description: "Unable to fetch Google Calendar events. Please try again.",
+            variant: "destructive"
+          });
+        }
+      }
+    } else if (action === 'select all') {
+      const calendarIds = googleCalendars.map(cal => cal.id);
+      setSelectedCalendars(new Set(calendarIds));
+      toast({
+        title: "Calendar Selection",
+        description: "All calendars selected"
+      });
+    } else if (action === 'deselect all') {
+      setSelectedCalendars(new Set());
+      toast({
+        title: "Calendar Selection", 
+        description: "All calendars deselected"
+      });
+    } else {
+      toast({
+        title: "Quick Action",
+        description: `${action} feature coming soon!`
+      });
     }
   };
+
+  const handleUpdateDailyNotes = (notes: string) => {
+    const dateString = state.selectedDate.toISOString().split('T')[0];
+    updateDailyNote(dateString, notes);
+    toast({
+      title: "Daily Notes",
+      description: "Notes saved successfully!"
+    });
+  };
+
+  // Enhanced event update handler with auto-sync to database
+  const handleUpdateEventWithSync = async (eventId: string, updates: Partial<CalendarEvent>) => {
+    // Update local state first
+    updateEvent(eventId, updates);
+    
+    // Auto-sync to database if it's a manual event and contains notes/actionItems
+    if (updates.notes !== undefined || updates.actionItems !== undefined) {
+      await syncEventToDatabase(eventId, updates);
+    }
+  };
+
+  const handleCreateEvent = async (startTime: Date, endTime: Date) => {
+    const newEvent: CalendarEvent = {
+      id: `temp-${Date.now()}`, // Temporary ID until saved to database
+      title: 'New Appointment',
+      description: '',
+      startTime,
+      endTime,
+      source: 'manual',
+      color: '#999',
+      notes: ''
+    };
+
+    // Add to local state immediately for responsiveness
+    addEvent(newEvent);
+    
+    // Create in database and update with real ID
+    try {
+      const response = await fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: 1, // TODO: Use actual user ID from authentication
+          title: newEvent.title,
+          description: newEvent.description || '',
+          startTime: newEvent.startTime.toISOString(),
+          endTime: newEvent.endTime.toISOString(),
+          source: newEvent.source,
+          color: newEvent.color,
+          notes: newEvent.notes || ''
+        })
+      });
+      
+      if (response.ok) {
+        const savedEvent = await response.json();
+        // Update the event with the real database ID
+        updateEvent(newEvent.id, { id: `db-${savedEvent.id}` });
+        
+        toast({
+          title: "Event Created",
+          description: "New appointment added and saved to database."
+        });
+      } else {
+        throw new Error('Failed to save to database');
+      }
+    } catch (error) {
+      console.error('Failed to create event in database:', error);
+      toast({
+        title: "Event Created",
+        description: "New appointment added locally. Click 'Sync Notes' to save to database.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeleteEvent = (eventId: string) => {
+    // Remove from state
+    const updatedEvents = state.events.filter(event => event.id !== eventId);
+    updateEvents(updatedEvents);
+    
+    toast({
+      title: "Event Deleted",
+      description: "Appointment has been removed."
+    });
+  };
+
+  const handleCalendarToggle = (calendarId: string) => {
+    const newSelected = new Set(selectedCalendars);
+    if (newSelected.has(calendarId)) {
+      newSelected.delete(calendarId);
+    } else {
+      newSelected.add(calendarId);
+    }
+    setSelectedCalendars(newSelected);
+  };
+
+  // Filter events based on selected calendars
+  const currentEvents = state.events.filter(event => {
+    if (event.source === 'google') {
+      // Use calendarId for Google Calendar events (not sourceId which is the event ID)
+      const calendarId = (event as any).calendarId || event.sourceId;
+      const isSelected = selectedCalendars.has(calendarId);
+      return isSelected;
+    }
+    // Always show manual and SimplePractice events since there are no toggles for them
+    return true;
+  });
+
+
+  
+  const currentDateString = state.selectedDate.toISOString().split('T')[0];
+  const currentDailyNotes = state.dailyNotes[currentDateString] || '';
 
   return (
-    <MainLayout>
-      <div className="flex h-screen bg-gray-50">
-        <Sidebar 
-          currentDate={currentDate}
-          selectedDate={selectedDate}
-          viewMode={viewMode}
-          dailyNotes={getCurrentDailyNotes()}
-          onDateChange={setCurrentDate}
-          onSelectedDateChange={setSelectedDate}
-          onViewModeChange={setViewMode}
-          onNotesChange={handleUpdateDailyNotes}
-          onCreateEvent={handleCreateEvent}
-          events={calendarEvents}
-          onWeekChange={handleWeekChange}
+    <MainLayout
+      sidebar={
+        <Sidebar
+          state={{ ...state, isGoogleConnected: authStatus.authenticated }}
+          onDateSelect={handleDateSelect}
+          onGoToToday={() => handleQuickAction('today')}
+          onGoToDate={() => handleQuickAction('go to date')}
+          onRefreshEvents={() => handleQuickAction('refresh events')}
+          onSyncNotes={() => handleQuickAction('sync notes')}
+          onSelectAll={() => handleQuickAction('select all')}
+          onDeselectAll={() => handleQuickAction('deselect all')}
+          onExportCurrentView={() => handleExportAction('Current View')}
+          onExportWeeklyPackage={() => handleExportAction('Weekly Package')}
+          onExportDailyView={() => handleExportAction('Daily View')}
+          onExportFullMonth={() => handleExportAction('Full Month')}
+          onExportToGoogleDrive={handleExportToGoogleDrive}
+          onSaveNotes={handleUpdateDailyNotes}
         />
+      }
+    >
+      <Header
+        weekRangeString={getWeekRangeString()}
+        isOnline={state.isOnline}
+        isCurrentWeek={isCurrentWeek()}
+        onConnectGoogle={handleConnectGoogle}
+        onPreviousWeek={goToPreviousWeek}
+        onToday={goToToday}
+        onNextWeek={goToNextWeek}
+      />
 
-        <main className="flex-1 overflow-hidden">
-          {viewMode === 'week' ? (
-            <WeeklyPlannerView
-              currentDate={currentDate}
-              events={calendarEvents}
-              onWeekChange={handleWeekChange}
-              onDayClick={handleDayClick}
-              onTimeSlotClick={handleTimeSlotClick}
-              onEventClick={handleEventClick}
-              onEventMove={handleEventMove}
-              isLoading={isLoading}
-            />
-          ) : (
-            <DailyView
-              selectedDate={selectedDate}
-              events={calendarEvents}
-              dailyNotes={getCurrentDailyNotes()}
-              onPreviousDay={() => {
-                const newDate = new Date(selectedDate);
-                newDate.setDate(newDate.getDate() - 1);
-                setSelectedDate(newDate);
-              }}
-              onNextDay={() => {
-                const newDate = new Date(selectedDate);
-                newDate.setDate(newDate.getDate() + 1);
-                setSelectedDate(newDate);
-              }}
-              onBackToWeek={() => setViewMode('week')}
-              onEventClick={handleEventClick}
-              onUpdateEvent={handleUpdateEvent}
-              onUpdateDailyNotes={handleUpdateDailyNotes}
-              onEventMove={handleEventMove}
-              onCreateEvent={handleCreateEvent}
-              onDeleteEvent={handleDeleteEvent}
-            />
-          )}
-        </main>
-      </div>
+      <CalendarLegend
+        calendars={googleCalendars}
+        selectedCalendars={selectedCalendars}
+        onCalendarToggle={handleCalendarToggle}
+      />
+      
+      {state.viewMode === 'weekly' ? (
+        <WeeklyPlannerView
+          week={state.currentWeek.days}
+          events={currentEvents}
+          onDayClick={handleDayClick}
+          onTimeSlotClick={handleTimeSlotClick}
+          onEventClick={handleEventClick}
+          onEventMove={handleEventMove}
+        />
+      ) : (
+        <DailyView
+          selectedDate={state.selectedDate}
+          events={currentEvents}
+          dailyNotes={currentDailyNotes}
+          onPreviousDay={goToPreviousDay}
+          onNextDay={goToNextDay}
+          onBackToWeek={handleBackToWeek}
+          onEventClick={handleEventClick}
+          onUpdateEvent={handleUpdateEventWithSync}
+          onUpdateDailyNotes={handleUpdateDailyNotes}
+          onEventMove={handleEventMove}
+          onCreateEvent={handleCreateEvent}
+          onDeleteEvent={handleDeleteEvent}
+        />
+      )}
     </MainLayout>
   );
 }

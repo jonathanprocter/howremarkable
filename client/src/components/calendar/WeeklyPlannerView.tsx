@@ -1,84 +1,63 @@
 import React from 'react';
 import { generateTimeSlots } from '../../utils/timeSlots';
-import { CalendarEvent } from '../../types/calendar';
-import { getWeekNumber, getWeekStartDate, getWeekEndDate } from '../../utils/dateUtils';
+import { CalendarEvent, CalendarDay } from '../../types/calendar';
+import { getWeekNumber } from '../../utils/dateUtils';
 
 interface WeeklyPlannerViewProps {
-  currentDate: Date;
+  week: CalendarDay[];
   events: CalendarEvent[];
-  onWeekChange: (direction: 'prev' | 'next') => void;
   onDayClick: (date: Date) => void;
   onTimeSlotClick: (date: Date, time: string) => void;
   onEventClick: (event: CalendarEvent) => void;
   onEventMove?: (eventId: string, newStartTime: Date, newEndTime: Date) => void;
-  isLoading?: boolean;
 }
 
 export const WeeklyPlannerView = ({
-  currentDate,
+  week,
   events,
-  onWeekChange,
   onDayClick,
   onTimeSlotClick,
   onEventClick,
-  onEventMove,
-  isLoading
+  onEventMove
 }: WeeklyPlannerViewProps) => {
   const timeSlots = generateTimeSlots();
-
-  // Generate week days from currentDate
-  const weekStartDate = getWeekStartDate(currentDate);
-  const weekEndDate = getWeekEndDate(currentDate);
-  const weekNumber = getWeekNumber(currentDate);
-
-  // Generate the week array
-  const week = [];
-  for (let i = 0; i < 7; i++) {
-    const date = new Date(weekStartDate);
-    date.setDate(weekStartDate.getDate() + i);
-    week.push({
-      date,
-      dayOfWeek: date.toLocaleDateString('en-US', { weekday: 'long' }),
-      dayNumber: date.getDate(),
-      events: events.filter(event => 
-        new Date(event.startTime).toDateString() === date.toDateString()
-      )
-    });
-  }
-
+  const weekStartDate = week[0]?.date;
+  const weekEndDate = week[6]?.date;
+  const weekNumber = weekStartDate ? getWeekNumber(weekStartDate) : 1;
+  
   // Calculate statistics ONLY for the current week
   const weekEvents = events.filter(event => {
     const eventDate = new Date(event.startTime);
     const weekStart = new Date(weekStartDate);
     const weekEnd = new Date(weekEndDate);
-
+    
     // Set to start/end of day for proper comparison
     weekStart.setHours(0, 0, 0, 0);
     weekEnd.setHours(23, 59, 59, 999);
-
+    
     return eventDate >= weekStart && eventDate <= weekEnd;
   });
-
+  
   const totalEvents = weekEvents.length;
   const totalHours = weekEvents.reduce((sum, event) => {
     return sum + (new Date(event.endTime).getTime() - new Date(event.startTime).getTime()) / (1000 * 60 * 60);
   }, 0);
-
+  
   const getEventStyle = (event: CalendarEvent) => {
     const eventStart = new Date(event.startTime);
     const eventEnd = new Date(event.endTime);
     const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
-
+    
     // Base appointment styles matching HTML
     let className = 'appointment ';
-
+    
     // Check if it's a SimplePractice appointment
     const isSimplePractice = event.source === 'simplepractice' || 
                            event.notes?.toLowerCase().includes('simple practice') ||
                            event.title?.toLowerCase().includes('simple practice') ||
                            event.description?.toLowerCase().includes('simple practice') ||
                            event.title?.toLowerCase().includes('appointment'); // SimplePractice appointments sync as "X Appointment"
-
+    
     if (isSimplePractice) {
       className += 'simplepractice ';
     } else if (event.source === 'google') {
@@ -86,7 +65,7 @@ export const WeeklyPlannerView = ({
     } else {
       className += 'personal ';
     }
-
+    
     // Duration classes
     if (durationMinutes >= 90) {
       className += 'duration-90';
@@ -95,33 +74,22 @@ export const WeeklyPlannerView = ({
     } else {
       className += 'duration-30';
     }
-
+    
     return className;
   };
 
   const renderTimeSlotEvents = (date: Date, slot: any, slotIndex: number) => {
-    const dayEvents = events.filter(event => {
-      try {
-        if (!event || !event.startTime) return false;
-        return new Date(event.startTime).toDateString() === date.toDateString();
-      } catch (error) {
-        console.error('Error filtering day events:', error);
-        return false;
-      }
-    });
+    const dayEvents = events.filter(event => 
+      new Date(event.startTime).toDateString() === date.toDateString()
+    );
 
     const slotEvents = dayEvents.filter(event => {
-      try {
-        const eventDate = new Date(event.startTime);
-        const eventStartMinutes = eventDate.getHours() * 60 + eventDate.getMinutes();
-        const slotStartMinutes = slot.hour * 60 + slot.minute;
-
-        return eventStartMinutes >= slotStartMinutes && 
-               eventStartMinutes < slotStartMinutes + 30;
-      } catch (error) {
-        console.error('Error filtering slot events:', error);
-        return false;
-      }
+      const eventDate = new Date(event.startTime);
+      const eventStartMinutes = eventDate.getHours() * 60 + eventDate.getMinutes();
+      const slotStartMinutes = slot.hour * 60 + slot.minute;
+      
+      return eventStartMinutes >= slotStartMinutes && 
+             eventStartMinutes < slotStartMinutes + 30;
     });
 
     return slotEvents.map(event => {
@@ -159,16 +127,6 @@ export const WeeklyPlannerView = ({
       );
     });
   };
-
-  if (isLoading) {
-    return (
-      <div className="planner-container">
-        <div className="header">
-          <h1>Loading...</h1>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="planner-container">
@@ -222,7 +180,7 @@ export const WeeklyPlannerView = ({
           {week.map((day, index) => {
             const dayName = day.date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
             const dayNum = day.date.getDate();
-
+            
             return (
               <div key={index} className="day-header" onClick={() => onDayClick(day.date)}>
                 <div className="day-name">{dayName}</div>
@@ -234,16 +192,16 @@ export const WeeklyPlannerView = ({
           {/* Time slots grid */}
           {timeSlots.map((slot, slotIndex) => {
             const isHour = slot.minute === 0;
-
+            
             const slotElements = [];
-
+            
             // Time slot label
             slotElements.push(
               <div key={`time-${slot.hour}-${slot.minute}`} className={`time-slot ${isHour ? 'hour' : ''}`}>
                 {slot.time}
               </div>
             );
-
+            
             // Calendar cells for each day
             week.forEach((day, dayIndex) => {
               slotElements.push(
@@ -260,9 +218,9 @@ export const WeeklyPlannerView = ({
                       const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
                       const newStartTime = new Date(day.date);
                       newStartTime.setHours(slot.hour, slot.minute, 0, 0);
-
+                      
                       const newEndTime = new Date(newStartTime.getTime() + dragData.duration);
-
+                      
                       onEventMove(dragData.eventId, newStartTime, newEndTime);
                     } catch (error) {
                       console.error('Error handling drop:', error);
@@ -273,7 +231,7 @@ export const WeeklyPlannerView = ({
                 </div>
               );
             });
-
+            
             return slotElements;
           }).flat()}
         </div>

@@ -10,15 +10,13 @@ app.use(express.urlencoded({ extended: false }));
 // Session configuration
 app.use(session({
   secret: process.env.SESSION_SECRET || 'remarkable-planner-secret',
-  resave: false,
-  saveUninitialized: false,
+  resave: true,
+  saveUninitialized: true,
   rolling: true,
-  name: 'remarkable.sid',
   cookie: {
     secure: false, // Set to true in production with HTTPS
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days instead of 1 day
-    httpOnly: false, // Allow client-side access for session persistence
-    sameSite: 'lax'
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    httpOnly: false // Allow client-side access for session persistence
   }
 }));
 
