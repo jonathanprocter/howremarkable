@@ -30,10 +30,10 @@ export const CalendarLegend = ({ calendars, selectedCalendars, onCalendarToggle 
   };
 
   return (
-    <div className="mb-4 p-4 bg-yellow-50 border-2 border-yellow-400 rounded-lg shadow-sm">
+    <div className="mb-2 p-2 bg-yellow-50 border-2 border-yellow-400 rounded-lg shadow-sm" style={{ marginTop: '0', paddingTop: '8px' }}>
       {/* Appointment Type Legend */}
-      <div className="mb-4 pb-3 border-b border-yellow-200">
-        <h4 className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wide">📅 Calendar Legend</h4>
+      <div className="mb-2 pb-2 border-b border-yellow-200">
+        <h4 className="text-sm font-bold text-gray-800 mb-2 uppercase tracking-wide">📅 Calendar Legend</h4>
         <div className="flex items-center gap-6 flex-wrap text-sm">
           <div className="flex items-center space-x-3 bg-white px-3 py-2 rounded shadow-sm">
             <div className="w-4 h-4 bg-blue-50 border-2 border-blue-500 relative" style={{borderLeft: '6px solid #4285F4'}}>

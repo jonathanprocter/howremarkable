@@ -166,11 +166,11 @@ export const WeeklyPlannerView = ({
   };
 
   return (
-    <div className="planner-container">
+    <div className="planner-container" style={{ marginTop: '0', paddingTop: '0' }}>
       {/* Header - exact match to HTML */}
-      <div className="header">
-        <h1>Weekly Planner</h1>
-        <div className="week-info">
+      <div className="header" style={{ marginTop: '0', paddingTop: '8px' }}>
+        <h1 style={{ margin: '0', marginBottom: '4px' }}>Weekly Planner</h1>
+        <div className="week-info" style={{ margin: '0' }}>
           {weekStartDate?.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}-
           {weekEndDate?.toLocaleDateString('en-US', { day: 'numeric' })} • Week {weekNumber}
         </div>

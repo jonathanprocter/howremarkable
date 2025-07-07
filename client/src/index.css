@@ -14,9 +14,10 @@
 
 .header {
     border-bottom: 3px solid black;
-    padding: 20px;
+    padding: 8px 20px;
     text-align: center;
     background: white;
+    margin: 0;
 }
 
 .header h1 {
