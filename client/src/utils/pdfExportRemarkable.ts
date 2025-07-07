@@ -1,4 +1,22 @@
 
+// Enhanced reMarkable Pro Export Formats
+export type RemarkableExportFormat = 'standard' | 'annotated' | 'minimal' | 'teacher' | 'student';
+export type RemarkableOrientation = 'landscape' | 'portrait';
+
+interface RemarkableExportOptions {
+  format: RemarkableExportFormat;
+  orientation: RemarkableOrientation;
+  includeTimeSlots: boolean;
+  includeNoteLines: boolean;
+  includeWeeklyGoals: boolean;
+  includeHabitTracker: boolean;
+  fontSize: 'small' | 'medium' | 'large';
+  lineSpacing: 'tight' | 'normal' | 'wide';
+  annotationSpace: 'minimal' | 'standard' | 'generous';
+}
+
+
+
 import jsPDF from 'jspdf';
 import { CalendarEvent } from '../types/calendar';
 import { generateTimeSlots } from './timeSlots';
@@ -19,6 +37,185 @@ const REMARKABLE_SPECS = {
   refreshZones: {
     full: 'high-contrast-borders',
     partial: 'light-backgrounds'
+  },
+  // Annotation zones
+  marginLeft: 5, // Space for handwritten notes
+  marginRight: 5,
+  marginTop: 5,
+  marginBottom: 10,
+  // Stylus pen pressure zones
+  penWidth: {
+    thin: 0.3,
+    medium: 0.8,
+
+export const exportRemarkableTemplate = async (
+  templateType: 'therapy-notes' | 'client-sessions' | 'weekly-review' | 'goal-tracker',
+  date: Date,
+  events: CalendarEvent[],
+  options: RemarkableExportOptions
+): Promise<string> => {
+  const pdf = new jsPDF({
+    orientation: options.orientation,
+    unit: 'mm',
+    format: [REMARKABLE_SPECS.width, REMARKABLE_SPECS.height],
+    putOnlyUsedFonts: true,
+    compress: true
+  });
+
+  switch (templateType) {
+    case 'therapy-notes':
+      return generateTherapyNotesTemplate(pdf, date, events, options);
+    case 'client-sessions':
+      return generateClientSessionsTemplate(pdf, date, events, options);
+    case 'weekly-review':
+      return generateWeeklyReviewTemplate(pdf, date, events, options);
+    case 'goal-tracker':
+      return generateGoalTrackerTemplate(pdf, date, events, options);
+    default:
+      return pdf.output('datauristring').split(',')[1];
+  }
+};
+
+const generateTherapyNotesTemplate = (
+  pdf: jsPDF,
+  date: Date,
+  events: CalendarEvent[],
+  options: RemarkableExportOptions
+): string => {
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  
+  // Header optimized for therapy practice
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(14);
+  pdf.setTextColor(...EINK_COLORS.black);
+  pdf.text('THERAPY SESSION NOTES', pageWidth / 2, 15, { align: 'center' });
+  
+  // Date and session info
+  pdf.setFontSize(10);
+  pdf.setFont('helvetica', 'normal');
+  const dateStr = date.toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+  pdf.text(dateStr, pageWidth / 2, 22, { align: 'center' });
+  
+  // Session schedule with annotation space
+  let currentY = 35;
+  const sessionHeight = 25;
+  const annotationWidth = pageWidth * 0.6;
+  
+  events.forEach((event, index) => {
+    if (currentY + sessionHeight > pageHeight - 20) return;
+    
+    // Session time box
+    pdf.setFillColor(...EINK_COLORS.lightGray);
+    pdf.rect(5, currentY, 35, sessionHeight, 'F');
+    pdf.setDrawColor(...EINK_COLORS.black);
+    pdf.setLineWidth(0.8);
+    pdf.rect(5, currentY, 35, sessionHeight, 'S');
+    
+    // Time info
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(8);
+    const startTime = new Date(event.startTime).toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      hour12: false 
+    });
+    const endTime = new Date(event.endTime).toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      hour12: false 
+    });
+    pdf.text(`${startTime}`, 22.5, currentY + 8, { align: 'center' });
+    pdf.text(`${endTime}`, 22.5, currentY + 13, { align: 'center' });
+    
+    // Client name
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(6);
+    const clientName = event.title.replace(/appointment|session/gi, '').trim();
+    pdf.text(clientName, 22.5, currentY + 18, { align: 'center' });
+    
+    // Notes section with lines for handwriting
+    pdf.setDrawColor(...EINK_COLORS.lightGray);
+    pdf.setLineWidth(0.5);
+    pdf.rect(45, currentY, annotationWidth, sessionHeight, 'S');
+    
+    // Header for notes
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(7);
+    pdf.text('SESSION NOTES:', 47, currentY + 5);
+    
+    // Ruled lines for handwriting
+    const lineSpacing = 3;
+    const startLineY = currentY + 8;
+    for (let line = 0; line < 5; line++) {
+      const lineY = startLineY + (line * lineSpacing);
+      if (lineY < currentY + sessionHeight - 2) {
+        pdf.setDrawColor(...EINK_COLORS.veryLightGray);
+        pdf.setLineWidth(0.2);
+        pdf.line(47, lineY, 45 + annotationWidth - 2, lineY);
+      }
+    }
+    
+    currentY += sessionHeight + 5;
+  });
+  
+  // Footer with session summary template
+  if (currentY < pageHeight - 40) {
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(8);
+    pdf.text('DAILY REFLECTION:', 5, currentY + 10);
+    
+    // Reflection lines
+    pdf.setDrawColor(...EINK_COLORS.lightGray);
+    pdf.setLineWidth(0.3);
+    for (let line = 0; line < 8; line++) {
+      const lineY = currentY + 15 + (line * 3);
+      if (lineY < pageHeight - 10) {
+        pdf.line(5, lineY, pageWidth - 5, lineY);
+      }
+    }
+  }
+  
+  return pdf.output('datauristring').split(',')[1];
+};
+
+const generateClientSessionsTemplate = (
+  pdf: jsPDF,
+  date: Date,
+  events: CalendarEvent[],
+  options: RemarkableExportOptions
+): string => {
+  // Implementation for client-focused session tracking
+  return pdf.output('datauristring').split(',')[1];
+};
+
+const generateWeeklyReviewTemplate = (
+  pdf: jsPDF,
+  date: Date,
+  events: CalendarEvent[],
+  options: RemarkableExportOptions
+): string => {
+  // Implementation for weekly review and planning
+  return pdf.output('datauristring').split(',')[1];
+};
+
+const generateGoalTrackerTemplate = (
+  pdf: jsPDF,
+  date: Date,
+  events: CalendarEvent[],
+  options: RemarkableExportOptions
+): string => {
+  // Implementation for goal tracking and habits
+  return pdf.output('datauristring').split(',')[1];
+};
+
+
+    thick: 1.5
   }
 };
 
@@ -636,3 +833,165 @@ export const generateRemarkableFilename = (type: 'weekly' | 'daily', date: Date)
   const prefix = type === 'weekly' ? 'reMarkable_Weekly' : 'reMarkable_Daily';
   return `${prefix}_${dateStr}.pdf`;
 };
+
+
+export const exportWeeklyBatch = async (
+  startDate: Date,
+  numberOfWeeks: number,
+  events: CalendarEvent[]
+): Promise<{ filename: string; data: string }[]> => {
+  const exports: { filename: string; data: string }[] = [];
+  
+  for (let week = 0; week < numberOfWeeks; week++) {
+    const currentWeekStart = new Date(startDate);
+    currentWeekStart.setDate(currentWeekStart.getDate() + (week * 7));
+    
+    const weekEnd = getWeekEndDate(currentWeekStart);
+    const weekNumber = getWeekNumber(currentWeekStart);
+    
+    const weekEvents = events.filter(event => {
+      const eventDate = new Date(event.startTime);
+      return eventDate >= currentWeekStart && eventDate <= weekEnd;
+    });
+    
+    const pdfData = await exportWeeklyForRemarkable(
+      currentWeekStart, 
+      weekEnd, 
+      weekEvents, 
+      weekNumber
+    );
+    
+    exports.push({
+      filename: generateRemarkableFilename('weekly', currentWeekStart),
+      data: pdfData
+    });
+  }
+  
+  return exports;
+};
+
+export const exportMonthlyBatch = async (
+  month: Date,
+  events: CalendarEvent[]
+): Promise<string> => {
+  // Create a combined monthly view optimized for reMarkable
+  const pdf = new jsPDF({
+    orientation: 'landscape',
+    unit: 'mm',
+    format: [REMARKABLE_SPECS.width, REMARKABLE_SPECS.height],
+    putOnlyUsedFonts: true,
+    compress: true
+  });
+  
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  
+  // Monthly overview with annotation space
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(16);
+  pdf.setTextColor(...EINK_COLORS.black);
+  
+  const monthName = month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  pdf.text(`${monthName} - Monthly Overview`, pageWidth / 2, 15, { align: 'center' });
+  
+  // Monthly statistics
+  const monthEvents = events.filter(event => {
+    const eventDate = new Date(event.startTime);
+    return eventDate.getMonth() === month.getMonth() && 
+           eventDate.getFullYear() === month.getFullYear();
+  });
+  
+  const totalHours = monthEvents.reduce((sum, event) => {
+    return sum + (new Date(event.endTime).getTime() - new Date(event.startTime).getTime()) / (1000 * 60 * 60);
+  }, 0);
+  
+  pdf.setFontSize(10);
+  pdf.setFont('helvetica', 'normal');
+  pdf.text(`Total Appointments: ${monthEvents.length} | Total Hours: ${totalHours.toFixed(1)}h`, pageWidth / 2, 25, { align: 'center' });
+  
+  // Mini calendar grid
+  const calendarStartY = 35;
+  const cellWidth = (pageWidth - 20) / 7;
+  const cellHeight = (pageHeight - calendarStartY - 40) / 6;
+  
+  // Days of week header
+  const daysOfWeek = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(8);
+  
+  daysOfWeek.forEach((day, index) => {
+    const x = 10 + (index * cellWidth);
+    pdf.setFillColor(...EINK_COLORS.lightGray);
+    pdf.rect(x, calendarStartY, cellWidth, 8, 'F');
+    pdf.setDrawColor(...EINK_COLORS.black);
+    pdf.rect(x, calendarStartY, cellWidth, 8, 'S');
+    pdf.text(day, x + cellWidth/2, calendarStartY + 5, { align: 'center' });
+  });
+  
+  // Calendar cells with appointment indicators
+  const firstDay = new Date(month.getFullYear(), month.getMonth(), 1);
+  const lastDay = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+  const startDay = new Date(firstDay);
+  startDay.setDate(startDay.getDate() - ((firstDay.getDay() + 6) % 7)); // Start from Monday
+  
+  let currentDate = new Date(startDay);
+  
+  for (let week = 0; week < 6; week++) {
+    for (let day = 0; day < 7; day++) {
+      const x = 10 + (day * cellWidth);
+      const y = calendarStartY + 8 + (week * cellHeight);
+      
+      // Cell background
+      const isCurrentMonth = currentDate.getMonth() === month.getMonth();
+      pdf.setFillColor(...(isCurrentMonth ? EINK_COLORS.white : EINK_COLORS.veryLightGray));
+      pdf.rect(x, y, cellWidth, cellHeight, 'F');
+      pdf.setDrawColor(...EINK_COLORS.lightGray);
+      pdf.rect(x, y, cellWidth, cellHeight, 'S');
+      
+      // Date number
+      pdf.setFont('helvetica', isCurrentMonth ? 'bold' : 'normal');
+      pdf.setFontSize(7);
+      pdf.setTextColor(...(isCurrentMonth ? EINK_COLORS.black : EINK_COLORS.mediumGray));
+      pdf.text(currentDate.getDate().toString(), x + 2, y + 8);
+      
+      // Appointment indicators
+      if (isCurrentMonth) {
+        const dayEvents = monthEvents.filter(event => {
+          const eventDate = new Date(event.startTime);
+          return eventDate.toDateString() === currentDate.toDateString();
+        });
+        
+        if (dayEvents.length > 0) {
+          pdf.setFillColor(...EINK_COLORS.black);
+          pdf.circle(x + cellWidth - 4, y + 4, 1, 'F');
+          
+          // Event count if more than 3
+          if (dayEvents.length > 3) {
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(5);
+            pdf.setTextColor(...EINK_COLORS.white);
+            pdf.text(dayEvents.length.toString(), x + cellWidth - 4, y + 5, { align: 'center' });
+          }
+        }
+      }
+      
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+  }
+  
+  return pdf.output('datauristring').split(',')[1];
+};
+
+// Helper function imports
+function getWeekEndDate(date: Date): Date {
+  const end = new Date(date);
+  end.setDate(end.getDate() + 6);
+  return end;
+}
+
+function getWeekNumber(date: Date): number {
+  const start = new Date(date.getFullYear(), 0, 1);
+  const days = Math.floor((date.getTime() - start.getTime()) / (24 * 60 * 60 * 1000));
+  return Math.ceil((days + start.getDay() + 1) / 7);
+}
+

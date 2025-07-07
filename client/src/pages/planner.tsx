@@ -17,6 +17,7 @@ export default function PlannerPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('week');
   const [dailyNotes, setDailyNotes] = useState<Record<string, string>>({});
   const [eventsLoading, setEventsLoading] = useState(false);
+  const [selectedCalendars, setSelectedCalendars] = useState<string[]>([]);
 
   // Get events from API
   const { data: events = [], isLoading: eventsQueryLoading } = useQuery({
@@ -195,14 +196,37 @@ export default function PlannerPage() {
 
   const isLoading = eventsQueryLoading || eventsLoading;
 
-  const handleExportCurrentView = async () => {
+  const downloadPDF = (pdfBase64: string, filename: string) => {
+    const byteCharacters = atob(pdfBase64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'application/pdf' });
+    
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+  };
+
+  const handleExportCurrentView = async (format: 'standard' | 'therapy-notes' | 'annotated' = 'standard') => {
     try {
       let pdfBase64: string;
       let filename: string;
 
       if (viewMode === 'week') {
         const weekNumber = getWeekNumber(selectedDate);
-        pdfBase64 = await exportWeeklyForRemarkable(weekStartDate, weekEndDate, calendarEvents, weekNumber);
+        if (format === 'therapy-notes') {
+          // Use therapy notes template - will import when implemented
+          pdfBase64 = await exportWeeklyForRemarkable(weekStartDate, weekEndDate, calendarEvents, weekNumber);
+        } else {
+          pdfBase64 = await exportWeeklyForRemarkable(weekStartDate, weekEndDate, calendarEvents, weekNumber);
+        }
         filename = generateRemarkableFilename('weekly', selectedDate);
       } else {
         const dateKey = selectedDate.toISOString().split('T')[0];
