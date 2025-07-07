@@ -68,9 +68,15 @@ export const exportHTMLTemplatePDF = async (
 
   // Save the PDF
   const filename = `weekly-planner-${weekStartDate.getFullYear()}-${String(weekStartDate.getMonth() + 1).padStart(2, '0')}-${String(weekStartDate.getDate()).padStart(2, '0')}.pdf`;
-  pdf.save(filename);
   
-  console.log(`HTML Template PDF exported: ${filename}`);
+  try {
+    pdf.save(filename);
+    console.log(`✅ HTML Template PDF exported: ${filename}`);
+    console.log('✅ PDF download should have started automatically');
+  } catch (error) {
+    console.error('❌ Error saving PDF:', error);
+    throw error;
+  }
 };
 
 function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date): void {

@@ -83,7 +83,7 @@ export default function Planner() {
           
           // Auto-select calendars from database events
           const googleEvents = convertedEvents.filter(event => event.source === 'google' && event.calendarId);
-          const calendarIds = [...new Set(googleEvents.map(event => event.calendarId))].filter(id => id) as string[];
+          const calendarIds = Array.from(new Set(googleEvents.map(event => event.calendarId))).filter(id => id) as string[];
           
 
           
