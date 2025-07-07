@@ -14,7 +14,7 @@ import {
   exportWeeklyRemarkableExact,
   generateRemarkableFilename 
 } from '../utils/remarkablePDFExactMatch';
-import { exportRemarkableProPerfect } from '../utils/remarkableProPerfect';
+import { exportRemarkableProPerfect } from '../utils/remarkableProPerfectCSS';
 import { getWeekNumber } from '../utils/dateUtils';
 import { initializeRemarkableOptimizations } from '../utils/remarkableDisplayOptimizer';
 

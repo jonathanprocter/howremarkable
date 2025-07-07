@@ -2,50 +2,60 @@ import jsPDF from 'jspdf';
 import { CalendarEvent } from '../types/calendar';
 import { formatWeekRange } from './dateUtils';
 
-// reMarkable Pro EXACT specifications from HTML template
+// reMarkable Pro EXACT specifications matching HTML CSS Grid template
 const REMARKABLE_SPECS = {
-  // Page dimensions: Exact reMarkable Pro landscape (11" x 8.5")
-  pageWidth: 279.4,   // 11 inches in mm
+  // Page dimensions: 11" x 8.5" landscape for first page (weekly view)
+  pageWidth: 279.4,   // 11 inches in mm  
   pageHeight: 215.9,  // 8.5 inches in mm
-  margin: 7.6,        // 0.3 inch margin
+  margin: 10.16,      // 0.4 inch margin as per CSS @page rule
   
-  // Grid specifications from HTML template (60px hour height, 100px time column)
-  timeColumnWidthPx: 100,    // 100px as specified
-  hourHeightPx: 60,          // 60px as specified
-  borderWidthPx: 3,          // 3px borders for e-ink
+  // CSS Grid exact specifications from template:
+  // grid-template-columns: 100px repeat(7, 1fr)
+  // grid-template-rows: 80px repeat(16, 60px)
   
-  // Convert pixels to mm (assuming 96 DPI standard)
-  get pxToMm() { return 25.4 / 96; },
-  get timeColumnWidth() { return this.timeColumnWidthPx * this.pxToMm; },
-  get hourHeight() { return this.hourHeightPx * this.pxToMm; },
-  get borderWidth() { return this.borderWidthPx * this.pxToMm; },
+  // Exact pixel measurements from CSS (converted to mm at 96 DPI)
+  cssPixelsToMm: 25.4 / 96, // Standard conversion factor
   
-  // Content area calculations
+  // Grid structure from CSS template
+  timeColumnPx: 100,       // 100px time column
+  dayHeaderHeightPx: 80,   // 80px header row
+  hourSlotHeightPx: 60,    // 60px per hour slot
+  borderThicknessPx: 3,    // 3px borders for e-ink
+  
+  // Convert to mm
+  get timeColumnWidth() { return this.timeColumnPx * this.cssPixelsToMm; },
+  get dayHeaderHeight() { return this.dayHeaderHeightPx * this.cssPixelsToMm; },
+  get hourSlotHeight() { return this.hourSlotHeightPx * this.cssPixelsToMm; },
+  get borderThickness() { return this.borderThicknessPx * this.cssPixelsToMm; },
+  
+  // Content area after margins
   get contentWidth() { return this.pageWidth - (2 * this.margin); },
   get contentHeight() { return this.pageHeight - (2 * this.margin); },
   
-  // Day columns (7 days after time column)
+  // Day columns: repeat(7, 1fr) = equal width for 7 days
   get dayColumnWidth() { return (this.contentWidth - this.timeColumnWidth) / 7; },
   
-  // Grid dimensions
-  totalHours: 16,  // 6AM to 9PM
-  startHour: 6,    // Start at 6AM
-  endHour: 21,     // End at 9PM
+  // Grid totals
+  totalHours: 16,      // 16 hour slots (6AM-9PM)
+  startHour: 6,        // Start at 6AM
+  headerSectionHeight: 40,  // Space for title and stats above grid
   
-  // Header specifications
-  headerHeight: 25.4,  // 1 inch for header
-  statsHeight: 15.24,  // 0.6 inch for stats
+  // Total grid height: 80px + (16 × 60px) = 1040px
+  get totalGridHeight() { 
+    return (this.dayHeaderHeightPx + (this.totalHours * this.hourSlotHeightPx)) * this.cssPixelsToMm; 
+  },
   
-  // Typography (Times New Roman for e-ink)
+  // Typography matching template
   fonts: {
-    header: { size: 18, weight: 'bold' },
-    weekInfo: { size: 12, weight: 'bold' },
-    stats: { size: 10, weight: 'normal' },
-    statsNumber: { size: 14, weight: 'bold' },
-    dayHeader: { size: 10, weight: 'bold' },
-    timeSlot: { size: 8, weight: 'bold' },
-    appointmentTitle: { size: 7, weight: 'bold' },
-    appointmentTime: { size: 6, weight: 'normal' }
+    title: { size: 16, weight: 'bold' },      // Main "WEEKLY PLANNER" title
+    weekInfo: { size: 10, weight: 'bold' },   // Week range and number
+    stats: { size: 8, weight: 'normal' },     // Statistics labels
+    statsNumber: { size: 12, weight: 'bold' }, // Statistics numbers
+    dayName: { size: 12, weight: 'bold' },    // MON, TUE, etc.
+    dayDate: { size: 16, weight: 'bold' },    // Day numbers
+    timeSlot: { size: 11, weight: 'bold' },   // Hour labels (06:00, etc.)
+    appointmentTitle: { size: 8, weight: 'bold' },
+    appointmentTime: { size: 7, weight: 'normal' }
   }
 };
 
@@ -83,17 +93,17 @@ async function generatePerfectLayout(
   weekEndDate: Date, 
   events: CalendarEvent[]
 ): Promise<number> {
-  const { margin } = REMARKABLE_SPECS;
+  const { margin, headerSectionHeight } = REMARKABLE_SPECS;
   let currentY = margin;
   
-  // 1. HEADER - Professional title and week info
-  currentY = generatePerfectHeader(pdf, weekStartDate, weekEndDate, currentY);
+  // 1. COMPACT HEADER - Title and week info (matching template)
+  currentY = generateCompactHeader(pdf, weekStartDate, weekEndDate, currentY);
   
-  // 2. STATISTICS - Real appointment data
-  currentY = generatePerfectStats(pdf, events, weekStartDate, weekEndDate, currentY);
+  // 2. STATISTICS BAR - Inline stats below header
+  currentY = generateInlineStats(pdf, events, weekStartDate, weekEndDate, currentY);
   
-  // 3. MAIN CALENDAR GRID - Exact 60px height, 100px time column
-  currentY = generatePerfectCalendarGrid(pdf, weekStartDate, events, currentY);
+  // 3. CSS GRID LAYOUT - Exact replication of HTML template grid
+  currentY = generateCSSGridLayout(pdf, weekStartDate, events, currentY);
   
   return currentY;
 }
