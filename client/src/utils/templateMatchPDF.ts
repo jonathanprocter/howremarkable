@@ -158,6 +158,13 @@ export const exportTemplateMatchPDF = async (
     pdf.setDrawColor(0, 0, 0);
     pdf.rect(dayX, gridStartY, TEMPLATE_CONFIG.dayColumnWidth, 30);
     
+    // Vertical lines between days - extend from top to bottom of page
+    if (i > 0) {
+      pdf.setLineWidth(1);
+      pdf.setDrawColor(128, 128, 128);
+      pdf.line(dayX, gridStartY, dayX, TEMPLATE_CONFIG.pageHeight - 20);
+    }
+    
     // Day name
     pdf.setFontSize(12);
     pdf.setFont('helvetica', 'bold');
@@ -172,6 +179,12 @@ export const exportTemplateMatchPDF = async (
     const dateWidth = pdf.getTextWidth(dateStr);
     pdf.text(dateStr, dayX + (TEMPLATE_CONFIG.dayColumnWidth - dateWidth) / 2, gridStartY + 25);
   }
+  
+  // Draw final vertical line at the end of the week
+  const finalLineX = gridStartX + TEMPLATE_CONFIG.timeColumnWidth + (7 * TEMPLATE_CONFIG.dayColumnWidth);
+  pdf.setLineWidth(1);
+  pdf.setDrawColor(128, 128, 128);
+  pdf.line(finalLineX, gridStartY, finalLineX, TEMPLATE_CONFIG.pageHeight - 20);
   
   // Draw time slots - full range from 06:00 to 23:30
   const timeSlots = Object.keys(TIME_POSITIONS).sort();
