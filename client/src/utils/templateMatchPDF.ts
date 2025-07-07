@@ -88,6 +88,31 @@ export const exportTemplateMatchPDF = async (
   const weekText = `${formatWeekRange(weekStartDate, weekEndDate)}`;
   pdf.text(weekText, TEMPLATE_CONFIG.pageWidth / 2, 50, { align: 'center' });
   
+  // Add legend in the header
+  const legendY = 30;
+  const legendX = TEMPLATE_CONFIG.pageWidth - 300;
+  
+  // SimplePractice legend
+  pdf.setFontSize(10);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFillColor(0, 102, 255); // Blue
+  pdf.rect(legendX, legendY, 15, 8, 'F');
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('SimplePractice', legendX + 20, legendY + 6);
+  
+  // Google Calendar legend
+  pdf.setDrawColor(0, 255, 0); // Green
+  pdf.setLineWidth(1);
+  pdf.setLineDashPattern([2, 2], 0);
+  pdf.rect(legendX + 100, legendY, 15, 8);
+  pdf.setLineDashPattern([], 0);
+  pdf.text('Google Calendar', legendX + 120, legendY + 6);
+  
+  // Holidays legend
+  pdf.setFillColor(255, 255, 0); // Yellow
+  pdf.rect(legendX + 230, legendY, 8, 8, 'F');
+  pdf.text('Holidays in United States', legendX + 245, legendY + 6);
+  
   // Draw main border
   pdf.setLineWidth(2);
   pdf.setDrawColor(0, 0, 0);
@@ -329,11 +354,15 @@ export const exportTemplateMatchPDF = async (
         pdf.text(line, dayX + 3, eventY + 10 + (index * 8));
       });
       
-      // Duration text at bottom
-      pdf.setFontSize(7);
+      // Add appointment time (start-end time format)
+      const startTimeStr = `${startTime.getHours().toString().padStart(2, '0')}:${startTime.getMinutes().toString().padStart(2, '0')}`;
+      const endTimeStr = `${endTime.getHours().toString().padStart(2, '0')}:${endTime.getMinutes().toString().padStart(2, '0')}`;
+      const timeRange = `${startTimeStr}-${endTimeStr}`;
+      
+      pdf.setFontSize(6);
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(0, 0, 0);
-      pdf.text(`${Math.round(durationMinutes)}min`, dayX + 3, eventY + eventHeight - 3);
+      pdf.text(timeRange, dayX + 3, eventY + eventHeight - 3);
     });
   }
   

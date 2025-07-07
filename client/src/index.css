@@ -190,6 +190,7 @@
 
 .calendar-cell.hour {
     border-bottom: 2px solid black;
+    background: #f0f0f0 !important; /* Grey background for hour rows across entire week */
 }
 
 .calendar-cell:hover {
