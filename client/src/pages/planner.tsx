@@ -34,7 +34,7 @@ export default function Planner() {
   const { authStatus, connectGoogle, fetchCalendarEvents, uploadToDrive, updateCalendarEvent } = useGoogleAuth();
   const { toast } = useToast();
   const [googleCalendars, setGoogleCalendars] = useState<any[]>([]);
-  const [selectedCalendars, setSelectedCalendars] = useState<Set<string>>(new Set());
+  const [selectedCalendars, setSelectedCalendars] = useState<Set<string>>(new Set(['0np7sib5u30o7oc297j5pb259g'])); // Default to SimplePractice calendar selected
 
   // Load events from database on component mount
   useEffect(() => {
