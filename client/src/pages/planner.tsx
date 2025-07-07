@@ -204,6 +204,9 @@ export default function Planner() {
 
   const handleExportAction = async (type: string) => {
     try {
+      console.log('Starting PDF export for type:', type);
+      console.log('Current events count:', currentEvents.length);
+      console.log('Current date:', state.currentDate);
       let pdfContent: string;
       let filename: string;
 
@@ -268,6 +271,7 @@ export default function Planner() {
       const link = document.createElement('a');
       link.href = `data:application/pdf;base64,${pdfContent}`;
       link.download = filename;
+      link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -278,9 +282,10 @@ export default function Planner() {
       });
 
     } catch (error) {
+      console.error('PDF Export Error:', error);
       toast({
         title: "Export Error",
-        description: "Failed to generate PDF. Please try again.",
+        description: `Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive"
       });
     }
