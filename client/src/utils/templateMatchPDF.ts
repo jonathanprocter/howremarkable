@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import { CalendarEvent } from '../types/calendar';
+import { formatWeekRange } from './dateUtils';
 
 // Template-exact positioning system based on your HTML template
 const TIME_POSITIONS = {
@@ -76,12 +77,16 @@ export const exportTemplateMatchPDF = async (
   // Set font for the entire document
   pdf.setFont('helvetica', 'normal');
   
-  // Title
-  pdf.setFontSize(24);
+  // Weekly Planner Header
+  pdf.setFontSize(20);
   pdf.setFont('helvetica', 'bold');
-  const title = `Week of ${weekStartDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEndDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, ${weekStartDate.getFullYear()}`;
-  const titleWidth = pdf.getTextWidth(title);
-  pdf.text(title, (TEMPLATE_CONFIG.pageWidth - titleWidth) / 2, 40);
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('WEEKLY PLANNER', TEMPLATE_CONFIG.pageWidth / 2, 35, { align: 'center' });
+  
+  pdf.setFontSize(12);
+  pdf.setFont('helvetica', 'normal');
+  const weekText = `${formatWeekRange(weekStartDate, weekEndDate)}`;
+  pdf.text(weekText, TEMPLATE_CONFIG.pageWidth / 2, 50, { align: 'center' });
   
   // Draw main border
   pdf.setLineWidth(2);
@@ -268,11 +273,26 @@ export const exportTemplateMatchPDF = async (
       const slotIndex = Math.floor(minutesSince6AM / 30); // Which 30-minute slot
       const eventY = gridStartY + 30 + (slotIndex * slotHeight);
       
-      // Draw event box with exact template styling
-      pdf.setFillColor(...TEMPLATE_CONFIG.lightBlue);
-      pdf.setDrawColor(...TEMPLATE_CONFIG.borderGray);
+      // Draw event box with calendar-specific styling
+      // White background for all events
+      pdf.setFillColor(255, 255, 255);
+      pdf.setDrawColor(128, 128, 128);
       pdf.setLineWidth(1);
       pdf.rect(dayX + 1, eventY + 1, TEMPLATE_CONFIG.dayColumnWidth - 2, eventHeight - 2, 'FD');
+      
+      // Calendar-specific highlighting
+      if (event.source === 'simplepractice' || event.title.includes('Appointment')) {
+        // SimplePractice: Left blue highlight
+        pdf.setFillColor(70, 130, 180); // Steel blue
+        pdf.rect(dayX + 1, eventY + 1, 3, eventHeight - 2, 'F');
+      } else if (event.source === 'google' || event.calendarId) {
+        // Google Calendar: Dotted green border
+        pdf.setDrawColor(34, 139, 34); // Forest green
+        pdf.setLineWidth(2);
+        pdf.setLineDashPattern([2, 2], 0);
+        pdf.rect(dayX + 1, eventY + 1, TEMPLATE_CONFIG.dayColumnWidth - 2, eventHeight - 2, 'D');
+        pdf.setLineDashPattern([], 0); // Reset dash pattern
+      }
       
       // Event title (remove "Appointment" suffix and clean up)
       let eventTitle = event.title.replace(/\s+Appointment\s*$/, '').trim();
