@@ -252,29 +252,36 @@
     line-height: 1.0;
 }
 
-/* Appointment types - MAXIMUM VISUAL DIFFERENTIATION */
+/* Appointment types - EXACT COLOR SPECIFICATIONS */
 .appointment.simplepractice {
-    background: #e3f2fd !important;
-    color: #0d47a1 !important;
-    border: 2px solid #1976d2 !important;
-    border-left: 8px solid #1976d2 !important;
-    box-shadow: 0 3px 8px rgba(25, 118, 210, 0.3) !important;
+    background: #E3F2FD !important;
+    color: #1565C0 !important;
+    border: 2px solid #6495ED !important; /* Cornflower blue solid */
+    box-shadow: 0 3px 8px rgba(100, 149, 237, 0.3) !important;
     font-weight: 800 !important;
 }
 
 .appointment.google-calendar {
-    background: #e8f5e8 !important;
-    color: #1b5e20 !important;
-    border: 3px dashed #388e3c !important;
-    box-shadow: 0 3px 8px rgba(56, 142, 60, 0.3) !important;
+    background: #E8F5E8 !important;
+    color: #16A34A !important;
+    border: 2px dashed #22C55E !important; /* Dashed green border */
+    box-shadow: 0 3px 8px rgba(34, 197, 94, 0.3) !important;
     font-weight: 700 !important;
 }
 
+.appointment.holiday {
+    background: #FEF3C7 !important;
+    color: #D97706 !important;
+    border: 2px solid #F59E0B !important; /* Solid yellow */
+    box-shadow: 0 3px 8px rgba(245, 158, 11, 0.4) !important;
+    font-weight: 800 !important;
+}
+
 .appointment.personal {
-    background: #fff3c4 !important;
-    color: #e65100 !important;
-    border: 3px solid #ff9800 !important;
-    box-shadow: 0 3px 8px rgba(255, 152, 0, 0.4) !important;
+    background: #E3F2FD !important;
+    color: #1565C0 !important;
+    border: 2px solid #6495ED !important; /* Default blue */
+    box-shadow: 0 3px 8px rgba(100, 149, 237, 0.3) !important;
     font-weight: 800 !important;
 }
 

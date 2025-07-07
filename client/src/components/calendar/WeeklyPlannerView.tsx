@@ -62,6 +62,8 @@ export const WeeklyPlannerView = ({
       className += 'simplepractice ';
     } else if (event.source === 'google') {
       className += 'google-calendar ';
+    } else if (event.title.includes('Holiday')) {
+      className += 'holiday ';
     } else {
       className += 'personal ';
     }
@@ -220,25 +222,47 @@ export const WeeklyPlannerView = ({
         </div>
       </div>
 
-      {/* Enhanced Visual Legend */}
-      <div className="legend bg-yellow-50 border-t-4 border-yellow-400">
-        <div className="flex items-center justify-center gap-8 py-3">
+      {/* Enhanced Visual Legend - Left side positioning */}
+      <div className="legend" style={{ 
+        background: '#F8F9FA', 
+        border: '2px solid #E5E7EB', 
+        borderRadius: '8px',
+        padding: '12px',
+        marginBottom: '16px'
+      }}>
+        <div className="flex items-center justify-start gap-8 py-2">
           <div className="flex items-center gap-2">
-            <div className="w-5 h-4 bg-blue-50 border-2 border-blue-500 relative" style={{borderLeft: '6px solid #4285F4'}}>
-              <div className="absolute inset-0 bg-blue-100 opacity-30"></div>
-            </div>
-            <span className="text-blue-700 font-bold text-sm">SimplePractice (274 events)</span>
+            <div 
+              className="w-6 h-5" 
+              style={{
+                backgroundColor: '#E3F2FD',
+                border: '2px solid #6495ED',
+                borderRadius: '4px'
+              }}
+            ></div>
+            <span className="text-blue-700 font-bold text-sm">🔵 SimplePractice (274 events)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-5 h-4 bg-white border-2 border-green-500 border-dashed relative">
-              <div className="absolute inset-1 border border-green-400 border-dashed"></div>
-            </div>
-            <span className="text-green-700 font-bold text-sm">Google Calendar (29 events)</span>
+            <div 
+              className="w-6 h-5" 
+              style={{
+                backgroundColor: '#E8F5E8',
+                border: '2px dashed #22C55E',
+                borderRadius: '4px'
+              }}
+            ></div>
+            <span className="text-green-700 font-bold text-sm">🟢 Google Calendar (29 events)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-5 h-4 bg-yellow-500 border-2 border-yellow-600">
-            </div>
-            <span className="text-yellow-700 font-bold text-sm">US Holidays</span>
+            <div 
+              className="w-6 h-5" 
+              style={{
+                backgroundColor: '#FEF3C7',
+                border: '2px solid #F59E0B',
+                borderRadius: '4px'
+              }}
+            ></div>
+            <span className="text-yellow-700 font-bold text-sm">🟡 US Holidays</span>
           </div>
           <div className="text-gray-700 font-bold text-sm">
             Total: 303 events • 481 hours • Week 28 (July 7-13)
