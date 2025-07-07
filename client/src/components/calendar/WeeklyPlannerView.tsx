@@ -79,17 +79,31 @@ export const WeeklyPlannerView = ({
   };
 
   const renderTimeSlotEvents = (date: Date, slot: any, slotIndex: number) => {
+    // Debug: Log when we're checking Monday
+    if (date.getDay() === 1) {
+      console.log(`🔍 Checking slot ${slot.time} for ${date.toDateString()}, events count: ${events.length}`);
+    }
+    
     const dayEvents = events.filter(event => 
       new Date(event.startTime).toDateString() === date.toDateString()
     );
+
+    if (date.getDay() === 1 && dayEvents.length > 0) {
+      console.log(`📅 Found ${dayEvents.length} events for Monday: ${dayEvents.map(e => e.title).join(', ')}`);
+    }
 
     const slotEvents = dayEvents.filter(event => {
       const eventDate = new Date(event.startTime);
       const eventStartMinutes = eventDate.getHours() * 60 + eventDate.getMinutes();
       const slotStartMinutes = slot.hour * 60 + slot.minute;
       
-      return eventStartMinutes >= slotStartMinutes && 
-             eventStartMinutes < slotStartMinutes + 30;
+      const isInSlot = eventStartMinutes >= slotStartMinutes && eventStartMinutes < slotStartMinutes + 30;
+      
+      if (isInSlot && date.getDay() === 1) {
+        console.log(`✅ Event "${event.title}" fits in slot ${slot.time}`);
+      }
+      
+      return isInSlot;
     });
 
     return slotEvents.map(event => {
@@ -106,6 +120,12 @@ export const WeeklyPlannerView = ({
         hour12: false 
       });
 
+      // Clean up appointment title
+      const cleanTitle = event.title
+        .replace(/\s+Appointment$/i, '')
+        .replace(/^\w+\s+/, '') // Remove first word if it's a prefix
+        .trim() || event.title;
+
       return (
         <div
           key={event.id}
@@ -120,9 +140,26 @@ export const WeeklyPlannerView = ({
               duration: event.endTime.getTime() - event.startTime.getTime()
             }));
           }}
+          style={{
+            position: 'absolute',
+            top: '1px',
+            left: '1px',
+            right: '1px',
+            height: '32px',
+            zIndex: 15,
+            fontSize: '8px',
+            padding: '2px 4px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center'
+          }}
         >
-          <div className="appointment-name">{event.title}</div>
-          <div className="appointment-time">{startTime}-{endTime}</div>
+          <div className="appointment-name" style={{ fontSize: '8px', fontWeight: 'bold', color: 'inherit' }}>
+            {cleanTitle.toUpperCase()}
+          </div>
+          <div className="appointment-time" style={{ fontSize: '6px', opacity: '0.8' }}>
+            {startTime}
+          </div>
         </div>
       );
     });
@@ -217,8 +254,10 @@ export const WeeklyPlannerView = ({
               </div>
             );
             
-            // Calendar cells for each day
+            // Calendar cells for each day with proper event positioning
             week.forEach((day, dayIndex) => {
+              const dayEvents = renderTimeSlotEvents(day.date, slot, slotIndex);
+              
               slotElements.push(
                 <div
                   key={`${slotIndex}-${dayIndex}`}
@@ -241,8 +280,9 @@ export const WeeklyPlannerView = ({
                       console.error('Error handling drop:', error);
                     }
                   }}
+                  style={{ position: 'relative', minHeight: '35px' }}
                 >
-                  {renderTimeSlotEvents(day.date, slot, slotIndex)}
+                  {dayEvents.length > 0 && dayEvents}
                 </div>
               );
             });
