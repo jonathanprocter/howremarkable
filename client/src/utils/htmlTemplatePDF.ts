@@ -228,10 +228,17 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
     pdf.setFillColor(255, 255, 255);
     pdf.rect(x, gridY, HTML_TEMPLATE_CONFIG.dayColumnWidth, 30, 'F');
     
-    // Day header border
+    // Day header borders - strong vertical lines
     pdf.setLineWidth(2);
     pdf.setDrawColor(0, 0, 0);
     pdf.rect(x, gridY, HTML_TEMPLATE_CONFIG.dayColumnWidth, 30);
+    
+    // Extra strong vertical borders between day columns
+    pdf.setLineWidth(3);
+    pdf.line(x, gridY, x, gridY + 30);
+    if (i === 6) {
+      pdf.line(x + HTML_TEMPLATE_CONFIG.dayColumnWidth, gridY, x + HTML_TEMPLATE_CONFIG.dayColumnWidth, gridY + 30);
+    }
     
     // Day name
     pdf.setFontSize(10);
@@ -272,16 +279,36 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
       pdf.setFillColor(255, 255, 255);
       pdf.rect(x, y, HTML_TEMPLATE_CONFIG.dayColumnWidth, HTML_TEMPLATE_CONFIG.timeSlotHeight, 'F');
       
-      // Cell border
+      // Cell horizontal border
       pdf.setLineWidth(isHour ? 2 : 1);
       if (isHour) {
         pdf.setDrawColor(0, 0, 0);
       } else {
         pdf.setDrawColor(204, 204, 204);
       }
-      pdf.rect(x, y, HTML_TEMPLATE_CONFIG.dayColumnWidth, HTML_TEMPLATE_CONFIG.timeSlotHeight);
+      pdf.line(x, y, x + HTML_TEMPLATE_CONFIG.dayColumnWidth, y);
+      pdf.line(x, y + HTML_TEMPLATE_CONFIG.timeSlotHeight, x + HTML_TEMPLATE_CONFIG.dayColumnWidth, y + HTML_TEMPLATE_CONFIG.timeSlotHeight);
+      
+      // Strong vertical borders between days
+      pdf.setLineWidth(2);
+      pdf.setDrawColor(0, 0, 0);
+      pdf.line(x, y, x, y + HTML_TEMPLATE_CONFIG.timeSlotHeight);
+      
+      // Right border for last column
+      if (dayIndex === 6) {
+        pdf.line(x + HTML_TEMPLATE_CONFIG.dayColumnWidth, y, x + HTML_TEMPLATE_CONFIG.dayColumnWidth, y + HTML_TEMPLATE_CONFIG.timeSlotHeight);
+      }
     }
   });
+  
+  // === VERTICAL GRID LINES ===
+  // Draw strong vertical lines through entire grid
+  for (let i = 0; i <= 7; i++) {
+    const x = HTML_TEMPLATE_CONFIG.timeColumnWidth + (i * HTML_TEMPLATE_CONFIG.dayColumnWidth);
+    pdf.setLineWidth(3);
+    pdf.setDrawColor(0, 0, 0);
+    pdf.line(x, gridY, x, gridY + 30 + (TIME_SLOTS.length * HTML_TEMPLATE_CONFIG.timeSlotHeight));
+  }
   
   // === APPOINTMENTS ===
   drawAppointments(pdf, weekStartDate, events, gridY);
@@ -333,18 +360,18 @@ function drawAppointments(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
     }
     
     // Appointment text
-    pdf.setFontSize(6);
+    pdf.setFontSize(8);
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(0, 0, 0);
     
     const appointmentName = event.title.replace(' Appointment', '').toUpperCase();
-    const lines = pdf.splitTextToSize(appointmentName, width - 4);
+    const lines = pdf.splitTextToSize(appointmentName, width - 6);
     
-    let textY = y + 6;
+    let textY = y + 10;
     lines.forEach((line: string) => {
-      if (textY < y + height - 4) {
-        pdf.text(line, x + 2, textY);
-        textY += 6;
+      if (textY < y + height - 6) {
+        pdf.text(line, x + 3, textY);
+        textY += 8;
       }
     });
   });
