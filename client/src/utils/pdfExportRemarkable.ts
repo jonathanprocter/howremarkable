@@ -242,11 +242,6 @@ const generateGoalTrackerTemplate = (
   return pdf.output('datauristring').split(',')[1];
 };
 
-
-    thick: 1.5
-  }
-};
-
 // Color palette optimized for E Ink display
 const EINK_COLORS = {
   black: [0, 0, 0],
