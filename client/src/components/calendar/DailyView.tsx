@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -37,6 +37,7 @@ export const DailyView = ({
 }: DailyViewProps) => {
   const [currentNotes, setCurrentNotes] = useState(dailyNotes);
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
+  const [noteTimers, setNoteTimers] = useState<{[key: string]: NodeJS.Timeout}>({});
 
   // Get events for the selected date
   const dayEvents = events.filter(event => 

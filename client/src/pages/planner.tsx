@@ -359,23 +359,59 @@ export default function Planner() {
     }
   };
 
-  // Function to sync event notes to database
+  // Enhanced function to sync all event notes to database
   const syncEventToDatabase = async (eventId: string, updates: Partial<CalendarEvent>) => {
     try {
-      // Only sync manually created events to database for now
       const event = state.events.find(e => e.id === eventId);
-      if (event && event.source === 'manual') {
+      if (!event) return;
+
+      let apiEndpoint = '';
+      let payload = updates;
+
+      if (event.source === 'manual') {
+        // Manual events: sync directly to database
         const numericId = parseInt(eventId.replace('manual-', ''));
         if (!isNaN(numericId)) {
-          await fetch(`/api/events/${numericId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updates)
-          });
+          apiEndpoint = `/api/events/${numericId}`;
         }
+      } else {
+        // For Google Calendar and SimplePractice events: create/update database record for notes
+        // Store notes as a separate record linked to the external event
+        apiEndpoint = '/api/events';
+        payload = {
+          title: event.title,
+          description: event.description || '',
+          startTime: event.startTime,
+          endTime: event.endTime,
+          source: event.source,
+          sourceId: eventId,
+          notes: updates.notes || event.notes || '',
+          actionItems: updates.actionItems || event.actionItems || '',
+          color: event.color
+        };
+      }
+
+      if (apiEndpoint) {
+        const method = event.source === 'manual' ? 'PUT' : 'POST';
+        const response = await fetch(apiEndpoint, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        console.log('Event notes synced successfully to database');
       }
     } catch (error) {
       console.error('Failed to sync event to database:', error);
+      toast({
+        title: "Sync Warning",
+        description: "Notes saved locally but may not be persistent. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 

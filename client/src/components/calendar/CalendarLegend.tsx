@@ -40,12 +40,12 @@ export const CalendarLegend = ({ calendars, selectedCalendars, onCalendarToggle 
             <span className="text-blue-700 font-medium">SimplePractice</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-gray-50 border-2 border-gray-400 border-dashed" style={{borderLeft: '4px solid #10b981'}}></div>
-            <span className="text-gray-600 font-medium">Google Calendar</span>
+            <div className="w-3 h-3 bg-white border-2 border-green-500 border-dashed"></div>
+            <span className="text-green-700 font-medium">Google Calendar</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-yellow-50 border-2 border-yellow-500" style={{borderStyle: 'double'}}></div>
-            <span className="text-yellow-700 font-medium">Personal</span>
+            <div className="w-3 h-3 bg-yellow-500 border-2 border-yellow-600"></div>
+            <span className="text-yellow-700 font-medium">Holidays in United States</span>
           </div>
         </div>
       </div>
