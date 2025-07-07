@@ -247,21 +247,17 @@ export const exportTemplateMatchPDF = async (
     pdf.text(timeSlot, gridStartX + (TEMPLATE_CONFIG.timeColumnWidth - timeWidth) / 2, yPosition + 10);
   }
   
-  // Draw day columns and events
+  // Draw day columns and events - AFTER backgrounds are drawn so they don't cover hour stripes
   const actualGridHeight = Math.min(TEMPLATE_CONFIG.totalGridHeight, TEMPLATE_CONFIG.pageHeight - gridStartY - 70);
   
   for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
     const dayX = gridStartX + TEMPLATE_CONFIG.timeColumnWidth + (dayIndex * TEMPLATE_CONFIG.dayColumnWidth);
     const currentDate = dates[dayIndex];
     
-    // Day column background
-    pdf.setFillColor(255, 255, 255);
-    pdf.rect(dayX, gridStartY + 30, TEMPLATE_CONFIG.dayColumnWidth, actualGridHeight, 'F');
-    
-    // Day column border
+    // Day column border only - no background to preserve hour stripes
     pdf.setLineWidth(1);
     pdf.setDrawColor(221, 221, 221);
-    pdf.rect(dayX, gridStartY + 30, TEMPLATE_CONFIG.dayColumnWidth, actualGridHeight);
+    pdf.rect(dayX, gridStartY + 30, TEMPLATE_CONFIG.dayColumnWidth, actualGridHeight, 'S');
     
     // Draw horizontal grid lines for each time slot
     for (let i = 0; i < timeSlots.length; i++) {
