@@ -81,86 +81,115 @@ export const WeeklyPlannerView = ({
   };
 
   const renderTimeSlotEvents = (date: Date, slot: any, slotIndex: number) => {
-    // Debug: Log when we're checking Monday
-    if (date.getDay() === 1) {
+    // Add debug for every call on Monday AND 08:00 slots
+    if (date.getDay() === 1 || slot.time === '08:00') {
       console.log(`🔍 Checking slot ${slot.time} for ${date.toDateString()}, events count: ${events.length}`);
     }
     
-    const dayEvents = events.filter(event => 
-      new Date(event.startTime).toDateString() === date.toDateString()
-    );
-
-    if (date.getDay() === 1 && dayEvents.length > 0) {
-      console.log(`📅 Found ${dayEvents.length} events for Monday: ${dayEvents.map(e => e.title).join(', ')}`);
-    }
-
-    const slotEvents = dayEvents.filter(event => {
+    // Get all events for this specific day
+    const dayEvents = events.filter(event => {
       const eventDate = new Date(event.startTime);
-      const eventStartMinutes = eventDate.getHours() * 60 + eventDate.getMinutes();
-      const slotStartMinutes = slot.hour * 60 + slot.minute;
+      return eventDate.toDateString() === date.toDateString();
+    });
+    
+    // Critical debugging for Monday date filtering
+    if (date.getDay() === 1 && slot.time === '08:00') {
+      console.log(`🚨 CRITICAL MONDAY 08:00 DEBUG:`);
+      console.log(`- Target date: ${date.toDateString()} (day: ${date.getDay()})`);
+      console.log(`- Total events: ${events.length}`);
+      console.log(`- Events filtered for this day: ${dayEvents.length}`);
       
-      const isInSlot = eventStartMinutes >= slotStartMinutes && eventStartMinutes < slotStartMinutes + 30;
+      // Show first 5 events with their dates
+      const sampleEvents = events.slice(0, 5);
+      console.log(`- Sample events and dates:`, sampleEvents.map(e => ({
+        title: e.title,
+        originalStartTime: e.startTime,
+        parsedDate: new Date(e.startTime),
+        dateString: new Date(e.startTime).toDateString(),
+        matches: new Date(e.startTime).toDateString() === date.toDateString()
+      })));
       
-      if (isInSlot && date.getDay() === 1) {
-        console.log(`✅ Event "${event.title}" fits in slot ${slot.time}`);
+      // Check for Monday events specifically
+      const mondayEvents = events.filter(e => new Date(e.startTime).getDay() === 1);
+      console.log(`- Total Monday events: ${mondayEvents.length}`);
+      if (mondayEvents.length > 0) {
+        console.log(`- Monday event examples:`, mondayEvents.slice(0, 3).map(e => `"${e.title}" on ${new Date(e.startTime).toDateString()}`));
       }
+    }
+    
+    // Find events that start at this time slot
+    const slotEvents = dayEvents.filter(event => {
+      const eventStart = new Date(event.startTime);
+      const eventHour = eventStart.getHours();
+      const eventMinute = eventStart.getMinutes();
       
-      return isInSlot;
+      const slotMatches = eventHour === slot.hour && eventMinute === slot.minute;
+      if (slotMatches && (date.getDay() === 1 || slot.time === '08:00')) {
+        console.log(`✅ Event "${event.title}" fits in slot ${slot.time} on ${date.toDateString()}`);
+      }
+      return slotMatches;
     });
 
-    return slotEvents.map(event => {
+    // CRITICAL: Return JSX elements for rendering in the calendar grid
+    if (slotEvents.length === 0) {
+      return [];
+    }
+
+    console.log(`🎯 RENDERING ${slotEvents.length} events for ${slot.time} on ${date.toDateString()}`);
+
+    return slotEvents.map((event, index) => {
       const eventStart = new Date(event.startTime);
       const eventEnd = new Date(event.endTime);
-      const startTime = eventStart.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit', 
-        hour12: false 
-      });
-      const endTime = eventEnd.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit', 
-        hour12: false 
-      });
-
-      // Clean up appointment title
-      const cleanTitle = event.title
-        .replace(/\s+Appointment$/i, '')
-        .replace(/^\w+\s+/, '') // Remove first word if it's a prefix
-        .trim() || event.title;
-
+      const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
+      
+      // Calculate visual height based on duration
+      const slotsSpanned = Math.ceil(durationMinutes / 30);
+      const heightInPixels = Math.max(30, slotsSpanned * 35);
+      
+      const eventName = event.title.replace(' Appointment', '').toUpperCase();
+      
+      console.log(`📍 Creating visual element for "${eventName}" with height ${heightInPixels}px and class ${getEventStyle(event)}`);
+      
       return (
         <div
-          key={event.id}
+          key={`${event.id}-${index}`}
           className={getEventStyle(event)}
-          onClick={() => onEventClick(event)}
-          draggable
-          onDragStart={(e) => {
-            e.dataTransfer.setData('text/plain', JSON.stringify({
-              eventId: event.id,
-              originalStartTime: event.startTime.toISOString(),
-              originalEndTime: event.endTime.toISOString(),
-              duration: event.endTime.getTime() - event.startTime.getTime()
-            }));
-          }}
           style={{
             position: 'absolute',
             top: '1px',
             left: '1px',
             right: '1px',
-            height: '32px',
-            zIndex: 15,
-            fontSize: '8px',
-            padding: '2px 4px',
+            bottom: '1px',
+            minHeight: '32px',
+            zIndex: 20,
+            fontSize: '10px',
+            padding: '4px',
+            fontWeight: 'bold',
+            overflow: 'hidden',
+            cursor: 'pointer',
+            borderRadius: '4px',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            // Force visibility with bright background for debugging
+            backgroundColor: event.title.includes('Appointment') ? '#E3F2FD !important' : '#FEF3C7 !important',
+            border: '2px solid red !important', // Temporary debug border
+            color: '#000 !important' // Force black text
+          }}
+          onClick={() => onEventClick(event)}
+          draggable={true}
+          onDragStart={(e) => {
+            e.dataTransfer.setData('text/plain', JSON.stringify({
+              eventId: event.id,
+              duration: eventEnd.getTime() - eventStart.getTime()
+            }));
           }}
         >
-          <div className="appointment-name" style={{ fontSize: '8px', fontWeight: 'bold', color: 'inherit' }}>
-            {cleanTitle.toUpperCase()}
+          <div className="appointment-name" style={{ lineHeight: '1.1', fontSize: '10px', fontWeight: 'bold' }}>
+            {eventName}
           </div>
-          <div className="appointment-time" style={{ fontSize: '6px', opacity: '0.8' }}>
-            {startTime}
+          <div className="appointment-time" style={{ fontSize: '8px', opacity: 1 }}>
+            {eventStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </div>
         </div>
       );
@@ -328,9 +357,14 @@ export const WeeklyPlannerView = ({
                       console.error('Error handling drop:', error);
                     }
                   }}
-                  style={{ position: 'relative', minHeight: '35px' }}
+                  style={{ 
+                    position: 'relative', 
+                    minHeight: '35px',
+                    backgroundColor: isHour ? '#FAFAFA' : '#FFFFFF',
+                    borderBottom: isHour ? '1px solid #E0E0E0' : '1px solid #F0F0F0'
+                  }}
                 >
-                  {dayEvents}
+                  {dayEvents && dayEvents.length > 0 ? dayEvents : null}
                 </div>
               );
             });
