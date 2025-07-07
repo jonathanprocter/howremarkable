@@ -1,4 +1,4 @@
-import { TimeSlot } from '../types/calendar';
+import { TimeSlot, CalendarEvent } from '../types/calendar';
 
 export const generateTimeSlots = (): TimeSlot[] => {
   const timeSlots: TimeSlot[] = [];

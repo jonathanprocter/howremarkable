@@ -80,26 +80,33 @@ export const WeeklyCalendarGrid = ({
   };
 
   const getEventsForTimeSlot = (date: Date, timeSlot: { time: string; hour: number; minute: number }) => {
-    return events.filter(event => {
-      const eventDate = new Date(event.startTime);
+    try {
+      return events.filter(event => {
+        if (!event || !event.startTime || !event.endTime) return false;
+        
+        const eventDate = new Date(event.startTime);
 
-      // Filter out all-day events from time slots
-      const isMarkedAllDay = (event as any).isAllDay;
-      const duration = event.endTime.getTime() - event.startTime.getTime();
-      const hours = duration / (1000 * 60 * 60);
-      const startHour = event.startTime.getHours();
-      const startMinute = event.startTime.getMinutes();
-      const isFullDay = startHour === 0 && startMinute === 0 && (hours === 24 || hours % 24 === 0);
-      const isAllDayEvent = isMarkedAllDay || isFullDay || hours >= 20;
+        // Filter out all-day events from time slots
+        const isMarkedAllDay = (event as any).isAllDay;
+        const duration = event.endTime.getTime() - event.startTime.getTime();
+        const hours = duration / (1000 * 60 * 60);
+        const startHour = event.startTime.getHours();
+        const startMinute = event.startTime.getMinutes();
+        const isFullDay = startHour === 0 && startMinute === 0 && (hours === 24 || hours % 24 === 0);
+        const isAllDayEvent = isMarkedAllDay || isFullDay || hours >= 20;
 
-      // Skip all-day events
-      if (isAllDayEvent) return false;
+        // Skip all-day events
+        if (isAllDayEvent) return false;
 
-      // For timed events, use simple date string comparison
-      if (eventDate.toDateString() !== date.toDateString()) return false;
+        // For timed events, use simple date string comparison
+        if (eventDate.toDateString() !== date.toDateString()) return false;
 
-      return isEventInTimeSlot(event, timeSlot);
-    });
+        return isEventInTimeSlot(event, timeSlot);
+      });
+    } catch (error) {
+      console.error('Error filtering events for time slot:', error);
+      return [];
+    }
   };
 
   const getEventStyle = (event: CalendarEvent) => {

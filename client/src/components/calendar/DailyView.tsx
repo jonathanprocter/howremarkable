@@ -39,9 +39,15 @@ export const DailyView = ({
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
 
   // Get events for the selected date
-  const dayEvents = events.filter(event => 
-    new Date(event.startTime).toDateString() === selectedDate.toDateString()
-  );
+  const dayEvents = events.filter(event => {
+    try {
+      if (!event || !event.startTime || !event.endTime) return false;
+      return new Date(event.startTime).toDateString() === selectedDate.toDateString();
+    } catch (error) {
+      console.error('Error filtering day events:', error, event);
+      return false;
+    }
+  });
 
   // Calculate daily statistics
   const totalEvents = dayEvents.length;
