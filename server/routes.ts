@@ -337,13 +337,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error('Calendar fetch error:', error);
-      console.error('Error details:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-        user: !!req.user,
-        userId: req.user ? (req.user as any).id : 'none'
-      });
+      
+      // Check if it's an authentication error
+      if (error.message?.includes('invalid_grant') || error.message?.includes('unauthorized')) {
+        return res.status(401).json({ 
+          error: "Authentication expired",
+          message: "Please re-authenticate with Google",
+          requiresReauth: true
+        });
+      }
       
       // Fallback: return database events if Google Calendar fails
       try {

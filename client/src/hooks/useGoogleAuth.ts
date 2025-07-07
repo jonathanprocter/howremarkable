@@ -21,6 +21,16 @@ export const useGoogleAuth = () => {
 
   const checkAuthStatus = async () => {
     try {
+      // Check localStorage first to reduce API calls
+      const lastAuthCheck = localStorage.getItem('google_auth_recent');
+      const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+      
+      if (lastAuthCheck && parseInt(lastAuthCheck) > fiveMinutesAgo) {
+        // Skip check if we checked recently
+        setIsLoading(false);
+        return;
+      }
+
       const response = await fetch('/api/auth/status');
       const data = await response.json();
       setAuthStatus(data);
@@ -28,10 +38,13 @@ export const useGoogleAuth = () => {
       // Save authentication timestamp for session persistence
       if (data.authenticated) {
         localStorage.setItem('google_auth_recent', Date.now().toString());
+      } else {
+        localStorage.removeItem('google_auth_recent');
       }
     } catch (error) {
       console.error('Auth status check failed:', error);
       setAuthStatus({ authenticated: false, user: null });
+      localStorage.removeItem('google_auth_recent');
     } finally {
       setIsLoading(false);
     }
@@ -72,7 +85,7 @@ export const useGoogleAuth = () => {
     }
   };
 
-  const fetchCalendarEvents = async (timeMin?: string, timeMax?: string) => {
+  const fetchCalendarEvents = async (timeMin?: string, timeMax?: string, retries = 3) => {
     try {
       const params = new URLSearchParams();
       if (timeMin) params.append('timeMin', timeMin);
@@ -81,11 +94,20 @@ export const useGoogleAuth = () => {
       const response = await fetch(`/api/calendar/events?${params}`);
       
       if (!response.ok) {
-        throw new Error('Failed to fetch calendar events');
+        if (response.status === 401) {
+          setAuthStatus({ authenticated: false, user: null });
+          localStorage.removeItem('google_auth_recent');
+        }
+        throw new Error(`HTTP ${response.status}: Failed to fetch calendar events`);
       }
 
       return response.json();
     } catch (error) {
+      if (retries > 0 && error.message?.includes('fetch')) {
+        console.warn(`Calendar fetch failed, retrying... (${retries} attempts left)`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return fetchCalendarEvents(timeMin, timeMax, retries - 1);
+      }
       console.error('Calendar fetch failed:', error);
       throw error;
     }
