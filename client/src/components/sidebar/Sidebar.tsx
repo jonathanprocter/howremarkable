@@ -1,4 +1,3 @@
-
 import { MiniCalendar } from './MiniCalendar';
 import { GoogleCalendarIntegration } from './GoogleCalendarIntegration';
 import { QuickActions } from './QuickActions';
@@ -40,20 +39,20 @@ export const Sidebar = ({
         selectedDate={selectedDate}
         onDateSelect={onSelectedDateChange}
       />
-      
+
       <GoogleCalendarIntegration
         isConnected={true}
         onSelectAll={() => {}}
         onDeselectAll={() => {}}
       />
-      
+
       <QuickActions
         onGoToToday={() => onDateChange(new Date())}
         onGoToDate={() => {}}
         onRefreshEvents={() => {}}
         onSyncNotes={() => {}}
       />
-      
+
       <ExportToPDF
         isGoogleConnected={true}
         onExportCurrentView={() => {}}
@@ -62,7 +61,7 @@ export const Sidebar = ({
         onExportFullMonth={() => {}}
         onExportToGoogleDrive={() => {}}
       />
-      
+
       <DailyNotes
         notes={dailyNotes}
         onSaveNotes={onNotesChange}

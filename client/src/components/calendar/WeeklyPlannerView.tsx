@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { generateTimeSlots } from '../../utils/timeSlots';
 import { CalendarEvent } from '../../types/calendar';
@@ -26,12 +25,12 @@ export const WeeklyPlannerView = ({
   isLoading
 }: WeeklyPlannerViewProps) => {
   const timeSlots = generateTimeSlots();
-  
+
   // Generate week days from currentDate
   const weekStartDate = getWeekStartDate(currentDate);
   const weekEndDate = getWeekEndDate(currentDate);
   const weekNumber = getWeekNumber(currentDate);
-  
+
   // Generate the week array
   const week = [];
   for (let i = 0; i < 7; i++) {

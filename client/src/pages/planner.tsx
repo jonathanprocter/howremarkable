@@ -20,10 +20,24 @@ export default function PlannerPage() {
   const [selectedCalendars, setSelectedCalendars] = useState<string[]>([]);
 
   // Get events from API
-  const { data: events = [], isLoading: eventsQueryLoading } = useQuery({
+  const { data: events = [], isLoading: eventsQueryLoading, error: eventsError } = useQuery({
     queryKey: ['/api/calendar/events'],
     staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: (failureCount, error: any) => {
+      // Don't retry on authentication errors
+      if (error?.status === 401) return false;
+      return failureCount < 2;
+    },
+    refetchOnWindowFocus: false,
   });
+
+  // Handle events fetch errors
+  useEffect(() => {
+    if (eventsError) {
+      console.warn('Events fetch error:', eventsError);
+      // Could show a toast notification here if needed
+    }
+  }, [eventsError]);
 
   // Get daily notes from API
   const { data: notesData = {} } = useQuery({
