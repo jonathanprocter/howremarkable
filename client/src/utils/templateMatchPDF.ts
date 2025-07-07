@@ -43,16 +43,16 @@ const TIME_POSITIONS = {
 };
 
 const TEMPLATE_CONFIG = {
-  // A3 Landscape dimensions to fit full time range (1190x842 points)
+  // Extended page dimensions to fit ALL time slots through 23:30
   pageWidth: 1190,
-  pageHeight: 842,
+  pageHeight: 950, // Increased height to accommodate all 36 time slots
   
   // Grid layout optimized for full time range
   timeColumnWidth: 80,
   dayColumnWidth: 150,
   headerHeight: 80,
   gridStartY: 80,
-  totalGridHeight: 720, // Full height for all time slots 06:00-23:30
+  totalGridHeight: 720, // 36 slots × 20pt = 720pt for 06:00-23:30
   
   // Template colors - exact match to your CSS
   lightBlue: [135, 206, 235], // #87CEEB
@@ -188,18 +188,17 @@ export const exportTemplateMatchPDF = async (
   pdf.setDrawColor(64, 64, 64); // Dark grey
   pdf.line(finalLineX, gridStartY, finalLineX, TEMPLATE_CONFIG.pageHeight - 40); // Extend full height
   
-  // Draw time slots - full range from 06:00 to 23:30
+  // Draw time slots - COMPLETE range from 06:00 to 23:30
   const timeSlots = Object.keys(TIME_POSITIONS).sort();
-  const totalSlots = timeSlots.length; // 35 slots (17.5 hours × 2)
-  const availableHeight = TEMPLATE_CONFIG.totalGridHeight;
-  const slotHeight = Math.floor(availableHeight / totalSlots); // Dynamic height per slot
+  const totalSlots = timeSlots.length; // Should be 36 slots total
+  console.log(`Drawing ${totalSlots} time slots from ${timeSlots[0]} to ${timeSlots[timeSlots.length-1]}`);
+  const slotHeight = 20; // Fixed 20pt per slot to ensure we fit all slots
   
   for (let i = 0; i < timeSlots.length; i++) {
     const timeSlot = timeSlots[i];
     const yPosition = gridStartY + 30 + (i * slotHeight);
     
-    // Skip if this would go beyond the page height
-    if (yPosition + slotHeight > TEMPLATE_CONFIG.pageHeight - 40) break;
+    // Continue drawing ALL time slots through 23:30 - NO EARLY BREAK
     
     // Time slot background - extend grey background across entire week for hour rows
     const isHour = timeSlot.endsWith(':00');
@@ -211,7 +210,7 @@ export const exportTemplateMatchPDF = async (
       // Grey background across ENTIRE WEEK for hour differentiation 
       pdf.setFillColor(220, 220, 220); // Darker grey for better visibility
       pdf.rect(gridStartX + TEMPLATE_CONFIG.timeColumnWidth, yPosition, 
-               TEMPLATE_CONFIG.pageWidth - gridStartX - TEMPLATE_CONFIG.timeColumnWidth - 40, 
+               TEMPLATE_CONFIG.pageWidth - gridStartX - TEMPLATE_CONFIG.timeColumnWidth - 10, 
                slotHeight, 'F');
     } else {
       // Light background for :30 slots
@@ -221,7 +220,7 @@ export const exportTemplateMatchPDF = async (
       // Light background for :30 slots across the ENTIRE WEEK
       pdf.setFillColor(250, 250, 250);
       pdf.rect(gridStartX + TEMPLATE_CONFIG.timeColumnWidth, yPosition, 
-               TEMPLATE_CONFIG.pageWidth - gridStartX - TEMPLATE_CONFIG.timeColumnWidth - 40, 
+               TEMPLATE_CONFIG.pageWidth - gridStartX - TEMPLATE_CONFIG.timeColumnWidth - 10, 
                slotHeight, 'F');
     }
     
@@ -231,12 +230,12 @@ export const exportTemplateMatchPDF = async (
       // Top of hour - solid line across entire week for hour differentiation
       pdf.setLineWidth(2);
       pdf.setDrawColor(100, 100, 100); // Darker line for hour breaks
-      pdf.line(gridStartX, yPosition + slotHeight, TEMPLATE_CONFIG.pageWidth - 20, yPosition + slotHeight);
+      pdf.line(gridStartX, yPosition + slotHeight, TEMPLATE_CONFIG.pageWidth - 10, yPosition + slotHeight);
     } else {
       // :30 minutes - thinner line
       pdf.setLineWidth(1);
       pdf.setDrawColor(200, 200, 200);
-      pdf.line(gridStartX, yPosition + slotHeight, TEMPLATE_CONFIG.pageWidth - 20, yPosition + slotHeight);
+      pdf.line(gridStartX, yPosition + slotHeight, TEMPLATE_CONFIG.pageWidth - 10, yPosition + slotHeight);
     }
     
     // Time text with different font sizes
