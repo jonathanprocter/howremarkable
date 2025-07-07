@@ -16,9 +16,9 @@ const HTML_TEMPLATE_CONFIG = {
   statsHeight: 40, 
   legendHeight: 30,
   
-  // Grid positioning - centered with better spacing
-  gridStartY: 130, // More space from top for better balance
-  timeSlotHeight: 20, // Slightly increased for better readability
+  // Grid positioning - optimized for full page usage
+  gridStartY: 120, // Balanced spacing from top
+  timeSlotHeight: 19, // Slightly increased for better readability
   
   // Colors matching HTML template
   colors: {
@@ -80,8 +80,8 @@ export const exportHTMLTemplatePDF = async (
 };
 
 function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date): void {
-  // Main border with margin for better centering
-  const margin = 20;
+  // Main border with minimal margin for maximum space usage
+  const margin = 10;
   pdf.setLineWidth(3);
   pdf.setDrawColor(0, 0, 0);
   pdf.rect(margin, margin, HTML_TEMPLATE_CONFIG.pageWidth - (margin * 2), HTML_TEMPLATE_CONFIG.pageHeight - (margin * 2));
@@ -99,17 +99,17 @@ function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date): void {
   pdf.setFontSize(20);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(0, 0, 0);
-  pdf.text('WEEKLY PLANNER', HTML_TEMPLATE_CONFIG.pageWidth / 2, margin + 30, { align: 'center' });
+  pdf.text('WEEKLY PLANNER', HTML_TEMPLATE_CONFIG.pageWidth / 2, margin + 25, { align: 'center' });
   
   // Week information
   pdf.setFontSize(14);
   pdf.setFont('helvetica', 'bold');
   const weekText = `${weekStartDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${weekEndDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
-  pdf.text(weekText, HTML_TEMPLATE_CONFIG.pageWidth / 2, margin + 50, { align: 'center' });
+  pdf.text(weekText, HTML_TEMPLATE_CONFIG.pageWidth / 2, margin + 45, { align: 'center' });
 }
 
 function drawStats(pdf: jsPDF, events: CalendarEvent[]): void {
-  const margin = 20;
+  const margin = 10;
   const contentWidth = HTML_TEMPLATE_CONFIG.pageWidth - (margin * 2);
   const statsY = margin + HTML_TEMPLATE_CONFIG.headerHeight;
   
@@ -161,7 +161,7 @@ function drawStats(pdf: jsPDF, events: CalendarEvent[]): void {
 }
 
 function drawLegend(pdf: jsPDF): void {
-  const margin = 20;
+  const margin = 10;
   const contentWidth = HTML_TEMPLATE_CONFIG.pageWidth - (margin * 2);
   const legendY = margin + HTML_TEMPLATE_CONFIG.headerHeight + HTML_TEMPLATE_CONFIG.statsHeight;
   
@@ -217,7 +217,7 @@ function drawLegend(pdf: jsPDF): void {
 }
 
 function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent[]): void {
-  const margin = 20;
+  const margin = 10;
   const contentWidth = HTML_TEMPLATE_CONFIG.pageWidth - (margin * 2);
   const gridY = margin + HTML_TEMPLATE_CONFIG.gridStartY;
   
