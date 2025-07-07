@@ -40,19 +40,22 @@ export const exportWeeklyRemarkable = async (
            REMARKABLE_CONFIG.contentWidth, REMARKABLE_CONFIG.contentHeight, 'S');
   
   // Header
-  const headerHeight = 20;
+  const headerHeight = 25;
   pdf.setFontSize(16);
   pdf.setFont('times', 'bold');
-  pdf.text('Weekly Planner - reMarkable Pro Optimized', 
-           REMARKABLE_CONFIG.width / 2, REMARKABLE_CONFIG.margin + 8, { align: 'center' });
+  pdf.text('Weekly Planner', REMARKABLE_CONFIG.margin + 5, REMARKABLE_CONFIG.margin + 8);
   
-  const monthStart = weekStartDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-  const monthEnd = weekEndDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  const weekInfo = `${monthStart}-${monthEnd.split(' ')[1]}, ${monthEnd.split(' ')[2]} • Week ${weekNumber}`;
-  
+  const monthStart = weekStartDate.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' });
+  const monthEnd = weekEndDate.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' });
+  const weekInfo = `Week ${weekNumber} — ${monthStart} - ${monthEnd}`;
   pdf.setFontSize(10);
   pdf.setFont('times', 'normal');
-  pdf.text(weekInfo, REMARKABLE_CONFIG.width / 2, REMARKABLE_CONFIG.margin + 16, { align: 'center' });
+  pdf.text(weekInfo, REMARKABLE_CONFIG.width - REMARKABLE_CONFIG.margin - 5, REMARKABLE_CONFIG.margin + 8, { align: 'right' });
+  
+  // Header line
+  pdf.setLineWidth(1);
+  pdf.line(REMARKABLE_CONFIG.margin, REMARKABLE_CONFIG.margin + 12, 
+           REMARKABLE_CONFIG.width - REMARKABLE_CONFIG.margin, REMARKABLE_CONFIG.margin + 12);
   
   // Calendar grid optimized for reMarkable Pro
   const gridStartY = REMARKABLE_CONFIG.margin + headerHeight + 3;
@@ -60,10 +63,13 @@ export const exportWeeklyRemarkable = async (
   const timeColumnWidth = 25;
   const dayColumnWidth = (REMARKABLE_CONFIG.contentWidth - timeColumnWidth) / 7;
   
-  // Day headers
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  // Time column header
   pdf.setFontSize(8);
   pdf.setFont('times', 'bold');
+  pdf.text('Time', REMARKABLE_CONFIG.margin + timeColumnWidth / 2, gridStartY + 8, { align: 'center' });
+  
+  // Day headers
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   
   days.forEach((day, index) => {
     const dayX = REMARKABLE_CONFIG.margin + timeColumnWidth + (index * dayColumnWidth);
@@ -74,15 +80,18 @@ export const exportWeeklyRemarkable = async (
       pdf.rect(dayX, gridStartY, dayColumnWidth, gridHeight, 'F');
     }
     
-    pdf.text(day, dayX + dayColumnWidth / 2, gridStartY + 6, { align: 'center' });
-    
-    // Date
+    // Day with full date
     const currentDate = new Date(weekStartDate);
     currentDate.setDate(weekStartDate.getDate() + index);
-    pdf.setFontSize(10);
-    pdf.text(currentDate.getDate().toString(), 
-             dayX + dayColumnWidth / 2, gridStartY + 12, { align: 'center' });
+    const dayHeader = `${day} ${currentDate.getMonth() + 1}/${currentDate.getDate()}`;
+    pdf.text(dayHeader, dayX + dayColumnWidth / 2, gridStartY + 8, { align: 'center' });
   });
+  
+  // Header border line under day headers
+  pdf.setDrawColor(0, 0, 0);
+  pdf.setLineWidth(1);
+  pdf.line(REMARKABLE_CONFIG.margin, gridStartY + 12, 
+           REMARKABLE_CONFIG.margin + REMARKABLE_CONFIG.contentWidth, gridStartY + 12);
   
   // Grid lines
   pdf.setDrawColor(128, 128, 128);
@@ -94,23 +103,30 @@ export const exportWeeklyRemarkable = async (
     pdf.line(x, gridStartY, x, gridStartY + gridHeight);
   }
   
-  // Time slots
+  // Time slots with detailed labels
   const timeSlots = generateTimeSlots();
-  const slotHeight = Math.max(12, (gridHeight - 15) / timeSlots.length); // Minimum 12 units for readability
+  const slotHeight = Math.max(8, (gridHeight - 15) / timeSlots.length); // Smaller slots for more detail
   
   timeSlots.forEach((slot, index) => {
     const y = gridStartY + 15 + (index * slotHeight);
     
-    // Time labels (every 2 hours for clarity)
-    if (index % 4 === 0) {
+    // Time labels for every hour and 30-minute marks
+    if (index % 2 === 0) {
       pdf.setFontSize(6);
       pdf.setFont('times', 'normal');
-      pdf.text(slot.time, REMARKABLE_CONFIG.margin + 2, y + 2);
+      pdf.text(slot.time, REMARKABLE_CONFIG.margin + 2, y + 3);
     }
     
     // Horizontal grid lines
-    pdf.setDrawColor(192, 192, 192);
-    pdf.setLineWidth(0.3);
+    if (index % 2 === 0) {
+      // Major lines for hours
+      pdf.setDrawColor(128, 128, 128);
+      pdf.setLineWidth(0.5);
+    } else {
+      // Minor lines for 30-minute marks
+      pdf.setDrawColor(192, 192, 192);
+      pdf.setLineWidth(0.3);
+    }
     pdf.line(REMARKABLE_CONFIG.margin + timeColumnWidth, y, 
              REMARKABLE_CONFIG.margin + REMARKABLE_CONFIG.contentWidth, y);
   });
@@ -157,31 +173,34 @@ export const exportWeeklyRemarkable = async (
         pdf.setFontSize(6);
         pdf.setFont('times', 'bold');
         
-        // Clean up title - remove "Appointment" and excessive words
-        let cleanTitle = event.title
-          .replace(/ Appointment$/, '')
-          .replace(/^(.{25}).*/, '$1...')  // Slightly longer truncation
-          .trim();
+        // Detailed appointment text like in expected layout
+        let appointmentTitle = event.title.toUpperCase();
         
         // Split title into multiple lines if needed
-        const titleLines = pdf.splitTextToSize(cleanTitle, eventWidth - 4);
-        const maxLines = Math.floor(eventHeight / 4) - 1; // Leave space for time
+        const titleLines = pdf.splitTextToSize(appointmentTitle, eventWidth - 4);
+        const maxTitleLines = Math.floor(eventHeight / 5) - 1; // Leave space for time
         
         // Draw title lines
-        for (let i = 0; i < Math.min(titleLines.length, maxLines); i++) {
+        for (let i = 0; i < Math.min(titleLines.length, maxTitleLines); i++) {
           pdf.text(titleLines[i], eventX + 2, eventY + 6 + (i * 4));
         }
         
-        // Event time
+        // Event time range
         pdf.setFontSize(5);
         pdf.setFont('times', 'normal');
-        const timeStr = eventStart.toLocaleTimeString('en-US', { 
+        const startTimeStr = eventStart.toLocaleTimeString('en-US', { 
           hour: '2-digit', 
           minute: '2-digit', 
           hour12: false 
         });
+        const endTimeStr = eventEnd.toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit', 
+          hour12: false 
+        });
+        const timeRangeStr = `${startTimeStr}-${endTimeStr}`;
         const timeY = eventY + eventHeight - 3;
-        pdf.text(timeStr, eventX + 2, timeY);
+        pdf.text(timeRangeStr, eventX + 2, timeY);
       }
     }
   });
