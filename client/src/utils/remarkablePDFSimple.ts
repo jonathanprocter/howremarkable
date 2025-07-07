@@ -13,12 +13,17 @@ const REMARKABLE_CONFIG = {
 };
 
 const createRemarkablePDF = () => {
-  return new jsPDF({
+  const pdf = new jsPDF({
     orientation: 'landscape',
     unit: 'mm',
     format: [REMARKABLE_CONFIG.width, REMARKABLE_CONFIG.height],
     compress: true
   });
+  
+  // Set font to helvetica to prevent encoding issues
+  pdf.setFont('helvetica', 'normal');
+  
+  return pdf;
 };
 
 export const exportWeeklyRemarkable = async (
@@ -30,7 +35,7 @@ export const exportWeeklyRemarkable = async (
   const pdf = createRemarkablePDF();
   
   // Set font for e-ink readability
-  pdf.setFont('times', 'normal');
+  pdf.setFont('helvetica', 'normal');
   pdf.setTextColor(0, 0, 0);
   
   // Border
@@ -42,14 +47,14 @@ export const exportWeeklyRemarkable = async (
   // Header
   const headerHeight = 25;
   pdf.setFontSize(16);
-  pdf.setFont('times', 'bold');
+  pdf.setFont('helvetica', 'bold');
   pdf.text('Weekly Planner', REMARKABLE_CONFIG.margin + 5, REMARKABLE_CONFIG.margin + 8);
   
   const monthStart = weekStartDate.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' });
   const monthEnd = weekEndDate.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' });
   const weekInfo = `Week ${weekNumber} — ${monthStart} - ${monthEnd}`;
   pdf.setFontSize(10);
-  pdf.setFont('times', 'normal');
+  pdf.setFont('helvetica', 'normal');
   pdf.text(weekInfo, REMARKABLE_CONFIG.width - REMARKABLE_CONFIG.margin - 5, REMARKABLE_CONFIG.margin + 8, { align: 'right' });
   
   // Header line
@@ -65,7 +70,7 @@ export const exportWeeklyRemarkable = async (
   
   // Time column header
   pdf.setFontSize(8);
-  pdf.setFont('times', 'bold');
+  pdf.setFont('helvetica', 'bold');
   pdf.text('Time', REMARKABLE_CONFIG.margin + timeColumnWidth / 2, gridStartY + 8, { align: 'center' });
   
   // Day headers
@@ -113,7 +118,7 @@ export const exportWeeklyRemarkable = async (
     // Time labels for every hour and 30-minute marks
     if (index % 2 === 0) {
       pdf.setFontSize(6);
-      pdf.setFont('times', 'normal');
+      pdf.setFont('helvetica', 'normal');
       pdf.text(slot.time, REMARKABLE_CONFIG.margin + 2, y + 3);
     }
     
@@ -171,23 +176,25 @@ export const exportWeeklyRemarkable = async (
         // Event text - optimized for e-ink
         pdf.setTextColor(0, 0, 0);
         pdf.setFontSize(6);
-        pdf.setFont('times', 'bold');
+        pdf.setFont('helvetica', 'bold');
         
-        // Detailed appointment text like in expected layout
-        let appointmentTitle = event.title.toUpperCase();
+        // Clean appointment text
+        let appointmentTitle = event.title
+          .replace(/ Appointment$/, '')
+          .toUpperCase()
+          .trim();
         
-        // Split title into multiple lines if needed
-        const titleLines = pdf.splitTextToSize(appointmentTitle, eventWidth - 4);
-        const maxTitleLines = Math.floor(eventHeight / 5) - 1; // Leave space for time
-        
-        // Draw title lines
-        for (let i = 0; i < Math.min(titleLines.length, maxTitleLines); i++) {
-          pdf.text(titleLines[i], eventX + 2, eventY + 6 + (i * 4));
+        // Limit title length to prevent overlapping
+        if (appointmentTitle.length > 20) {
+          appointmentTitle = appointmentTitle.substring(0, 17) + '...';
         }
+        
+        // Single line title for cleaner layout
+        pdf.text(appointmentTitle, eventX + 2, eventY + 8);
         
         // Event time range
         pdf.setFontSize(5);
-        pdf.setFont('times', 'normal');
+        pdf.setFont('helvetica', 'normal');
         const startTimeStr = eventStart.toLocaleTimeString('en-US', { 
           hour: '2-digit', 
           minute: '2-digit', 
@@ -199,8 +206,7 @@ export const exportWeeklyRemarkable = async (
           hour12: false 
         });
         const timeRangeStr = `${startTimeStr}-${endTimeStr}`;
-        const timeY = eventY + eventHeight - 3;
-        pdf.text(timeRangeStr, eventX + 2, timeY);
+        pdf.text(timeRangeStr, eventX + 2, eventY + eventHeight - 2);
       }
     }
   });
@@ -217,7 +223,7 @@ export const exportDailyRemarkable = async (
 ): Promise<string> => {
   const pdf = createRemarkablePDF();
   
-  pdf.setFont('times', 'normal');
+  pdf.setFont('helvetica', 'normal');
   pdf.setTextColor(0, 0, 0);
   
   // Border
@@ -228,7 +234,7 @@ export const exportDailyRemarkable = async (
   
   // Header
   pdf.setFontSize(16);
-  pdf.setFont('times', 'bold');
+  pdf.setFont('helvetica', 'bold');
   pdf.text('Daily Planner - reMarkable Pro', 
            REMARKABLE_CONFIG.width / 2, REMARKABLE_CONFIG.margin + 8, { align: 'center' });
   
@@ -239,7 +245,7 @@ export const exportDailyRemarkable = async (
     day: 'numeric' 
   });
   pdf.setFontSize(12);
-  pdf.setFont('times', 'normal');
+  pdf.setFont('helvetica', 'normal');
   pdf.text(dateStr, REMARKABLE_CONFIG.width / 2, REMARKABLE_CONFIG.margin + 18, { align: 'center' });
   
   // Content area
@@ -267,7 +273,7 @@ export const exportDailyRemarkable = async (
       
       if (minute === 0) {
         pdf.setFontSize(8);
-        pdf.setFont('times', 'normal');
+        pdf.setFont('helvetica', 'normal');
         const timeStr = `${hour.toString().padStart(2, '0')}:00`;
         pdf.text(timeStr, REMARKABLE_CONFIG.margin + 2, y + 3);
       }
@@ -316,13 +322,13 @@ export const exportDailyRemarkable = async (
       // Event text
       pdf.setTextColor(0, 0, 0);
       pdf.setFontSize(9);
-      pdf.setFont('times', 'bold');
+      pdf.setFont('helvetica', 'bold');
       const titleLines = pdf.splitTextToSize(event.title, appointmentWidth - 4);
       pdf.text(titleLines[0] || event.title, 
                REMARKABLE_CONFIG.margin + timeColumnWidth + 4, eventY + 6);
       
       pdf.setFontSize(7);
-      pdf.setFont('times', 'normal');
+      pdf.setFont('helvetica', 'normal');
       const timeStr = `${eventStart.toLocaleTimeString('en-US', { 
         hour: '2-digit', minute: '2-digit', hour12: false 
       })}-${eventEnd.toLocaleTimeString('en-US', { 
@@ -333,7 +339,7 @@ export const exportDailyRemarkable = async (
       // Notes if space allows
       if (event.notes && eventHeight > 20) {
         pdf.setFontSize(6);
-        pdf.setFont('times', 'italic');
+        pdf.setFont('helvetica', 'italic');
         const notesLines = pdf.splitTextToSize(event.notes, appointmentWidth - 4);
         notesLines.slice(0, 2).forEach((line: string, index: number) => {
           pdf.text(line, REMARKABLE_CONFIG.margin + timeColumnWidth + 4, eventY + 18 + (index * 4));
@@ -351,7 +357,7 @@ export const exportMonthlyRemarkable = async (
 ): Promise<string> => {
   const pdf = createRemarkablePDF();
   
-  pdf.setFont('times', 'normal');
+  pdf.setFont('helvetica', 'normal');
   pdf.setTextColor(0, 0, 0);
   
   // Border
@@ -362,7 +368,7 @@ export const exportMonthlyRemarkable = async (
   
   // Header
   pdf.setFontSize(16);
-  pdf.setFont('times', 'bold');
+  pdf.setFont('helvetica', 'bold');
   const monthStr = monthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   pdf.text(`Monthly Overview - ${monthStr}`, 
            REMARKABLE_CONFIG.width / 2, REMARKABLE_CONFIG.margin + 12, { align: 'center' });
@@ -376,7 +382,7 @@ export const exportMonthlyRemarkable = async (
   // Day headers
   const dayHeaders = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   pdf.setFontSize(8);
-  pdf.setFont('times', 'bold');
+  pdf.setFont('helvetica', 'bold');
   
   dayHeaders.forEach((day, index) => {
     pdf.text(day, REMARKABLE_CONFIG.margin + (index * cellWidth) + (cellWidth / 2),
@@ -403,7 +409,7 @@ export const exportMonthlyRemarkable = async (
       
       // Date number
       pdf.setFontSize(7);
-      pdf.setFont('times', currentDate.getMonth() === monthDate.getMonth() ? 'bold' : 'normal');
+      pdf.setFont('helvetica', currentDate.getMonth() === monthDate.getMonth() ? 'bold' : 'normal');
       pdf.setTextColor(currentDate.getMonth() === monthDate.getMonth() ? 0 : 128, 128, 128);
       pdf.text(currentDate.getDate().toString(), cellX + 2, cellY + 6);
       
