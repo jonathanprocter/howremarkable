@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import { CalendarEvent } from '../types/calendar';
+import { getWeekNumber } from './dateUtils';
 
 // HTML Template Configuration - Full landscape weekly view
 const HTML_TEMPLATE_CONFIG = {
@@ -101,10 +102,11 @@ function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date): void {
   pdf.setTextColor(0, 0, 0);
   pdf.text('WEEKLY PLANNER', HTML_TEMPLATE_CONFIG.pageWidth / 2, margin + 25, { align: 'center' });
   
-  // Week information - slightly smaller for better proportion
+  // Week information - include ALL information as requested in feedback
   pdf.setFontSize(12);
   pdf.setFont('helvetica', 'bold');
-  const weekText = `${weekStartDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${weekEndDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+  const weekNumber = getWeekNumber(weekStartDate);
+  const weekText = `Week ${weekNumber} - ${weekStartDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEndDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
   pdf.text(weekText, HTML_TEMPLATE_CONFIG.pageWidth / 2, margin + 45, { align: 'center' });
 }
 
