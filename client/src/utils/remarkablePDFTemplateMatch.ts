@@ -155,23 +155,28 @@ export const exportWeeklyRemarkable = async (
   
   pdf.text('Google Calendar', googleX + 12, legendY + 9);
   
-  // Calendar grid
+  // Calendar grid - reMarkable Pro optimized with hourly blocks
   const gridY = legendY + legendHeight;
   const gridHeight = REMARKABLE_CONFIG.contentHeight - (gridY - REMARKABLE_CONFIG.margin);
-  const timeColumnWidth = 20;
+  const timeColumnWidth = 25; // Wider for better proportions
   const dayColumnWidth = (REMARKABLE_CONFIG.contentWidth - timeColumnWidth) / 7;
   
-  // Grid headers
-  const headerRowHeight = 18;
+  // Grid headers - larger for reMarkable Pro
+  const headerRowHeight = 25;
   pdf.setFillColor(240, 240, 240);
   pdf.rect(REMARKABLE_CONFIG.margin, gridY, REMARKABLE_CONFIG.contentWidth, headerRowHeight, 'F');
   
-  // Time header
-  pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('TIME', REMARKABLE_CONFIG.margin + timeColumnWidth / 2, gridY + 12, { align: 'center' });
+  // Header border - thicker for e-ink visibility
+  pdf.setLineWidth(3);
+  pdf.line(REMARKABLE_CONFIG.margin, gridY + headerRowHeight, 
+           REMARKABLE_CONFIG.margin + REMARKABLE_CONFIG.contentWidth, gridY + headerRowHeight);
   
-  // Day headers
+  // Time header
+  pdf.setFontSize(12);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('TIME', REMARKABLE_CONFIG.margin + timeColumnWidth / 2, gridY + 15, { align: 'center' });
+  
+  // Day headers with enhanced formatting
   const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const date = new Date(weekStartDate);
@@ -183,29 +188,35 @@ export const exportWeeklyRemarkable = async (
     const dayX = REMARKABLE_CONFIG.margin + timeColumnWidth + (index * dayColumnWidth);
     const dayDate = weekDays[index];
     
-    pdf.setFontSize(9);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text(day, dayX + dayColumnWidth / 2, gridY + 7, { align: 'center' });
+    // Day column border
+    if (index < 6) {
+      pdf.setLineWidth(2);
+      pdf.setDrawColor(0, 0, 0);
+      pdf.line(dayX + dayColumnWidth, gridY, dayX + dayColumnWidth, gridY + gridHeight);
+    }
     
-    pdf.setFontSize(12);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text(dayDate.getDate().toString(), dayX + dayColumnWidth / 2, gridY + 15, { align: 'center' });
+    // Day name
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(day, dayX + dayColumnWidth / 2, gridY + 10, { align: 'center' });
+    
+    // Day number
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(dayDate.getDate().toString(), dayX + dayColumnWidth / 2, gridY + 20, { align: 'center' });
   });
   
-  // Grid structure
+  // Grid structure - reMarkable Pro hourly blocks
   const gridContentY = gridY + headerRowHeight;
   const gridContentHeight = gridHeight - headerRowHeight;
   
-  // Major time slots (6:00 to 21:30)
+  // Hourly time slots (6:00 to 21:00) - 16 hours total
   const timeSlots: string[] = [];
   for (let hour = 6; hour <= 21; hour++) {
     timeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
-    if (hour < 21) {
-      timeSlots.push(`${hour.toString().padStart(2, '0')}:30`);
-    }
   }
   
-  const slotHeight = gridContentHeight / timeSlots.length;
+  const slotHeight = gridContentHeight / timeSlots.length; // 60px equivalent for each hour
   
   // Draw grid lines and time labels
   pdf.setDrawColor(0, 0, 0);
@@ -227,25 +238,40 @@ export const exportWeeklyRemarkable = async (
     pdf.line(x, gridY, x, gridY + gridHeight);
   }
   
-  // Time slots and horizontal lines
+  // Time column border - thick for e-ink visibility
+  pdf.setDrawColor(0, 0, 0);
+  pdf.setLineWidth(3);
+  pdf.line(REMARKABLE_CONFIG.margin + timeColumnWidth, gridY, 
+           REMARKABLE_CONFIG.margin + timeColumnWidth, gridY + gridHeight);
+  
+  // Time slots and horizontal lines - reMarkable Pro hourly blocks
   timeSlots.forEach((time, index) => {
     const y = gridContentY + (index * slotHeight);
-    const isHour = time.endsWith(':00');
     
-    // Time label
-    if (isHour) {
-      pdf.setFontSize(8);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(0, 0, 0);
-      pdf.text(time, REMARKABLE_CONFIG.margin + timeColumnWidth / 2, y + slotHeight / 2 + 2, { align: 'center' });
-    }
+    // Time label - larger for reMarkable Pro
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(0, 0, 0);
+    pdf.text(time, REMARKABLE_CONFIG.margin + timeColumnWidth / 2, y + slotHeight / 2 + 3, { align: 'center' });
     
-    // Horizontal grid line
+    // Horizontal grid line - thick for clear hour separation
     if (index > 0) {
-      pdf.setDrawColor(isHour ? 0 : 221, isHour ? 0 : 221, isHour ? 0 : 221);
-      pdf.setLineWidth(isHour ? 2 : 1);
+      pdf.setDrawColor(0, 0, 0);
+      pdf.setLineWidth(2);
       pdf.line(REMARKABLE_CONFIG.margin + timeColumnWidth, y, 
                REMARKABLE_CONFIG.margin + REMARKABLE_CONFIG.contentWidth, y);
+    }
+    
+    // Add subtle writing grid lines within each cell
+    if (slotHeight > 15) {
+      pdf.setDrawColor(238, 238, 238);
+      pdf.setLineWidth(0.5);
+      const numLines = Math.floor(slotHeight / 5);
+      for (let i = 1; i < numLines; i++) {
+        const lineY = y + (i * 5);
+        pdf.line(REMARKABLE_CONFIG.margin + timeColumnWidth, lineY, 
+                 REMARKABLE_CONFIG.margin + REMARKABLE_CONFIG.contentWidth, lineY);
+      }
     }
   });
   
@@ -261,43 +287,44 @@ export const exportWeeklyRemarkable = async (
       const minute = eventStart.getMinutes();
       const duration = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60); // minutes
       
-      // Find time slot position
-      const timeKey = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+      // Find hourly slot position (reMarkable Pro hourly blocks)
       const slotIndex = timeSlots.findIndex(slot => {
         const slotHour = parseInt(slot.split(':')[0]);
-        const slotMinute = parseInt(slot.split(':')[1]);
-        return slotHour === hour && Math.abs(slotMinute - minute) <= 15;
+        return slotHour === hour;
       });
       
       if (slotIndex >= 0) {
-        // Calculate position
-        const eventX = REMARKABLE_CONFIG.margin + timeColumnWidth + (dayIndex * dayColumnWidth) + 1;
-        const eventY = gridContentY + (slotIndex * slotHeight) + 1;
-        const eventWidth = dayColumnWidth - 2;
-        const eventHeight = Math.max((duration / 30) * slotHeight - 2, slotHeight * 0.8);
+        // Calculate position within hourly block
+        const minuteOffset = (minute / 60) * slotHeight; // Position within the hour
+        const eventX = REMARKABLE_CONFIG.margin + timeColumnWidth + (dayIndex * dayColumnWidth) + 2;
+        const eventY = gridContentY + (slotIndex * slotHeight) + minuteOffset + 2;
+        const eventWidth = dayColumnWidth - 4;
+        const eventHeight = Math.max((duration / 60) * slotHeight - 4, 8); // Scale by hour, not 30-minute slots
         
-        // Event background based on source
+        // Event background - reMarkable Pro optimized e-ink styling
         if (event.source === 'simplepractice' || event.title.includes('Appointment')) {
-          pdf.setFillColor(232, 240, 255);
-          pdf.setDrawColor(100, 149, 237);
-          pdf.setLineWidth(1);
+          // SimplePractice appointments - high contrast for e-ink
+          pdf.setFillColor(245, 245, 245);
+          pdf.setDrawColor(0, 0, 0);
+          pdf.setLineWidth(2);
           pdf.rect(eventX, eventY, eventWidth, eventHeight, 'FD');
           
-          // Left border accent
-          pdf.setLineWidth(3);
+          // Left border accent - thick for e-ink visibility
+          pdf.setLineWidth(6);
           pdf.line(eventX, eventY, eventX, eventY + eventHeight);
         } else {
-          pdf.setFillColor(240, 240, 240);
-          pdf.setDrawColor(102, 102, 102);
-          pdf.setLineWidth(1);
-          pdf.setLineDashPattern([2, 2]);
+          // Google Calendar appointments - dashed for e-ink
+          pdf.setFillColor(255, 255, 255);
+          pdf.setDrawColor(0, 0, 0);
+          pdf.setLineWidth(2);
+          pdf.setLineDashPattern([4, 4]);
           pdf.rect(eventX, eventY, eventWidth, eventHeight, 'FD');
           pdf.setLineDashPattern([]);
         }
         
-        // Event text
+        // Event text - reMarkable Pro optimized
         pdf.setTextColor(0, 0, 0);
-        pdf.setFontSize(5);
+        pdf.setFontSize(7); // Larger for e-ink readability
         pdf.setFont('helvetica', 'bold');
         
         let title = event.title
@@ -305,28 +332,29 @@ export const exportWeeklyRemarkable = async (
           .toUpperCase()
           .trim();
         
-        // Truncate for small spaces
-        if (title.length > 12) {
-          title = title.substring(0, 9) + '...';
+        // Smart text truncation for reMarkable Pro
+        const maxChars = Math.floor(eventWidth / 2.5); // Character limit based on width
+        if (title.length > maxChars) {
+          title = title.substring(0, maxChars - 3) + '...';
         }
         
-        pdf.text(title, eventX + 2, eventY + 4);
+        pdf.text(title, eventX + 3, eventY + 6);
         
-        // Time range
-        pdf.setFontSize(4);
-        pdf.setFont('helvetica', 'normal');
-        const timeRange = `${eventStart.toLocaleTimeString('en-US', { 
-          hour: '2-digit', 
-          minute: '2-digit', 
-          hour12: false 
-        })}-${eventEnd.toLocaleTimeString('en-US', { 
-          hour: '2-digit', 
-          minute: '2-digit', 
-          hour12: false 
-        })}`;
-        
-        if (eventHeight > 8) {
-          pdf.text(timeRange, eventX + 2, eventY + eventHeight - 2);
+        // Time range - larger for e-ink
+        if (eventHeight > 12) {
+          pdf.setFontSize(6);
+          pdf.setFont('helvetica', 'normal');
+          const timeRange = `${eventStart.toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            hour12: false 
+          })}-${eventEnd.toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            hour12: false 
+          })}`;
+          
+          pdf.text(timeRange, eventX + 3, eventY + eventHeight - 3);
         }
       }
     }
