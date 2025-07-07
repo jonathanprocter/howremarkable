@@ -121,7 +121,7 @@ export const exportTemplateMatchPDF = async (
   pdf.rect(20, 20, TEMPLATE_CONFIG.pageWidth - 40, TEMPLATE_CONFIG.pageHeight - 40);
   
   // Draw header section
-  pdf.setFillColor(...TEMPLATE_CONFIG.headerGray);
+  pdf.setFillColor(240, 240, 240); // Light grey header
   pdf.rect(20, 20, TEMPLATE_CONFIG.pageWidth - 40, TEMPLATE_CONFIG.headerHeight, 'F');
   pdf.setLineWidth(3);
   pdf.line(20, TEMPLATE_CONFIG.headerHeight + 20, TEMPLATE_CONFIG.pageWidth - 20, TEMPLATE_CONFIG.headerHeight + 20);
@@ -131,7 +131,7 @@ export const exportTemplateMatchPDF = async (
   const gridStartY = TEMPLATE_CONFIG.gridStartY + 20;
   
   // Time column header
-  pdf.setFillColor(...TEMPLATE_CONFIG.timeGray);
+  pdf.setFillColor(153, 153, 153); // Dark grey for time header
   pdf.rect(gridStartX, gridStartY, TEMPLATE_CONFIG.timeColumnWidth, 30, 'F');
   pdf.setFontSize(12);
   pdf.setFont('helvetica', 'bold');
@@ -150,7 +150,7 @@ export const exportTemplateMatchPDF = async (
     const dayX = gridStartX + TEMPLATE_CONFIG.timeColumnWidth + (i * TEMPLATE_CONFIG.dayColumnWidth);
     
     // Day header background
-    pdf.setFillColor(...TEMPLATE_CONFIG.headerGray);
+    pdf.setFillColor(240, 240, 240); // Light grey for day headers
     pdf.rect(dayX, gridStartY, TEMPLATE_CONFIG.dayColumnWidth, 30, 'F');
     
     // Day header border
@@ -203,11 +203,11 @@ export const exportTemplateMatchPDF = async (
     const isHour = timeSlot.endsWith(':00');
     if (isHour) {
       // Grey background for time column
-      pdf.setFillColor(...TEMPLATE_CONFIG.headerGray);
+      pdf.setFillColor(240, 240, 240); // Light grey for hour backgrounds
       pdf.rect(gridStartX, yPosition, TEMPLATE_CONFIG.timeColumnWidth, slotHeight, 'F');
       
       // Grey background across entire week for hour differentiation
-      pdf.setFillColor(...TEMPLATE_CONFIG.headerGray);
+      pdf.setFillColor(240, 240, 240); // Light grey extending across full week
       pdf.rect(gridStartX + TEMPLATE_CONFIG.timeColumnWidth, yPosition, 
                TEMPLATE_CONFIG.pageWidth - gridStartX - TEMPLATE_CONFIG.timeColumnWidth - 20, 
                slotHeight, 'F');
