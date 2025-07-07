@@ -22,6 +22,9 @@ export const useGoogleAuth = () => {
   const checkAuthStatus = async () => {
     try {
       const response = await fetch('/api/auth/status');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
       setAuthStatus(data);
       
@@ -81,7 +84,8 @@ export const useGoogleAuth = () => {
       const response = await fetch(`/api/calendar/events?${params}`);
       
       if (!response.ok) {
-        throw new Error('Failed to fetch calendar events');
+        const errorText = await response.text();
+        throw new Error(`Failed to fetch calendar events: ${response.status} ${errorText}`);
       }
 
       return response.json();
@@ -131,7 +135,8 @@ export const useGoogleAuth = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update calendar event');
+        const errorText = await response.text();
+        throw new Error(`Failed to update calendar event: ${response.status} ${errorText}`);
       }
 
       return await response.json();

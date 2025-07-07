@@ -20,11 +20,23 @@ import { useToast } from '@/hooks/use-toast';
 import { exportHTMLTemplatePDF } from '../utils/htmlTemplatePDF';
 
 // Temporary stub functions until PDF exports are fixed
-const exportWeeklyPackageToPDF = async (...args: any[]) => { console.log('Weekly package export temporarily disabled'); return ''; };
-const exportDailyToPDF = async (...args: any[]) => { console.log('Daily export temporarily disabled'); return ''; };
-const exportWeeklyToPDF = async (...args: any[]) => { console.log('Weekly export temporarily disabled'); return ''; };
-const exportWeeklyRemarkableExact = async (...args: any[]) => { console.log('Remarkable export temporarily disabled'); return ''; };
-const generateFilename = (...args: any[]) => 'export.pdf';
+const exportWeeklyPackageToPDF = async (...args: any[]): Promise<string> => { 
+  console.log('Weekly package export temporarily disabled'); 
+  return Promise.resolve(''); 
+};
+const exportDailyToPDF = async (...args: any[]): Promise<string> => { 
+  console.log('Daily export temporarily disabled'); 
+  return Promise.resolve(''); 
+};
+const exportWeeklyToPDF = async (...args: any[]): Promise<string> => { 
+  console.log('Weekly export temporarily disabled'); 
+  return Promise.resolve(''); 
+};
+const exportWeeklyRemarkableExact = async (...args: any[]): Promise<void> => { 
+  console.log('Remarkable export temporarily disabled'); 
+  return Promise.resolve(); 
+};
+const generateFilename = (...args: any[]): string => 'export.pdf';
 import { getWeekNumber } from '../utils/dateUtils';
 import { initializeRemarkableOptimizations } from '../utils/remarkableDisplayOptimizer';
 
@@ -59,7 +71,6 @@ export default function Planner() {
 
   // Load events from database on component mount
   useEffect(() => {
-    
     const loadDatabaseEvents = async () => {
       try {
         const response = await fetch('/api/events/1'); // TODO: Use actual user ID
@@ -85,15 +96,11 @@ export default function Planner() {
             };
           });
           
-
-          
           updateEvents(convertedEvents);
           
           // Auto-select calendars from database events
           const googleEvents = convertedEvents.filter(event => event.source === 'google' && event.calendarId);
           const calendarIds = Array.from(new Set(googleEvents.map(event => event.calendarId))).filter(id => id) as string[];
-          
-
           
           if (calendarIds.length > 0) {
             setSelectedCalendars(new Set(calendarIds));
@@ -114,15 +121,20 @@ export default function Planner() {
             });
             setGoogleCalendars(calendarsForLegend);
           }
+        } else {
+          console.warn('Failed to load events from database - response not ok:', response.status);
         }
       } catch (error) {
         console.error('Failed to load events from database:', error);
+        toast({
+          title: "Error Loading Events",
+          description: "Could not load calendar events. Please refresh the page.",
+          variant: "destructive"
+        });
       }
     };
 
-    loadDatabaseEvents().catch(error => {
-      console.error('Failed to load events from database:', error);
-    });
+    loadDatabaseEvents();
   }, []); // Run once on mount
 
   const handleDateSelect = (date: Date) => {
@@ -233,17 +245,22 @@ export default function Planner() {
         );
         filename = generateFilename('weekly-package', state.currentWeek.startDate);
       } else if (type === 'Current View') {
-        await exportHTMLTemplatePDF(
-          state.currentWeek.startDate,
-          state.currentWeek.endDate,
-          currentEvents
-        );
-        
-        toast({
-          title: "PDF Export",
-          description: "HTML template PDF downloaded successfully!"
-        });
-        return; // exportHTMLTemplatePDF handles the download
+        try {
+          await exportHTMLTemplatePDF(
+            state.currentWeek.startDate,
+            state.currentWeek.endDate,
+            currentEvents
+          );
+          
+          toast({
+            title: "PDF Export",
+            description: "HTML template PDF downloaded successfully!"
+          });
+          return; // exportHTMLTemplatePDF handles the download
+        } catch (htmlError) {
+          console.error('HTML template PDF export error:', htmlError);
+          throw htmlError;
+        }
       } else if (type === 'Daily View') {
         pdfContent = await exportDailyToPDF(
           state.selectedDate,
@@ -254,26 +271,41 @@ export default function Planner() {
       }
       // reMarkable Pro optimized exports
       else if (type === 'reMarkable Weekly') {
-        await exportWeeklyRemarkableExact(
-          state.currentWeek.startDate,
-          state.currentWeek.endDate,
-          currentEvents
-        );
-        return; // exportWeeklyRemarkableExact handles the download
+        try {
+          await exportWeeklyRemarkableExact(
+            state.currentWeek.startDate,
+            state.currentWeek.endDate,
+            currentEvents
+          );
+          return; // exportWeeklyRemarkableExact handles the download
+        } catch (remarkableError) {
+          console.error('reMarkable export error:', remarkableError);
+          throw remarkableError;
+        }
       } else if (type === 'reMarkable Daily') {
-        await exportWeeklyRemarkableExact(
-          state.selectedDate,
-          state.selectedDate,
-          currentEvents
-        );
-        return; // exportWeeklyRemarkableExact handles the download
+        try {
+          await exportWeeklyRemarkableExact(
+            state.selectedDate,
+            state.selectedDate,
+            currentEvents
+          );
+          return; // exportWeeklyRemarkableExact handles the download
+        } catch (remarkableError) {
+          console.error('reMarkable export error:', remarkableError);
+          throw remarkableError;
+        }
       } else if (type === 'reMarkable Monthly') {
-        await exportWeeklyRemarkableExact(
-          state.currentWeek.startDate,
-          state.currentWeek.endDate,
-          currentEvents
-        );
-        return; // exportWeeklyRemarkableExact handles the download
+        try {
+          await exportWeeklyRemarkableExact(
+            state.currentWeek.startDate,
+            state.currentWeek.endDate,
+            currentEvents
+          );
+          return; // exportWeeklyRemarkableExact handles the download
+        } catch (remarkableError) {
+          console.error('reMarkable export error:', remarkableError);
+          throw remarkableError;
+        }
       } else {
         toast({
           title: "PDF Export",

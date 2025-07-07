@@ -165,19 +165,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Google Calendar API - Fetch Events
   app.get("/api/calendar/events", async (req, res) => {
-    // Since API usage stats show authentication is working, try to fetch with stored credentials
-    console.log("Calendar events requested - checking authentication...");
-    console.log("Session user:", !!req.user);
-    
-    if (!req.user) {
-      console.log("No session user found, but API calls are working based on usage stats");
-      return res.status(401).json({ 
-        error: "Session authentication required",
-        message: "Please authenticate with Google first"
-      });
-    }
-
     try {
+      // Since API usage stats show authentication is working, try to fetch with stored credentials
+      console.log("Calendar events requested - checking authentication...");
+      console.log("Session user:", !!req.user);
+      
+      if (!req.user) {
+        console.log("No session user found, but API calls are working based on usage stats");
+        return res.status(401).json({ 
+          error: "Session authentication required",
+          message: "Please authenticate with Google first"
+        });
+      }
       const { timeMin, timeMax } = req.query;
       const user = req.user as any;
 
@@ -292,6 +291,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           allCalendarEvents.push(...calendarEvents);
         } catch (error) {
           console.error(`Error fetching events from calendar ${cal.summary}:`, error);
+          // Don't break the loop, continue with next calendar
         }
       }
 
@@ -367,18 +367,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } catch (dbError) {
         console.error('Database fallback error:', dbError);
-        res.status(500).json({ error: "Failed to fetch calendar events" });
+        if (!res.headersSent) {
+          res.status(500).json({ error: "Failed to fetch calendar events" });
+        }
       }
     }
   });
 
   // Update Google Calendar Event
   app.put("/api/calendar/events/:eventId", async (req, res) => {
-    if (!req.user) {
-      return res.status(401).json({ error: "Not authenticated" });
-    }
-
     try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
       const { eventId } = req.params;
       const { startTime, endTime, calendarId } = req.body;
       const user = req.user as any;
@@ -430,17 +431,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error('Event update error:', error);
-      res.status(500).json({ error: "Failed to update calendar event" });
+      if (!res.headersSent) {
+        res.status(500).json({ error: "Failed to update calendar event" });
+      }
     }
   });
 
   // Google Drive PDF Upload
   app.post("/api/drive/upload", async (req, res) => {
-    if (!req.user) {
-      return res.status(401).json({ error: "Not authenticated" });
-    }
-
     try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
       const { filename, content, mimeType } = req.body;
       const user = req.user as any;
 
@@ -505,7 +507,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error('Drive upload error:', error);
-      res.status(500).json({ error: "Failed to upload to Google Drive" });
+      if (!res.headersSent) {
+        res.status(500).json({ error: "Failed to upload to Google Drive" });
+      }
     }
   });
 
@@ -547,7 +551,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const event = await storage.createEvent(eventData);
       res.json(event);
     } catch (error) {
-      res.status(400).json({ error: "Invalid event data" });
+      console.error('Create event error:', error);
+      if (!res.headersSent) {
+        res.status(400).json({ error: "Invalid event data", details: error instanceof Error ? error.message : 'Unknown error' });
+      }
     }
   });
 
@@ -558,7 +565,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const event = await storage.updateEvent(eventId, updates);
       res.json(event);
     } catch (error) {
-      res.status(400).json({ error: "Failed to update event" });
+      console.error('Update event error:', error);
+      if (!res.headersSent) {
+        res.status(400).json({ error: "Failed to update event", details: error instanceof Error ? error.message : 'Unknown error' });
+      }
     }
   });
 
@@ -568,7 +578,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteEvent(eventId);
       res.json({ success: true });
     } catch (error) {
-      res.status(400).json({ error: "Failed to delete event" });
+      console.error('Delete event error:', error);
+      if (!res.headersSent) {
+        res.status(400).json({ error: "Failed to delete event", details: error instanceof Error ? error.message : 'Unknown error' });
+      }
     }
   });
 
@@ -580,7 +593,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const note = await storage.getDailyNote(userId, date);
       res.json(note || { content: "" });
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch daily note" });
+      console.error('Get daily note error:', error);
+      if (!res.headersSent) {
+        res.status(500).json({ error: "Failed to fetch daily note", details: error instanceof Error ? error.message : 'Unknown error' });
+      }
     }
   });
 
@@ -590,7 +606,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const note = await storage.createOrUpdateDailyNote(noteData);
       res.json(note);
     } catch (error) {
-      res.status(400).json({ error: "Invalid note data" });
+      console.error('Create/update daily note error:', error);
+      if (!res.headersSent) {
+        res.status(400).json({ error: "Invalid note data", details: error instanceof Error ? error.message : 'Unknown error' });
+      }
     }
   });
 
