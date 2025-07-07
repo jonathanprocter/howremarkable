@@ -179,8 +179,13 @@ export const WeeklyCalendarGrid = ({
       {timeSlots.map((timeSlot, slotIndex) => (
         <div key={slotIndex} className="contents">
           {/* Time column */}
-          <div className="time-slot p-2 text-sm font-medium text-gray-600 border-r border-gray-300 bg-gray-50">
-            {timeSlot.time}
+          <div className="time-slot p-2 border-r border-gray-300 bg-gray-50">
+            <div className={cn(
+              "text-gray-600 font-medium",
+              timeSlot.minute === 0 ? "text-xs" : "text-sm" // Top of hour (smaller), 30-minute (larger)
+            )}>
+              {timeSlot.time}
+            </div>
           </div>
           
           {/* Day columns */}
