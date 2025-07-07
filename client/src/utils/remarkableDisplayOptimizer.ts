@@ -144,6 +144,21 @@ export const optimizeForEink = () => {
       box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
     }
     
+    .remarkable-optimized .appointment-name {
+      font-size: 6px !important;
+      line-height: 1.0 !important;
+      font-weight: bold;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      hyphens: auto;
+    }
+    
+    .remarkable-optimized .appointment-time {
+      font-size: 5px !important;
+      line-height: 1.0 !important;
+      opacity: 0.8;
+    }
+    
     /* SimplePractice event styling */
     .remarkable-optimized .appointment.simplepractice {
       border-color: var(--remarkable-green);
