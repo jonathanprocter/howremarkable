@@ -225,15 +225,15 @@ function generateTimeSlots(pdf: jsPDF, startX: number, startY: number, timeWidth
     pdf.setLineWidth(borderWidth);
     pdf.rect(startX, y, timeWidth, hourHeight, 'S');
     
-    // Top of hour label (now with smaller font - was 14pt, now 7pt)
-    pdf.setFont(fonts.appointmentTime.family, fonts.appointmentTime.weight); // Using appointmentTime (7pt)
-    pdf.setFontSize(fonts.appointmentTime.size);
+    // Top of hour label (larger font - 14pt)
+    pdf.setFont(fonts.timeLabel.family, fonts.timeLabel.weight); // Using timeLabel (14pt)
+    pdf.setFontSize(fonts.timeLabel.size);
     const hourLabel = `${actualHour.toString().padStart(2, '0')}:00`;
     pdf.text(hourLabel, centerX, y + (hourHeight * 0.3), { align: 'center' });
     
-    // 30-minute mark label (now with larger font - was 7pt, now 14pt)
-    pdf.setFont(fonts.timeLabel.family, fonts.timeLabel.weight); // Using timeLabel (14pt)
-    pdf.setFontSize(fonts.timeLabel.size);
+    // 30-minute mark label (smaller font - 7pt)
+    pdf.setFont(fonts.appointmentTime.family, fonts.appointmentTime.weight); // Using appointmentTime (7pt)
+    pdf.setFontSize(fonts.appointmentTime.size);
     const halfHourLabel = `${actualHour.toString().padStart(2, '0')}:30`;
     pdf.text(halfHourLabel, centerX, y + (hourHeight * 0.7), { align: 'center' });
   }

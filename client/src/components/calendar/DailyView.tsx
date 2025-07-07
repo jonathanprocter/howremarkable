@@ -305,7 +305,7 @@ export const DailyView = ({
         <div className="time-column">
           {timeSlots.map((slot, index) => (
             <div key={index} className={`time-slot ${slot.isHour ? 'hour' : ''}`}>
-              <span className={slot.minute === 0 ? 'text-xs' : 'text-sm'}>
+              <span className={slot.minute === 0 ? 'text-sm' : 'text-xs'}>
                 {slot.time}
               </span>
             </div>

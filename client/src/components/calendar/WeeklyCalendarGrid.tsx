@@ -182,7 +182,7 @@ export const WeeklyCalendarGrid = ({
           <div className="time-slot p-2 border-r border-gray-300 bg-gray-50">
             <div className={cn(
               "text-gray-600 font-medium",
-              timeSlot.minute === 0 ? "text-xs" : "text-sm" // Top of hour (smaller), 30-minute (larger)
+              timeSlot.minute === 0 ? "text-sm" : "text-xs" // Top of hour (larger), 30-minute (smaller)
             )}>
               {timeSlot.time}
             </div>
