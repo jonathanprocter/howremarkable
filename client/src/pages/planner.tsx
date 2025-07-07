@@ -134,7 +134,10 @@ export default function Planner() {
       }
     };
 
-    loadDatabaseEvents();
+    // Call the async function and catch any unhandled promise rejections
+    loadDatabaseEvents().catch(error => {
+      console.error('Unhandled error in loadDatabaseEvents:', error);
+    });
   }, []); // Run once on mount
 
   const handleDateSelect = (date: Date) => {
@@ -218,8 +221,8 @@ export default function Planner() {
     // Check if user was recently authenticated (within last few minutes)
     const recentAuth = localStorage.getItem('google_auth_recent');
     if (recentAuth && Date.now() - parseInt(recentAuth) < 300000) { // 5 minutes
-      // Force authenticated state for better UX
-      authStatus.authenticated = true;
+      // Note: We should not directly mutate authStatus here
+      // The auth state should be managed through proper hooks
       return true;
     }
     return false;
