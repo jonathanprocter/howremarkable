@@ -81,38 +81,36 @@ export const exportHTMLTemplatePDF = async (
 };
 
 function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date): void {
-  // Main border with minimal margin for maximum space usage
+  // FIXED: Main border extends to full page width for proper proportional alignment
   const margin = 10;
   pdf.setLineWidth(3);
   pdf.setDrawColor(0, 0, 0);
-  pdf.rect(margin, margin, HTML_TEMPLATE_CONFIG.pageWidth - (margin * 2), HTML_TEMPLATE_CONFIG.pageHeight - (margin * 2));
+  // Full page border - extends all the way to edges
+  pdf.rect(0, margin, HTML_TEMPLATE_CONFIG.pageWidth, HTML_TEMPLATE_CONFIG.pageHeight - (margin * 2));
   
-  // FIXED: Header box width should match the calendar grid width exactly
-  // Calculate the exact width to align with TIME column to Sunday column
-  const calendarGridWidth = HTML_TEMPLATE_CONFIG.timeColumnWidth + (7 * HTML_TEMPLATE_CONFIG.dayColumnWidth);
-  const headerStartX = margin; // Start at same position as TIME column
+  // Header content box - standard width for text content
+  const contentWidth = HTML_TEMPLATE_CONFIG.pageWidth - (margin * 2);
   
-  // Header background aligned with calendar grid
+  // Header background with standard content width
   pdf.setFillColor(255, 255, 255);
-  pdf.rect(headerStartX, margin, calendarGridWidth, HTML_TEMPLATE_CONFIG.headerHeight, 'F');
+  pdf.rect(margin, margin, contentWidth, HTML_TEMPLATE_CONFIG.headerHeight, 'F');
   
-  // Header border aligned with calendar grid
+  // Header bottom border - extends full content width
   pdf.setLineWidth(3);
-  pdf.line(headerStartX, margin + HTML_TEMPLATE_CONFIG.headerHeight, headerStartX + calendarGridWidth, margin + HTML_TEMPLATE_CONFIG.headerHeight);
+  pdf.line(margin, margin + HTML_TEMPLATE_CONFIG.headerHeight, margin + contentWidth, margin + HTML_TEMPLATE_CONFIG.headerHeight);
   
-  // Title - centered within the aligned header box
+  // Title - centered within the content area
   pdf.setFontSize(16);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(0, 0, 0);
-  const headerCenterX = headerStartX + (calendarGridWidth / 2);
-  pdf.text('WEEKLY PLANNER', headerCenterX, margin + 30, { align: 'center' });
+  pdf.text('WEEKLY PLANNER', HTML_TEMPLATE_CONFIG.pageWidth / 2, margin + 30, { align: 'center' });
   
-  // Week information - centered within the aligned header box
+  // Week information - centered within the content area  
   pdf.setFontSize(14);
   pdf.setFont('helvetica', 'bold');
   const weekNumber = getWeekNumber(weekStartDate);
   const weekText = `Week ${weekNumber} - ${weekStartDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEndDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
-  pdf.text(weekText, headerCenterX, margin + 55, { align: 'center' });
+  pdf.text(weekText, HTML_TEMPLATE_CONFIG.pageWidth / 2, margin + 55, { align: 'center' });
 }
 
 function drawStats(pdf: jsPDF, events: CalendarEvent[]): void {
