@@ -12,8 +12,8 @@ const HTML_TEMPLATE_CONFIG = {
   timeColumnWidth: 60,
   dayColumnWidth: 161, // (1190 - 60) / 7 = ~161 points per day
   
-  // Header sections - optimized spacing
-  headerHeight: 50,
+  // Header sections - increased height for better scaling alignment
+  headerHeight: 65,
   statsHeight: 40, 
   legendHeight: 30,
   
@@ -96,18 +96,18 @@ function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date): void {
   pdf.setLineWidth(3);
   pdf.line(margin, margin + HTML_TEMPLATE_CONFIG.headerHeight, margin + contentWidth, margin + HTML_TEMPLATE_CONFIG.headerHeight);
   
-  // Title - scaled down to match layout proportions
-  pdf.setFontSize(14);
+  // Title - increased size for better proportion alignment
+  pdf.setFontSize(16);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(0, 0, 0);
-  pdf.text('WEEKLY PLANNER', HTML_TEMPLATE_CONFIG.pageWidth / 2, margin + 25, { align: 'center' });
+  pdf.text('WEEKLY PLANNER', HTML_TEMPLATE_CONFIG.pageWidth / 2, margin + 30, { align: 'center' });
   
-  // Week information - include ALL information as requested in feedback
-  pdf.setFontSize(12);
+  // Week information - increased size to match header scaling
+  pdf.setFontSize(14);
   pdf.setFont('helvetica', 'bold');
   const weekNumber = getWeekNumber(weekStartDate);
   const weekText = `Week ${weekNumber} - ${weekStartDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEndDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
-  pdf.text(weekText, HTML_TEMPLATE_CONFIG.pageWidth / 2, margin + 45, { align: 'center' });
+  pdf.text(weekText, HTML_TEMPLATE_CONFIG.pageWidth / 2, margin + 55, { align: 'center' });
 }
 
 function drawStats(pdf: jsPDF, events: CalendarEvent[]): void {
