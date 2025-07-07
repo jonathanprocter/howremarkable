@@ -61,92 +61,96 @@ export const exportWeeklyRemarkable = async (
   pdf.line(REMARKABLE_CONFIG.margin, REMARKABLE_CONFIG.margin + headerHeight, 
            REMARKABLE_CONFIG.margin + REMARKABLE_CONFIG.contentWidth, REMARKABLE_CONFIG.margin + headerHeight);
   
-  // Grid setup
+  // Professional grid structure matching template
   const gridStartY = REMARKABLE_CONFIG.margin + headerHeight + 5;
   const gridHeight = REMARKABLE_CONFIG.contentHeight - headerHeight - 10;
-  const timeColumnWidth = 30;
+  const timeColumnWidth = 25; // Narrower time column
   const dayColumnWidth = (REMARKABLE_CONFIG.contentWidth - timeColumnWidth) / 7;
   
-  // Day headers
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  // Create week days array
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const date = new Date(weekStartDate);
     date.setDate(weekStartDate.getDate() + i);
     return date;
   });
   
+  // Draw main grid structure
+  pdf.setDrawColor(0, 0, 0);
+  pdf.setLineWidth(1);
+  
+  // Outer grid border
+  pdf.rect(REMARKABLE_CONFIG.margin, gridStartY, REMARKABLE_CONFIG.contentWidth, gridHeight, 'S');
+  
+  // Header row background
+  pdf.setFillColor(240, 240, 240);
+  pdf.rect(REMARKABLE_CONFIG.margin, gridStartY, REMARKABLE_CONFIG.contentWidth, 25, 'F');
+  
   // Time column header
   pdf.setFontSize(10);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('Time', REMARKABLE_CONFIG.margin + timeColumnWidth / 2, gridStartY + 8, { align: 'center' });
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('Time', REMARKABLE_CONFIG.margin + timeColumnWidth / 2, gridStartY + 15, { align: 'center' });
   
-  // Day headers with dates
+  // Day headers with proper formatting
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   days.forEach((day, index) => {
     const dayX = REMARKABLE_CONFIG.margin + timeColumnWidth + (index * dayColumnWidth);
     const dayDate = weekDays[index];
     
+    // Day name
     pdf.setFontSize(10);
     pdf.setFont('helvetica', 'bold');
-    pdf.text(day, dayX + dayColumnWidth / 2, gridStartY + 5, { align: 'center' });
+    pdf.text(day, dayX + dayColumnWidth / 2, gridStartY + 8, { align: 'center' });
     
-    pdf.setFontSize(12);
+    // Date
+    pdf.setFontSize(11);
     pdf.setFont('helvetica', 'normal');
     pdf.text(`${dayDate.getMonth() + 1}/${dayDate.getDate()}`, 
-             dayX + dayColumnWidth / 2, gridStartY + 12, { align: 'center' });
+             dayX + dayColumnWidth / 2, gridStartY + 18, { align: 'center' });
   });
   
-  // Header border line
+  // Vertical dividers
   pdf.setDrawColor(0, 0, 0);
   pdf.setLineWidth(1);
-  pdf.line(REMARKABLE_CONFIG.margin, gridStartY + 15, 
-           REMARKABLE_CONFIG.margin + REMARKABLE_CONFIG.contentWidth, gridStartY + 15);
   
-  // Vertical grid lines
-  pdf.setDrawColor(128, 128, 128);
-  pdf.setLineWidth(0.5);
-  
-  // Time column separator
-  pdf.setDrawColor(0, 0, 0);
-  pdf.setLineWidth(1);
+  // Time column divider
   pdf.line(REMARKABLE_CONFIG.margin + timeColumnWidth, gridStartY, 
            REMARKABLE_CONFIG.margin + timeColumnWidth, gridStartY + gridHeight);
   
-  // Day separators
-  pdf.setDrawColor(128, 128, 128);
-  pdf.setLineWidth(0.3);
+  // Day dividers
   for (let i = 1; i < 7; i++) {
     const x = REMARKABLE_CONFIG.margin + timeColumnWidth + (i * dayColumnWidth);
     pdf.line(x, gridStartY, x, gridStartY + gridHeight);
   }
   
-  // Time slots with better spacing
-  const timeSlots = generateTimeSlots();
-  const slotHeight = Math.max(5, (gridHeight - 15) / timeSlots.length);
+  // Header separator line
+  pdf.line(REMARKABLE_CONFIG.margin, gridStartY + 25, 
+           REMARKABLE_CONFIG.margin + REMARKABLE_CONFIG.contentWidth, gridStartY + 25);
   
-  timeSlots.forEach((slot, index) => {
-    const y = gridStartY + 15 + (index * slotHeight);
+  // Time rows - major hours only for cleaner look
+  const majorHours = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22];
+  const rowHeight = (gridHeight - 25) / majorHours.length;
+  
+  majorHours.forEach((hour, index) => {
+    const y = gridStartY + 25 + (index * rowHeight);
     
-    // Time labels only for major hours
-    if (index % 2 === 0) {
-      pdf.setFontSize(7);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(slot.time, REMARKABLE_CONFIG.margin + 2, y + 3);
-    }
+    // Time label
+    pdf.setFontSize(8);
+    pdf.setFont('helvetica', 'normal');
+    const timeStr = hour < 10 ? `0${hour}:00` : `${hour}:00`;
+    pdf.text(timeStr, REMARKABLE_CONFIG.margin + 2, y + rowHeight / 2 + 2);
     
-    // Horizontal grid lines
-    if (index % 2 === 0) {
-      pdf.setDrawColor(128, 128, 128);
+    // Horizontal grid line
+    if (index > 0) {
+      pdf.setDrawColor(180, 180, 180);
       pdf.setLineWidth(0.3);
-    } else {
-      pdf.setDrawColor(192, 192, 192);
-      pdf.setLineWidth(0.2);
+      pdf.line(REMARKABLE_CONFIG.margin, y, 
+               REMARKABLE_CONFIG.margin + REMARKABLE_CONFIG.contentWidth, y);
     }
-    pdf.line(REMARKABLE_CONFIG.margin + timeColumnWidth, y, 
-             REMARKABLE_CONFIG.margin + REMARKABLE_CONFIG.contentWidth, y);
   });
   
-  // Events with improved conflict resolution
-  const drawnEvents: { [key: string]: Array<{ startSlot: number, endSlot: number, column: number }> } = {};
+  // Events positioned in new grid structure
+  const drawnEvents: { [key: string]: Array<{ startHour: number, endHour: number, column: number }> } = {};
   
   events.forEach((event) => {
     const eventDate = new Date(event.startTime);
@@ -156,30 +160,28 @@ export const exportWeeklyRemarkable = async (
       const eventStart = new Date(event.startTime);
       const eventEnd = new Date(event.endTime);
       const startHour = eventStart.getHours();
-      const startMinute = eventStart.getMinutes();
-      const duration = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
+      const endHour = eventEnd.getHours();
+      const duration = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60 * 60); // hours
       
-      const startSlotIndex = timeSlots.findIndex(slot => 
-        slot.hour === startHour && slot.minute === startMinute
-      );
+      // Find the row index for this hour
+      const hourIndex = majorHours.indexOf(startHour);
       
-      if (startSlotIndex >= 0) {
-        const endSlotIndex = startSlotIndex + Math.ceil(duration / 30);
+      if (hourIndex >= 0) {
         const dayKey = `day-${dayIndex}`;
         
         if (!drawnEvents[dayKey]) {
           drawnEvents[dayKey] = [];
         }
         
-        // Find available column (max 2 events side by side)
+        // Find available column (max 3 events side by side)
         let column = 0;
-        const maxColumns = 2;
+        const maxColumns = 3;
         
         for (let col = 0; col < maxColumns; col++) {
           const hasConflict = drawnEvents[dayKey].some(existing => 
             existing.column === col && 
-            existing.startSlot < endSlotIndex && 
-            existing.endSlot > startSlotIndex
+            existing.startHour < endHour && 
+            existing.endHour > startHour
           );
           
           if (!hasConflict) {
@@ -189,37 +191,37 @@ export const exportWeeklyRemarkable = async (
         }
         
         drawnEvents[dayKey].push({
-          startSlot: startSlotIndex,
-          endSlot: endSlotIndex,
+          startHour: startHour,
+          endHour: endHour,
           column: column
         });
         
         // Calculate event position and size
-        const baseEventWidth = dayColumnWidth - 2;
-        const eventWidth = column > 0 ? baseEventWidth / 2 - 1 : baseEventWidth;
-        const eventX = REMARKABLE_CONFIG.margin + timeColumnWidth + (dayIndex * dayColumnWidth) + 1 + 
+        const baseEventWidth = dayColumnWidth - 4; // More margin
+        const eventWidth = maxColumns > 1 ? (baseEventWidth / maxColumns) - 1 : baseEventWidth;
+        const eventX = REMARKABLE_CONFIG.margin + timeColumnWidth + (dayIndex * dayColumnWidth) + 2 + 
                      (column * (eventWidth + 1));
-        const eventY = gridStartY + 15 + (startSlotIndex * slotHeight);
-        const eventHeight = Math.max((duration / 30) * slotHeight - 1, slotHeight * 0.6);
+        const eventY = gridStartY + 25 + (hourIndex * rowHeight) + 2;
+        const eventHeight = Math.max(duration * rowHeight - 4, rowHeight * 0.7);
         
-        // Event background and border
+        // Event background and border based on source
         if (event.source === 'google') {
-          pdf.setFillColor(235, 235, 235);
+          pdf.setFillColor(230, 230, 230);
           pdf.setDrawColor(100, 100, 100);
         } else if (event.source === 'simplepractice') {
           pdf.setFillColor(245, 245, 245);
           pdf.setDrawColor(100, 149, 237); // Cornflower blue
         } else {
-          pdf.setFillColor(250, 250, 250);
+          pdf.setFillColor(255, 255, 255);
           pdf.setDrawColor(80, 80, 80);
         }
         
-        pdf.setLineWidth(0.5);
+        pdf.setLineWidth(1);
         pdf.rect(eventX, eventY, eventWidth, eventHeight, 'FD');
         
-        // Event text
+        // Event text with proper sizing
         pdf.setTextColor(0, 0, 0);
-        pdf.setFontSize(5);
+        pdf.setFontSize(6);
         pdf.setFont('helvetica', 'bold');
         
         // Clean and format title
@@ -228,14 +230,14 @@ export const exportWeeklyRemarkable = async (
           .toUpperCase()
           .trim();
         
-        // Adjust length based on width
-        const maxChars = column > 0 ? 8 : 15;
+        // Adjust length based on column width
+        const maxChars = column > 1 ? 8 : (column > 0 ? 12 : 16);
         if (title.length > maxChars) {
           title = title.substring(0, maxChars - 3) + '...';
         }
         
         // Position title
-        pdf.text(title, eventX + 1, eventY + 3);
+        pdf.text(title, eventX + 2, eventY + 5);
         
         // Time range
         pdf.setFontSize(4);
@@ -251,7 +253,7 @@ export const exportWeeklyRemarkable = async (
           hour12: false 
         });
         const timeRange = `${startTime}-${endTime}`;
-        pdf.text(timeRange, eventX + 1, eventY + eventHeight - 1);
+        pdf.text(timeRange, eventX + 2, eventY + eventHeight - 2);
       }
     }
   });
@@ -379,16 +381,22 @@ export const exportDailyRemarkable = async (
       pdf.setLineWidth(0.5);
       pdf.rect(eventX, eventY, eventWidth, eventHeight, 'FD');
       
-      // Event text
+      // Event text with improved readability
       pdf.setTextColor(0, 0, 0);
-      pdf.setFontSize(7);
+      pdf.setFontSize(8);
       pdf.setFont('helvetica', 'bold');
       
-      const title = event.title.replace(/ Appointment$/, '').toUpperCase();
-      pdf.text(title, eventX + 2, eventY + 5);
+      let title = event.title.replace(/ Appointment$/, '').toUpperCase().trim();
       
-      // Time range
-      pdf.setFontSize(6);
+      // Better text wrapping for daily view
+      if (title.length > 25) {
+        title = title.substring(0, 22) + '...';
+      }
+      
+      pdf.text(title, eventX + 3, eventY + 6);
+      
+      // Time range with better visibility
+      pdf.setFontSize(7);
       pdf.setFont('helvetica', 'normal');
       const timeRange = `${eventStart.toLocaleTimeString('en-US', { 
         hour: '2-digit', 
@@ -399,7 +407,7 @@ export const exportDailyRemarkable = async (
         minute: '2-digit', 
         hour12: false 
       })}`;
-      pdf.text(timeRange, eventX + 2, eventY + eventHeight - 2);
+      pdf.text(timeRange, eventX + 3, eventY + eventHeight - 3);
     }
   });
   
