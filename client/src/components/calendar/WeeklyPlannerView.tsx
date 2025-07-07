@@ -79,17 +79,28 @@ export const WeeklyPlannerView = ({
   };
 
   const renderTimeSlotEvents = (date: Date, slot: any, slotIndex: number) => {
-    const dayEvents = events.filter(event => 
-      new Date(event.startTime).toDateString() === date.toDateString()
-    );
+    const dayEvents = events.filter(event => {
+      try {
+        if (!event || !event.startTime) return false;
+        return new Date(event.startTime).toDateString() === date.toDateString();
+      } catch (error) {
+        console.error('Error filtering day events:', error);
+        return false;
+      }
+    });
 
     const slotEvents = dayEvents.filter(event => {
-      const eventDate = new Date(event.startTime);
-      const eventStartMinutes = eventDate.getHours() * 60 + eventDate.getMinutes();
-      const slotStartMinutes = slot.hour * 60 + slot.minute;
+      try {
+        const eventDate = new Date(event.startTime);
+        const eventStartMinutes = eventDate.getHours() * 60 + eventDate.getMinutes();
+        const slotStartMinutes = slot.hour * 60 + slot.minute;
 
-      return eventStartMinutes >= slotStartMinutes && 
-             eventStartMinutes < slotStartMinutes + 30;
+        return eventStartMinutes >= slotStartMinutes && 
+               eventStartMinutes < slotStartMinutes + 30;
+      } catch (error) {
+        console.error('Error filtering slot events:', error);
+        return false;
+      }
     });
 
     return slotEvents.map(event => {

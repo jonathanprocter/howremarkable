@@ -83,7 +83,7 @@ export const WeeklyCalendarGrid = ({
     try {
       return events.filter(event => {
         if (!event || !event.startTime || !event.endTime) return false;
-        
+
         const eventDate = new Date(event.startTime);
 
         // Filter out all-day events from time slots
