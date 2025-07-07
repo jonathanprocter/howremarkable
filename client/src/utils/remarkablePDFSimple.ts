@@ -96,7 +96,7 @@ export const exportWeeklyRemarkable = async (
   
   // Time slots
   const timeSlots = generateTimeSlots();
-  const slotHeight = (gridHeight - 15) / timeSlots.length;
+  const slotHeight = Math.max(12, (gridHeight - 15) / timeSlots.length); // Minimum 12 units for readability
   
   timeSlots.forEach((slot, index) => {
     const y = gridStartY + 15 + (index * slotHeight);
@@ -156,8 +156,21 @@ export const exportWeeklyRemarkable = async (
         pdf.setTextColor(0, 0, 0);
         pdf.setFontSize(6);
         pdf.setFont('times', 'bold');
-        const titleLines = pdf.splitTextToSize(event.title, eventWidth - 4);
-        pdf.text(titleLines[0] || event.title, eventX + 2, eventY + 4);
+        
+        // Clean up title - remove "Appointment" and excessive words
+        let cleanTitle = event.title
+          .replace(/ Appointment$/, '')
+          .replace(/^(.{20}).*/, '$1...')  // Truncate if too long
+          .trim();
+        
+        // Split title into multiple lines if needed
+        const titleLines = pdf.splitTextToSize(cleanTitle, eventWidth - 4);
+        const maxLines = Math.floor(eventHeight / 4) - 1; // Leave space for time
+        
+        // Draw title lines
+        for (let i = 0; i < Math.min(titleLines.length, maxLines); i++) {
+          pdf.text(titleLines[i], eventX + 2, eventY + 5 + (i * 4));
+        }
         
         // Event time
         pdf.setFontSize(5);
@@ -167,7 +180,8 @@ export const exportWeeklyRemarkable = async (
           minute: '2-digit', 
           hour12: false 
         });
-        pdf.text(timeStr, eventX + 2, eventY + 8);
+        const timeY = eventY + eventHeight - 3;
+        pdf.text(timeStr, eventX + 2, timeY);
       }
     }
   });
