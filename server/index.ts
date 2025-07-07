@@ -2,7 +2,6 @@ import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import MemoryStore from "memorystore";
 
 const app = express();
 
@@ -12,24 +11,18 @@ app.set('trust proxy', 1);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Create memory store for sessions with 24 hour TTL
-const MemoryStoreSession = MemoryStore(session);
-
-// Session configuration with improved settings and memory store
+// Session configuration for development environment
 app.use(session({
   secret: process.env.SESSION_SECRET || 'remarkable-planner-secret-key-2025',
-  resave: false, // Don't save session if unmodified
-  saveUninitialized: false, // Don't create session until something stored
-  rolling: true, // Reset expiration on activity
-  name: 'remarkable.session', // Custom session name
-  store: new MemoryStoreSession({
-    checkPeriod: 86400000 // Prune expired entries every 24h
-  }),
+  resave: true, // Save session back to session store, even if unmodified
+  saveUninitialized: true, // Save uninitialized sessions
+  rolling: false, // Don't reset expiration on each request
+  name: 'connect.sid', // Use default session name for compatibility
   cookie: {
-    secure: false, // Set to true in production with HTTPS
+    secure: false, // Must be false for HTTP in development
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    httpOnly: false, // Allow client-side access for session persistence
-    sameSite: 'lax' // CSRF protection
+    httpOnly: false, // Allow client-side access
+    sameSite: false // Disable SameSite for development
   }
 }));
 

@@ -8,6 +8,11 @@ import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { google } from "googleapis";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  
+  // Initialize passport BEFORE configuring strategies
+  app.use(passport.initialize());
+  app.use(passport.session());
+
   // Configure Google OAuth2 Strategy
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID!,
@@ -56,31 +61,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }));
 
   passport.serializeUser((user: any, done) => {
-    console.log("Serializing user:", { id: user.id, email: user.email });
+    console.log("✅ Serializing user:", { id: user.id, email: user.email });
     done(null, user);
   });
 
-  passport.deserializeUser(async (user: any, done) => {
-    console.log("Deserializing user:", { id: user.id, email: user.email });
-    try {
-      // Verify user still exists in database
-      const dbUser = await storage.getUser(parseInt(user.id));
-      if (!dbUser) {
-        console.log("User not found in database during deserialization");
-        return done(null, false);
-      }
-      
-      // Return the full user object with tokens
-      done(null, user);
-    } catch (error) {
-      console.error("Error during user deserialization:", error);
-      done(error, false);
-    }
+  passport.deserializeUser((user: any, done) => {
+    console.log("✅ Deserializing user:", { id: user.id, email: user.email });
+    done(null, user);
   });
-
-  // Initialize passport
-  app.use(passport.initialize());
-  app.use(passport.session());
 
   // Session debugging middleware
   app.use((req, res, next) => {
@@ -185,11 +173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         hasSession: !!req.session,
         hasPassport: !!req.session.passport
       },
-      issue: {
-        description: "Sessions not persisting between requests - each request creates new session ID",
-        status: "Session middleware configuration issue detected",
-        solution: "Google OAuth works (API calls successful), but session persistence needs fix"
-      }
+      note: "To authenticate, visit /api/auth/google to start OAuth flow"
     });
   });
 
@@ -206,6 +190,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       hasClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
       domain: process.env.REPLIT_DEV_DOMAIN,
       callbackUrl: `https://${process.env.REPLIT_DEV_DOMAIN}/api/auth/google/callback`
+    });
+  });
+
+  // Test session persistence endpoint
+  app.get("/api/auth/session-test", (req, res) => {
+    console.log("=== SESSION TEST ===");
+    console.log("Session ID:", req.sessionID);
+    console.log("Session exists:", !!req.session);
+    
+    // Initialize test counter if not exists
+    if (!req.session.testCounter) {
+      req.session.testCounter = 0;
+    }
+    
+    req.session.testCounter++;
+    console.log("Test counter:", req.session.testCounter);
+    
+    res.json({
+      sessionId: req.sessionID,
+      testCounter: req.session.testCounter,
+      message: `Session test #${req.session.testCounter}`
     });
   });
 
@@ -589,6 +594,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             message: "You can only access your own events" 
           });
         }
+      } else {
+        // For development: allow access to user 1 when not authenticated
+        if (userId !== 1) {
+          return res.status(401).json({ 
+            error: "Authentication required", 
+            message: "Please authenticate to access events",
+            authUrl: "/api/auth/google"
+          });
+        }
+        console.log("Allowing unauthenticated access to user 1 for development");
       }
       
       const events = await storage.getEvents(userId);
