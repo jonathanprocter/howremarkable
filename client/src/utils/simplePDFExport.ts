@@ -175,9 +175,9 @@ export const exportWeeklyRemarkable = async (
       
       // Event box with exact template blue styling
       pdf.setFillColor(173, 216, 230); // Light blue matching template exactly
-      pdf.setDrawColor(95, 158, 160); // Cadet blue border
-      pdf.setLineWidth(0.5);
-      pdf.rect(dayX + 1, eventY + 1, dayColumnWidth - 2, eventHeight - 2, 'FD');
+      pdf.setDrawColor(105, 138, 160); // Subtle border
+      pdf.setLineWidth(0.3);
+      pdf.rect(dayX + 0.8, eventY + 0.5, dayColumnWidth - 1.6, eventHeight - 1, 'FD');
       
       // Event title (remove "Appointment" suffix)
       let eventTitle = event.title.replace(/\s*Appointment\s*$/i, '').trim();
@@ -201,29 +201,29 @@ export const exportWeeklyRemarkable = async (
         titleLines.push(eventTitle);
       }
       
-      // Draw title lines with exact template styling
+      // Draw title lines with perfect template styling
       pdf.setTextColor(0, 0, 0);
-      pdf.setFontSize(6.5);
+      pdf.setFontSize(6);
       pdf.setFont('helvetica', 'bold');
       titleLines.slice(0, 2).forEach((line, lineIndex) => {
-        pdf.text(line, dayX + 2, eventY + 6 + (lineIndex * 4));
+        pdf.text(line, dayX + 1.5, eventY + 5 + (lineIndex * 3.5));
       });
       
-      // Event time range with template format
+      // Event time range with template format at bottom
       const startTimeStr = `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}`;
       const endTimeStr = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
       const timeRange = `${startTimeStr}-${endTimeStr}`;
       
-      pdf.setFontSize(5);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(50, 50, 50);
-      pdf.text(timeRange, dayX + 2, eventY + eventHeight - 6);
-      
-      // Duration matching template format
-      const durationMinutes = Math.round((eventEnd.getTime() - eventStart.getTime()) / (1000 * 60));
-      pdf.setTextColor(90, 90, 90);
       pdf.setFontSize(4.5);
-      pdf.text(`${durationMinutes}min`, dayX + 2, eventY + eventHeight - 2);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(60, 60, 60);
+      pdf.text(timeRange, dayX + 1.5, eventY + eventHeight - 3);
+      
+      // Duration on same line as time
+      const durationMinutes = Math.round((eventEnd.getTime() - eventStart.getTime()) / (1000 * 60));
+      pdf.setTextColor(80, 80, 80);
+      pdf.setFontSize(4.5);
+      pdf.text(`${durationMinutes}min`, dayX + dayColumnWidth - 15, eventY + eventHeight - 3);
     }
   });
 
