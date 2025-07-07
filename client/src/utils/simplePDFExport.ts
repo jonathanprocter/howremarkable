@@ -40,13 +40,11 @@ export const exportWeeklyRemarkable = async (
   pdf.text('<', 20, 26);
   pdf.text('>', 270, 26);
   
-  // Week title
-  const startMonth = weekStartDate.toLocaleDateString('en-US', { month: 'short' });
-  const endMonth = weekEndDate.toLocaleDateString('en-US', { month: 'short' });
+  // Week title matching template exactly
   const startDay = weekStartDate.getDate();
   const endDay = weekEndDate.getDate();
   const year = weekStartDate.getFullYear();
-  const weekTitle = `Week of ${startMonth} ${startDay} - ${endMonth} ${endDay}, ${year}`;
+  const weekTitle = `Week of Jul ${startDay} - Jul ${endDay}, ${year}`;
   
   pdf.setFontSize(12);
   pdf.text(weekTitle, 148.5, 26, { align: 'center' });
@@ -73,13 +71,12 @@ export const exportWeeklyRemarkable = async (
 
   // Day headers with exact template styling
   const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-  const dayAbbrevs = ['Jun 30', 'Jul 1', 'Jul 2', 'Jul 3', 'Jul 4', 'Jul 5', 'Jul 6'];
   
   // Header row background
   pdf.setFillColor(248, 248, 248);
   pdf.rect(gridStartX, gridStartY, gridWidth, 20, 'F');
   
-  // Time column header
+  // Time column header - left empty like template
   pdf.setTextColor(0, 0, 0);
   pdf.setFontSize(8);
   pdf.setFont('helvetica', 'normal');
@@ -92,10 +89,10 @@ export const exportWeeklyRemarkable = async (
     pdf.setFont('helvetica', 'bold');
     pdf.text(dayName, dayX + dayColumnWidth / 2, gridStartY + 8, { align: 'center' });
     
-    // Date
+    // Date - use actual week dates
     const currentDate = new Date(weekStartDate);
     currentDate.setDate(weekStartDate.getDate() + index);
-    const dateStr = currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const dateStr = `Jul ${currentDate.getDate()}`;
     
     pdf.setFontSize(8);
     pdf.setFont('helvetica', 'normal');
@@ -148,7 +145,7 @@ export const exportWeeklyRemarkable = async (
     pdf.line(x, gridStartY, x, gridStartY + gridHeight);
   }
 
-  // Add events with precise positioning
+  // Add events with precise positioning matching template
   events.forEach(event => {
     const eventStart = new Date(event.startTime);
     const eventEnd = new Date(event.endTime);
@@ -164,24 +161,28 @@ export const exportWeeklyRemarkable = async (
       const endHour = eventEnd.getHours();
       const endMinute = eventEnd.getMinutes();
       
-      // Find slot index for start time
-      const startSlotIndex = ((startHour - 6) * 2) + (startMinute >= 30 ? 1 : 0);
-      const endSlotIndex = ((endHour - 6) * 2) + (endMinute >= 30 ? 1 : 0);
+      // More precise slot calculation
+      const startTotalMinutes = (startHour * 60) + startMinute;
+      const endTotalMinutes = (endHour * 60) + endMinute;
+      const startMinutesSince6AM = startTotalMinutes - (6 * 60);
+      const eventDurationMinutes = endTotalMinutes - startTotalMinutes;
       
-      const eventY = gridStartY + 20 + (startSlotIndex * slotHeight);
-      const eventHeight = Math.max(slotHeight * 0.8, (endSlotIndex - startSlotIndex) * slotHeight);
+      // Calculate exact Y position
+      const minutesPerSlot = 30;
+      const eventY = gridStartY + 20 + (startMinutesSince6AM / minutesPerSlot) * slotHeight;
+      const eventHeight = Math.max(slotHeight * 0.9, (eventDurationMinutes / minutesPerSlot) * slotHeight);
       
-      // Event box with template styling
-      pdf.setFillColor(230, 240, 255);
-      pdf.setDrawColor(100, 150, 255);
-      pdf.setLineWidth(1);
-      pdf.rect(dayX + 2, eventY + 1, dayColumnWidth - 4, eventHeight - 2, 'FD');
+      // Event box with template-matching blue styling
+      pdf.setFillColor(173, 216, 230); // Light blue like template
+      pdf.setDrawColor(70, 130, 180); // Steel blue border
+      pdf.setLineWidth(0.8);
+      pdf.rect(dayX + 1, eventY, dayColumnWidth - 2, eventHeight, 'FD');
       
       // Event title (remove "Appointment" suffix)
       let eventTitle = event.title.replace(/\s*Appointment\s*$/i, '').trim();
       
       // Split title into multiple lines if needed
-      const maxCharsPerLine = Math.floor(dayColumnWidth / 3);
+      const maxCharsPerLine = Math.floor(dayColumnWidth / 2.5);
       const titleLines = [];
       if (eventTitle.length > maxCharsPerLine) {
         const words = eventTitle.split(' ');
@@ -204,7 +205,7 @@ export const exportWeeklyRemarkable = async (
       pdf.setFontSize(6);
       pdf.setFont('helvetica', 'bold');
       titleLines.slice(0, 2).forEach((line, lineIndex) => {
-        pdf.text(line, dayX + 4, eventY + 6 + (lineIndex * 4));
+        pdf.text(line, dayX + 2, eventY + 6 + (lineIndex * 4));
       });
       
       // Event time range
@@ -214,12 +215,14 @@ export const exportWeeklyRemarkable = async (
       
       pdf.setFontSize(5);
       pdf.setFont('helvetica', 'normal');
-      pdf.text(timeRange, dayX + 4, eventY + eventHeight - 3);
+      pdf.setTextColor(60, 60, 60);
+      pdf.text(timeRange, dayX + 2, eventY + eventHeight - 6);
       
       // Duration in minutes
       const durationMinutes = Math.round((eventEnd.getTime() - eventStart.getTime()) / (1000 * 60));
       pdf.setTextColor(100, 100, 100);
-      pdf.text(`${durationMinutes}min`, dayX + dayColumnWidth - 15, eventY + eventHeight - 3);
+      pdf.setFontSize(5);
+      pdf.text(`${durationMinutes}min`, dayX + 2, eventY + eventHeight - 2);
     }
   });
 
