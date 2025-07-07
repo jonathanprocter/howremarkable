@@ -170,54 +170,75 @@ function drawLegend(pdf: jsPDF): void {
   const contentWidth = HTML_TEMPLATE_CONFIG.pageWidth - (margin * 2);
   const legendY = margin + HTML_TEMPLATE_CONFIG.headerHeight + HTML_TEMPLATE_CONFIG.statsHeight;
   
-  // Legend background
+  // Legend background with visible white fill
   pdf.setFillColor(255, 255, 255);
   pdf.rect(margin, legendY, contentWidth, HTML_TEMPLATE_CONFIG.legendHeight, 'F');
   
-  // Legend border
-  pdf.setLineWidth(3);
-  pdf.line(margin, legendY + HTML_TEMPLATE_CONFIG.legendHeight, margin + contentWidth, legendY + HTML_TEMPLATE_CONFIG.legendHeight);
+  // Strong legend border for visibility
+  pdf.setLineWidth(2);
+  pdf.setDrawColor(0, 0, 0);
+  pdf.rect(margin, legendY, contentWidth, HTML_TEMPLATE_CONFIG.legendHeight);
   
-  // Legend items
+  // Legend title - larger and bolder
+  pdf.setFontSize(14);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('Calendar Legend', margin + 20, legendY + 18);
+  
+  // Legend items with enhanced visibility
   const legendItems = [
-    { label: 'SimplePractice', color: { r: 66, g: 133, b: 244 }, style: 'solid' },
+    { label: 'SimplePractice', color: { r: 66, g: 133, b: 244 }, style: 'left-border' },
     { label: 'Google Calendar', color: { r: 52, g: 168, b: 83 }, style: 'dashed' },
-    { label: 'US Holidays', color: { r: 251, g: 188, b: 4 }, style: 'solid' }
+    { label: 'US Holidays', color: { r: 251, g: 188, b: 4 }, style: 'filled' }
   ];
   
   let x = margin + 20;
   legendItems.forEach(item => {
-    // Legend symbol
-    pdf.setFillColor(255, 255, 255);
-    pdf.rect(x, legendY + 12, 16, 12, 'F');
+    const symbolY = legendY + 25;
+    const symbolSize = 20;
     
     if (item.style === 'dashed') {
+      // Google Calendar - dashed green border
+      pdf.setFillColor(255, 255, 255);
+      pdf.rect(x, symbolY, symbolSize, symbolSize, 'F');
+      
       pdf.setDrawColor(item.color.r, item.color.g, item.color.b);
       pdf.setLineWidth(2);
-      pdf.setLineDashPattern([3, 3], 0);
-      pdf.rect(x, legendY + 12, 16, 12);
+      pdf.setLineDashPattern([4, 2], 0);
+      pdf.rect(x, symbolY, symbolSize, symbolSize);
       pdf.setLineDashPattern([], 0);
-    } else {
-      pdf.setDrawColor(204, 204, 204);
-      pdf.setLineWidth(2);
-      pdf.rect(x, legendY + 12, 16, 12);
-      if (item.label === 'SimplePractice') {
-        pdf.setDrawColor(item.color.r, item.color.g, item.color.b);
-        pdf.setLineWidth(6);
-        pdf.line(x, legendY + 12, x, legendY + 24);
-      } else if (item.label === 'US Holidays') {
-        pdf.setFillColor(item.color.r, item.color.g, item.color.b);
-        pdf.rect(x, legendY + 12, 16, 12, 'F');
-      }
+    } else if (item.style === 'left-border') {
+      // SimplePractice - white box with blue left border
+      pdf.setFillColor(255, 255, 255);
+      pdf.rect(x, symbolY, symbolSize, symbolSize, 'F');
+      
+      // Regular gray border
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(1);
+      pdf.rect(x, symbolY, symbolSize, symbolSize);
+      
+      // Blue left border (thick)
+      pdf.setDrawColor(item.color.r, item.color.g, item.color.b);
+      pdf.setLineWidth(4);
+      pdf.line(x, symbolY, x, symbolY + symbolSize);
+    } else if (item.style === 'filled') {
+      // US Holidays - solid yellow filled box
+      pdf.setFillColor(item.color.r, item.color.g, item.color.b);
+      pdf.rect(x, symbolY, symbolSize, symbolSize, 'F');
+      
+      // Dark border for contrast
+      pdf.setDrawColor(0, 0, 0);
+      pdf.setLineWidth(1);
+      pdf.rect(x, symbolY, symbolSize, symbolSize);
     }
     
-    // Legend text
-    pdf.setFontSize(9);
+    // Legend text - larger and positioned better
+    pdf.setFontSize(12);
     pdf.setFont('helvetica', 'normal');
     pdf.setTextColor(0, 0, 0);
-    pdf.text(item.label, x + 22, legendY + 18);
+    pdf.text(item.label, x + symbolSize + 8, symbolY + 13);
     
-    x += 120;
+    x += 150; // More spacing between legend items
   });
 }
 
