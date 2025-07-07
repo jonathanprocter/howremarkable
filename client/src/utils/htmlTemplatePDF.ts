@@ -284,19 +284,19 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
     } else {
       pdf.setFillColor(240, 240, 240); // Slightly darker for half-hour slots
     }
-    pdf.rect(0, y, HTML_TEMPLATE_CONFIG.timeColumnWidth, HTML_TEMPLATE_CONFIG.timeSlotHeight, 'F');
+    pdf.rect(margin, y, HTML_TEMPLATE_CONFIG.timeColumnWidth, HTML_TEMPLATE_CONFIG.timeSlotHeight, 'F');
     
     pdf.setLineWidth(isHour ? 2 : 1);
     pdf.setDrawColor(0, 0, 0);
-    pdf.rect(0, y, HTML_TEMPLATE_CONFIG.timeColumnWidth, HTML_TEMPLATE_CONFIG.timeSlotHeight);
+    pdf.rect(margin, y, HTML_TEMPLATE_CONFIG.timeColumnWidth, HTML_TEMPLATE_CONFIG.timeSlotHeight);
     
     pdf.setFontSize(isHour ? 9 : 8);
     pdf.setFont('helvetica', 'bold');
-    pdf.text(timeSlot, HTML_TEMPLATE_CONFIG.timeColumnWidth / 2, y + HTML_TEMPLATE_CONFIG.timeSlotHeight / 2 + 3, { align: 'center' });
+    pdf.text(timeSlot, margin + HTML_TEMPLATE_CONFIG.timeColumnWidth / 2, y + HTML_TEMPLATE_CONFIG.timeSlotHeight / 2 + 3, { align: 'center' });
     
     // Calendar cells for each day
     for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
-      const x = HTML_TEMPLATE_CONFIG.timeColumnWidth + (dayIndex * HTML_TEMPLATE_CONFIG.dayColumnWidth);
+      const x = margin + HTML_TEMPLATE_CONFIG.timeColumnWidth + (dayIndex * HTML_TEMPLATE_CONFIG.dayColumnWidth);
       
       // Cell background
       pdf.setFillColor(255, 255, 255);
