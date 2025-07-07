@@ -9,7 +9,7 @@ import { DailyView } from '../components/calendar/DailyView';
 import { CalendarLegend } from '../components/calendar/CalendarLegend';
 import { CalendarEvent } from '../types/calendar';
 import { useToast } from '@/hooks/use-toast';
-import { exportWeeklyToPDF, exportDailyToPDF, exportWeeklyPackageToPDF, generateFilename } from '../utils/pdfExportNew';
+import { exportWeeklyToPDF, exportDailyToPDF, exportWeeklyPackageToPDF, generateFilename } from '../utils/pdfExportSimple';
 import { getWeekNumber } from '../utils/dateUtils';
 
 export default function Planner() {
