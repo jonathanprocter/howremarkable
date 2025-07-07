@@ -2,25 +2,51 @@ import jsPDF from 'jspdf';
 import { CalendarEvent } from '../types/calendar';
 import { formatWeekRange } from './dateUtils';
 
-// EXACT CSS Grid replication from HTML template
+// EXACT CSS Grid replication from HTML template with precise positioning
 const CSS_GRID_SPECS = {
-  // CSS Grid template from HTML:
-  // grid-template-columns: 100px repeat(7, 1fr)
-  // grid-template-rows: 80px repeat(16, 60px)
-  
-  // Page: 11" x 8.5" landscape, 0.3" margins
+  // Page: 11" x 8.5" landscape, 0.4" margins (matching CSS @page)
   pageWidth: 279.4,    // 11" in mm
   pageHeight: 215.9,   // 8.5" in mm
-  margin: 7.62,        // 0.3" in mm
+  margin: 10.16,       // 0.4" in mm (matching CSS @page margin)
   
   // CSS pixel to mm conversion (96 DPI standard)
   pxToMm: 25.4 / 96,   // 0.264583mm per pixel
   
-  // Exact CSS Grid dimensions
+  // Exact CSS Grid dimensions from template
   timeColumnPx: 100,   // 100px time column
   dayHeaderPx: 80,     // 80px day header row
   hourSlotPx: 60,      // 60px per hour slot
   totalHours: 16,      // 16 hours (6AM-9PM)
+  
+  // CRITICAL: Exact appointment positioning from CSS classes
+  // .appointment.time-06-00 { top: 80px; }
+  // .appointment.time-07-00 { top: 140px; }
+  // etc. - each hour increases by 60px
+  timeSlotPositions: {
+    6: 80,   // 6AM at 80px
+    7: 140,  // 7AM at 140px
+    8: 200,  // 8AM at 200px
+    9: 260,  // 9AM at 260px
+    10: 320, // 10AM at 320px
+    11: 380, // 11AM at 380px
+    12: 440, // 12PM at 440px
+    13: 500, // 1PM at 500px
+    14: 560, // 2PM at 560px
+    15: 620, // 3PM at 620px
+    16: 680, // 4PM at 680px
+    17: 740, // 5PM at 740px
+    18: 800, // 6PM at 800px
+    19: 860, // 7PM at 860px
+    20: 920, // 8PM at 920px
+    21: 980  // 9PM at 980px
+  },
+  
+  // Duration height classes from CSS
+  durationHeights: {
+    30: 25,  // .duration-30 { height: 25px; }
+    60: 50,  // .duration-60 { height: 50px; }
+    90: 75   // .duration-90 { height: 75px; }
+  },
   
   // Convert to mm
   get timeColumnMm() { return this.timeColumnPx * this.pxToMm; },
@@ -31,30 +57,29 @@ const CSS_GRID_SPECS = {
   get contentWidth() { return this.pageWidth - (2 * this.margin); },
   get contentHeight() { return this.pageHeight - (2 * this.margin); },
   
-  // Day columns: (content width - time column) / 7 days
+  // Day columns: exact calculation from CSS
+  // .appointment.col-mon { left: 102px; width: calc((100% - 102px) / 7 - 6px); }
   get dayColumnMm() { return (this.contentWidth - this.timeColumnMm) / 7; },
   
-  // Grid totals
-  get gridTotalHeight() { return this.dayHeaderMm + (this.totalHours * this.hourSlotMm); },
-  
   // Header space above grid
-  headerSpace: 15,  // 15mm for title and stats
+  headerSpace: 20,  // Compact header
   
-  // Typography exactly matching template
+  // Typography exactly matching template font sizes
   fonts: {
-    title: { size: 14, family: 'times', weight: 'bold' },
-    stats: { size: 8, family: 'times', weight: 'normal' },
-    dayName: { size: 12, family: 'times', weight: 'bold' },
-    dayDate: { size: 16, family: 'times', weight: 'bold' },
-    timeLabel: { size: 10, family: 'times', weight: 'bold' },
-    appointment: { size: 7, family: 'times', weight: 'bold' },
-    appointmentTime: { size: 6, family: 'times', weight: 'normal' }
+    title: { size: 16, family: 'times', weight: 'bold' },
+    weekInfo: { size: 12, family: 'times', weight: 'bold' },
+    dayName: { size: 14, family: 'times', weight: 'bold' },
+    dayDate: { size: 20, family: 'times', weight: 'bold' },
+    timeLabel: { size: 14, family: 'times', weight: 'bold' },
+    appointmentText: { size: 8, family: 'times', weight: 'bold' },  // .appointment-text
+    appointmentTime: { size: 7, family: 'times', weight: 'normal' } // .appointment-time
   },
   
   // E-ink optimized styling
-  borderWidth: 0.5,  // Thicker borders for e-ink
-  lightGray: [245, 245, 245],
-  darkGray: [200, 200, 200],
+  borderWidth: 0.8,  // 3px borders converted to mm
+  lightGray: [248, 248, 248],  // #f8f8f8
+  mediumGray: [240, 240, 240], // #f0f0f0
+  appointmentGray: [245, 245, 245], // #f5f5f5
   black: [0, 0, 0]
 };
 
@@ -217,8 +242,8 @@ function generateDayGrid(pdf: jsPDF, startX: number, startY: number, dayWidth: n
   }
 }
 
-function generateAppointments(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent[], startX: number, startY: number, dayWidth: number, hourHeight: number): void {
-  const { fonts } = CSS_GRID_SPECS;
+function generateAppointments(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent[], gridStartX: number, gridStartY: number, dayWidth: number, hourHeight: number): void {
+  const { fonts, timeSlotPositions, durationHeights, pxToMm, appointmentGray, black } = CSS_GRID_SPECS;
   
   // Filter events for this week
   const weekEvents = events.filter(event => {
@@ -236,41 +261,75 @@ function generateAppointments(pdf: jsPDF, weekStartDate: Date, events: CalendarE
     const dayIndex = Math.floor((eventStart.getTime() - weekStartDate.getTime()) / (24 * 60 * 60 * 1000));
     if (dayIndex < 0 || dayIndex > 6) return;
     
-    // Calculate hour position (0-15 for 6AM-9PM)
+    // Get exact hour (6-21)
     const startHour = eventStart.getHours();
-    const startMinute = eventStart.getMinutes();
-    const hourIndex = startHour - 6; // Offset by 6AM
+    if (startHour < 6 || startHour > 21) return;
     
-    if (hourIndex < 0 || hourIndex >= 16) return;
+    // Use exact CSS positioning values
+    const cssTopPosition = timeSlotPositions[startHour as keyof typeof timeSlotPositions];
+    if (!cssTopPosition) return;
     
-    // Calculate position and size
-    const x = startX + (dayIndex * dayWidth);
-    const y = startY + (hourIndex * hourHeight) + (startMinute / 60 * hourHeight);
-    const duration = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60); // minutes
-    const height = Math.min(duration / 60 * hourHeight, hourHeight * 2); // Max 2 hours
+    // Convert CSS pixel position to PDF mm position
+    const appointmentY = gridStartY + (cssTopPosition * pxToMm);
     
-    // Draw appointment block
-    pdf.setFillColor(240, 240, 240);
-    pdf.rect(x + 1, y, dayWidth - 2, height, 'F');
-    pdf.setLineWidth(0.5);
-    pdf.rect(x + 1, y, dayWidth - 2, height, 'S');
+    // Calculate appointment X position for day column
+    // CSS: .appointment.col-mon { left: 102px; width: calc((100% - 102px) / 7 - 6px); }
+    const appointmentX = gridStartX + (dayIndex * dayWidth) + (1 * pxToMm); // 1px padding
+    const appointmentWidth = dayWidth - (6 * pxToMm); // -6px from CSS
     
-    // Clean appointment title
-    let title = event.title;
-    if (title.includes('Appointment')) {
-      title = title.replace(' Appointment', '');
+    // Calculate duration and height
+    const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
+    let appointmentHeight: number;
+    
+    if (durationMinutes <= 30) {
+      appointmentHeight = durationHeights[30] * pxToMm;
+    } else if (durationMinutes <= 60) {
+      appointmentHeight = durationHeights[60] * pxToMm;
+    } else {
+      appointmentHeight = durationHeights[90] * pxToMm;
     }
     
-    // Appointment title
-    pdf.setFont(fonts.appointment.family, fonts.appointment.weight);
-    pdf.setFontSize(fonts.appointment.size);
-    pdf.text(title, x + 2, y + 4, { maxWidth: dayWidth - 4 });
+    // Draw appointment background (matching CSS .appointment.simplepractice)
+    pdf.setFillColor(...appointmentGray);
+    pdf.rect(appointmentX, appointmentY, appointmentWidth, appointmentHeight, 'F');
     
-    // Appointment time
+    // Draw appointment border (2px solid black + 6px left border for SimplePractice)
+    pdf.setDrawColor(...black);
+    pdf.setLineWidth(0.5);
+    pdf.rect(appointmentX, appointmentY, appointmentWidth, appointmentHeight, 'S');
+    
+    // Thick left border for SimplePractice appointments
+    if (event.title.includes('Appointment')) {
+      pdf.setLineWidth(1.5); // 6px in CSS
+      pdf.line(appointmentX, appointmentY, appointmentX, appointmentY + appointmentHeight);
+    }
+    
+    // Clean appointment title (.appointment-text styling)
+    let cleanTitle = event.title;
+    if (cleanTitle.includes(' Appointment')) {
+      cleanTitle = cleanTitle.replace(' Appointment', '');
+    }
+    
+    // Appointment text (font-size: 8px, font-weight: bold, text-transform: uppercase)
+    pdf.setFont(fonts.appointmentText.family, fonts.appointmentText.weight);
+    pdf.setFontSize(fonts.appointmentText.size);
+    pdf.setTextColor(...black);
+    
+    // Truncate text to fit width
+    const maxWidth = appointmentWidth - (3 * pxToMm); // 3px padding
+    pdf.text(cleanTitle.toUpperCase(), appointmentX + (3 * pxToMm), appointmentY + (4 * pxToMm), { 
+      maxWidth: maxWidth 
+    });
+    
+    // Appointment time (.appointment-time styling: font-size: 7px, margin-top: 1px)
     pdf.setFont(fonts.appointmentTime.family, fonts.appointmentTime.weight);
     pdf.setFontSize(fonts.appointmentTime.size);
-    const timeText = `${eventStart.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
-    pdf.text(timeText, x + 2, y + height - 2);
+    const timeText = `${eventStart.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit', 
+      hour12: true 
+    })}`;
+    pdf.text(timeText, appointmentX + (3 * pxToMm), appointmentY + appointmentHeight - (2 * pxToMm));
   });
 }
 
