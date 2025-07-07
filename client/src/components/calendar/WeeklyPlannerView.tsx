@@ -135,7 +135,7 @@ export const WeeklyPlannerView = ({
         <h1>Weekly Planner</h1>
         <div className="week-info">
           {weekStartDate?.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}-
-          {weekEndDate?.toLocaleDateString('en-US', { day: 'numeric', year: 'numeric' })}, {weekEndDate?.getFullYear()} • Week {weekNumber}
+          {weekEndDate?.toLocaleDateString('en-US', { day: 'numeric' })} • Week {weekNumber}
         </div>
       </div>
 
@@ -168,7 +168,7 @@ export const WeeklyPlannerView = ({
           <span className="legend-symbol google-calendar"></span>Google Calendar
         </span>
         <span className="legend-item">
-          <span className="legend-symbol personal"></span>Personal
+          <span className="legend-symbol personal"></span>Holidays in United States
         </span>
       </div>
 
