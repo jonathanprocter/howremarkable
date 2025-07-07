@@ -308,11 +308,14 @@ export const exportTemplateMatchPDF = async (
       const eventY = gridStartY + 30 + (slotIndex * slotHeight);
       
       // Draw event box with calendar-specific styling
-      // White background for all events
-      pdf.setFillColor(255, 255, 255);
+      // Light semi-transparent background for readability while preserving hour stripes
+      pdf.setFillColor(248, 248, 248); // Very light grey background
+      pdf.rect(dayX + 1, eventY + 1, TEMPLATE_CONFIG.dayColumnWidth - 2, eventHeight - 2, 'F');
+      
+      // Draw border
       pdf.setDrawColor(128, 128, 128);
       pdf.setLineWidth(1);
-      pdf.rect(dayX + 1, eventY + 1, TEMPLATE_CONFIG.dayColumnWidth - 2, eventHeight - 2, 'FD');
+      pdf.rect(dayX + 1, eventY + 1, TEMPLATE_CONFIG.dayColumnWidth - 2, eventHeight - 2, 'D');
       
       // Calendar-specific highlighting
       if (event.source === 'simplepractice' || event.title.includes('Appointment')) {
