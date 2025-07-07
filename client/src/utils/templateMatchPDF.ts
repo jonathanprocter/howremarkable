@@ -210,9 +210,12 @@ export const exportTemplateMatchPDF = async (
     });
     
     // Draw events
-    dayEvents.forEach(event => {
+    console.log(`Day ${dayIndex} (${currentDate.toDateString()}): ${dayEvents.length} events`);
+    dayEvents.forEach((event, eventIndex) => {
       const startTime = new Date(event.startTime);
       const endTime = new Date(event.endTime);
+      
+      console.log(`  Event ${eventIndex}: ${event.title} at ${startTime.toLocaleTimeString()}`);
       
       // Get position from template mapping
       const startHour = startTime.getHours();
@@ -252,26 +255,49 @@ export const exportTemplateMatchPDF = async (
       // Draw event box with exact template styling
       pdf.setFillColor(...TEMPLATE_CONFIG.lightBlue);
       pdf.setDrawColor(...TEMPLATE_CONFIG.borderGray);
-      pdf.setLineWidth(0.5);
-      pdf.rect(dayX + 2, eventY, TEMPLATE_CONFIG.dayColumnWidth - 4, eventHeight, 'FD');
+      pdf.setLineWidth(1);
+      pdf.rect(dayX + 1, eventY + 1, TEMPLATE_CONFIG.dayColumnWidth - 2, eventHeight - 2, 'FD');
       
-      // Event title (remove "Appointment" suffix)
+      // Event title (remove "Appointment" suffix and clean up)
       let eventTitle = event.title.replace(/\s+Appointment\s*$/, '').trim();
-      if (eventTitle.length > 20) {
-        eventTitle = eventTitle.substring(0, 18) + '...';
+      
+      // Handle text wrapping for longer names
+      const maxCharsPerLine = 18;
+      const lines = [];
+      if (eventTitle.length > maxCharsPerLine) {
+        // Split by words and wrap
+        const words = eventTitle.split(' ');
+        let currentLine = '';
+        for (const word of words) {
+          if ((currentLine + word).length > maxCharsPerLine && currentLine.length > 0) {
+            lines.push(currentLine.trim());
+            currentLine = word + ' ';
+          } else {
+            currentLine += word + ' ';
+          }
+        }
+        if (currentLine.trim()) {
+          lines.push(currentLine.trim());
+        }
+      } else {
+        lines.push(eventTitle);
       }
       
-      // Draw event text
-      pdf.setFontSize(9);
+      // Draw event text (title)
+      pdf.setFontSize(8);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(0, 0, 0);
-      pdf.text(eventTitle, dayX + 4, eventY + 12);
       
-      // Duration text
-      pdf.setFontSize(8);
+      // Draw lines of text
+      lines.slice(0, 2).forEach((line, index) => {
+        pdf.text(line, dayX + 3, eventY + 10 + (index * 8));
+      });
+      
+      // Duration text at bottom
+      pdf.setFontSize(7);
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(0, 0, 0);
-      pdf.text(`${Math.round(durationMinutes)}min`, dayX + 4, eventY + eventHeight - 4);
+      pdf.text(`${Math.round(durationMinutes)}min`, dayX + 3, eventY + eventHeight - 3);
     });
   }
   
