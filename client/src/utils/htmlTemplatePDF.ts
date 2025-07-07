@@ -226,6 +226,9 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
   const contentWidth = HTML_TEMPLATE_CONFIG.pageWidth - (margin * 2);
   const gridY = margin + HTML_TEMPLATE_CONFIG.gridStartY;
   
+  // FIXED: Calculate proper day column width based on available space
+  const dayColumnWidth = (contentWidth - HTML_TEMPLATE_CONFIG.timeColumnWidth) / 7;
+  
   // === TIME COLUMN HEADER ===
   pdf.setFillColor(255, 255, 255);
   pdf.rect(margin, gridY, HTML_TEMPLATE_CONFIG.timeColumnWidth, 30, 'F');
@@ -244,7 +247,6 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
     const dayDate = new Date(weekStartDate);
     dayDate.setDate(weekStartDate.getDate() + i);
     
-    const dayColumnWidth = (contentWidth - HTML_TEMPLATE_CONFIG.timeColumnWidth) / 7;
     const x = margin + HTML_TEMPLATE_CONFIG.timeColumnWidth + (i * dayColumnWidth);
     
     // Day header background
@@ -266,11 +268,11 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
     // Day name
     pdf.setFontSize(10);
     pdf.setFont('helvetica', 'bold');
-    pdf.text(dayNames[i], x + HTML_TEMPLATE_CONFIG.dayColumnWidth / 2, gridY + 12, { align: 'center' });
+    pdf.text(dayNames[i], x + dayColumnWidth / 2, gridY + 12, { align: 'center' });
     
     // Day date
     pdf.setFontSize(14);
-    pdf.text(dayDate.getDate().toString(), x + HTML_TEMPLATE_CONFIG.dayColumnWidth / 2, gridY + 25, { align: 'center' });
+    pdf.text(dayDate.getDate().toString(), x + dayColumnWidth / 2, gridY + 25, { align: 'center' });
   }
   
   // === TIME SLOTS AND CELLS ===
@@ -296,11 +298,11 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
     
     // Calendar cells for each day
     for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
-      const x = margin + HTML_TEMPLATE_CONFIG.timeColumnWidth + (dayIndex * HTML_TEMPLATE_CONFIG.dayColumnWidth);
+      const x = margin + HTML_TEMPLATE_CONFIG.timeColumnWidth + (dayIndex * dayColumnWidth);
       
       // Cell background
       pdf.setFillColor(255, 255, 255);
-      pdf.rect(x, y, HTML_TEMPLATE_CONFIG.dayColumnWidth, HTML_TEMPLATE_CONFIG.timeSlotHeight, 'F');
+      pdf.rect(x, y, dayColumnWidth, HTML_TEMPLATE_CONFIG.timeSlotHeight, 'F');
       
       // Cell horizontal border
       pdf.setLineWidth(isHour ? 2 : 1);
@@ -309,8 +311,8 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
       } else {
         pdf.setDrawColor(204, 204, 204);
       }
-      pdf.line(x, y, x + HTML_TEMPLATE_CONFIG.dayColumnWidth, y);
-      pdf.line(x, y + HTML_TEMPLATE_CONFIG.timeSlotHeight, x + HTML_TEMPLATE_CONFIG.dayColumnWidth, y + HTML_TEMPLATE_CONFIG.timeSlotHeight);
+      pdf.line(x, y, x + dayColumnWidth, y);
+      pdf.line(x, y + HTML_TEMPLATE_CONFIG.timeSlotHeight, x + dayColumnWidth, y + HTML_TEMPLATE_CONFIG.timeSlotHeight);
       
       // Strong vertical borders between days
       pdf.setLineWidth(2);
@@ -319,7 +321,7 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
       
       // Right border for last column
       if (dayIndex === 6) {
-        pdf.line(x + HTML_TEMPLATE_CONFIG.dayColumnWidth, y, x + HTML_TEMPLATE_CONFIG.dayColumnWidth, y + HTML_TEMPLATE_CONFIG.timeSlotHeight);
+        pdf.line(x + dayColumnWidth, y, x + dayColumnWidth, y + HTML_TEMPLATE_CONFIG.timeSlotHeight);
       }
     }
   });
@@ -327,7 +329,7 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
   // === VERTICAL GRID LINES ===
   // Draw strong vertical lines through entire grid - FIXED positioning
   for (let i = 0; i <= 7; i++) {
-    const x = margin + HTML_TEMPLATE_CONFIG.timeColumnWidth + (i * HTML_TEMPLATE_CONFIG.dayColumnWidth);
+    const x = margin + HTML_TEMPLATE_CONFIG.timeColumnWidth + (i * dayColumnWidth);
     pdf.setLineWidth(3);
     pdf.setDrawColor(0, 0, 0);
     pdf.line(x, gridY, x, gridY + 30 + (TIME_SLOTS.length * HTML_TEMPLATE_CONFIG.timeSlotHeight));
@@ -356,9 +358,11 @@ function drawAppointments(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
     const duration = (event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60);
     const heightInSlots = Math.max(1, Math.round(duration / 30));
     
-    const x = margin + HTML_TEMPLATE_CONFIG.timeColumnWidth + (dayIndex * HTML_TEMPLATE_CONFIG.dayColumnWidth) + 2;
+    // FIXED: Calculate proper day column width and position
+    const dayColumnWidth = (HTML_TEMPLATE_CONFIG.pageWidth - 20 - HTML_TEMPLATE_CONFIG.timeColumnWidth) / 7;
+    const x = margin + HTML_TEMPLATE_CONFIG.timeColumnWidth + (dayIndex * dayColumnWidth) + 2;
     const y = gridY + 30 + (slotIndex * HTML_TEMPLATE_CONFIG.timeSlotHeight) + 2;
-    const width = HTML_TEMPLATE_CONFIG.dayColumnWidth - 4;
+    const width = dayColumnWidth - 4;
     const height = (heightInSlots * HTML_TEMPLATE_CONFIG.timeSlotHeight) - 4;
     
     // Appointment background
