@@ -169,8 +169,9 @@ export const exportTemplateMatchPDF = async (
     pdf.setLineWidth(isHalfHour ? 2 : 1);
     pdf.setDrawColor(isHalfHour ? 180 : 221, isHalfHour ? 180 : 221, isHalfHour ? 180 : 221);
     
-    // Draw horizontal line across entire week for :30 minutes
+    // Draw horizontal lines across entire week
     if (isHalfHour) {
+      // :30 minutes - thicker line across entire week
       pdf.line(gridStartX, yPosition + slotHeight, TEMPLATE_CONFIG.pageWidth - 20, yPosition + slotHeight);
       // Add subtle background for :30 slots across the week
       pdf.setFillColor(250, 250, 250);
@@ -178,7 +179,10 @@ export const exportTemplateMatchPDF = async (
                TEMPLATE_CONFIG.pageWidth - gridStartX - TEMPLATE_CONFIG.timeColumnWidth - 20, 
                slotHeight, 'F');
     } else {
-      pdf.line(gridStartX, yPosition + slotHeight, gridStartX + TEMPLATE_CONFIG.timeColumnWidth, yPosition + slotHeight);
+      // Top of hour - solid line across entire week for hour differentiation
+      pdf.setLineWidth(2);
+      pdf.setDrawColor(100, 100, 100); // Darker line for hour breaks
+      pdf.line(gridStartX, yPosition + slotHeight, TEMPLATE_CONFIG.pageWidth - 20, yPosition + slotHeight);
     }
     
     // Time text with different font sizes
