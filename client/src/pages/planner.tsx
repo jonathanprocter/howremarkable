@@ -14,6 +14,7 @@ import {
   exportWeeklyRemarkableExact,
   generateRemarkableFilename 
 } from '../utils/remarkablePDFExactMatch';
+import { exportRemarkableProPerfect } from '../utils/remarkableProPerfect';
 import { getWeekNumber } from '../utils/dateUtils';
 import { initializeRemarkableOptimizations } from '../utils/remarkableDisplayOptimizer';
 
@@ -220,12 +221,12 @@ export default function Planner() {
         );
         filename = generateFilename('weekly-package', state.currentWeek.startDate);
       } else if (type === 'Current View') {
-        await exportWeeklyRemarkableExact(
+        await exportRemarkableProPerfect(
           state.currentWeek.startDate,
           state.currentWeek.endDate,
           currentEvents
         );
-        return; // exportWeeklyRemarkableExact handles the download
+        return; // exportRemarkableProPerfect handles the download
       } else if (type === 'Daily View') {
         pdfContent = await exportDailyToPDF(
           state.selectedDate,
