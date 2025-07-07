@@ -198,7 +198,9 @@ export const WeeklyPlannerView = ({
             // Time slot label
             slotElements.push(
               <div key={`time-${slot.hour}-${slot.minute}`} className={`time-slot ${isHour ? 'hour' : ''}`}>
-                {slot.time}
+                <span className={isHour ? 'text-sm' : 'text-xs'}>
+                  {slot.time}
+                </span>
               </div>
             );
             
