@@ -102,36 +102,44 @@
 
 .calendar-grid {
     display: grid;
-    grid-template-columns: 80px repeat(7, 1fr);
-    grid-template-rows: 60px repeat(35, 35px);
+    grid-template-columns: 90px repeat(7, 1fr);
+    grid-template-rows: 65px repeat(35, 38px);
     background: white;
+    border: 3px solid black;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-radius: 4px;
+    overflow: hidden;
 }
 
 .time-header {
-    background: #f0f0f0;
-    padding: 15px 8px;
+    background: linear-gradient(135deg, #f0f0f0, #e8e8e8);
+    padding: 18px 10px;
     text-align: center;
     font-weight: bold;
-    font-size: 12px;
-    border-right: 2px solid black;
-    border-bottom: 3px solid black;
+    font-size: 14px;
+    color: #333;
+    border-right: 3px solid black;
+    border-bottom: 4px solid black;
     display: flex;
     align-items: center;
     justify-content: center;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .day-header {
-    background: #f0f0f0;
-    padding: 10px 8px;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    padding: 12px 10px;
     text-align: center;
     font-weight: bold;
-    border-right: 1px solid black;
-    border-bottom: 3px solid black;
+    border-right: 2px solid black;
+    border-bottom: 4px solid black;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     cursor: pointer;
+    transition: background 0.2s ease;
 }
 
 .day-header:last-child {
@@ -239,28 +247,30 @@
     line-height: 1.0;
 }
 
-/* Appointment types - enhanced differentiation */
+/* Appointment types - ENHANCED VISUAL DIFFERENTIATION */
 .appointment.simplepractice {
     background: #f0f8ff;
     color: #1e3a8a;
-    border: 2px solid #6495ED;
-    border-left: 8px solid #6495ED;
-    box-shadow: 0 1px 3px rgba(100, 149, 237, 0.3);
+    border: 2px solid #93c5fd;
+    border-left: 8px solid #4285F4;
+    box-shadow: 0 2px 6px rgba(66, 133, 244, 0.25);
+    font-weight: 700;
 }
 
 .appointment.google-calendar {
-    background: #ffffff;
-    color: #374151;
-    border: 2px dashed #10b981;
-    box-shadow: 0 1px 3px rgba(16, 185, 129, 0.2);
+    background: #ecfdf5;
+    color: #047857;
+    border: 3px dashed #34d399;
+    box-shadow: 0 2px 6px rgba(52, 211, 153, 0.25);
+    font-weight: 600;
 }
 
 .appointment.personal {
-    background: #fef3c7;
+    background: #fbbf24;
     color: #92400e;
-    border: 2px solid #f59e0b;
-    border-style: double;
-    box-shadow: 0 1px 3px rgba(245, 158, 11, 0.2);
+    border: 3px solid #f59e0b;
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
+    font-weight: 700;
 }
 
 /* Height classes for different durations */

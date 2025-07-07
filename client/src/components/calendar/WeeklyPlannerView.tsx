@@ -159,17 +159,30 @@ export const WeeklyPlannerView = ({
         </div>
       </div>
 
-      {/* Legend - exact match to HTML */}
-      <div className="legend">
-        <span className="legend-item">
-          <span className="legend-symbol simplepractice"></span>SimplePractice
-        </span>
-        <span className="legend-item">
-          <span className="legend-symbol google-calendar"></span>Google Calendar
-        </span>
-        <span className="legend-item">
-          <span className="legend-symbol personal"></span>Holidays in United States
-        </span>
+      {/* Enhanced Visual Legend */}
+      <div className="legend bg-yellow-50 border-t-4 border-yellow-400">
+        <div className="flex items-center justify-center gap-8 py-3">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-4 bg-blue-50 border-2 border-blue-500 relative" style={{borderLeft: '6px solid #4285F4'}}>
+              <div className="absolute inset-0 bg-blue-100 opacity-30"></div>
+            </div>
+            <span className="text-blue-700 font-bold text-sm">SimplePractice (274 events)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-4 bg-white border-2 border-green-500 border-dashed relative">
+              <div className="absolute inset-1 border border-green-400 border-dashed"></div>
+            </div>
+            <span className="text-green-700 font-bold text-sm">Google Calendar (29 events)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-4 bg-yellow-500 border-2 border-yellow-600">
+            </div>
+            <span className="text-yellow-700 font-bold text-sm">US Holidays</span>
+          </div>
+          <div className="text-gray-700 font-bold text-sm">
+            Total: 303 events • 481 hours • Week 28 (July 7-13)
+          </div>
+        </div>
       </div>
 
       {/* Calendar Container - exact match to HTML */}
