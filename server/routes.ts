@@ -56,16 +56,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }));
 
   passport.serializeUser((user: any, done) => {
+    console.log("Serializing user:", { id: user.id, email: user.email });
     done(null, user);
   });
 
-  passport.deserializeUser((user: any, done) => {
-    done(null, user);
+  passport.deserializeUser(async (user: any, done) => {
+    console.log("Deserializing user:", { id: user.id, email: user.email });
+    try {
+      // Verify user still exists in database
+      const dbUser = await storage.getUser(parseInt(user.id));
+      if (!dbUser) {
+        console.log("User not found in database during deserialization");
+        return done(null, false);
+      }
+      
+      // Return the full user object with tokens
+      done(null, user);
+    } catch (error) {
+      console.error("Error during user deserialization:", error);
+      done(error, false);
+    }
   });
 
   // Initialize passport
   app.use(passport.initialize());
   app.use(passport.session());
+
+  // Session debugging middleware
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api/')) {
+      console.log(`🔍 Session Debug [${req.method} ${req.path}]:`);
+      console.log(`  - Session ID: ${req.sessionID}`);
+      console.log(`  - Has User: ${!!req.user}`);
+      console.log(`  - Session Passport: ${!!req.session.passport}`);
+      if (req.session.passport) {
+        console.log(`  - Passport User: ${JSON.stringify(req.session.passport.user)}`);
+      }
+    }
+    next();
+  });
 
   // Google OAuth Routes
   app.get("/api/auth/google", (req, res, next) => {
@@ -108,8 +137,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error("Login error:", err);
           return res.redirect("/?error=auth_failed&details=" + encodeURIComponent(err.message));
         }
-        console.log("Google OAuth callback successful", user.email);
-        res.redirect("/?connected=true");
+        console.log("Google OAuth callback successful - User logged in:", user.email);
+        console.log("Session after login:", req.sessionID);
+        console.log("User object in session:", !!req.user);
+        
+        // Force session save before redirect
+        req.session.save((saveErr) => {
+          if (saveErr) {
+            console.error("Session save error:", saveErr);
+          } else {
+            console.log("Session saved successfully");
+          }
+          res.redirect("/?connected=true");
+        });
       });
     })(req, res, next);
   });
@@ -129,12 +169,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/auth/status", (req, res) => {
-    console.log("Auth status check - Session ID:", req.sessionID);
-    console.log("Auth status check - User:", !!req.user, req.user);
-    console.log("Auth status check - Session data:", req.session);
+    console.log("=== AUTH STATUS DEBUG ===");
+    console.log("Session ID:", req.sessionID);
+    console.log("Session exists:", !!req.session);
+    console.log("User in request:", !!req.user);
+    console.log("User details:", req.user ? { id: req.user.id, email: req.user.email } : null);
+    console.log("Session passport:", req.session.passport);
+    console.log("Session cookie:", req.session.cookie);
+    
     res.json({ 
       authenticated: !!req.user,
-      user: req.user || null
+      user: req.user || null,
+      debug: {
+        sessionId: req.sessionID,
+        hasSession: !!req.session,
+        hasPassport: !!req.session.passport
+      },
+      issue: {
+        description: "Sessions not persisting between requests - each request creates new session ID",
+        status: "Session middleware configuration issue detected",
+        solution: "Google OAuth works (API calls successful), but session persistence needs fix"
+      }
     });
   });
 
@@ -519,6 +574,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = parseInt(req.params.userId);
       if (isNaN(userId)) {
         return res.status(400).json({ error: "Invalid user ID" });
+      }
+      
+      // Debug authentication for events endpoint
+      console.log("Events endpoint - User authenticated:", !!req.user);
+      console.log("Events endpoint - Requested user ID:", userId);
+      if (req.user) {
+        console.log("Events endpoint - Session user ID:", req.user.id);
+        
+        // If user is authenticated, ensure they can only access their own events
+        if (req.user.id !== userId.toString()) {
+          return res.status(403).json({ 
+            error: "Access denied", 
+            message: "You can only access your own events" 
+          });
+        }
       }
       
       const events = await storage.getEvents(userId);
