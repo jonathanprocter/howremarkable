@@ -675,14 +675,6 @@ export default function Planner() {
         />
       }
     >
-      <div style={{ marginTop: '0', paddingTop: '0' }}>
-        <CalendarLegend
-          calendars={googleCalendars}
-          selectedCalendars={selectedCalendars}
-          onCalendarToggle={handleCalendarToggle}
-        />
-      </div>
-      
       <Header
         weekRangeString={getWeekRangeString()}
         isOnline={state.isOnline}
@@ -691,6 +683,12 @@ export default function Planner() {
         onPreviousWeek={goToPreviousWeek}
         onToday={goToToday}
         onNextWeek={goToNextWeek}
+      />
+
+      <CalendarLegend
+        calendars={googleCalendars}
+        selectedCalendars={selectedCalendars}
+        onCalendarToggle={handleCalendarToggle}
       />
       
       {state.viewMode === 'weekly' ? (

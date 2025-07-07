@@ -14,10 +14,9 @@
 
 .header {
     border-bottom: 3px solid black;
-    padding: 8px 20px;
+    padding: 20px;
     text-align: center;
     background: white;
-    margin: 0;
 }
 
 .header h1 {
@@ -103,44 +102,36 @@
 
 .calendar-grid {
     display: grid;
-    grid-template-columns: 90px repeat(7, 1fr);
-    grid-template-rows: 65px repeat(35, 38px);
+    grid-template-columns: 80px repeat(7, 1fr);
+    grid-template-rows: 60px repeat(35, 35px);
     background: white;
-    border: 3px solid black;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    border-radius: 4px;
-    overflow: hidden;
 }
 
 .time-header {
-    background: linear-gradient(135deg, #f0f0f0, #e8e8e8);
-    padding: 18px 10px;
+    background: #f0f0f0;
+    padding: 15px 8px;
     text-align: center;
     font-weight: bold;
-    font-size: 14px;
-    color: #333;
-    border-right: 3px solid black;
-    border-bottom: 4px solid black;
+    font-size: 12px;
+    border-right: 2px solid black;
+    border-bottom: 3px solid black;
     display: flex;
     align-items: center;
     justify-content: center;
-    text-transform: uppercase;
-    letter-spacing: 1px;
 }
 
 .day-header {
-    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-    padding: 12px 10px;
+    background: #f0f0f0;
+    padding: 10px 8px;
     text-align: center;
     font-weight: bold;
-    border-right: 2px solid black;
-    border-bottom: 4px solid black;
+    border-right: 1px solid black;
+    border-bottom: 3px solid black;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    transition: background 0.2s ease;
 }
 
 .day-header:last-child {
@@ -186,8 +177,6 @@
     border-bottom: 1px solid #ddd;
     position: relative;
     cursor: pointer;
-    min-height: 35px;
-    overflow: hidden;
 }
 
 /* Light background for half-hour slots across all day columns */
@@ -233,16 +222,14 @@
 }
 
 .appointment-name {
-    font-size: 8px;
-    line-height: 1.1;
-    margin-bottom: 2px;
+    font-size: 6px;
+    line-height: 1.0;
+    margin-bottom: 1px;
     text-transform: uppercase;
     font-weight: bold;
     word-wrap: break-word;
     overflow-wrap: break-word;
     hyphens: auto;
-    max-height: 20px;
-    overflow: hidden;
 }
 
 .appointment-time {
@@ -252,37 +239,28 @@
     line-height: 1.0;
 }
 
-/* Appointment types - EXACT COLOR SPECIFICATIONS */
+/* Appointment types - enhanced differentiation */
 .appointment.simplepractice {
-    background: #E3F2FD !important;
-    color: #1565C0 !important;
-    border: 2px solid #6495ED !important; /* Cornflower blue solid */
-    box-shadow: 0 3px 8px rgba(100, 149, 237, 0.3) !important;
-    font-weight: 800 !important;
+    background: #f0f8ff;
+    color: #1e3a8a;
+    border: 2px solid #6495ED;
+    border-left: 8px solid #6495ED;
+    box-shadow: 0 1px 3px rgba(100, 149, 237, 0.3);
 }
 
 .appointment.google-calendar {
-    background: #E8F5E8 !important;
-    color: #16A34A !important;
-    border: 2px dashed #22C55E !important; /* Dashed green border */
-    box-shadow: 0 3px 8px rgba(34, 197, 94, 0.3) !important;
-    font-weight: 700 !important;
-}
-
-.appointment.holiday {
-    background: #FEF3C7 !important;
-    color: #D97706 !important;
-    border: 2px solid #F59E0B !important; /* Solid yellow */
-    box-shadow: 0 3px 8px rgba(245, 158, 11, 0.4) !important;
-    font-weight: 800 !important;
+    background: #ffffff;
+    color: #374151;
+    border: 2px dashed #10b981;
+    box-shadow: 0 1px 3px rgba(16, 185, 129, 0.2);
 }
 
 .appointment.personal {
-    background: #E3F2FD !important;
-    color: #1565C0 !important;
-    border: 2px solid #6495ED !important; /* Default blue */
-    box-shadow: 0 3px 8px rgba(100, 149, 237, 0.3) !important;
-    font-weight: 800 !important;
+    background: #fef3c7;
+    color: #92400e;
+    border: 2px solid #f59e0b;
+    border-style: double;
+    box-shadow: 0 1px 3px rgba(245, 158, 11, 0.2);
 }
 
 /* Height classes for different durations */

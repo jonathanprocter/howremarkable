@@ -30,28 +30,22 @@ export const CalendarLegend = ({ calendars, selectedCalendars, onCalendarToggle 
   };
 
   return (
-    <div className="mb-2 p-2 bg-yellow-50 border-2 border-yellow-400 rounded-lg shadow-sm" style={{ marginTop: '0', paddingTop: '8px' }}>
+    <div className="mb-4 p-2 bg-white border border-gray-200 rounded-sm">
       {/* Appointment Type Legend */}
-      <div className="mb-2 pb-2 border-b border-yellow-200">
-        <h4 className="text-sm font-bold text-gray-800 mb-2 uppercase tracking-wide">📅 Calendar Legend</h4>
-        <div className="flex items-center gap-6 flex-wrap text-sm">
-          <div className="flex items-center space-x-3 bg-white px-3 py-2 rounded shadow-sm">
-            <div className="w-4 h-4 bg-blue-50 border-2 border-blue-500 relative" style={{borderLeft: '6px solid #4285F4'}}>
-              <div className="absolute inset-0 bg-blue-100 opacity-30"></div>
-            </div>
-            <span className="text-blue-700 font-semibold">SimplePractice (274 events)</span>
+      <div className="mb-3 pb-2 border-b border-gray-100">
+        <h4 className="text-xs font-semibold text-gray-700 mb-2">Appointment Types</h4>
+        <div className="flex items-center gap-4 flex-wrap text-xs">
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-blue-50 border-2 border-blue-500" style={{borderLeft: '8px solid #6495ED'}}></div>
+            <span className="text-blue-700 font-medium">SimplePractice</span>
           </div>
-          <div className="flex items-center space-x-3 bg-white px-3 py-2 rounded shadow-sm">
-            <div className="w-4 h-4 bg-white border-2 border-green-500 border-dashed relative">
-              <div className="absolute inset-1 border border-green-400 border-dashed"></div>
-            </div>
-            <span className="text-green-700 font-semibold">Google Calendar (29 events)</span>
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-white border-2 border-green-500 border-dashed"></div>
+            <span className="text-green-700 font-medium">Google Calendar</span>
           </div>
-          <div className="flex items-center space-x-3 bg-white px-3 py-2 rounded shadow-sm">
-            <div className="w-4 h-4 bg-yellow-500 border-2 border-yellow-600 relative">
-              <div className="absolute inset-0 bg-yellow-400"></div>
-            </div>
-            <span className="text-yellow-700 font-semibold">US Holidays</span>
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-yellow-500 border-2 border-yellow-600"></div>
+            <span className="text-yellow-700 font-medium">Holidays in United States</span>
           </div>
         </div>
       </div>

@@ -185,7 +185,7 @@ function drawLegend(pdf: jsPDF): void {
   pdf.setTextColor(0, 0, 0);
   pdf.text('Calendar Legend', margin + 20, legendY + 18);
   
-  // Legend items with enhanced visibility and proper colors
+  // Legend items with enhanced visibility
   const legendItems = [
     { label: 'SimplePractice', color: { r: 66, g: 133, b: 244 }, style: 'left-border' },
     { label: 'Google Calendar', color: { r: 52, g: 168, b: 83 }, style: 'dashed' },
@@ -198,45 +198,37 @@ function drawLegend(pdf: jsPDF): void {
     const symbolSize = 20;
     
     if (item.style === 'dashed') {
-      // Google Calendar - dashed green border (more visible)
+      // Google Calendar - dashed green border
       pdf.setFillColor(255, 255, 255);
       pdf.rect(x, symbolY, symbolSize, symbolSize, 'F');
       
-      // Bold dashed green border
       pdf.setDrawColor(item.color.r, item.color.g, item.color.b);
-      pdf.setLineWidth(3);
-      pdf.setLineDashPattern([5, 3], 0);
+      pdf.setLineWidth(2);
+      pdf.setLineDashPattern([4, 2], 0);
       pdf.rect(x, symbolY, symbolSize, symbolSize);
       pdf.setLineDashPattern([], 0);
-      
-      // Add inner bracket-like marks for clarity
-      pdf.setLineWidth(2);
-      pdf.line(x + 2, symbolY + 2, x + 2, symbolY + 6);
-      pdf.line(x + 2, symbolY + 2, x + 5, symbolY + 2);
-      pdf.line(x + symbolSize - 2, symbolY + symbolSize - 6, x + symbolSize - 2, symbolY + symbolSize - 2);
-      pdf.line(x + symbolSize - 5, symbolY + symbolSize - 2, x + symbolSize - 2, symbolY + symbolSize - 2);
     } else if (item.style === 'left-border') {
-      // SimplePractice - white box with thick blue left border
+      // SimplePractice - white box with blue left border
       pdf.setFillColor(255, 255, 255);
       pdf.rect(x, symbolY, symbolSize, symbolSize, 'F');
       
-      // Light gray border for the box
+      // Regular gray border
       pdf.setDrawColor(200, 200, 200);
       pdf.setLineWidth(1);
       pdf.rect(x, symbolY, symbolSize, symbolSize);
       
-      // Bold blue left border (thicker and more visible)
+      // Blue left border (thick)
       pdf.setDrawColor(item.color.r, item.color.g, item.color.b);
-      pdf.setLineWidth(6);
+      pdf.setLineWidth(4);
       pdf.line(x, symbolY, x, symbolY + symbolSize);
     } else if (item.style === 'filled') {
-      // US Holidays - solid yellow filled box with strong border
+      // US Holidays - solid yellow filled box
       pdf.setFillColor(item.color.r, item.color.g, item.color.b);
       pdf.rect(x, symbolY, symbolSize, symbolSize, 'F');
       
-      // Strong black border for high contrast
+      // Dark border for contrast
       pdf.setDrawColor(0, 0, 0);
-      pdf.setLineWidth(2);
+      pdf.setLineWidth(1);
       pdf.rect(x, symbolY, symbolSize, symbolSize);
     }
     
