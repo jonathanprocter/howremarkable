@@ -5,7 +5,7 @@ import { CalendarEvent } from '../types/calendar';
 const GRID_CONFIG = {
   // Page setup - A3 landscape dimensions (1190x842 points)
   pageWidth: 1190,
-  pageHeight: 842,
+  pageHeight: 900,
 
   // Optimized margins for professional layout
   margin: 20,
@@ -42,9 +42,8 @@ const GRID_CONFIG = {
   },
 
   get gridHeight() {
-    // Use remaining vertical space after headers
-    const availableHeight = this.pageHeight - this.gridStartY - this.margin;
-    return Math.min(this.totalSlots * this.slotHeight, availableHeight - 30);
+    // Use remaining vertical space after headers - ensure full 36 slots are visible
+    return this.totalSlots * this.slotHeight;
   }
 };
 
@@ -111,36 +110,36 @@ export const exportExactGridPDF = async (
 
     let legendX = legendStartX;
 
-    // SimplePractice
-    pdf.setFillColor(240, 248, 255);
+    // SimplePractice - white background with cornflower blue border and thick left flag
+    pdf.setFillColor(255, 255, 255);
+    pdf.rect(legendX, legendY + 12, 18, 12, 'F');
     pdf.setDrawColor(100, 149, 237);
     pdf.setLineWidth(1);
-    pdf.rect(legendX, legendY + 12, 18, 12, 'FD');
-    pdf.setLineWidth(3);
-    pdf.setDrawColor(100, 149, 237);
-    pdf.line(legendX, legendY + 18, legendX + 18, legendY + 18);
+    pdf.rect(legendX, legendY + 12, 18, 12, 'S');
+    pdf.setLineWidth(4);
+    pdf.line(legendX, legendY + 12, legendX, legendY + 24);
     pdf.setTextColor(0, 0, 0);
     pdf.text('SimplePractice', legendX + 24, legendY + 20);
 
     legendX += legendItemSpacing;
 
-    // Google Calendar
-    pdf.setFillColor(240, 255, 240);
-    pdf.setDrawColor(16, 185, 129);
+    // Google Calendar - white background with dashed green border
+    pdf.setFillColor(255, 255, 255);
+    pdf.rect(legendX, legendY + 12, 18, 12, 'F');
+    pdf.setDrawColor(34, 197, 94);
     pdf.setLineWidth(1);
-    pdf.rect(legendX, legendY + 12, 18, 12, 'FD');
-    pdf.setLineDash([2, 2]);
+    pdf.setLineDash([3, 2]);
     pdf.rect(legendX, legendY + 12, 18, 12, 'S');
     pdf.setLineDash([]);
     pdf.text('Google Calendar', legendX + 24, legendY + 20);
 
     legendX += legendItemSpacing;
 
-    // Holidays
-    pdf.setFillColor(254, 243, 199);
+    // Holidays - white background with orange border
+    pdf.setFillColor(255, 255, 255);
+    pdf.rect(legendX, legendY + 12, 18, 12, 'F');
     pdf.setDrawColor(245, 158, 11);
     pdf.setLineWidth(1);
-    pdf.rect(legendX, legendY + 12, 18, 12, 'FD');
     pdf.rect(legendX, legendY + 12, 18, 12, 'S');
     pdf.text('Holidays in United States', legendX + 24, legendY + 20);
 
