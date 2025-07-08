@@ -59,13 +59,12 @@ export const exportExactGridPDF = async (
       format: [GRID_CONFIG.pageWidth, GRID_CONFIG.pageHeight]
     });
 
-    // Calculate total content width and center positioning for reMarkable Pro
+    // Position content higher and more to the right for full timeline visibility
     const totalContentWidth = GRID_CONFIG.timeColumnWidth + (7 * GRID_CONFIG.dayColumnWidth);
-    const centerX = (GRID_CONFIG.pageWidth - totalContentWidth) / 2; // Perfect horizontal centering
+    const centerX = 80; // Move right from left edge for better positioning
     
-    // Calculate total content height for reMarkable Pro vertical centering
-    const totalContentHeight = GRID_CONFIG.headerHeight + GRID_CONFIG.statsHeight + GRID_CONFIG.legendHeight + 50 + GRID_CONFIG.gridHeight;
-    const centerY = (GRID_CONFIG.pageHeight - totalContentHeight) / 2; // Perfect vertical centering
+    // Start higher on page to ensure full timeline fits
+    const centerY = 15; // Start near top of page
 
     // White background
     pdf.setFillColor(255, 255, 255);
