@@ -287,6 +287,11 @@ export default function Planner() {
       const currentDateString = selectedDateForExport.toISOString().split('T')[0];
       const dailyNotes = state.dailyNotes[currentDateString] || '';
 
+      console.log('=== EXPORT DATA GENERATION ===');
+      console.log('Selected date for export:', selectedDateForExport.toDateString());
+      console.log('Current events being passed to generateCompleteExportData:', currentEvents.length);
+      console.log('Daily notes:', dailyNotes);
+
       const exportData = generateCompleteExportData(
         selectedDateForExport,
         currentEvents,
@@ -295,13 +300,18 @@ export default function Planner() {
 
       console.log('Generated export data:', exportData);
 
-      if (exportData.appointments.length === 0) {
+      // For daily exports, allow proceeding even with no appointments
+      if (exportData.appointments.length === 0 && type !== 'Daily View' && type !== 'reMarkable Daily' && type !== 'Current View') {
         toast({
           title: "No Appointments",
           description: `No appointments found for ${exportData.date}. Check your calendar filters.`,
           variant: "destructive"
         });
         return;
+      }
+
+      if (exportData.appointments.length === 0) {
+        console.log('WARNING: No appointments found, but proceeding with daily export anyway');
       }
 
       // Export based on type
