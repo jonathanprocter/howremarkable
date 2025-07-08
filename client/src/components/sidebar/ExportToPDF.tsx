@@ -17,6 +17,10 @@ export const ExportToPDF = ({
   onExportFullMonth,
   onExportToGoogleDrive
 }: ExportToPDFProps) => {
+  console.log('🔧 ExportToPDF component rendered');
+  console.log('🔧 onExportCurrentView:', typeof onExportCurrentView);
+  console.log('🔧 onExportDailyView:', typeof onExportDailyView);
+  
   return (
     <div className="sidebar-section">
       <h3 className="text-sm font-semibold mb-3 text-gray-900">Export Options</h3>
