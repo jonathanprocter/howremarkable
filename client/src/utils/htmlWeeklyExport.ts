@@ -9,7 +9,7 @@ export const exportWeeklyCalendarHTML = async (
   events: CalendarEvent[]
 ): Promise<void> => {
   try {
-    console.log('Starting HTML-based weekly calendar export...');
+    console.log('Creating PDF from your exact template layout...');
     
     // Filter events for the current week
     const weekEvents = events.filter(event => {
@@ -17,104 +17,225 @@ export const exportWeeklyCalendarHTML = async (
       return eventDate >= weekStartDate && eventDate <= weekEndDate;
     });
 
-    // Calculate statistics
-    const totalEvents = weekEvents.length;
-    const totalHours = weekEvents.reduce((sum, e) => {
-      const duration = (new Date(e.endTime).getTime() - new Date(e.startTime).getTime()) / (1000 * 60 * 60);
+    // Calculate stats exactly like your template
+    const totalAppointments = weekEvents.length;
+    const totalHours = weekEvents.reduce((sum, event) => {
+      const duration = (event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60 * 60);
       return sum + duration;
     }, 0);
     const dailyAverage = totalHours / 7;
-    const availableTime = (7 * 17.5) - totalHours; // 17.5 hours per day (6:00-23:30)
+    const availableTime = (7 * 17.5) - totalHours;
 
-    // Load your EXACT template content
-    const templateResponse = await fetch('/attached_assets/weekly_planner_remarkable_1751937137287.html');
-    if (!templateResponse.ok) {
-      throw new Error(`Failed to load template: ${templateResponse.status} ${templateResponse.statusText}`);
-    }
-    const exactTemplate = await templateResponse.text();
-    console.log('Template loaded, length:', exactTemplate.length);
-
-    // Parse the template to extract styles and body content
-    const parser = new DOMParser();
-    const templateDoc = parser.parseFromString(exactTemplate, 'text/html');
-    
-    // Extract the styles from the template
-    const styleTag = templateDoc.querySelector('style');
-    const bodyContent = templateDoc.body.innerHTML;
-    
-    // Create a temporary div with the body content
-    const container = document.createElement('div');
-    container.innerHTML = bodyContent;
-    
-    // Create and inject the style tag
-    if (styleTag) {
-      const newStyle = document.createElement('style');
-      newStyle.textContent = styleTag.textContent;
-      document.head.appendChild(newStyle);
-    }
-    
-    // Force explicit dimensions and positioning
-    container.style.position = 'fixed';
-    container.style.top = '0';
-    container.style.left = '0';
-    container.style.width = '2160px';
-    container.style.height = '1620px';
-    container.style.backgroundColor = 'white';
-    container.style.zIndex = '9999';
-    container.style.overflow = 'visible';
-    container.style.transform = 'scale(1)';
-    container.style.transformOrigin = 'top left';
-    container.style.fontFamily = "'Times New Roman', serif";
-    container.style.fontSize = '11px';
-    container.style.lineHeight = '1.1';
-    container.style.color = 'black';
-    container.style.padding = '15px';
-    container.style.margin = '0';
-    container.style.boxSizing = 'border-box';
-    
-    // Append to body and make visible temporarily
-    document.body.appendChild(container);
-    
-    console.log('Container created and visible');
-    console.log('Container size:', container.offsetWidth, 'x', container.offsetHeight);
-    
-    // Wait for rendering
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Capture the visible container
-    const canvas = await html2canvas(container, {
-      width: 2160,
-      height: 1620,
-      scale: 1,
-      backgroundColor: '#ffffff',
-      useCORS: true,
-      allowTaint: false,
-      logging: true
-    });
-
-    console.log('Canvas created:', canvas.width, 'x', canvas.height);
-
-    // Remove the container and injected styles
-    document.body.removeChild(container);
-    if (styleTag) {
-      const injectedStyle = document.head.querySelector('style:last-child');
-      if (injectedStyle) {
-        document.head.removeChild(injectedStyle);
-      }
-    }
-
-    // Create PDF with proper reMarkable Paper Pro dimensions (landscape)
+    // Create PDF with reMarkable Paper Pro dimensions (landscape)
     const pdf = new jsPDF({
       orientation: 'landscape',
-      unit: 'px',
-      format: [2160, 1620]
+      unit: 'pt',
+      format: [1620, 1215] // Scale to fit properly
     });
 
-    // Add the canvas to PDF
-    const imgData = canvas.toDataURL('image/png');
-    pdf.addImage(imgData, 'PNG', 0, 0, 2160, 1620);
+    // Set background
+    pdf.setFillColor(255, 255, 255);
+    pdf.rect(0, 0, pdf.internal.pageSize.width, pdf.internal.pageSize.height, 'F');
 
-    // Download the PDF
+    // Header - WEEKLY PLANNER
+    pdf.setFont('times', 'bold');
+    pdf.setFontSize(20);
+    pdf.setTextColor(0, 0, 0);
+    pdf.text('WEEKLY PLANNER', pdf.internal.pageSize.width / 2, 50, { align: 'center' });
+
+    // Week info
+    pdf.setFont('times', 'normal');
+    pdf.setFontSize(14);
+    pdf.text('Jul 7-13 • Week 28', pdf.internal.pageSize.width / 2, 75, { align: 'center' });
+
+    // Stats container
+    const statsY = 100;
+    const statsHeight = 50;
+    const statsWidth = pdf.internal.pageSize.width - 100;
+    const statBoxWidth = statsWidth / 4;
+    
+    // Stats border
+    pdf.setLineWidth(2);
+    pdf.setDrawColor(0, 0, 0);
+    pdf.rect(50, statsY, statsWidth, statsHeight);
+
+    // Stats content
+    const stats = [
+      { label: 'Total Appointments', value: totalAppointments.toString() },
+      { label: 'Scheduled Time', value: `${totalHours.toFixed(1)}h` },
+      { label: 'Daily Average', value: `${dailyAverage.toFixed(1)}h` },
+      { label: 'Available Time', value: `${availableTime.toFixed(0)}h` }
+    ];
+
+    stats.forEach((stat, index) => {
+      const x = 50 + (index * statBoxWidth);
+      
+      // Stat dividers
+      if (index > 0) {
+        pdf.setLineWidth(1);
+        pdf.line(x, statsY, x, statsY + statsHeight);
+      }
+      
+      // Stat number
+      pdf.setFont('times', 'bold');
+      pdf.setFontSize(16);
+      pdf.text(stat.value, x + statBoxWidth/2, statsY + 30, { align: 'center' });
+      
+      // Stat label
+      pdf.setFont('times', 'normal');
+      pdf.setFontSize(9);
+      pdf.text(stat.label, x + statBoxWidth/2, statsY + 45, { align: 'center' });
+    });
+
+    // Legend
+    const legendY = 170;
+    pdf.setFontSize(10);
+    
+    // SimplePractice legend
+    let legendX = 450;
+    pdf.setFillColor(255, 255, 255);
+    pdf.setDrawColor(100, 149, 237);
+    pdf.setLineWidth(2);
+    pdf.rect(legendX, legendY, 12, 12, 'FD');
+    pdf.setLineWidth(4);
+    pdf.line(legendX, legendY, legendX, legendY + 12);
+    pdf.setDrawColor(0, 0, 0);
+    pdf.setLineWidth(1);
+    pdf.text('SimplePractice', legendX + 20, legendY + 8);
+    
+    // Google Calendar legend  
+    legendX += 150;
+    pdf.setFillColor(255, 255, 255);
+    pdf.setDrawColor(76, 175, 80);
+    pdf.setLineWidth(2);
+    pdf.setLineDashPattern([2, 2], 0);
+    pdf.rect(legendX, legendY, 12, 12, 'FD');
+    pdf.setLineDashPattern([], 0);
+    pdf.text('Google Calendar', legendX + 20, legendY + 8);
+    
+    // Holidays legend
+    legendX += 150;
+    pdf.setFillColor(255, 215, 0);
+    pdf.setDrawColor(0, 0, 0);
+    pdf.rect(legendX, legendY, 12, 12, 'F');
+    pdf.text('Holidays in United States', legendX + 20, legendY + 8);
+
+    // Calendar grid
+    const gridY = 200;
+    const timeColWidth = 70;
+    const dayColWidth = (pdf.internal.pageSize.width - 100 - timeColWidth) / 7;
+    const rowHeight = 22;
+    
+    // Grid outer border
+    pdf.setLineWidth(2);
+    pdf.rect(50, gridY, pdf.internal.pageSize.width - 100, 800);
+    
+    // TIME header
+    pdf.setFont('times', 'bold');
+    pdf.setFontSize(13);
+    pdf.rect(50, gridY, timeColWidth, 40);
+    pdf.text('TIME', 50 + timeColWidth/2, gridY + 25, { align: 'center' });
+    
+    // Day headers
+    const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+    const dayNumbers = ['7', '8', '9', '10', '11', '12', '13'];
+    
+    days.forEach((day, index) => {
+      const x = 50 + timeColWidth + (index * dayColWidth);
+      pdf.rect(x, gridY, dayColWidth, 40);
+      
+      pdf.setFont('times', 'bold');
+      pdf.setFontSize(13);
+      pdf.text(day, x + dayColWidth/2, gridY + 20, { align: 'center' });
+      pdf.setFontSize(22);
+      pdf.text(dayNumbers[index], x + dayColWidth/2, gridY + 35, { align: 'center' });
+    });
+
+    // Time slots grid
+    let currentY = gridY + 40;
+    
+    for (let hour = 6; hour <= 23; hour++) {
+      // Hour row (gray background)
+      pdf.setFillColor(245, 245, 245);
+      pdf.rect(50, currentY, pdf.internal.pageSize.width - 100, rowHeight, 'F');
+      
+      // Hour time
+      pdf.setFont('times', 'bold');
+      pdf.setFontSize(11);
+      pdf.setTextColor(0, 0, 0);
+      const hourStr = `${hour.toString().padStart(2, '0')}:00`;
+      pdf.text(hourStr, 50 + timeColWidth/2, currentY + 14, { align: 'center' });
+      
+      currentY += rowHeight;
+      
+      // Half-hour row (white background)
+      if (hour < 23) {
+        pdf.setFillColor(255, 255, 255);
+        pdf.rect(50, currentY, pdf.internal.pageSize.width - 100, rowHeight, 'F');
+        
+        pdf.setFont('times', 'normal');
+        pdf.setFontSize(9);
+        pdf.setTextColor(102, 102, 102);
+        const halfHourStr = `${hour.toString().padStart(2, '0')}:30`;
+        pdf.text(halfHourStr, 50 + timeColWidth/2, currentY + 14, { align: 'center' });
+        pdf.setTextColor(0, 0, 0);
+        
+        currentY += rowHeight;
+      }
+    }
+    
+    // 23:30 final row
+    pdf.setFillColor(255, 255, 255);
+    pdf.rect(50, currentY, pdf.internal.pageSize.width - 100, rowHeight, 'F');
+    pdf.setFont('times', 'normal');
+    pdf.setFontSize(9);
+    pdf.setTextColor(102, 102, 102);
+    pdf.text('23:30', 50 + timeColWidth/2, currentY + 14, { align: 'center' });
+
+    // Add appointments to grid
+    weekEvents.forEach(event => {
+      const dayIndex = event.startTime.getDay() === 0 ? 6 : event.startTime.getDay() - 1; // Convert Sunday=0 to be index 6
+      const startHour = event.startTime.getHours();
+      const startMinute = event.startTime.getMinutes();
+      const duration = (event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60); // minutes
+      
+      if (startHour >= 6 && startHour <= 23) {
+        const slotIndex = ((startHour - 6) * 2) + (startMinute >= 30 ? 1 : 0);
+        const appointmentY = gridY + 40 + (slotIndex * rowHeight);
+        const appointmentX = 50 + timeColWidth + (dayIndex * dayColWidth);
+        const appointmentHeight = Math.max(rowHeight, (duration / 30) * rowHeight);
+        
+        // Draw appointment background
+        if (event.title.includes('Appointment')) {
+          pdf.setFillColor(255, 255, 255);
+          pdf.setDrawColor(100, 149, 237);
+          pdf.setLineWidth(2);
+        } else {
+          pdf.setFillColor(255, 255, 255);
+          pdf.setDrawColor(76, 175, 80);
+          pdf.setLineWidth(1);
+          pdf.setLineDashPattern([2, 2], 0);
+        }
+        
+        pdf.rect(appointmentX + 1, appointmentY + 1, dayColWidth - 2, appointmentHeight - 2, 'FD');
+        pdf.setLineDashPattern([], 0);
+        
+        // Appointment text
+        pdf.setFont('times', 'bold');
+        pdf.setFontSize(7);
+        pdf.setTextColor(0, 0, 0);
+        const cleanTitle = event.title.replace(' Appointment', '');
+        pdf.text(cleanTitle, appointmentX + 3, appointmentY + 10, { maxWidth: dayColWidth - 6 });
+        
+        // Time text
+        pdf.setFont('times', 'normal');
+        pdf.setFontSize(6);
+        pdf.setTextColor(51, 51, 51);
+        const timeStr = `${event.startTime.getHours().toString().padStart(2, '0')}:${event.startTime.getMinutes().toString().padStart(2, '0')}`;
+        pdf.text(timeStr, appointmentX + 3, appointmentY + appointmentHeight - 5);
+      }
+    });
+
     const filename = `weekly-planner-${weekStartDate.toISOString().split('T')[0]}.pdf`;
     pdf.save(filename);
 
