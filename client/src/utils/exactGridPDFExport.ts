@@ -333,24 +333,32 @@ export const exportExactGridPDF = async (
             displayTitle = displayTitle.substring(0, maxChars - 3) + '...';
           }
 
-          // Event name - improved readability
+          // Event name - improved readability with fixed character spacing
           pdf.setFont('times', 'bold');
           pdf.setFontSize(9);
           
+          // CLEAN EVENT TITLE (Fix text formatting issues)
+          let cleanTitle = displayTitle
+            .replace(/\s+/g, ' ')  // Remove extra spaces
+            .replace(/[^\w\s\-\.,:;!?'"()]/g, '') // Remove problematic characters
+            .trim();
+          
           // Show title for all events that are tall enough
           if (eventHeight >= 10) {
-            // Handle text wrapping for longer titles
-            const words = displayTitle.split(' ');
-            const maxCharsPerLine = Math.floor(maxWidth / 4.5);
+            // Handle text wrapping using proper text width measurement
+            const words = cleanTitle.split(' ');
+            const maxLines = Math.floor((eventHeight - 8) / 10);
             let currentLine = '';
             let lineCount = 0;
-            const maxLines = Math.floor((eventHeight - 8) / 10);
             
             for (const word of words) {
-              if ((currentLine + word).length <= maxCharsPerLine) {
-                currentLine += (currentLine ? ' ' : '') + word;
+              const testLine = currentLine ? `${currentLine} ${word}` : word;
+              const textWidth = pdf.getTextWidth(testLine);
+              
+              if (textWidth <= maxWidth - 2) {
+                currentLine = testLine;
               } else {
-                if (lineCount < maxLines) {
+                if (lineCount < maxLines && currentLine) {
                   pdf.text(currentLine, textX, eventY + 9 + (lineCount * 10));
                   lineCount++;
                   currentLine = word;

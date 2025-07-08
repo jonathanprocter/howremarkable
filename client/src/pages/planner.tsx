@@ -361,7 +361,7 @@ export default function Planner() {
         
         case 'Daily View':
         case 'reMarkable Daily':
-          // Export daily view as PDF
+          // Export daily view as PDF using the correct daily export function
           try {
             console.log(`=== BEFORE ${type} PDF EXPORT ===`);
             console.log('Selected date:', selectedDateForExport.toDateString());
@@ -381,12 +381,8 @@ export default function Planner() {
               console.log(`Event ${i+1}: "${event.title}" - Duration: ${duration} minutes`);
             });
             
-            await exportHTMLTemplatePDF(
-              selectedDateForExport,
-              selectedDateForExport,
-              currentEvents,
-              true // isDailyView flag
-            );
+            // Use the daily export function directly
+            await exportDailyToPDF(selectedDateForExport, currentEvents, dailyNotes);
             
             toast({
               title: "Export Successful",
