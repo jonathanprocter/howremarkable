@@ -316,6 +316,12 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     cleanTitle = cleanTitle.replace(/🔒\s*/, '').trim();
     
     console.log(`Event ${event.id}: "${event.title}" -> "${cleanTitle}"`);
+    
+    // Handle case where title might be empty or just "Appointment"
+    if (!cleanTitle || cleanTitle === 'Appointment' || cleanTitle.trim() === '') {
+      cleanTitle = 'Untitled Appointment';
+    }
+    
     pdf.text(cleanTitle, eventX, eventY);
     
     // Source line
