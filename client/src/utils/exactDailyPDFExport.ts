@@ -8,7 +8,7 @@ const DAILY_CONFIG = {
   margin: 12,  // Even more compact for better space usage
   timeColumnWidth: 65,  // Reduced time column width
   appointmentColumnWidth: 495,  // Adjusted to maintain proportions
-  timeSlotHeight: 22,  // Increased row height for better text clarity
+  timeSlotHeight: 22,  // PDF optimized - dashboard uses 60px but we scale down for printing
   headerHeight: 75,  // More compact header
 
   // Typography matching dashboard
@@ -234,13 +234,21 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     // Calculate position exactly like dashboard CSS Grid
     const startHour = eventStart.getHours();
     const startMinute = eventStart.getMinutes();
-    const minutesSince6am = (startHour - 6) * 60 + startMinute;
-    const slotsFromStart = minutesSince6am / 30;
-    const topPosition = gridStartY + (slotsFromStart * timeSlotHeight);
+    
+    // Calculate exact slot position from 6:00 AM starting point
+    const slotIndex = ((startHour - 6) * 2) + (startMinute >= 30 ? 1 : 0);
+    const topPosition = gridStartY + (slotIndex * timeSlotHeight);
     
     // Calculate height based on EXACT duration to prevent overlaps
     const durationSlots = Math.ceil(durationMinutes / 30);
     const exactHeight = durationSlots * timeSlotHeight - 4; // Small gap between appointments
+    
+    console.log(`📅 Event: ${event.title}`);
+    console.log(`  ⏰ Start: ${formatMilitaryTime(eventStart)} (${startHour}:${startMinute.toString().padStart(2, '0')})`);
+    console.log(`  ⏳ Duration: ${durationMinutes} minutes (${durationSlots} slots)`);
+    console.log(`  📍 Slot index: ${slotIndex} (calculated: ${startHour - 6}*2 + ${startMinute >= 30 ? 1 : 0})`);
+    console.log(`  📐 Top position: ${topPosition}px (gridStart: ${gridStartY} + slot: ${slotIndex} * height: ${timeSlotHeight})`);
+    console.log(`  📏 Height: ${exactHeight}px`);
     
     // Minimum height for text visibility
     const minHeight = 45;
