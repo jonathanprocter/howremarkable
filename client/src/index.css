@@ -12,12 +12,12 @@
     border: 2px solid black;
     font-family: 'Times New Roman', serif;
     overflow-x: auto;
-    min-height: calc(100vh + 600px);
+    min-height: 100vh;
 }
 
 .header {
     border-bottom: 3px solid black;
-    padding: 20px;
+    padding: 10px;
     text-align: center;
     background: white;
 }
@@ -45,7 +45,7 @@
 
 .stat-card {
     text-align: center;
-    padding: 15px;
+    padding: 8px;
     border-right: 1px solid black;
     font-size: 12px;
 }
@@ -62,7 +62,7 @@
 }
 
 .legend {
-    padding: 12px 20px;
+    padding: 6px 20px;
     border-bottom: 2px solid black;
     font-size: 10px;
     background: #f8f8f8;
@@ -150,9 +150,9 @@
 .calendar-grid {
     display: grid;
     grid-template-columns: 100px repeat(7, 1fr);
-    grid-template-rows: 80px repeat(48, 40px);
+    grid-template-rows: 60px repeat(36, 30px);
     background: white;
-    min-height: calc(100vh + 400px);
+    height: calc(100vh - 200px);
     width: 100%;
 }
 
@@ -171,7 +171,7 @@
 
 .day-header {
     background: #f0f0f0;
-    padding: 15px 12px;
+    padding: 8px 12px;
     text-align: center;
     font-weight: bold;
     border-right: 1px solid black;
@@ -181,7 +181,7 @@
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    min-height: 60px;
+    min-height: 50px;
 }
 
 .day-header:last-child {
@@ -204,16 +204,16 @@
 
 .time-slot {
     background: #f8f8f8;
-    padding: 8px;
+    padding: 4px;
     text-align: center;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: bold;
     display: flex;
     align-items: center;
     justify-content: center;
     border-right: 2px solid black;
     border-bottom: 1px solid #ddd;
-    min-height: 40px;
+    min-height: 30px;
 }
 
 .time-slot.hour {
