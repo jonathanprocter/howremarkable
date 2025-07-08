@@ -150,7 +150,7 @@
 .calendar-grid {
     display: grid;
     grid-template-columns: 100px repeat(7, 1fr);
-    grid-template-rows: 50px repeat(48, 25px);
+    grid-template-rows: 50px repeat(48, 30px);
     background: white;
     height: calc(100vh - 160px);
     width: 100%;
@@ -215,7 +215,7 @@
     justify-content: center;
     border-right: 2px solid black;
     border-bottom: 1px solid #ddd;
-    height: 25px;
+    height: 30px;
     line-height: 1;
     box-sizing: border-box;
 }
@@ -319,10 +319,10 @@
     box-shadow: 0 1px 3px rgba(245, 158, 11, 0.2);
 }
 
-/* Height classes for different durations - exactly match 25px grid slots */
-.appointment.duration-30 { height: 23px; }
-.appointment.duration-60 { height: 48px; }
-.appointment.duration-90 { height: 73px; }
+/* Height classes for different durations */
+.appointment.duration-30 { height: 28px; }
+.appointment.duration-60 { height: 58px; }
+.appointment.duration-90 { height: 88px; }
 
 /* Appointment header styling - exact match to HTML template */
 .appointment-header {
