@@ -18,9 +18,9 @@ const DAILY_CONFIG = {
     date: { size: 14, weight: 'normal' },
     stats: { size: 12, weight: 'normal' },
     timeLabels: { size: 9, weight: 'normal' },
-    eventTitle: { size: 10, weight: 'bold' },
+    eventTitle: { size: 12, weight: 'bold' }, // Increased from 10
     eventSource: { size: 8, weight: 'normal' },
-    eventTime: { size: 9, weight: 'bold' },
+    eventTime: { size: 10, weight: 'bold' }, // Increased from 9
     eventNotes: { size: 8, weight: 'normal' }
   },
 
@@ -243,7 +243,7 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
 
     // Calculate duration
     const durationMinutes = (endDate.getTime() - eventDate.getTime()) / (1000 * 60);
-    const eventHeight = Math.max(40, (durationMinutes / 30) * timeSlotHeight - 2);
+    const eventHeight = Math.max(50, (durationMinutes / 30) * timeSlotHeight - 2); // Increased minimum height
 
     // Skip if outside range
     if (minutesSince6am < 0 || minutesSince6am > (17.5 * 60)) {
@@ -290,19 +290,19 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
       pdf.rect(eventX, eventY, eventWidth, eventHeight);
     }
 
-    // Check for expanded layout
-    const hasNotes = !!(event.notes && event.notes.trim());
-    const hasActionItems = !!(event.actionItems && event.actionItems.trim());
-    const needsExpandedLayout = hasNotes || hasActionItems;
-
-    // Clean title
+    // Clean title - remove "Appointment" suffix like dashboard
     let displayTitle = event.title || 'Untitled Event';
     if (displayTitle.endsWith(' Appointment')) {
       displayTitle = displayTitle.slice(0, -12);
     }
 
-    if (needsExpandedLayout) {
-      // 3-column layout matching dashboard
+    // Check for notes/action items to determine layout
+    const hasNotes = !!(event.notes && event.notes.trim());
+    const hasActionItems = !!(event.actionItems && event.actionItems.trim());
+    const needsExpandedLayout = hasNotes || hasActionItems;
+
+    if (needsExpandedLayout && eventHeight >= 60) {
+      // 3-column layout for events with notes/action items (only if enough height)
       const col1Width = eventWidth * 0.33;
       const col2Width = eventWidth * 0.33;
       const col3Width = eventWidth * 0.34;
@@ -311,7 +311,7 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
       const col2X = eventX + col1Width + 8;
       const col3X = eventX + col1Width + col2Width + 10;
 
-      // Column dividers
+      // Column dividers - only draw if we have content
       pdf.setDrawColor(...DAILY_CONFIG.colors.lightGray);
       pdf.setLineWidth(0.5);
       if (hasNotes) {
@@ -322,107 +322,107 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
       }
 
       // Column 1: Event info
-      let currentY = eventY + 12;
+      let currentY = eventY + 14;
 
-      // Title
+      // Title - larger and bolder
       pdf.setFontSize(DAILY_CONFIG.fonts.eventTitle.size);
       pdf.setFont('helvetica', DAILY_CONFIG.fonts.eventTitle.weight);
       pdf.setTextColor(...DAILY_CONFIG.colors.black);
       pdf.text(displayTitle, col1X, currentY);
-      currentY += 12;
+      currentY += 14;
 
-      // Source
+      // Source - match dashboard text
       pdf.setFontSize(DAILY_CONFIG.fonts.eventSource.size);
-      pdf.setFont('helvetica', DAILY_CONFIG.fonts.eventSource.weight);
+      pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(...DAILY_CONFIG.colors.gray);
       const sourceText = isSimplePractice ? 'SIMPLEPRACTICE' : 
                         isGoogle ? 'GOOGLE CALENDAR' : 
                         isHoliday ? 'HOLIDAYS IN UNITED STATES' : 'MANUAL';
       pdf.text(sourceText, col1X, currentY);
-      currentY += 12;
+      currentY += 14;
 
-      // Time
+      // Time - larger and bolder like dashboard
       pdf.setFontSize(DAILY_CONFIG.fonts.eventTime.size);
       pdf.setFont('helvetica', DAILY_CONFIG.fonts.eventTime.weight);
       pdf.setTextColor(...DAILY_CONFIG.colors.black);
       const timeRange = `${eventDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}-${endDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}`;
       pdf.text(timeRange, col1X, currentY);
 
-      // Column 2: Notes
+      // Column 2: Event Notes
       if (hasNotes) {
-        let notesY = eventY + 12;
+        let notesY = eventY + 14;
         pdf.setFontSize(9);
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(...DAILY_CONFIG.colors.black);
         pdf.text('Event Notes', col2X, notesY);
-        notesY += 14;
+        notesY += 16;
 
         pdf.setFontSize(8);
         pdf.setFont('helvetica', 'normal');
         const noteLines = event.notes!.split('\n').filter(line => line.trim());
         noteLines.forEach(line => {
-          const cleanLine = line.trim();
+          const cleanLine = line.trim().replace(/^[•\s-]+/, '').trim();
           if (cleanLine && notesY + 10 <= eventY + eventHeight - 5) {
-            const bulletLine = cleanLine.startsWith('•') ? cleanLine : '• ' + cleanLine;
-            pdf.text(bulletLine, col2X, notesY);
-            notesY += 10;
+            pdf.text(cleanLine, col2X, notesY);
+            notesY += 11;
           }
         });
       }
 
       // Column 3: Action Items
       if (hasActionItems) {
-        let actionY = eventY + 12;
+        let actionY = eventY + 14;
         pdf.setFontSize(9);
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(...DAILY_CONFIG.colors.black);
         pdf.text('Action Items', col3X, actionY);
-        actionY += 14;
+        actionY += 16;
 
         pdf.setFontSize(8);
         pdf.setFont('helvetica', 'normal');
         const actionLines = event.actionItems!.split('\n').filter(line => line.trim());
         actionLines.forEach(line => {
-          const cleanLine = line.trim();
+          const cleanLine = line.trim().replace(/^[•\s-]+/, '').trim();
           if (cleanLine && actionY + 10 <= eventY + eventHeight - 5) {
-            const bulletLine = cleanLine.startsWith('•') ? cleanLine : '• ' + cleanLine;
-            pdf.text(bulletLine, col3X, actionY);
-            actionY += 10;
+            pdf.text(cleanLine, col3X, actionY);
+            actionY += 11;
           }
         });
       }
 
     } else {
-      // Simple layout matching dashboard
-      let currentY = eventY + 12;
-      const padding = 6;
+      // Simple single-column layout like dashboard
+      let currentY = eventY + 14;
+      const padding = 8;
 
-      // Title
+      // Title - larger and bolder
       pdf.setFontSize(DAILY_CONFIG.fonts.eventTitle.size);
       pdf.setFont('helvetica', DAILY_CONFIG.fonts.eventTitle.weight);
       pdf.setTextColor(...DAILY_CONFIG.colors.black);
       pdf.text(displayTitle, eventX + padding, currentY);
-      currentY += 12;
+      currentY += 14;
 
-      // Source
+      // Source - match dashboard
       pdf.setFontSize(DAILY_CONFIG.fonts.eventSource.size);
-      pdf.setFont('helvetica', DAILY_CONFIG.fonts.eventSource.weight);
+      pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(...DAILY_CONFIG.colors.gray);
       const sourceText = isSimplePractice ? 'SIMPLEPRACTICE' : 
                         isGoogle ? 'GOOGLE CALENDAR' : 
                         isHoliday ? 'HOLIDAYS IN UNITED STATES' : 'MANUAL';
       pdf.text(sourceText, eventX + padding, currentY);
-      currentY += 12;
+      currentY += 14;
 
-      // Time
-      pdf.setFontSize(DAILY_CONFIG.fonts.eventTime.size);
-      pdf.setFont('helvetica', DAILY_CONFIG.fonts.eventTime.weight);
-      pdf.setTextColor(...DAILY_CONFIG.colors.black);
-      const timeRange = `${eventDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}-${endDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}`;
-      pdf.text(timeRange, eventX + padding, currentY);
+      // Time - larger and bolder
+      if (currentY + 12 <= eventY + eventHeight - 5) {
+        pdf.setFontSize(DAILY_CONFIG.fonts.eventTime.size);
+        pdf.setFont('helvetica', DAILY_CONFIG.fonts.eventTime.weight);
+        pdf.setTextColor(...DAILY_CONFIG.colors.black);
+        const timeRange = `${eventDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}-${endDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}`;
+        pdf.text(timeRange, eventX + padding, currentY);
+      }
     }
 
-    console.log(`Event positioned at Y=${eventY}, height=${eventHeight}`);
+    console.log(`Event positioned at Y=${eventY}, height=${eventHeight}, layout=${needsExpandedLayout ? '3-column' : 'simple'}`);
   });
 }
 
