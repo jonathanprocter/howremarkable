@@ -4,7 +4,7 @@ import { CalendarEvent } from '../types/calendar';
 // Match the exact dashboard layout
 const DAILY_CONFIG = {
   pageWidth: 595,
-  pageHeight: 1200,  // Optimized for 30px slots (36 slots * 30px = 1080px + header)
+  pageHeight: 1400,  // Full timeline to 23:30 (36 slots * 30px = 1080px + header + margins)
   margin: 12,  // Even more compact for better space usage
   timeColumnWidth: 65,  // Reduced time column width
   appointmentColumnWidth: 495,  // Adjusted to maintain proportions
@@ -190,7 +190,7 @@ function drawDashboardLegend(pdf: jsPDF) {
 function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
   const { margin, timeColumnWidth, appointmentColumnWidth, timeSlotHeight } = DAILY_CONFIG;
   const gridStartY = margin + 82;  // Balanced grid start
-  const totalGridHeight = timeSlotHeight * TIME_SLOTS.length;  // Full timeline to 23:30
+  const totalGridHeight = timeSlotHeight * TIME_SLOTS.length;  // Full timeline to 23:30 (36 slots * 30px = 1080px)
   
   // Filter events for the selected date
   const dayEvents = events.filter(event => {
@@ -210,6 +210,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
   });
 
   // Draw time slots exactly like dashboard
+  console.log(`📅 Drawing time slots from ${TIME_SLOTS[0]} to ${TIME_SLOTS[TIME_SLOTS.length - 1]} (${TIME_SLOTS.length} slots)`);
   TIME_SLOTS.forEach((timeSlot, index) => {
     const y = gridStartY + (index * timeSlotHeight);
     const isHour = timeSlot.endsWith(':00');
