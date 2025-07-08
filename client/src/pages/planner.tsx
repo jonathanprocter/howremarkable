@@ -320,6 +320,11 @@ export default function Planner() {
       let fileName: string;
       let mimeType: string;
 
+      console.log('=== EXPORT TYPE DEBUG ===');
+      console.log('Export type received:', JSON.stringify(type));
+      console.log('Type length:', type.length);
+      console.log('Type === "Daily View":', type === 'Daily View');
+
       switch (type) {
         case 'Current View':
           // For current view, use the appropriate export based on view mode
