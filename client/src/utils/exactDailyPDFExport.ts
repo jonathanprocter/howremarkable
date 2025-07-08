@@ -59,14 +59,17 @@ function getEventTypeInfo(event: CalendarEvent) {
   const isHoliday = event.title.toLowerCase().includes('holiday') ||
                    event.calendarId === 'en.usa#holiday@group.v.calendar.google.com';
 
-  // Check for SimplePractice events - only if they have "SimplePractice" in the source
-  const isSimplePractice = event.source === 'simplepractice' || 
-                           event.notes?.toLowerCase().includes('simple practice') ||
-                           event.title?.toLowerCase().includes('simple practice') ||
-                           event.description?.toLowerCase().includes('simple practice');
+  // Check for "Dan re: Supervision" - this is the only Google Calendar appointment
+  const isDanSupervision = event.title === 'Dan re: Supervision';
 
-  // Most events are Google Calendar events (unless they're holidays or SimplePractice)
-  const isGoogle = !isSimplePractice && !isHoliday;
+  // All other appointments (except holidays and Dan's supervision) are SimplePractice
+  // This includes appointments like "Nancy Grossman Appointment", "Sherrifa Hoosein Appointment", etc.
+  const isSimplePractice = !isHoliday && !isDanSupervision && 
+                           (event.title.includes('Appointment') || 
+                            event.title.includes('Sherrifa Hoosein'));
+
+  // Only Dan's supervision is Google Calendar
+  const isGoogle = isDanSupervision;
 
   console.log(`Event type detection for "${event.title}":`, {
     source: event.source,
@@ -75,7 +78,14 @@ function getEventTypeInfo(event: CalendarEvent) {
     isHoliday
   });
 
-  return { isSimplePractice, isGoogle, isHoliday };
+  return { 
+    isSimplePractice, 
+    isGoogle, 
+    isHoliday,
+    source: isHoliday ? 'Holidays in United States' : 
+            isSimplePractice ? 'SimplePractice' : 
+            'Google Calendar'
+  };
 }
 
 function drawDashboardHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
@@ -337,9 +347,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     pdf.setFontSize(8);
     pdf.setFont('helvetica', 'normal');
     pdf.setTextColor(...DAILY_CONFIG.colors.black); // Ensure black text
-    const source = eventType.isSimplePractice ? 'SimplePractice' : 
-                   eventType.isGoogle ? 'Google Calendar' : 'Holidays';
-    pdf.text(source, eventX, eventY + 11);
+    pdf.text(eventType.source, eventX, eventY + 11);
     
     // Time range - military time format
     pdf.setFontSize(12);
