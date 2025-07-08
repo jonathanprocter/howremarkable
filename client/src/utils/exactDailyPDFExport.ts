@@ -235,6 +235,9 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     const durationSlots = Math.ceil(durationMinutes / 30);
     const exactHeight = durationSlots * timeSlotHeight - 4; // Small gap between appointments
     
+    // Minimum height for text visibility
+    const minHeight = 45;
+    
     // Calculate additional height needed for wrapped text with better spacing
     let maxContentLines = 3; // base: title, source, time
     if (event.notes && event.notes.trim()) {
@@ -247,7 +250,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     }
     
     const contentHeight = maxContentLines * 10 + 30;
-    const height = Math.max(exactHeight, contentHeight);
+    const height = Math.max(exactHeight, minHeight, contentHeight);
     
     // Event styling based on type
     const eventType = getEventTypeInfo(event);
@@ -289,18 +292,21 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(...DAILY_CONFIG.colors.black);
     
-    // Clean title - remove "Appointment" suffix and emojis like dashboard
+    // Clean title - minimal processing to preserve patient names
     let cleanTitle = event.title;
     if (cleanTitle.endsWith(' Appointment')) {
       cleanTitle = cleanTitle.replace(' Appointment', '');
     }
-    // Remove emojis and special characters that cause display issues
-    cleanTitle = cleanTitle.replace(/[^\w\s\-\.,:;!?'"()&]/g, '').trim();
+    // Only remove lock emoji and preserve all other text
+    cleanTitle = cleanTitle.replace(/🔒\s*/, '').trim();
+    
+    console.log(`Event ${event.id}: "${event.title}" -> "${cleanTitle}" at ${formatMilitaryTime(eventStart)}`);
     pdf.text(cleanTitle, eventX, eventY);
     
     // Source line
     pdf.setFontSize(8);
     pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(...DAILY_CONFIG.colors.black); // Ensure black text
     const source = eventType.isSimplePractice ? 'SimplePractice' : 
                    eventType.isGoogle ? 'Google Calendar' : 'Holidays';
     pdf.text(source, eventX, eventY + 11);
@@ -308,6 +314,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     // Time range - military time format
     pdf.setFontSize(12);
     pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(...DAILY_CONFIG.colors.black); // Ensure black text
     const formatMilitaryTime = (date: Date) => {
       const hours = date.getHours().toString().padStart(2, '0');
       const minutes = date.getMinutes().toString().padStart(2, '0');
@@ -320,10 +327,12 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     if (event.notes && event.notes.trim()) {
       pdf.setFontSize(8);
       pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...DAILY_CONFIG.colors.black); // Ensure black text
       pdf.text('Event Notes', eventX + columnWidth, eventY);
       
       pdf.setFontSize(7);
       pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(...DAILY_CONFIG.colors.black); // Ensure black text
       const notes = event.notes.split('\n')
         .filter(note => note.trim().length > 0)
         .map(note => note.trim().replace(/^[•\s-]+/, '').trim())
@@ -336,6 +345,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
         let currentY = eventY + 12 + (index * 10); // Increased spacing between items
         
         lines.forEach((line, lineIndex) => {
+          pdf.setTextColor(...DAILY_CONFIG.colors.black); // Ensure black text for each line
           pdf.text(line, eventX + columnWidth, currentY + (lineIndex * 8)); // Increased line spacing
         });
       });
@@ -345,10 +355,12 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     if (event.actionItems && event.actionItems.trim()) {
       pdf.setFontSize(8);
       pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...DAILY_CONFIG.colors.black); // Ensure black text
       pdf.text('Action Items', eventX + columnWidth * 2, eventY);
       
       pdf.setFontSize(7);
       pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(...DAILY_CONFIG.colors.black); // Ensure black text
       const actionItems = event.actionItems.split('\n')
         .filter(item => item.trim().length > 0)
         .map(item => item.trim().replace(/^[•\s-]+/, '').trim())
@@ -361,6 +373,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
         let currentY = eventY + 12 + (index * 10); // Increased spacing between items
         
         lines.forEach((line, lineIndex) => {
+          pdf.setTextColor(...DAILY_CONFIG.colors.black); // Ensure black text for each line
           pdf.text(line, eventX + columnWidth * 2, currentY + (lineIndex * 8)); // Increased line spacing
         });
       });
