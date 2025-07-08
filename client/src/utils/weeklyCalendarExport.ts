@@ -11,6 +11,7 @@ const WEEKLY_CONFIG = {
   
   // Layout
   headerHeight: 60,
+  legendHeight: 30,
   timeColumnWidth: 60,
   
   // Time range
@@ -22,9 +23,12 @@ const WEEKLY_CONFIG = {
   // Colors
   headerBg: [245, 245, 245],
   gridBorder: [200, 200, 200],
+  hourRowBg: [240, 240, 240], // Grey background for hour rows
   hourLine: [150, 150, 150],
-  eventBg: [220, 240, 255],
-  eventBorder: [100, 150, 200]
+  eventBg: [255, 255, 255], // White background for events
+  googleEventBorder: [52, 168, 83], // Green for Google Calendar
+  simplePracticeEventBorder: [66, 133, 244], // Blue for SimplePractice
+  personalEventBorder: [255, 152, 0] // Orange for personal events
 };
 
 export const exportWeeklyCalendar = async (
@@ -56,7 +60,7 @@ export const exportWeeklyCalendar = async (
 };
 
 function drawCalendarPage(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date, events: CalendarEvent[]): void {
-  const { margin, headerHeight, timeColumnWidth } = WEEKLY_CONFIG;
+  const { margin, headerHeight, legendHeight, timeColumnWidth } = WEEKLY_CONFIG;
   const contentWidth = WEEKLY_CONFIG.pageWidth - (margin * 2);
   const dayColumnWidth = (contentWidth - timeColumnWidth) / 7;
   
@@ -68,14 +72,17 @@ function drawCalendarPage(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date, ev
   // Header
   drawHeader(pdf, weekStartDate, weekEndDate, margin, contentWidth);
   
+  // Legend
+  drawLegend(pdf, margin, headerHeight, contentWidth);
+  
   // Day headers
-  drawDayHeaders(pdf, weekStartDate, margin, headerHeight, timeColumnWidth, dayColumnWidth);
+  drawDayHeaders(pdf, weekStartDate, margin, headerHeight + legendHeight, timeColumnWidth, dayColumnWidth);
   
   // Time grid
-  drawTimeGrid(pdf, margin, headerHeight, timeColumnWidth, dayColumnWidth);
+  drawTimeGrid(pdf, margin, headerHeight + legendHeight, timeColumnWidth, dayColumnWidth);
   
   // Events
-  drawEvents(pdf, weekStartDate, events, margin, headerHeight, timeColumnWidth, dayColumnWidth);
+  drawEvents(pdf, weekStartDate, events, margin, headerHeight + legendHeight, timeColumnWidth, dayColumnWidth);
 }
 
 function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date, margin: number, contentWidth: number): void {
@@ -102,6 +109,54 @@ function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date, margin: 
   const weekNumber = getWeekNumber(weekStartDate);
   const weekText = `Week ${weekNumber}: ${weekStartDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEndDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
   pdf.text(weekText, WEEKLY_CONFIG.pageWidth / 2, margin + 45, { align: 'center' });
+}
+
+function drawLegend(pdf: jsPDF, margin: number, headerHeight: number, contentWidth: number): void {
+  const legendY = margin + headerHeight;
+  const { legendHeight } = WEEKLY_CONFIG;
+  
+  // Legend background
+  pdf.setFillColor(255, 255, 255);
+  pdf.rect(margin, legendY, contentWidth, legendHeight, 'F');
+  
+  // Legend border
+  pdf.setLineWidth(1);
+  pdf.setDrawColor(0, 0, 0);
+  pdf.line(margin, legendY + legendHeight, margin + contentWidth, legendY + legendHeight);
+  
+  // Legend items
+  const legendItems = [
+    { label: 'SimplePractice', color: WEEKLY_CONFIG.simplePracticeEventBorder, style: 'solid' },
+    { label: 'Google Calendar', color: WEEKLY_CONFIG.googleEventBorder, style: 'dashed' },
+    { label: 'Personal', color: WEEKLY_CONFIG.personalEventBorder, style: 'solid' }
+  ];
+  
+  let x = margin + 50;
+  legendItems.forEach((item) => {
+    // Draw legend box
+    pdf.setFillColor(...WEEKLY_CONFIG.eventBg);
+    pdf.rect(x, legendY + 8, 16, 12, 'F');
+    
+    if (item.style === 'dashed') {
+      pdf.setDrawColor(...item.color);
+      pdf.setLineWidth(2);
+      pdf.setLineDashPattern([2, 2], 0);
+      pdf.rect(x, legendY + 8, 16, 12);
+      pdf.setLineDashPattern([], 0);
+    } else {
+      pdf.setDrawColor(...item.color);
+      pdf.setLineWidth(2);
+      pdf.rect(x, legendY + 8, 16, 12);
+    }
+    
+    // Legend label
+    pdf.setFontSize(8);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(0, 0, 0);
+    pdf.text(item.label, x + 22, legendY + 15);
+    
+    x += 100;
+  });
 }
 
 function drawDayHeaders(pdf: jsPDF, weekStartDate: Date, margin: number, headerHeight: number, timeColumnWidth: number, dayColumnWidth: number): void {
@@ -151,7 +206,7 @@ function drawTimeGrid(pdf: jsPDF, margin: number, headerHeight: number, timeColu
   const gridStartY = margin + headerHeight + 30;
   const { startHour, endHour, endMinute, slotHeight } = WEEKLY_CONFIG;
   
-  // Generate time slots
+  // Generate time slots - ensuring we go through 23:30
   const timeSlots = [];
   for (let hour = startHour; hour <= endHour; hour++) {
     timeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
@@ -164,7 +219,7 @@ function drawTimeGrid(pdf: jsPDF, margin: number, headerHeight: number, timeColu
     const y = gridStartY + (index * slotHeight);
     const isHour = timeSlot.endsWith(':00');
     
-    // Time column
+    // Time column background
     pdf.setFillColor(255, 255, 255);
     pdf.rect(margin, y, timeColumnWidth, slotHeight, 'F');
     
@@ -174,20 +229,29 @@ function drawTimeGrid(pdf: jsPDF, margin: number, headerHeight: number, timeColu
     pdf.setTextColor(0, 0, 0);
     pdf.text(timeSlot, margin + timeColumnWidth / 2, y + slotHeight / 2 + 3, { align: 'center' });
     
-    // Grid lines
-    pdf.setLineWidth(isHour ? 1 : 0.5);
-    pdf.setDrawColor(...(isHour ? WEEKLY_CONFIG.hourLine : WEEKLY_CONFIG.gridBorder));
-    pdf.line(margin, y, margin + timeColumnWidth + (7 * dayColumnWidth), y);
-    
-    // Day columns
+    // Day columns with grey background for hour rows
     for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
       const x = margin + timeColumnWidth + (dayIndex * dayColumnWidth);
+      
+      // Hour row background - grey for hour rows (:00), white for half-hour rows (:30)
+      if (isHour) {
+        pdf.setFillColor(...WEEKLY_CONFIG.hourRowBg);
+        pdf.rect(x, y, dayColumnWidth, slotHeight, 'F');
+      } else {
+        pdf.setFillColor(255, 255, 255);
+        pdf.rect(x, y, dayColumnWidth, slotHeight, 'F');
+      }
       
       // Cell border
       pdf.setLineWidth(0.5);
       pdf.setDrawColor(...WEEKLY_CONFIG.gridBorder);
       pdf.rect(x, y, dayColumnWidth, slotHeight);
     }
+    
+    // Grid lines
+    pdf.setLineWidth(isHour ? 1 : 0.5);
+    pdf.setDrawColor(...(isHour ? WEEKLY_CONFIG.hourLine : WEEKLY_CONFIG.gridBorder));
+    pdf.line(margin, y, margin + timeColumnWidth + (7 * dayColumnWidth), y);
   });
   
   // Vertical day separators
@@ -229,13 +293,29 @@ function drawEvents(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent[], ma
     const width = dayColumnWidth - 2;
     const height = Math.max(slotHeight - 2, (endSlotIndex - startSlotIndex) * slotHeight - 2);
     
-    // Draw event
-    pdf.setFillColor(...WEEKLY_CONFIG.eventBg);
+    // Draw event with white background
+    pdf.setFillColor(...WEEKLY_CONFIG.eventBg); // White background
     pdf.rect(x, y, width, height, 'F');
     
-    pdf.setLineWidth(1);
-    pdf.setDrawColor(...WEEKLY_CONFIG.eventBorder);
-    pdf.rect(x, y, width, height);
+    // Event border styling based on source
+    if (event.title.includes('Appointment')) {
+      // SimplePractice events - solid blue border
+      pdf.setDrawColor(...WEEKLY_CONFIG.simplePracticeEventBorder);
+      pdf.setLineWidth(2);
+      pdf.rect(x, y, width, height);
+    } else if (event.source === 'google') {
+      // Google Calendar events - dashed green border
+      pdf.setDrawColor(...WEEKLY_CONFIG.googleEventBorder);
+      pdf.setLineWidth(2);
+      pdf.setLineDashPattern([3, 3], 0);
+      pdf.rect(x, y, width, height);
+      pdf.setLineDashPattern([], 0); // Reset dash pattern
+    } else {
+      // Personal events - solid orange border
+      pdf.setDrawColor(...WEEKLY_CONFIG.personalEventBorder);
+      pdf.setLineWidth(2);
+      pdf.rect(x, y, width, height);
+    }
     
     // Event text
     pdf.setFontSize(7);
