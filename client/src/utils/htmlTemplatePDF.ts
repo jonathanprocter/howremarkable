@@ -75,7 +75,7 @@ const REMARKABLE_DAILY_CONFIG = {
   
   // Grid configuration
   timeColumnWidth: 71,  // 25mm * 2.834
-  timeSlotHeight: 17,   // 6mm * 2.834
+  timeSlotHeight: 20,   // Increased from 17 to 20 for better event spacing
   
   get gridStartY() {
     return this.margin + this.totalHeaderHeight;
@@ -797,7 +797,8 @@ function drawRemarkableDailyAppointments(pdf: jsPDF, selectedDate: Date, events:
     // Convert to slot positions (each slot is 30 minutes)
     const startSlot = Math.max(0, startMinutesFrom6 / 30);
     const endSlot = Math.min(35, endMinutesFrom6 / 30);
-    const durationSlots = Math.max(1, endSlot - startSlot); // Minimum 1 slot
+    // FIXED: Ensure minimum event height for visibility and text
+    const durationSlots = Math.max(2, endSlot - startSlot); // Minimum 2 slots (1 hour) for text visibility
     
     console.log(`Start slot: ${startSlot}, End slot: ${endSlot}, Duration: ${durationSlots}`);
     
@@ -810,7 +811,8 @@ function drawRemarkableDailyAppointments(pdf: jsPDF, selectedDate: Date, events:
     const eventX = margin + timeColumnWidth + 3; // Small margin from time column
     const eventY = gridStartY + (startSlot * timeSlotHeight) + 2; // Small margin from top
     const eventWidth = dayColumnWidth - 6; // Full width minus margins
-    const eventHeight = Math.max(timeSlotHeight - 4, (durationSlots * timeSlotHeight) - 4);
+    // FIXED: Minimum height for proper text display
+    const eventHeight = Math.max(45, (durationSlots * timeSlotHeight) - 4); // Minimum 45 points for 3 lines of text
     
     console.log(`Event position: X=${eventX}, Y=${eventY}, Width=${eventWidth}, Height=${eventHeight}`);
     
@@ -868,33 +870,38 @@ function drawRemarkableDailyAppointments(pdf: jsPDF, selectedDate: Date, events:
       pdf.rect(eventX, eventY, eventWidth, eventHeight);
     }
     
-    // Event text content - MATCH THE TARGET LAYOUT EXACTLY
-    const textX = eventX + (isSimplePractice ? 8 : 6); // More margin for SimplePractice due to thick border
+    // FIXED: Event text with proper spacing and larger fonts
+    const textX = eventX + (isSimplePractice ? 8 : 6);
     const textWidth = eventWidth - (isSimplePractice ? 12 : 8);
-    let currentY = eventY + 12;
+    let currentY = eventY + 15; // Start text lower to ensure visibility
+    
+    console.log(`Text area: X=${textX}, starting Y=${currentY}, width=${textWidth}`);
     
     // 1. EVENT TITLE (Bold, larger font)
     const cleanTitle = event.title.replace(/ Appointment$/, '').trim();
-    pdf.setFontSize(9);
+    
+    // INCREASED font size for better visibility
+    pdf.setFontSize(11);
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(0, 0, 0);
     
-    // Handle text wrapping for title
-    const titleLines = pdf.splitTextToSize(cleanTitle, textWidth);
-    const maxTitleLines = Math.min(titleLines.length, Math.floor((eventHeight - 25) / 11));
+    console.log(`Drawing title: "${cleanTitle}"`);
     
-    for (let i = 0; i < maxTitleLines; i++) {
-      if (currentY + 11 <= eventY + eventHeight - 15) { // Leave space for source and time
-        pdf.text(titleLines[i], textX, currentY);
-        currentY += 11;
-      }
+    // Handle text wrapping
+    const titleLines = pdf.splitTextToSize(cleanTitle, textWidth);
+    const maxTitleLines = Math.min(titleLines.length, 2); // Max 2 lines for title
+    
+    for (let i = 0; i < maxTitleLines && currentY + 12 <= eventY + eventHeight - 20; i++) {
+      pdf.text(titleLines[i], textX, currentY);
+      console.log(`Drew title line ${i + 1}: "${titleLines[i]}" at Y=${currentY}`);
+      currentY += 12;
     }
     
     // 2. SOURCE (Smaller, all caps, gray)
-    if (eventHeight > 25 && currentY + 10 <= eventY + eventHeight - 12) {
-      pdf.setFontSize(7);
+    if (currentY + 10 <= eventY + eventHeight - 12) {
+      pdf.setFontSize(8);
       pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(100, 100, 100); // Gray
+      pdf.setTextColor(100, 100, 100);
       
       let sourceText = '';
       if (isSimplePractice) {
@@ -908,14 +915,15 @@ function drawRemarkableDailyAppointments(pdf: jsPDF, selectedDate: Date, events:
       }
       
       pdf.text(sourceText, textX, currentY);
+      console.log(`Drew source: "${sourceText}" at Y=${currentY}`);
       currentY += 10;
     }
     
-    // 3. TIME RANGE (Bold, format: "HH:MM-HH:MM")
-    if (eventHeight > 35 && currentY + 10 <= eventY + eventHeight - 5) {
-      pdf.setFontSize(8);
+    // 3. TIME RANGE (Bold)
+    if (currentY + 10 <= eventY + eventHeight - 5) {
+      pdf.setFontSize(9);
       pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(0, 0, 0); // Black
+      pdf.setTextColor(0, 0, 0);
       
       const startTimeStr = eventDate.toLocaleTimeString('en-US', { 
         hour: '2-digit', 
@@ -930,7 +938,10 @@ function drawRemarkableDailyAppointments(pdf: jsPDF, selectedDate: Date, events:
       const timeRange = `${startTimeStr}-${endTimeStr}`;
       
       pdf.text(timeRange, textX, currentY);
+      console.log(`Drew time: "${timeRange}" at Y=${currentY}`);
     }
+    
+    console.log(`Finished rendering event ${index + 1}`);
   });
 }
 
