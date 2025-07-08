@@ -18,10 +18,10 @@ const HTML_TEMPLATE_CONFIG = {
   pageHeight: 842,
   
   // Layout structure
-  margin: 20,
-  headerHeight: 80,
-  statsHeight: 60,
-  legendHeight: 40,
+  margin: 15,
+  headerHeight: 90,
+  statsHeight: 70,
+  legendHeight: 50,
   
   // Total header section height
   get totalHeaderHeight() {
@@ -31,7 +31,7 @@ const HTML_TEMPLATE_CONFIG = {
   // Grid configuration
   timeColumnWidth: 80,
   get gridStartY() {
-    return this.margin + this.totalHeaderHeight + 10; // Add spacing below header
+    return this.margin + this.totalHeaderHeight + 5; // Minimal spacing below header
   },
   timeSlotHeight: 18, // Optimal slot height for grid alignment
   
@@ -109,17 +109,17 @@ function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date, events: 
   pdf.rect(margin, margin, HTML_TEMPLATE_CONFIG.pageWidth - (margin * 2), totalHeaderHeight, 'F');
   
   // === TITLE SECTION ===
-  pdf.setFontSize(24);
+  pdf.setFontSize(28);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(...HTML_TEMPLATE_CONFIG.colors.black);
-  pdf.text('WEEKLY PLANNER', HTML_TEMPLATE_CONFIG.pageWidth / 2, margin + 35, { align: 'center' });
+  pdf.text('WEEKLY PLANNER', HTML_TEMPLATE_CONFIG.pageWidth / 2, margin + 40, { align: 'center' });
   
   // Week info
-  pdf.setFontSize(16);
+  pdf.setFontSize(18);
   pdf.setFont('helvetica', 'normal');
   const weekNumber = getWeekNumber(weekStartDate);
   const weekText = `${weekStartDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEndDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • Week ${weekNumber}`;
-  pdf.text(weekText, HTML_TEMPLATE_CONFIG.pageWidth / 2, margin + 60, { align: 'center' });
+  pdf.text(weekText, HTML_TEMPLATE_CONFIG.pageWidth / 2, margin + 70, { align: 'center' });
   
   // === STATS SECTION ===
   const statsY = margin + HTML_TEMPLATE_CONFIG.headerHeight;
@@ -159,19 +159,19 @@ function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date, events: 
     if (index > 0) {
       pdf.setLineWidth(1);
       pdf.setDrawColor(...HTML_TEMPLATE_CONFIG.colors.mediumGray);
-      pdf.line(x, statsY + 10, x, statsY + HTML_TEMPLATE_CONFIG.statsHeight - 10);
+      pdf.line(x, statsY + 15, x, statsY + HTML_TEMPLATE_CONFIG.statsHeight - 15);
     }
     
     // Stat value
-    pdf.setFontSize(20);
+    pdf.setFontSize(24);
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(...HTML_TEMPLATE_CONFIG.colors.black);
-    pdf.text(stat.value, x + cardWidth / 2, statsY + 25, { align: 'center' });
+    pdf.text(stat.value, x + cardWidth / 2, statsY + 30, { align: 'center' });
     
     // Stat label
-    pdf.setFontSize(11);
+    pdf.setFontSize(13);
     pdf.setFont('helvetica', 'normal');
-    pdf.text(stat.label, x + cardWidth / 2, statsY + 45, { align: 'center' });
+    pdf.text(stat.label, x + cardWidth / 2, statsY + 52, { align: 'center' });
   });
   
   // === LEGEND SECTION ===
@@ -196,9 +196,9 @@ function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date, events: 
   const itemWidth = contentWidth / legendItems.length;
   
   legendItems.forEach((item, index) => {
-    const x = margin + (index * itemWidth) + 20;
-    const symbolY = legendY + 15;
-    const symbolSize = 12;
+    const x = margin + (index * itemWidth) + 30;
+    const symbolY = legendY + 20;
+    const symbolSize = 16;
     
     // Draw legend symbol
     if (item.style === 'left-border') {
@@ -222,10 +222,10 @@ function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date, events: 
     }
     
     // Legend text
-    pdf.setFontSize(10);
+    pdf.setFontSize(12);
     pdf.setFont('helvetica', 'normal');
     pdf.setTextColor(...HTML_TEMPLATE_CONFIG.colors.black);
-    pdf.text(item.label, x + symbolSize + 8, symbolY + 8);
+    pdf.text(item.label, x + symbolSize + 10, symbolY + 12);
   });
   
   // Complete header border
@@ -240,7 +240,7 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
   const { margin } = HTML_TEMPLATE_CONFIG;
   const gridY = HTML_TEMPLATE_CONFIG.gridStartY;
   const dayColumnWidth = HTML_TEMPLATE_CONFIG.dayColumnWidth;
-  const headerHeight = 28;
+  const headerHeight = 35;
   
   // Calculate total grid height
   const totalGridHeight = headerHeight + (TIME_SLOTS.length * HTML_TEMPLATE_CONFIG.timeSlotHeight);
@@ -258,10 +258,10 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
   pdf.setFillColor(...HTML_TEMPLATE_CONFIG.colors.lightGray);
   pdf.rect(margin, gridY, HTML_TEMPLATE_CONFIG.timeColumnWidth, headerHeight, 'F');
   
-  pdf.setFontSize(11);
+  pdf.setFontSize(13);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(...HTML_TEMPLATE_CONFIG.colors.black);
-  pdf.text('TIME', margin + HTML_TEMPLATE_CONFIG.timeColumnWidth / 2, gridY + 17, { align: 'center' });
+  pdf.text('TIME', margin + HTML_TEMPLATE_CONFIG.timeColumnWidth / 2, gridY + 22, { align: 'center' });
   
   // === DAY HEADERS ===
   const dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -275,14 +275,14 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
     pdf.rect(x, gridY, dayColumnWidth, headerHeight, 'F');
     
     // Day name
-    pdf.setFontSize(10);
+    pdf.setFontSize(12);
     pdf.setFont('helvetica', 'bold');
-    pdf.text(dayNames[i], x + dayColumnWidth / 2, gridY + 11, { align: 'center' });
+    pdf.text(dayNames[i], x + dayColumnWidth / 2, gridY + 15, { align: 'center' });
     
     // Date number
-    pdf.setFontSize(9);
+    pdf.setFontSize(11);
     pdf.setFont('helvetica', 'normal');
-    pdf.text(dayDate.getDate().toString(), x + dayColumnWidth / 2, gridY + 22, { align: 'center' });
+    pdf.text(dayDate.getDate().toString(), x + dayColumnWidth / 2, gridY + 28, { align: 'center' });
   }
   
   // === TIME GRID ===
