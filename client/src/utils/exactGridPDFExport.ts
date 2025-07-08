@@ -334,6 +334,14 @@ export const exportExactGridPDF = async (
       GRID_CONFIG.margin, 
       gridEndY
     );
+    
+    // Vertical border between time column and Monday
+    pdf.line(
+      GRID_CONFIG.margin + GRID_CONFIG.timeColumnWidth, 
+      gridStartY, 
+      GRID_CONFIG.margin + GRID_CONFIG.timeColumnWidth, 
+      gridEndY
+    );
 
     // Download the PDF
     const filename = `Weekly_Calendar_${weekStartDate.toLocaleDateString('en-US').replace(/\//g, '-')}.pdf`;
