@@ -28,6 +28,7 @@ const DAILY_CONFIG = {
     black: [0, 0, 0],
     gray: [100, 100, 100],
     lightGray: [200, 200, 200],
+    mediumGray: [150, 150, 150],
     white: [255, 255, 255],
     simplePracticeBlue: [66, 133, 244],
     googleGreen: [52, 168, 83],
@@ -44,6 +45,12 @@ const TIME_SLOTS = [
   '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30',
   '22:00', '22:30', '23:00', '23:30'
 ];
+
+// Time slots with isHour property for grid display
+const TIME_SLOTS_WITH_HOUR = TIME_SLOTS.map(time => ({
+  time,
+  isHour: time.endsWith(':00')
+}));
 
 function getEventTypeInfo(event: CalendarEvent) {
   const isSimplePractice = event.source === 'simplepractice' || 
@@ -182,7 +189,7 @@ function drawTimeGrid(pdf: jsPDF) {
   pdf.text('APPOINTMENTS', dayX + appointmentColumnWidth / 2, gridStartY + 15, { align: 'center' });
 
   // Time slots - match dashboard exactly
-  TIME_SLOTS.forEach((slot, index) => {
+  TIME_SLOTS_WITH_HOUR.forEach((slot, index) => {
     const y = gridStartY + headerHeight + (index * timeSlotHeight);
 
     // Time cell - alternate backgrounds like dashboard
@@ -208,7 +215,7 @@ function drawTimeGrid(pdf: jsPDF) {
   // Vertical grid lines
   pdf.setLineWidth(2);
   pdf.setDrawColor(...DAILY_CONFIG.colors.black);
-  pdf.line(margin + timeColumnWidth, gridStartY, margin + timeColumnWidth, gridStartY + headerHeight + (TIME_SLOTS.length * timeSlotHeight));
+  pdf.line(margin + timeColumnWidth, gridStartY, margin + timeColumnWidth, gridStartY + headerHeight + (TIME_SLOTS_WITH_HOUR.length * timeSlotHeight));
 
   // Header separator
   pdf.line(margin, gridStartY + headerHeight, margin + timeColumnWidth + appointmentColumnWidth, gridStartY + headerHeight);
@@ -429,7 +436,9 @@ export const exportDailyToPDF = async (
   // Filter events for selected date with improved debugging
   const dayEvents = events.filter(event => {
     const eventDate = new Date(event.startTime);
-    const matches = eventDate.toDateString() === selectedDate.toDateString();
+    const eventDateString = eventDate.toISOString().split('T')[0];
+    const selectedDateString = selectedDate.toISOString().split('T')[0];
+    const matches = eventDateString === selectedDateString;
     console.log(`Event: ${event.title} on ${eventDate.toDateString()}, Selected: ${selectedDate.toDateString()}, Matches: ${matches}`);
     return matches;
   });
