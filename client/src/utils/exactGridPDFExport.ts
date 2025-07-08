@@ -3,9 +3,9 @@ import { CalendarEvent } from '../types/calendar';
 
 // Exact grid configuration matching our fixed calendar
 const GRID_CONFIG = {
-  // Page setup - A3 landscape with more height for 30px slots
+  // Page setup - A3 landscape optimized for 36 time slots
   pageWidth: 1190,
-  pageHeight: 1200, // Increased height to accommodate 36 × 30px slots
+  pageHeight: 1400, // Optimized height for complete timeline visibility
   
   // Layout dimensions matching calendar
   margin: 30,
@@ -195,9 +195,10 @@ export const exportExactGridPDF = async (
       pdf.setFontSize(16);
       pdf.text(dayDate.getDate().toString(), dayX + GRID_CONFIG.dayColumnWidth/2, gridStartY + 40, { align: 'center' });
       
-      // Vertical border
+      // Bold vertical border between days
       if (index < 6) {
-        pdf.setLineWidth(1);
+        pdf.setLineWidth(2);
+        pdf.setDrawColor(0, 0, 0);
         pdf.line(dayX + GRID_CONFIG.dayColumnWidth, gridStartY, dayX + GRID_CONFIG.dayColumnWidth, gridStartY + 50 + GRID_CONFIG.gridHeight);
       }
     });
@@ -241,6 +242,13 @@ export const exportExactGridPDF = async (
         pdf.setLineWidth(slot.isHour ? 2 : 1);
         pdf.setDrawColor(slot.isHour ? 0 : 221, slot.isHour ? 0 : 221, slot.isHour ? 0 : 221);
         pdf.rect(cellX, y, GRID_CONFIG.dayColumnWidth, GRID_CONFIG.slotHeight, 'S');
+        
+        // Bold vertical lines between days
+        if (dayIndex < 6) {
+          pdf.setDrawColor(0, 0, 0);
+          pdf.setLineWidth(2);
+          pdf.line(cellX + GRID_CONFIG.dayColumnWidth, y, cellX + GRID_CONFIG.dayColumnWidth, y + GRID_CONFIG.slotHeight);
+        }
       }
       
       // Horizontal grid line
