@@ -299,6 +299,7 @@ html, body {
     border-radius: 2px;
     cursor: pointer;
     color: black;
+    background: white !important;
 }
 
 .appointment:hover {
@@ -432,6 +433,8 @@ html, body {
     width: calc(100% - 8px);
     margin: 0 4px;
     z-index: 10;
+    background: white !important;
+    background: white !important;
 }
 
 .appointment-slot {
