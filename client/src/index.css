@@ -205,7 +205,7 @@
 
 .time-slot {
     background: #f8f8f8;
-    padding: 2px;
+    padding: 0;
     text-align: center;
     font-size: 9px;
     font-weight: bold;
@@ -214,13 +214,14 @@
     justify-content: center;
     border-right: 2px solid black;
     border-bottom: 1px solid #ddd;
-    height: 30px;
+    height: 25px;
+    line-height: 1;
 }
 
 .time-slot.hour {
     background: #f0f0f0;
     border-bottom: 2px solid black;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: bold;
 }
 
@@ -317,9 +318,9 @@
 }
 
 /* Height classes for different durations */
-.appointment.duration-30 { height: 32px; }
-.appointment.duration-60 { height: 68px; }
-.appointment.duration-90 { height: 103px; }
+.appointment.duration-30 { height: 25px; }
+.appointment.duration-60 { height: 50px; }
+.appointment.duration-90 { height: 75px; }
 
 /* Appointment header styling - exact match to HTML template */
 .appointment-header {
