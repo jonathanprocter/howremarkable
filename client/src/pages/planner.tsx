@@ -233,6 +233,7 @@ export default function Planner() {
   const handleExportAction = async (type: string = 'Current View') => {
     try {
       console.log('Starting PDF export for type:', type);
+      console.log('Current view mode:', state.viewMode);
       console.log('Current events count:', currentEvents.length);
       console.log('Current date:', state.currentDate);
       let pdfContent: string;
@@ -250,21 +251,33 @@ export default function Planner() {
         );
         filename = generateFilename('weekly-package', state.currentWeek.startDate);
       } else if (type === 'Current View') {
-        try {
-          await exportExactGridPDF(
-            state.currentWeek.startDate,
-            state.currentWeek.endDate,
-            currentEvents
+        // Check current view mode to determine export type
+        if (state.viewMode === 'daily') {
+          // Export daily view when in daily mode
+          pdfContent = await exportDailyToPDF(
+            state.selectedDate,
+            currentEvents,
+            currentDailyNotes
           );
+          filename = generateFilename('daily', state.selectedDate);
+        } else {
+          // Export weekly view when in weekly mode
+          try {
+            await exportExactGridPDF(
+              state.currentWeek.startDate,
+              state.currentWeek.endDate,
+              currentEvents
+            );
 
-          toast({
-            title: "PDF Export",
-            description: "Weekly calendar PDF downloaded successfully!"
-          });
-          return; // exportExactGridPDF handles the download
-        } catch (calendarError) {
-          console.error('Weekly calendar export error:', calendarError);
-          throw calendarError;
+            toast({
+              title: "PDF Export",
+              description: "Weekly calendar PDF downloaded successfully!"
+            });
+            return; // exportExactGridPDF handles the download
+          } catch (calendarError) {
+            console.error('Weekly calendar export error:', calendarError);
+            throw calendarError;
+          }
         }
       } else if (type === 'Daily View') {
         pdfContent = await exportDailyToPDF(
@@ -289,10 +302,16 @@ export default function Planner() {
         }
       } else if (type === 'reMarkable Daily') {
         try {
+          // Filter events for the selected day only
+          const dailyEvents = currentEvents.filter(event => {
+            const eventDate = new Date(event.startTime);
+            return eventDate.toDateString() === state.selectedDate.toDateString();
+          });
+          
           await exportWeeklyRemarkableExact(
             state.selectedDate,
             state.selectedDate,
-            currentEvents
+            dailyEvents
           );
           return; // exportWeeklyRemarkableExact handles the download
         } catch (remarkableError) {
@@ -368,14 +387,24 @@ export default function Planner() {
         );
         filename = generateFilename('weekly-package', state.currentWeek.startDate);
       } else if (type === 'current') {
-        const weekNumber = getWeekNumber(state.currentDate);
-        pdfContent = await exportWeeklyToPDF(
-          state.currentWeek.startDate,
-          state.currentWeek.endDate,
-          currentEvents,
-          weekNumber
-        );
-        filename = generateFilename('weekly', state.currentWeek.startDate);
+        // Check current view mode to determine export type
+        if (state.viewMode === 'daily') {
+          pdfContent = await exportDailyToPDF(
+            state.selectedDate,
+            currentEvents,
+            currentDailyNotes
+          );
+          filename = generateFilename('daily', state.selectedDate);
+        } else {
+          const weekNumber = getWeekNumber(state.currentDate);
+          pdfContent = await exportWeeklyToPDF(
+            state.currentWeek.startDate,
+            state.currentWeek.endDate,
+            currentEvents,
+            weekNumber
+          );
+          filename = generateFilename('weekly', state.currentWeek.startDate);
+        }
       } else if (type === 'daily') {
         pdfContent = await exportDailyToPDF(
           state.selectedDate,
