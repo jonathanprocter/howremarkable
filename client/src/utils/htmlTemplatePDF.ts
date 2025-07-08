@@ -768,15 +768,29 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
 function drawRemarkableDailyAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[], gridStartY: number, dayColumnWidth: number, timeSlotHeight: number): void {
   const { margin, timeColumnWidth } = REMARKABLE_DAILY_CONFIG;
   
-  // Filter events for the selected day
+  // Filter events for the selected day using robust date comparison
+  const selectedDateString = selectedDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+  
   const dayEvents = events.filter(event => {
     const eventDate = new Date(event.startTime);
-    return eventDate.getFullYear() === selectedDate.getFullYear() &&
-           eventDate.getMonth() === selectedDate.getMonth() &&
-           eventDate.getDate() === selectedDate.getDate();
+    const eventDateString = eventDate.toISOString().split('T')[0];
+    const matches = eventDateString === selectedDateString;
+    
+    console.log(`Event: ${event.title} on ${eventDateString}, Selected: ${selectedDateString}, Matches: ${matches}`);
+    return matches;
   }).sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
   
-  console.log(`=== RENDERING ${dayEvents.length} EVENTS WITH 3-COLUMN LAYOUT ===`);
+  console.log(`=== RENDERING ${dayEvents.length} EVENTS FOR ${selectedDateString} ===`);
+  console.log(`Available events: ${events.length}`);
+  
+  if (dayEvents.length === 0) {
+    console.log(`No events found for ${selectedDateString}. Available event dates:`);
+    events.forEach(event => {
+      const eventDate = new Date(event.startTime);
+      const eventDateString = eventDate.toISOString().split('T')[0];
+      console.log(`  - ${event.title}: ${eventDateString}`);
+    });
+  }
   
   dayEvents.forEach((event, index) => {
     const eventDate = new Date(event.startTime);
