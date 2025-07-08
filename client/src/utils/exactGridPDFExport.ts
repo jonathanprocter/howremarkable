@@ -3,9 +3,9 @@ import { CalendarEvent } from '../types/calendar';
 
 // Exact grid configuration matching our fixed calendar
 const GRID_CONFIG = {
-  // Page setup - A3 landscape
+  // Page setup - A3 landscape with more height for 30px slots
   pageWidth: 1190,
-  pageHeight: 842,
+  pageHeight: 1200, // Increased height to accommodate 36 × 30px slots
   
   // Layout dimensions matching calendar
   margin: 30,
@@ -15,7 +15,7 @@ const GRID_CONFIG = {
   
   // Grid structure - exactly 36 time slots
   timeColumnWidth: 100,
-  slotHeight: 20,
+  slotHeight: 30, // Match web calendar's 30px slots
   totalSlots: 36, // 6:00 to 23:30
   
   get dayColumnWidth() {
@@ -257,11 +257,13 @@ export const exportExactGridPDF = async (
       if (dayIndex >= 0 && dayIndex < 7) {
         const eventHour = eventDate.getHours();
         const eventMinute = eventDate.getMinutes();
-        const slotIndex = timeSlots.findIndex(slot => 
-          slot.hour === eventHour && Math.abs(slot.minute - eventMinute) < 30
-        );
         
-        if (slotIndex >= 0) {
+        // Calculate slot index based on our 36-slot grid (6:00-23:30)
+        // Each hour has 2 slots (0 and 30 minute marks)
+        const slotIndex = ((eventHour - 6) * 2) + (eventMinute >= 30 ? 1 : 0);
+        
+        // Only place events within our time range
+        if (slotIndex >= 0 && slotIndex < 36) {
           const duration = (new Date(event.endTime).getTime() - new Date(event.startTime).getTime()) / (1000 * 60);
           const slots = Math.ceil(duration / 30);
           
