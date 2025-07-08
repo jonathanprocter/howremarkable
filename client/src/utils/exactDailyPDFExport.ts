@@ -4,11 +4,11 @@ import { CalendarEvent } from '../types/calendar';
 // Match the exact dashboard layout
 const DAILY_CONFIG = {
   pageWidth: 595,
-  pageHeight: 980,  // Increased height to accommodate full timeline to 23:30 with taller rows
+  pageHeight: 2200,  // Much taller to accommodate 60px slots (36 slots * 60px = 2160px + header)
   margin: 12,  // Even more compact for better space usage
   timeColumnWidth: 65,  // Reduced time column width
   appointmentColumnWidth: 495,  // Adjusted to maintain proportions
-  timeSlotHeight: 22,  // PDF optimized - dashboard uses 60px but we scale down for printing
+  timeSlotHeight: 60,  // EXACT MATCH to dashboard - 60px per slot
   headerHeight: 75,  // More compact header
 
   // Typography matching dashboard
@@ -55,16 +55,25 @@ const formatMilitaryTime = (date: Date) => {
 };
 
 function getEventTypeInfo(event: CalendarEvent) {
-  const isSimplePractice = event.source === 'simplepractice' || 
-                           event.notes?.toLowerCase().includes('simple practice') ||
-                           event.title?.toLowerCase().includes('simple practice') ||
-                           event.description?.toLowerCase().includes('simple practice') ||
-                           event.title?.toLowerCase().includes('appointment');
-
+  // Check for holiday events first
   const isHoliday = event.title.toLowerCase().includes('holiday') ||
                    event.calendarId === 'en.usa#holiday@group.v.calendar.google.com';
 
-  const isGoogle = event.source === 'google' && !isSimplePractice && !isHoliday;
+  // Check for SimplePractice events - only if they have "SimplePractice" in the source
+  const isSimplePractice = event.source === 'simplepractice' || 
+                           event.notes?.toLowerCase().includes('simple practice') ||
+                           event.title?.toLowerCase().includes('simple practice') ||
+                           event.description?.toLowerCase().includes('simple practice');
+
+  // Most events are Google Calendar events (unless they're holidays or SimplePractice)
+  const isGoogle = !isSimplePractice && !isHoliday;
+
+  console.log(`Event type detection for "${event.title}":`, {
+    source: event.source,
+    isSimplePractice,
+    isGoogle,
+    isHoliday
+  });
 
   return { isSimplePractice, isGoogle, isHoliday };
 }
