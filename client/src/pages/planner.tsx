@@ -19,6 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 // import { exportTemplateMatchPDF } from '../utils/templateMatchPDF';
 import { exportHTMLTemplatePDF } from '../utils/htmlTemplatePDF';
 import { exportWeeklyCalendarHTML } from '../utils/htmlWeeklyExport';
+import { exportExactGridPDF } from '../utils/exactGridPDFExport';
 
 // Temporary stub functions until PDF exports are fixed
 const exportWeeklyPackageToPDF = async (...args: any[]): Promise<string> => { 
@@ -250,7 +251,7 @@ export default function Planner() {
         filename = generateFilename('weekly-package', state.currentWeek.startDate);
       } else if (type === 'Current View') {
         try {
-          await exportWeeklyCalendarHTML(
+          await exportExactGridPDF(
             state.currentWeek.startDate,
             state.currentWeek.endDate,
             currentEvents
@@ -260,7 +261,7 @@ export default function Planner() {
             title: "PDF Export",
             description: "Weekly calendar PDF downloaded successfully!"
           });
-          return; // exportWeeklyCalendarHTML handles the download
+          return; // exportExactGridPDF handles the download
         } catch (calendarError) {
           console.error('Weekly calendar export error:', calendarError);
           throw calendarError;
