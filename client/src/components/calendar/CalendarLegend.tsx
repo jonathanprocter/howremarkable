@@ -30,7 +30,7 @@ export const CalendarLegend = ({ calendars, selectedCalendars, onCalendarToggle 
   };
 
   return (
-    <div className="mb-4 p-2 bg-white border border-gray-200 rounded-sm">
+    <div className="mb-4 p-2 bg-gray-50 border border-gray-200 rounded-sm">
       {/* Appointment Type Legend */}
       <div className="mb-3 pb-2 border-b border-gray-100">
         <h4 className="text-xs font-semibold text-gray-700 mb-2">Appointment Types</h4>
