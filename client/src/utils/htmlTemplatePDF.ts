@@ -965,15 +965,6 @@ function drawRemarkableDailyAppointments(pdf: jsPDF, selectedDate: Date, events:
         }
       }
       
-      // Render title lines
-      for (let i = 0; i < Math.min(titleLines.length, 2); i++) {
-        if (col1Y + 12 <= eventY + eventHeight - 30) {
-          pdf.text(titleLines[i], col1X, col1Y);
-          console.log(`Drew title line ${i + 1}: "${titleLines[i]}"`);
-          col1Y += 12;
-        }
-      }
-      
       // Source
       if (col1Y + 10 <= eventY + eventHeight - 20) {
         pdf.setFontSize(8);
