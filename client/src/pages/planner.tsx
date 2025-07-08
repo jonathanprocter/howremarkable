@@ -967,7 +967,13 @@ export default function Planner() {
           onDeselectAll={() => handleQuickAction('deselect all')}
           onExportCurrentView={(type) => {
             console.log('🎯 onExportCurrentView called with type:', type);
-            handleExportAction(type || 'Current View');
+            console.log('🎯 About to call handleExportAction');
+            try {
+              handleExportAction(type || 'Current View');
+              console.log('🎯 handleExportAction called successfully');
+            } catch (error) {
+              console.error('🎯 Error in handleExportAction:', error);
+            }
           }}
           onExportWeeklyPackage={() => handleExportAction('Weekly Package')}
           onExportDailyView={() => {

@@ -92,7 +92,14 @@ export const ExportToPDF = ({
             variant="outline" 
             onClick={() => {
               console.log('🔥 DAILY VIEW BUTTON CLICKED!');
-              onExportCurrentView('Daily View');
+              console.log('🔥 About to call onExportCurrentView with "Daily View"');
+              console.log('🔥 Function type:', typeof onExportCurrentView);
+              try {
+                onExportCurrentView('Daily View');
+                console.log('🔥 onExportCurrentView called successfully');
+              } catch (error) {
+                console.error('🔥 Error calling onExportCurrentView:', error);
+              }
             }}
             className="w-full text-xs"
             size="sm"
