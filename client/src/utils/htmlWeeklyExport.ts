@@ -30,18 +30,51 @@ export const exportWeeklyCalendarHTML = async (
     const templateResponse = await fetch('/attached_assets/weekly_planner_remarkable_1751937137287.html');
     const exactTemplate = await templateResponse.text();
 
-    // Create a blob and download as HTML file
-    const blob = new Blob([exactTemplate], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `weekly-planner-${weekStartDate.toISOString().split('T')[0]}.html`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    // Create a temporary container with your exact template
+    const container = document.createElement('div');
+    container.innerHTML = exactTemplate;
+    container.style.position = 'absolute';
+    container.style.left = '-9999px';
+    container.style.top = '0';
+    container.style.width = '1404px'; // reMarkable Pro width
+    container.style.height = '1872px'; // reMarkable Pro height
+    container.style.background = 'white';
+    container.style.overflow = 'visible';
+    document.body.appendChild(container);
 
-    console.log(`✅ Weekly calendar exported: weekly-planner-${weekStartDate.toISOString().split('T')[0]}.html`);
+    // Wait for layout to stabilize
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Convert to canvas using your exact template
+    const canvas = await html2canvas(container, {
+      width: 1404,
+      height: 1872,
+      scale: 2, // High quality
+      backgroundColor: '#ffffff',
+      useCORS: true,
+      allowTaint: false,
+      logging: false
+    });
+
+    // Remove the temporary container
+    document.body.removeChild(container);
+
+    // Create PDF with proper reMarkable Pro dimensions
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'px',
+      format: [1404, 1872]
+    });
+
+    // Add the canvas to PDF
+    const imgData = canvas.toDataURL('image/png');
+    pdf.addImage(imgData, 'PNG', 0, 0, 1404, 1872);
+
+    // Download the PDF
+    const filename = `weekly-planner-${weekStartDate.toISOString().split('T')[0]}.pdf`;
+    pdf.save(filename);
+
+    console.log(`✅ Weekly calendar exported: ${filename}`);
   } catch (error) {
     console.error('Error exporting weekly calendar:', error);
     throw error;
