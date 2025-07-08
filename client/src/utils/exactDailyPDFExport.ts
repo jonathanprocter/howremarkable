@@ -4,7 +4,7 @@ import { CalendarEvent } from '../types/calendar';
 // Match the exact dashboard layout
 const DAILY_CONFIG = {
   pageWidth: 595,
-  pageHeight: 1400,  // Full timeline to 23:30 (36 slots * 30px = 1080px + header + margins)
+  pageHeight: 1600,  // Increased height to ensure full timeline to 23:30 (36 slots * 30px = 1080px + header + margins)
   margin: 12,  // Even more compact for better space usage
   timeColumnWidth: 65,  // Reduced time column width
   appointmentColumnWidth: 495,  // Adjusted to maintain proportions
@@ -442,7 +442,7 @@ export const exportExactDailyPDF = async (
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'pt',
-      format: 'a4'
+      format: [DAILY_CONFIG.pageWidth, DAILY_CONFIG.pageHeight]
     });
     
     console.log('✅ PDF OBJECT CREATED SUCCESSFULLY');
