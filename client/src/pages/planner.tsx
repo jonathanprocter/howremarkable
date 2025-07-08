@@ -14,38 +14,21 @@ import { exportWeeklyCalendarHTML } from '../utils/htmlWeeklyExport';
 import { exportExactGridPDF } from '../utils/exactGridPDFExport';
 import { generateCompleteExportData, exportToText, exportToJSON, exportToCSV, testExportData } from '../utils/completePDFExport';
 
-// Working daily PDF export function using HTML template
-const exportDailyToPDF = async (selectedDate: Date, events: CalendarEvent[], dailyNotes: string): Promise<string> => {
+// NEW: Comprehensive daily PDF export function
+const exportDailyToPDFNew = async (selectedDate: Date, events: CalendarEvent[], dailyNotes: string): Promise<string> => {
   try {
-    console.log('=== STARTING DAILY PDF EXPORT ===');
+    console.log('=== STARTING NEW DAILY PDF EXPORT ===');
     console.log('Selected date:', selectedDate.toDateString());
     console.log('Total events passed:', events.length);
     
-    // Filter events for the selected day with improved date comparison
-    const dayEvents = events.filter(event => {
-      const eventDate = new Date(event.startTime);
-      const matches = eventDate.getFullYear() === selectedDate.getFullYear() &&
-                     eventDate.getMonth() === selectedDate.getMonth() &&
-                     eventDate.getDate() === selectedDate.getDate();
-      console.log(`Event: ${event.title} on ${eventDate.toDateString()}, Selected: ${selectedDate.toDateString()}, Matches: ${matches}`);
-      return matches;
-    });
-
-    console.log(`Found ${dayEvents.length} events for ${selectedDate.toDateString()}`);
-    
-    if (dayEvents.length === 0) {
-      console.log('WARNING: No events found for the selected day');
-    }
-
-    // Use the HTML template export for daily view
-    console.log('=== CALLING exportHTMLTemplatePDF ===');
-    await exportHTMLTemplatePDF(selectedDate, selectedDate, dayEvents, true); // true for daily view
+    // Use the new dedicated daily export function
+    await exportDailyToPDF(selectedDate, events);
     
     const filename = `daily-planner-${selectedDate.toISOString().split('T')[0]}.pdf`;
-    console.log(`=== DAILY PDF EXPORT COMPLETE: ${filename} ===`);
+    console.log(`=== NEW DAILY PDF EXPORT COMPLETE: ${filename} ===`);
     return filename;
   } catch (error) {
-    console.error('=== DAILY PDF EXPORT ERROR ===');
+    console.error('=== NEW DAILY PDF EXPORT ERROR ===');
     console.error('Error details:', error);
     console.error('Error stack:', error.stack);
     throw error;
@@ -349,12 +332,7 @@ export default function Planner() {
                 console.log(`Event ${i+1}: "${event.title}" - Duration: ${duration} minutes`);
               });
               
-              await exportHTMLTemplatePDF(
-                selectedDateForExport,
-                selectedDateForExport,
-                currentEvents,
-                true // isDailyView flag
-              );
+              await exportDailyToPDFNew(selectedDateForExport, currentEvents, dailyNotes);
               
               toast({
                 title: "Export Successful",
@@ -415,8 +393,8 @@ export default function Planner() {
               console.log(`Event ${i+1}: "${event.title}" - Duration: ${duration} minutes`);
             });
             
-            // Use the daily export function directly
-            await exportDailyToPDF(selectedDateForExport, currentEvents, dailyNotes);
+            // Use the new daily export function
+            await exportDailyToPDFNew(selectedDateForExport, currentEvents, dailyNotes);
             
             toast({
               title: "Export Successful",

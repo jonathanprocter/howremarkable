@@ -199,7 +199,7 @@ export const exportHTMLTemplatePDF = async (
   pdf.setFont('helvetica', 'normal');
 
   if (isDailyView) {
-    // === DAILY VIEW LAYOUT ===
+    // === DAILY VIEW LAYOUT - COMPLETELY REWRITTEN ===
     console.log('=== DAILY EVENT DEBUGGING ===');
     const dayEvents = events.filter(event => {
       const eventDate = new Date(event.startTime);
@@ -207,6 +207,8 @@ export const exportHTMLTemplatePDF = async (
              eventDate.getMonth() === weekStartDate.getMonth() &&
              eventDate.getDate() === weekStartDate.getDate();
     });
+    
+    console.log(`Found ${dayEvents.length} events for ${weekStartDate.toDateString()}`);
     
     dayEvents.forEach(event => {
       const eventType = getEventTypeInfo(event);
