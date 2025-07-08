@@ -17,26 +17,37 @@ import { generateCompleteExportData, exportToText, exportToJSON, exportToCSV, te
 // Working daily PDF export function using HTML template
 const exportDailyToPDF = async (selectedDate: Date, events: CalendarEvent[], dailyNotes: string): Promise<string> => {
   try {
-    console.log('Exporting daily view to PDF...');
+    console.log('=== STARTING DAILY PDF EXPORT ===');
+    console.log('Selected date:', selectedDate.toDateString());
+    console.log('Total events passed:', events.length);
     
     // Filter events for the selected day with improved date comparison
     const dayEvents = events.filter(event => {
       const eventDate = new Date(event.startTime);
-      return eventDate.getFullYear() === selectedDate.getFullYear() &&
-             eventDate.getMonth() === selectedDate.getMonth() &&
-             eventDate.getDate() === selectedDate.getDate();
+      const matches = eventDate.getFullYear() === selectedDate.getFullYear() &&
+                     eventDate.getMonth() === selectedDate.getMonth() &&
+                     eventDate.getDate() === selectedDate.getDate();
+      console.log(`Event: ${event.title} on ${eventDate.toDateString()}, Selected: ${selectedDate.toDateString()}, Matches: ${matches}`);
+      return matches;
     });
 
     console.log(`Found ${dayEvents.length} events for ${selectedDate.toDateString()}`);
+    
+    if (dayEvents.length === 0) {
+      console.log('WARNING: No events found for the selected day');
+    }
 
     // Use the HTML template export for daily view
+    console.log('=== CALLING exportHTMLTemplatePDF ===');
     await exportHTMLTemplatePDF(selectedDate, selectedDate, dayEvents, true); // true for daily view
     
     const filename = `daily-planner-${selectedDate.toISOString().split('T')[0]}.pdf`;
-    console.log(`Daily PDF exported: ${filename}`);
+    console.log(`=== DAILY PDF EXPORT COMPLETE: ${filename} ===`);
     return filename;
   } catch (error) {
-    console.error('Daily PDF export error:', error);
+    console.error('=== DAILY PDF EXPORT ERROR ===');
+    console.error('Error details:', error);
+    console.error('Error stack:', error.stack);
     throw error;
   }
 };
@@ -335,8 +346,15 @@ export default function Planner() {
               });
               return;
             } catch (dailyError) {
-              console.error('Daily PDF export error:', dailyError);
-              throw dailyError;
+              console.error('=== DAILY PDF EXPORT ERROR ===');
+              console.error('Error details:', dailyError);
+              console.error('Stack trace:', dailyError.stack);
+              toast({
+                title: "Export Failed",
+                description: `Daily PDF export failed: ${dailyError.message}`,
+                variant: "destructive"
+              });
+              return;
             }
           } else {
             // Export weekly view as PDF
@@ -390,8 +408,15 @@ export default function Planner() {
             });
             return;
           } catch (dailyError) {
-            console.error('Daily PDF export error:', dailyError);
-            throw dailyError;
+            console.error('=== DAILY EXPORT CASE ERROR ===');
+            console.error('Error details:', dailyError);
+            console.error('Error stack:', dailyError.stack);
+            toast({
+              title: "Export Failed",
+              description: `Daily PDF export failed: ${dailyError.message}`,
+              variant: "destructive"
+            });
+            return;
           }
           break;
 
