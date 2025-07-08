@@ -167,45 +167,60 @@ export const exportWeeklyCalendarHTML = async (
     for (let hour = 6; hour <= 23; hour++) {
       // Hour row with gray background
       pdf.setFillColor(245, 245, 245);
+      pdf.setDrawColor(0, 0, 0);
+      pdf.setLineWidth(1);
+      
+      // Fill time column with gray background
       pdf.rect(50, currentY, timeColWidth, rowHeight, 'F');
-      pdf.rect(50, currentY, timeColWidth, rowHeight);
+      pdf.rect(50, currentY, timeColWidth, rowHeight, 'S');
+      
+      // Fill day columns with gray background  
+      for (let day = 0; day < 7; day++) {
+        const x = 50 + timeColWidth + (day * dayColWidth);
+        pdf.rect(x, currentY, dayColWidth, rowHeight, 'F');
+        pdf.rect(x, currentY, dayColWidth, rowHeight, 'S');
+      }
       
       // Time column thick right border
       pdf.setLineWidth(2);
       pdf.line(50 + timeColWidth, currentY, 50 + timeColWidth, currentY + rowHeight);
       
+      // Left border for first day column (thicker)
+      pdf.line(50 + timeColWidth, currentY, 50 + timeColWidth, currentY + rowHeight);
+      
+      // Hour text
       pdf.setFont('Times', 'bold');
       pdf.setFontSize(11);
+      pdf.setTextColor(0, 0, 0);
       const hourStr = `${hour.toString().padStart(2, '0')}:00`;
       pdf.text(hourStr, 50 + timeColWidth/2, currentY + 14, { align: 'center' });
-      
-      // Day columns for hour row with gray background
-      pdf.setLineWidth(1);
-      for (let day = 0; day < 7; day++) {
-        const x = 50 + timeColWidth + (day * dayColWidth);
-        pdf.rect(x, currentY, dayColWidth, rowHeight, 'F');
-        pdf.rect(x, currentY, dayColWidth, rowHeight);
-        
-        // Left border for first day column (thicker)
-        if (day === 0) {
-          pdf.setLineWidth(2);
-          pdf.line(x, currentY, x, currentY + rowHeight);
-          pdf.setLineWidth(1);
-        }
-      }
       
       currentY += rowHeight;
       
       // Half-hour row (skip 23:30 as it's handled separately)
       if (hour < 23) {
         pdf.setFillColor(255, 255, 255); // White background
+        pdf.setLineWidth(1);
+        
+        // Fill time column with white background
         pdf.rect(50, currentY, timeColWidth, rowHeight, 'F');
-        pdf.rect(50, currentY, timeColWidth, rowHeight);
+        pdf.rect(50, currentY, timeColWidth, rowHeight, 'S');
+        
+        // Fill day columns with white background
+        for (let day = 0; day < 7; day++) {
+          const x = 50 + timeColWidth + (day * dayColWidth);
+          pdf.rect(x, currentY, dayColWidth, rowHeight, 'F');
+          pdf.rect(x, currentY, dayColWidth, rowHeight, 'S');
+        }
         
         // Time column thick right border
         pdf.setLineWidth(2);
         pdf.line(50 + timeColWidth, currentY, 50 + timeColWidth, currentY + rowHeight);
         
+        // Left border for first day column (thicker)
+        pdf.line(50 + timeColWidth, currentY, 50 + timeColWidth, currentY + rowHeight);
+        
+        // Half-hour text
         pdf.setFont('Times', 'normal');
         pdf.setFontSize(9);
         pdf.setTextColor(102, 102, 102); // Gray text
@@ -213,51 +228,39 @@ export const exportWeeklyCalendarHTML = async (
         pdf.text(halfHourStr, 50 + timeColWidth/2, currentY + 14, { align: 'center' });
         pdf.setTextColor(0, 0, 0); // Reset to black
         
-        // Day columns for half-hour row
-        pdf.setLineWidth(1);
-        for (let day = 0; day < 7; day++) {
-          const x = 50 + timeColWidth + (day * dayColWidth);
-          pdf.rect(x, currentY, dayColWidth, rowHeight);
-          
-          // Left border for first day column (thicker)
-          if (day === 0) {
-            pdf.setLineWidth(2);
-            pdf.line(x, currentY, x, currentY + rowHeight);
-            pdf.setLineWidth(1);
-          }
-        }
-        
         currentY += rowHeight;
       }
     }
     
     // Final 23:30 row
     pdf.setFillColor(255, 255, 255);
+    pdf.setDrawColor(0, 0, 0);
+    pdf.setLineWidth(1);
+    
+    // Fill time column with white background
     pdf.rect(50, currentY, timeColWidth, rowHeight, 'F');
-    pdf.rect(50, currentY, timeColWidth, rowHeight);
+    pdf.rect(50, currentY, timeColWidth, rowHeight, 'S');
+    
+    // Fill day columns with white background
+    for (let day = 0; day < 7; day++) {
+      const x = 50 + timeColWidth + (day * dayColWidth);
+      pdf.rect(x, currentY, dayColWidth, rowHeight, 'F');
+      pdf.rect(x, currentY, dayColWidth, rowHeight, 'S');
+    }
     
     // Time column thick right border
     pdf.setLineWidth(2);
     pdf.line(50 + timeColWidth, currentY, 50 + timeColWidth, currentY + rowHeight);
     
+    // Left border for first day column (thicker)
+    pdf.line(50 + timeColWidth, currentY, 50 + timeColWidth, currentY + rowHeight);
+    
+    // 23:30 text
     pdf.setFont('Times', 'normal');
     pdf.setFontSize(9);
     pdf.setTextColor(102, 102, 102);
     pdf.text('23:30', 50 + timeColWidth/2, currentY + 14, { align: 'center' });
     pdf.setTextColor(0, 0, 0);
-    
-    pdf.setLineWidth(1);
-    for (let day = 0; day < 7; day++) {
-      const x = 50 + timeColWidth + (day * dayColWidth);
-      pdf.rect(x, currentY, dayColWidth, rowHeight);
-      
-      // Left border for first day column (thicker)
-      if (day === 0) {
-        pdf.setLineWidth(2);
-        pdf.line(x, currentY, x, currentY + rowHeight);
-        pdf.setLineWidth(1);
-      }
-    }
 
     // Generate filename and save
     const date = weekStartDate.toISOString().split('T')[0];
