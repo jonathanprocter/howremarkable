@@ -360,15 +360,15 @@ export const DailyView = ({
                   onClick={() => toggleEventExpansion(event.id)}
                 >
                   <div className="appointment-layout">
-                    {/* Left: Calendar and Time */}
+                    {/* Left: Title, Calendar, and Time */}
                     <div className="appointment-left">
+                      <div className="appointment-title-bold">{event.title}</div>
                       <div className="appointment-calendar">{event.source} calendar</div>
                       <div className="appointment-time">{formatEventTime(event)}</div>
                     </div>
                     
-                    {/* Center: Event Notes (bulleted) */}
+                    {/* Center: Event Notes (bulleted) - only if they exist */}
                     <div className="appointment-center">
-                      <div className="appointment-title">{event.title}</div>
                       {event.notes && (
                         <div className="appointment-notes">
                           {event.notes.split('\n').filter(note => note.trim()).map((note, index) => (
@@ -378,7 +378,7 @@ export const DailyView = ({
                       )}
                     </div>
                     
-                    {/* Right: Action Items */}
+                    {/* Right: Action Items - only if they exist */}
                     <div className="appointment-right">
                       {event.actionItems && (
                         <div className="appointment-actions">
