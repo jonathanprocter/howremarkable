@@ -1,26 +1,28 @@
 import jsPDF from 'jspdf';
 import { CalendarEvent } from '../types/calendar';
 
-// Match the exact dashboard layout
+// reMarkable Paper Pro portrait dimensions optimized
 const DAILY_CONFIG = {
-  pageWidth: 595,
-  pageHeight: 1600,  // Increased height to ensure full timeline to 23:30 (36 slots * 30px = 1080px + header + margins)
-  margin: 12,  // Even more compact for better space usage
-  timeColumnWidth: 65,  // Reduced time column width
-  appointmentColumnWidth: 495,  // Adjusted to maintain proportions
-  timeSlotHeight: 30,  // Scaled down for PDF - maintains exact positioning ratios
-  headerHeight: 75,  // More compact header
+  // reMarkable Paper Pro portrait: 179 x 239 mm active display area
+  // Convert to points: 179mm = 507.4pt, 239mm = 677.5pt
+  pageWidth: 507,   // 179mm in points (179 * 72 / 25.4)
+  pageHeight: 677,  // 239mm in points (239 * 72 / 25.4)  
+  margin: 8,        // Minimal margins for maximum space usage
+  timeColumnWidth: 50,  // Compact time column for narrow screen
+  appointmentColumnWidth: 449,  // Remaining width for appointments
+  timeSlotHeight: 16,  // Compact slots to fit full timeline in portrait
+  headerHeight: 50,    // Compact header for e-ink display
 
-  // Typography matching dashboard
+  // Typography optimized for reMarkable Paper Pro e-ink display
   fonts: {
-    title: { size: 20, weight: 'bold' },
-    date: { size: 14, weight: 'normal' },
-    stats: { size: 12, weight: 'normal' },
-    timeLabels: { size: 9, weight: 'normal' },
-    eventTitle: { size: 10, weight: 'bold' },
-    eventSource: { size: 8, weight: 'normal' },
-    eventTime: { size: 10, weight: 'bold' },
-    eventNotes: { size: 8, weight: 'normal' }
+    title: { size: 14, weight: 'bold' },      // Compact title for narrow screen
+    date: { size: 10, weight: 'normal' },     // Readable date info
+    stats: { size: 8, weight: 'normal' },     // Compact stats
+    timeLabels: { size: 7, weight: 'normal' }, // Small time labels
+    eventTitle: { size: 7, weight: 'bold' },  // Compact but readable events
+    eventSource: { size: 5, weight: 'normal' }, // Minimal source info
+    eventTime: { size: 6, weight: 'bold' },   // Clear time display
+    eventNotes: { size: 5, weight: 'normal' }  // Compact notes
   },
 
   // Colors matching dashboard
@@ -119,8 +121,8 @@ function drawDashboardHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEve
   pdf.setFontSize(DAILY_CONFIG.fonts.stats.size);
   pdf.setFont('helvetica', DAILY_CONFIG.fonts.stats.weight);
   
-  const statsY = margin + 45;  // Balanced positioning
-  const statsSpacing = 135;    // Better spacing for readability
+  const statsY = margin + 25;  // Compact positioning for reMarkable Paper Pro
+  const statsSpacing = 112;    // Tighter spacing for narrow screen
   
   // Statistics with proper sizing
   pdf.setFontSize(12);
@@ -159,38 +161,38 @@ function drawDashboardHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEve
 
 function drawDashboardLegend(pdf: jsPDF) {
   const { margin, pageWidth } = DAILY_CONFIG;
-  const legendY = margin + 65;  // Balanced positioning
+  const legendY = margin + 35;  // Compact positioning for reMarkable Paper Pro
   
   pdf.setFontSize(9);  // Proper legend font size
   pdf.setFont('helvetica', 'normal');
   
-  // SimplePractice - better positioning
+  // SimplePractice - compact positioning for reMarkable Paper Pro
   pdf.setFillColor(...DAILY_CONFIG.colors.white);
   pdf.setDrawColor(...DAILY_CONFIG.colors.simplePracticeBlue);
-  pdf.rect(margin + 40, legendY, 16, 9, 'FD');
+  pdf.rect(margin + 20, legendY, 12, 7, 'FD');
   pdf.setFillColor(...DAILY_CONFIG.colors.simplePracticeBlue);
-  pdf.rect(margin + 40, legendY, 4, 9, 'F');
-  pdf.text('SimplePractice', margin + 62, legendY + 7);
+  pdf.rect(margin + 20, legendY, 3, 7, 'F');
+  pdf.text('SimplePractice', margin + 38, legendY + 5);
   
-  // Google Calendar - better positioning
+  // Google Calendar - compact positioning
   pdf.setFillColor(...DAILY_CONFIG.colors.white);
   pdf.setDrawColor(...DAILY_CONFIG.colors.googleGreen);
   pdf.setLineDash([2, 2]);
-  pdf.rect(margin + 190, legendY, 16, 9, 'FD');
+  pdf.rect(margin + 140, legendY, 12, 7, 'FD');
   pdf.setLineDash([]);
-  pdf.text('Google Calendar', margin + 212, legendY + 7);
+  pdf.text('Google Calendar', margin + 158, legendY + 5);
   
-  // Holidays - better positioning with yellow fill
+  // Holidays - compact positioning for reMarkable Paper Pro
   pdf.setFillColor(...DAILY_CONFIG.colors.holidayYellow);
   pdf.setDrawColor(...DAILY_CONFIG.colors.holidayOrange);
-  pdf.rect(margin + 350, legendY, 16, 9, 'FD');
-  pdf.text('Holidays in United States', margin + 372, legendY + 7);
+  pdf.rect(margin + 280, legendY, 12, 7, 'FD');
+  pdf.text('Holidays', margin + 298, legendY + 5);
 }
 
 function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
   const { margin, timeColumnWidth, appointmentColumnWidth, timeSlotHeight } = DAILY_CONFIG;
-  const gridStartY = margin + 82;  // Balanced grid start
-  const totalGridHeight = timeSlotHeight * TIME_SLOTS.length;  // Full timeline to 23:30 (36 slots * 30px = 1080px)
+  const gridStartY = margin + 45;  // Compact grid start for reMarkable Paper Pro
+  const totalGridHeight = timeSlotHeight * TIME_SLOTS.length;  // Full timeline to 23:30 (36 slots * 16px = 576px)
   
   // Filter events for the selected date
   const dayEvents = events.filter(event => {
