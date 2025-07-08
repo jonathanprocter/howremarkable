@@ -21,6 +21,11 @@ export const ExportToPDF = ({
   console.log('🔧 onExportCurrentView:', typeof onExportCurrentView);
   console.log('🔧 onExportDailyView:', typeof onExportDailyView);
   
+  const testExport = () => {
+    console.log('🚀 DIRECT TEST EXPORT CALLED!');
+    onExportCurrentView('Test Export');
+  };
+  
   return (
     <div className="sidebar-section">
       <h3 className="text-sm font-semibold mb-3 text-gray-900">Export Options</h3>
@@ -29,17 +34,13 @@ export const ExportToPDF = ({
       <div className="mb-4">
         <h4 className="text-xs font-medium text-red-700 mb-2">🐛 Debug Exports</h4>
         <div className="space-y-1">
-          <Button 
-            variant="outline" 
-            onClick={() => {
-              console.log('🔥 TEST EXPORT BUTTON CLICKED!');
-              onExportCurrentView('Test Export');
-            }}
-            className="w-full text-xs bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
-            size="sm"
+          <button
+            onClick={testExport}
+            className="w-full text-xs bg-red-50 border-red-200 text-red-700 hover:bg-red-100 border rounded px-2 py-1"
+            style={{ pointerEvents: 'auto', zIndex: 9999 }}
           >
             🔍 Test Export (Debug)
-          </Button>
+          </button>
           <Button 
             variant="outline" 
             onClick={() => onExportCurrentView('JSON Export')}
