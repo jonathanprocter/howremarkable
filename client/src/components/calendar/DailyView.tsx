@@ -373,11 +373,10 @@ export const DailyView = ({
                       {event.notes && (
                         <div className="appointment-notes">
                           <div className="appointment-notes-header">Event Notes</div>
-{event.notes.split('\n')
-                            .map(note => note.trim())
-                            .filter(note => note.length > 0 && note !== '•' && note !== '• ')
-                            .map(note => note.replace(/^[•\s]+/, '').trim())
-                            .filter(note => note.length > 0)
+                          {event.notes.split('\n')
+                            .filter(note => note.trim().length > 0)
+                            .map(note => note.trim().replace(/^[•\s-]+/, '').trim())
+                            .filter(note => note.length > 0 && note !== '•' && note !== '-')
                             .map((note, index) => (
                               <div key={index} className="note-item">• {note}</div>
                             ))}
@@ -390,11 +389,10 @@ export const DailyView = ({
                       {event.actionItems && (
                         <div className="appointment-actions">
                           <div className="appointment-actions-header">Action Items</div>
-{event.actionItems.split('\n')
-                            .map(item => item.trim())
-                            .filter(item => item.length > 0 && item !== '•' && item !== '• ')
-                            .map(item => item.replace(/^[•\s]+/, '').trim())
-                            .filter(item => item.length > 0)
+                          {event.actionItems.split('\n')
+                            .filter(item => item.trim().length > 0)
+                            .map(item => item.trim().replace(/^[•\s-]+/, '').trim())
+                            .filter(item => item.length > 0 && item !== '•' && item !== '-')
                             .map((item, index) => (
                               <div key={index} className="action-item">• {item}</div>
                             ))}
