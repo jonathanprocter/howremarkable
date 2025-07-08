@@ -875,179 +875,279 @@ function drawRemarkableDailyAppointments(pdf: jsPDF, selectedDate: Date, events:
       pdf.rect(eventX, eventY, eventWidth, eventHeight);
     }
     
-    // === TEXT RENDERING - 3 COLUMN LAYOUT ===
+    // === IMPROVED TEXT RENDERING ===
     const padding = isSimplePractice ? 8 : 6;
     const startX = eventX + padding;
     const contentWidth = eventWidth - (padding * 2);
     
+    // CLEAN EVENT TITLE (Fix text formatting issues)
+    let cleanTitle = event.title.replace(/ Appointment$/, '').trim();
+    
+    // Fix common text encoding issues
+    cleanTitle = cleanTitle
+      .replace(/\s+/g, ' ')  // Remove extra spaces
+      .replace(/[^\w\s\-\.,:;!?'"()]/g, '') // Remove problematic characters
+      .trim();
+    
+    console.log(`Original title: "${event.title}"`);
+    console.log(`Clean title: "${cleanTitle}"`);
+    
     if (needsExpandedLayout) {
       // === 3-COLUMN LAYOUT ===
-      const col1Width = contentWidth * 0.33; // Left: Event info
-      const col2Width = contentWidth * 0.33; // Center: Notes  
-      const col3Width = contentWidth * 0.33; // Right: Action items
+      const col1Width = contentWidth * 0.33;
+      const col2Width = contentWidth * 0.33;
+      const col3Width = contentWidth * 0.33;
       
       const col1X = startX;
-      const col2X = startX + col1Width + 5;
-      const col3X = startX + col1Width + col2Width + 10;
+      const col2X = startX + col1Width + 8;
+      const col3X = startX + col1Width + col2Width + 16;
       
-      // Draw column dividers for clarity
+      // Draw column dividers
       pdf.setDrawColor(220, 220, 220);
       pdf.setLineWidth(0.5);
-      pdf.line(col2X - 3, eventY + 5, col2X - 3, eventY + eventHeight - 5);
-      pdf.line(col3X - 3, eventY + 5, col3X - 3, eventY + eventHeight - 5);
+      pdf.line(col2X - 4, eventY + 8, col2X - 4, eventY + eventHeight - 8);
+      pdf.line(col3X - 4, eventY + 8, col3X - 4, eventY + eventHeight - 8);
       
       // === COLUMN 1: Event Info ===
-      let col1Y = eventY + 15; // Restored for better spacing
+      let col1Y = eventY + 18;
       
-      // Event title
-      const cleanTitle = event.title.replace(/ Appointment$/, '').trim();
-      pdf.setFontSize(10); // Restored for better readability
+      // Event title - IMPROVED RENDERING
+      pdf.setFontSize(11);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(0, 0, 0);
       
-      const titleLines = pdf.splitTextToSize(cleanTitle, col1Width - 5);
+      // Better text wrapping
+      const titleWords = cleanTitle.split(' ');
+      const titleLines = [];
+      let currentLine = '';
+      
+      for (const word of titleWords) {
+        const testLine = currentLine ? `${currentLine} ${word}` : word;
+        const textWidth = pdf.getTextWidth(testLine);
+        
+        if (textWidth <= col1Width - 5) {
+          currentLine = testLine;
+        } else {
+          if (currentLine) titleLines.push(currentLine);
+          currentLine = word;
+        }
+      }
+      if (currentLine) titleLines.push(currentLine);
+      
+      // Render title lines
       for (let i = 0; i < Math.min(titleLines.length, 2); i++) {
-        pdf.text(titleLines[i], col1X, col1Y);
-        col1Y += 11; // Restored for better spacing
+        if (col1Y + 12 <= eventY + eventHeight - 30) {
+          pdf.text(titleLines[i], col1X, col1Y);
+          console.log(`Drew title line ${i + 1}: "${titleLines[i]}"`);
+          col1Y += 12;
+        }
       }
       
       // Source
-      pdf.setFontSize(8); // Restored for better readability
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(100, 100, 100);
-      
-      let sourceText = '';
-      if (isSimplePractice) sourceText = 'SIMPLEPRACTICE';
-      else if (isGoogle) sourceText = 'GOOGLE CALENDAR';
-      else if (isHoliday) sourceText = 'HOLIDAYS IN UNITED STATES';
-      else sourceText = (event.source || 'MANUAL').toUpperCase();
-      
-      pdf.text(sourceText, col1X, col1Y);
-      col1Y += 10; // Restored for better spacing
+      if (col1Y + 10 <= eventY + eventHeight - 20) {
+        pdf.setFontSize(8);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(100, 100, 100);
+        
+        let sourceText = '';
+        if (isSimplePractice) sourceText = 'SIMPLEPRACTICE';
+        else if (isGoogle) sourceText = 'GOOGLE CALENDAR';
+        else if (isHoliday) sourceText = 'HOLIDAYS IN UNITED STATES';
+        else sourceText = (event.source || 'MANUAL').toUpperCase();
+        
+        pdf.text(sourceText, col1X, col1Y);
+        col1Y += 12;
+      }
       
       // Time
-      pdf.setFontSize(9); // Restored for better readability
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(0, 0, 0);
-      
-      const startTimeStr = eventDate.toLocaleTimeString('en-US', { 
-        hour: '2-digit', minute: '2-digit', hour12: false 
-      });
-      const endTimeStr = endDate.toLocaleTimeString('en-US', { 
-        hour: '2-digit', minute: '2-digit', hour12: false 
-      });
-      const timeRange = `${startTimeStr}-${endTimeStr}`;
-      
-      pdf.text(timeRange, col1X, col1Y);
+      if (col1Y + 10 <= eventY + eventHeight - 8) {
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(0, 0, 0);
+        
+        const startTimeStr = eventDate.toLocaleTimeString('en-US', { 
+          hour: '2-digit', minute: '2-digit', hour12: false 
+        });
+        const endTimeStr = endDate.toLocaleTimeString('en-US', { 
+          hour: '2-digit', minute: '2-digit', hour12: false 
+        });
+        const timeRange = `${startTimeStr}-${endTimeStr}`;
+        
+        pdf.text(timeRange, col1X, col1Y);
+      }
       
       // === COLUMN 2: Event Notes ===
       if (hasNotes) {
-        let col2Y = eventY + 15; // Restored for better spacing
+        let col2Y = eventY + 18;
         
         // Header
-        pdf.setFontSize(9); // Restored for better readability
+        pdf.setFontSize(9);
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(0, 0, 0);
         pdf.text('Event Notes', col2X, col2Y);
-        col2Y += 12; // Restored for better spacing
+        col2Y += 14;
         
         // Notes content
-        pdf.setFontSize(8); // Restored for better readability
+        pdf.setFontSize(8);
         pdf.setFont('helvetica', 'normal');
         pdf.setTextColor(0, 0, 0);
         
         const noteLines = event.notes!.split('\n').filter(line => line.trim());
         noteLines.forEach(note => {
           const cleanNote = note.trim().replace(/^[•\s-]+/, '').trim();
-          if (cleanNote && col2Y + 8 <= eventY + eventHeight - 5) { // Restored spacing
-            // Add bullet point
+          if (cleanNote && col2Y + 10 <= eventY + eventHeight - 8) {
+            // Bullet point
             pdf.text('•', col2X, col2Y);
-            // Wrap text if needed
-            const wrappedNote = pdf.splitTextToSize(cleanNote, col2Width - 10);
-            for (let i = 0; i < Math.min(wrappedNote.length, 2); i++) {
-              pdf.text(wrappedNote[i], col2X + 8, col2Y + (i * 8)); // Restored spacing
+            
+            // Wrap note text properly
+            const noteWords = cleanNote.split(' ');
+            const wrappedLines = [];
+            let currentNoteLine = '';
+            
+            for (const word of noteWords) {
+              const testLine = currentNoteLine ? `${currentNoteLine} ${word}` : word;
+              const textWidth = pdf.getTextWidth(testLine);
+              
+              if (textWidth <= col2Width - 12) {
+                currentNoteLine = testLine;
+              } else {
+                if (currentNoteLine) wrappedLines.push(currentNoteLine);
+                currentNoteLine = word;
+              }
             }
-            col2Y += Math.min(wrappedNote.length, 2) * 8 + 2; // Restored spacing
+            if (currentNoteLine) wrappedLines.push(currentNoteLine);
+            
+            // Render wrapped lines
+            for (let i = 0; i < Math.min(wrappedLines.length, 2); i++) {
+              if (col2Y + (i * 9) + 9 <= eventY + eventHeight - 8) {
+                pdf.text(wrappedLines[i], col2X + 10, col2Y + (i * 9));
+              }
+            }
+            col2Y += Math.min(wrappedLines.length, 2) * 9 + 3;
           }
         });
       }
       
       // === COLUMN 3: Action Items ===
       if (hasActionItems) {
-        let col3Y = eventY + 15; // Restored for better spacing
+        let col3Y = eventY + 18;
         
         // Header
-        pdf.setFontSize(9); // Restored for better readability
+        pdf.setFontSize(9);
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(0, 0, 0);
         pdf.text('Action Items', col3X, col3Y);
-        col3Y += 12; // Restored for better spacing
+        col3Y += 14;
         
         // Action items content
-        pdf.setFontSize(8); // Restored for better readability
+        pdf.setFontSize(8);
         pdf.setFont('helvetica', 'normal');
         pdf.setTextColor(0, 0, 0);
         
         const actionLines = event.actionItems!.split('\n').filter(line => line.trim());
         actionLines.forEach(action => {
           const cleanAction = action.trim().replace(/^[•\s-]+/, '').trim();
-          if (cleanAction && col3Y + 8 <= eventY + eventHeight - 5) { // Restored spacing
-            // Add bullet point
+          if (cleanAction && col3Y + 10 <= eventY + eventHeight - 8) {
+            // Bullet point
             pdf.text('•', col3X, col3Y);
-            // Wrap text if needed
-            const wrappedAction = pdf.splitTextToSize(cleanAction, col3Width - 10);
-            for (let i = 0; i < Math.min(wrappedAction.length, 2); i++) {
-              pdf.text(wrappedAction[i], col3X + 8, col3Y + (i * 8)); // Restored spacing
+            
+            // Wrap action text properly
+            const actionWords = cleanAction.split(' ');
+            const wrappedLines = [];
+            let currentActionLine = '';
+            
+            for (const word of actionWords) {
+              const testLine = currentActionLine ? `${currentActionLine} ${word}` : word;
+              const textWidth = pdf.getTextWidth(testLine);
+              
+              if (textWidth <= col3Width - 12) {
+                currentActionLine = testLine;
+              } else {
+                if (currentActionLine) wrappedLines.push(currentActionLine);
+                currentActionLine = word;
+              }
             }
-            col3Y += Math.min(wrappedAction.length, 2) * 8 + 2; // Restored spacing
+            if (currentActionLine) wrappedLines.push(currentActionLine);
+            
+            // Render wrapped lines
+            for (let i = 0; i < Math.min(wrappedLines.length, 2); i++) {
+              if (col3Y + (i * 9) + 9 <= eventY + eventHeight - 8) {
+                pdf.text(wrappedLines[i], col3X + 10, col3Y + (i * 9));
+              }
+            }
+            col3Y += Math.min(wrappedLines.length, 2) * 9 + 3;
           }
         });
       }
       
     } else {
       // === SIMPLE LAYOUT (No notes/action items) ===
-      let currentY = eventY + 15;
+      let currentY = eventY + 18;
       
-      // Event title
-      const cleanTitle = event.title.replace(/ Appointment$/, '').trim();
+      // Event title - IMPROVED RENDERING
       pdf.setFontSize(12);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(0, 0, 0);
       
-      const titleLines = pdf.splitTextToSize(cleanTitle, contentWidth);
+      // Better text wrapping for simple layout
+      const titleWords = cleanTitle.split(' ');
+      const titleLines = [];
+      let currentLine = '';
+      
+      for (const word of titleWords) {
+        const testLine = currentLine ? `${currentLine} ${word}` : word;
+        const textWidth = pdf.getTextWidth(testLine);
+        
+        if (textWidth <= contentWidth - 5) {
+          currentLine = testLine;
+        } else {
+          if (currentLine) titleLines.push(currentLine);
+          currentLine = word;
+        }
+      }
+      if (currentLine) titleLines.push(currentLine);
+      
+      // Render title lines
       for (let i = 0; i < Math.min(titleLines.length, 2); i++) {
-        pdf.text(titleLines[i], startX, currentY);
-        currentY += 12;
+        if (currentY + 12 <= eventY + eventHeight - 20) {
+          pdf.text(titleLines[i], startX, currentY);
+          console.log(`Drew simple title line ${i + 1}: "${titleLines[i]}"`);
+          currentY += 12;
+        }
       }
       
       // Source
-      pdf.setFontSize(8);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(100, 100, 100);
-      
-      let sourceText = '';
-      if (isSimplePractice) sourceText = 'SIMPLEPRACTICE';
-      else if (isGoogle) sourceText = 'GOOGLE CALENDAR';
-      else if (isHoliday) sourceText = 'HOLIDAYS IN UNITED STATES';
-      else sourceText = (event.source || 'MANUAL').toUpperCase();
-      
-      pdf.text(sourceText, startX, currentY);
-      currentY += 10;
+      if (currentY + 10 <= eventY + eventHeight - 15) {
+        pdf.setFontSize(8);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(100, 100, 100);
+        
+        let sourceText = '';
+        if (isSimplePractice) sourceText = 'SIMPLEPRACTICE';
+        else if (isGoogle) sourceText = 'GOOGLE CALENDAR';
+        else if (isHoliday) sourceText = 'HOLIDAYS IN UNITED STATES';
+        else sourceText = (event.source || 'MANUAL').toUpperCase();
+        
+        pdf.text(sourceText, startX, currentY);
+        currentY += 12;
+      }
       
       // Time
-      pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(0, 0, 0);
-      
-      const startTimeStr = eventDate.toLocaleTimeString('en-US', { 
-        hour: '2-digit', minute: '2-digit', hour12: false 
-      });
-      const endTimeStr = endDate.toLocaleTimeString('en-US', { 
-        hour: '2-digit', minute: '2-digit', hour12: false 
-      });
-      const timeRange = `${startTimeStr}-${endTimeStr}`;
-      
-      pdf.text(timeRange, startX, currentY);
+      if (currentY + 10 <= eventY + eventHeight - 8) {
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(0, 0, 0);
+        
+        const startTimeStr = eventDate.toLocaleTimeString('en-US', { 
+          hour: '2-digit', minute: '2-digit', hour12: false 
+        });
+        const endTimeStr = endDate.toLocaleTimeString('en-US', { 
+          hour: '2-digit', minute: '2-digit', hour12: false 
+        });
+        const timeRange = `${startTimeStr}-${endTimeStr}`;
+        
+        pdf.text(timeRange, startX, currentY);
+      }
     }
     
     console.log(`Finished rendering event ${index + 1}`);
