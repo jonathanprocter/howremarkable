@@ -304,6 +304,24 @@ export default function Planner() {
           if (state.viewMode === 'daily') {
             // Export daily view as PDF
             try {
+              console.log('=== BEFORE DAILY PDF EXPORT ===');
+              console.log('Selected date:', selectedDateForExport.toDateString());
+              console.log('Current events count:', currentEvents.length);
+              
+              // Filter events for debugging
+              const dayEvents = currentEvents.filter(event => {
+                const eventDate = new Date(event.startTime);
+                return eventDate.getFullYear() === selectedDateForExport.getFullYear() &&
+                       eventDate.getMonth() === selectedDateForExport.getMonth() &&
+                       eventDate.getDate() === selectedDateForExport.getDate();
+              });
+              
+              console.log('Day events count:', dayEvents.length);
+              dayEvents.forEach((event, i) => {
+                const duration = (event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60);
+                console.log(`Event ${i+1}: "${event.title}" - Duration: ${duration} minutes`);
+              });
+              
               await exportHTMLTemplatePDF(
                 selectedDateForExport,
                 selectedDateForExport,
@@ -345,6 +363,24 @@ export default function Planner() {
         case 'reMarkable Daily':
           // Export daily view as PDF
           try {
+            console.log(`=== BEFORE ${type} PDF EXPORT ===`);
+            console.log('Selected date:', selectedDateForExport.toDateString());
+            console.log('Current events count:', currentEvents.length);
+            
+            // Filter events for debugging
+            const dayEvents = currentEvents.filter(event => {
+              const eventDate = new Date(event.startTime);
+              return eventDate.getFullYear() === selectedDateForExport.getFullYear() &&
+                     eventDate.getMonth() === selectedDateForExport.getMonth() &&
+                     eventDate.getDate() === selectedDateForExport.getDate();
+            });
+            
+            console.log('Day events count:', dayEvents.length);
+            dayEvents.forEach((event, i) => {
+              const duration = (event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60);
+              console.log(`Event ${i+1}: "${event.title}" - Duration: ${duration} minutes`);
+            });
+            
             await exportHTMLTemplatePDF(
               selectedDateForExport,
               selectedDateForExport,

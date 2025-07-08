@@ -275,6 +275,13 @@ The application uses three main entities:
   - Fixed date filtering using robust date comparison instead of timezone-sensitive string comparison
   - Updated legend section to match event styling exactly
   - **RESULT**: Professional daily planner PDF exports with accurate event detection, proper visual styling, and reliable date filtering
+- July 08, 2025. **DAILY PDF EXPORT EVENT HEIGHT AND TEXT FIXES**: Fixed critical event rendering issues for daily PDF exports:
+  - Increased font sizes in REMARKABLE_DAILY_CONFIG: eventTitle (8→11pt), eventSource (6→8pt), eventTime (7→9pt)
+  - Enhanced `drawRemarkableDailyAppointments` function with minimum event height (45 points) for proper text display
+  - Minimum duration enforced at 2 slots (1 hour) to ensure events are tall enough for 3-line text layout
+  - Improved event text rendering with proper spacing and line positioning
+  - Added comprehensive debugging to export handlers for tracking event filtering and duration calculations
+  - **RESULT**: Events now appear as proper blocks instead of thin lines, with clearly visible title, source, and time information
 
 ## User Preferences
 
