@@ -175,7 +175,6 @@ html, body {
     height: 1130px;
     width: 100%;
     overflow: visible;
-    border-bottom: 2px solid black;
 }
 
 .time-header {
@@ -273,7 +272,7 @@ html, body {
 }
 
 /* Ensure the last row has proper bottom border */
-.calendar-cell:nth-child(n+289) {
+.calendar-cell:nth-last-child(-n+7) {
     border-bottom: 2px solid black;
 }
 
