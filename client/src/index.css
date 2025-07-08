@@ -20,7 +20,7 @@ html, body {
     width: 100%;
     max-width: 1600px;
     margin: 0 auto;
-    background: blue;
+    background: white;
     border: 2px solid black;
     font-family: 'Times New Roman', serif;
     overflow-x: auto;
@@ -159,12 +159,9 @@ html, body {
 
 .calendar-container {
     position: relative;
-    overflow: auto;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
+    overflow: hidden;
+    display: block;
     height: fit-content;
-    background: red;
 }
 
 .calendar-grid {
