@@ -4,11 +4,11 @@ import { CalendarEvent } from '../types/calendar';
 // Match the exact dashboard layout
 const DAILY_CONFIG = {
   pageWidth: 595,
-  pageHeight: 842,
+  pageHeight: 900,  // Increased height to accommodate full timeline to 23:30
   margin: 12,  // Even more compact for better space usage
-  timeColumnWidth: 90,  // Wider for better time display
-  appointmentColumnWidth: 480,  // Adjusted to maintain proportions
-  timeSlotHeight: 24,  // Taller for better readability
+  timeColumnWidth: 65,  // Reduced time column width
+  appointmentColumnWidth: 495,  // Adjusted to maintain proportions
+  timeSlotHeight: 18,  // Reduced row height
   headerHeight: 75,  // More compact header
 
   // Typography matching dashboard
@@ -164,6 +164,7 @@ function drawDashboardLegend(pdf: jsPDF) {
 function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
   const { margin, timeColumnWidth, appointmentColumnWidth, timeSlotHeight } = DAILY_CONFIG;
   const gridStartY = margin + 82;  // Balanced grid start
+  const totalGridHeight = timeSlotHeight * TIME_SLOTS.length;  // Full timeline to 23:30
   
   // Filter events for the selected date
   const dayEvents = events.filter(event => {
@@ -207,10 +208,15 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     pdf.line(margin, y, margin + timeColumnWidth + appointmentColumnWidth, y);
   });
   
-  // Draw vertical separator between time and appointments
+  // Draw vertical separator between time and appointments (moved left to reduce time column space)
   pdf.setDrawColor(...DAILY_CONFIG.colors.mediumGray);
   pdf.setLineWidth(1);
-  pdf.line(margin + timeColumnWidth, gridStartY, margin + timeColumnWidth, gridStartY + (TIME_SLOTS.length * timeSlotHeight));
+  pdf.line(margin + timeColumnWidth, gridStartY, margin + timeColumnWidth, gridStartY + totalGridHeight);
+  
+  // Draw bottom border to close the grid at 23:30
+  pdf.setDrawColor(...DAILY_CONFIG.colors.mediumGray);
+  pdf.setLineWidth(1);
+  pdf.line(margin, gridStartY + totalGridHeight, margin + timeColumnWidth + appointmentColumnWidth, gridStartY + totalGridHeight);
   
   // Draw events exactly like dashboard with precise positioning
   timedEvents.forEach(event => {
