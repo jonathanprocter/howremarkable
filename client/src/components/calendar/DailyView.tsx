@@ -392,8 +392,8 @@ export const DailyView = ({
                         <div className="appointment-actions">
                           <div className="appointment-actions-header">Action Items</div>
                           {event.actionItems.split('\n').filter(item => {
-                            const cleaned = item.trim().replace(/^•+\s*/, '');
-                            return cleaned && cleaned !== '';
+                            const cleaned = item.trim().replace(/^•+\s*/, '').replace(/^\s*$/, '');
+                            return cleaned && cleaned.length > 0;
                           }).map((item, index) => {
                             const cleaned = item.trim().replace(/^•+\s*/, '');
                             return (
