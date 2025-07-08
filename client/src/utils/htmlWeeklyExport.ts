@@ -34,30 +34,33 @@ export const exportWeeklyCalendarHTML = async (
     const exactTemplate = await templateResponse.text();
     console.log('Template loaded, length:', exactTemplate.length);
 
-    // Create a temporary iframe to render the template properly
-    const iframe = document.createElement('iframe');
-    iframe.style.position = 'absolute';
-    iframe.style.left = '-9999px';
-    iframe.style.top = '0';
-    iframe.style.width = '2160px';
-    iframe.style.height = '1620px';
-    iframe.style.border = 'none';
-    iframe.style.background = 'white';
-    document.body.appendChild(iframe);
-
-    // Write the template to the iframe
-    iframe.contentDocument.open();
-    iframe.contentDocument.write(exactTemplate);
-    iframe.contentDocument.close();
-
-    console.log('Template written to iframe');
-    console.log('Iframe size:', iframe.offsetWidth, 'x', iframe.offsetHeight);
-
-    // Wait for the iframe to fully load and render
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // Convert the iframe content to canvas
-    const canvas = await html2canvas(iframe.contentDocument.body, {
+    // Create a temporary div with explicit styling
+    const container = document.createElement('div');
+    container.innerHTML = exactTemplate;
+    
+    // Force explicit dimensions and positioning
+    container.style.position = 'fixed';
+    container.style.top = '0';
+    container.style.left = '0';
+    container.style.width = '2160px';
+    container.style.height = '1620px';
+    container.style.backgroundColor = 'white';
+    container.style.zIndex = '9999';
+    container.style.overflow = 'visible';
+    container.style.transform = 'scale(1)';
+    container.style.transformOrigin = 'top left';
+    
+    // Append to body and make visible temporarily
+    document.body.appendChild(container);
+    
+    console.log('Container created and visible');
+    console.log('Container size:', container.offsetWidth, 'x', container.offsetHeight);
+    
+    // Wait for rendering
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Capture the visible container
+    const canvas = await html2canvas(container, {
       width: 2160,
       height: 1620,
       scale: 1,
@@ -69,8 +72,8 @@ export const exportWeeklyCalendarHTML = async (
 
     console.log('Canvas created:', canvas.width, 'x', canvas.height);
 
-    // Remove the temporary iframe
-    document.body.removeChild(iframe);
+    // Remove the container
+    document.body.removeChild(container);
 
     // Create PDF with proper reMarkable Paper Pro dimensions (landscape)
     const pdf = new jsPDF({
