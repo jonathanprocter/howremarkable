@@ -261,6 +261,7 @@ export default function Planner() {
   };
 
   const handleExportAction = async (type: string = 'Current View') => {
+    console.log('🚀 EXPORT BUTTON CLICKED! Type:', type);
     try {
       console.log('=== STARTING EXPORT ===');
       console.log('Export type:', type);
@@ -961,7 +962,10 @@ export default function Planner() {
           onDeselectAll={() => handleQuickAction('deselect all')}
           onExportCurrentView={() => handleExportAction('Current View')}
           onExportWeeklyPackage={() => handleExportAction('Weekly Package')}
-          onExportDailyView={() => handleExportAction('Daily View')}
+          onExportDailyView={() => {
+            console.log('📱 Daily View Export Button Clicked!');
+            handleExportAction('Daily View');
+          }}
           onExportFullMonth={() => handleExportAction('Full Month')}
           onExportToGoogleDrive={handleExportToGoogleDrive}
           onSaveNotes={handleUpdateDailyNotes}
