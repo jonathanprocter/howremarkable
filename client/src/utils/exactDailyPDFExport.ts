@@ -226,7 +226,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     const topPosition = gridStartY + (slotsFromStart * timeSlotHeight);
     
     // Calculate height based on duration - match dashboard exactly
-    const height = Math.max(50, (durationMinutes / 30) * timeSlotHeight - 2);
+    const height = Math.max(48, (durationMinutes / 30) * timeSlotHeight - 2);
     
     // Event styling based on type
     const eventType = getEventTypeInfo(event);
@@ -268,11 +268,13 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(...DAILY_CONFIG.colors.black);
     
-    // Clean title - remove "Appointment" suffix like dashboard
+    // Clean title - remove "Appointment" suffix and emojis like dashboard
     let cleanTitle = event.title;
     if (cleanTitle.endsWith(' Appointment')) {
       cleanTitle = cleanTitle.replace(' Appointment', '');
     }
+    // Remove emojis and special characters that cause display issues
+    cleanTitle = cleanTitle.replace(/[^\w\s\-\.,:;!?'"()&]/g, '').trim();
     pdf.text(cleanTitle, eventX, eventY);
     
     // Source line
@@ -294,6 +296,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
       pdf.setFont('helvetica', 'bold');
       pdf.text('Event Notes', eventX + columnWidth, eventY);
       
+      pdf.setFontSize(7);
       pdf.setFont('helvetica', 'normal');
       const notes = event.notes.split('\n')
         .filter(note => note.trim().length > 0)
@@ -311,6 +314,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
       pdf.setFont('helvetica', 'bold');
       pdf.text('Action Items', eventX + columnWidth * 2, eventY);
       
+      pdf.setFontSize(7);
       pdf.setFont('helvetica', 'normal');
       const actionItems = event.actionItems.split('\n')
         .filter(item => item.trim().length > 0)
