@@ -15,7 +15,7 @@ const GRID_CONFIG = {
   
   // Grid structure - maximized for landscape format
   timeColumnWidth: 120, // Wider time column for better readability
-  slotHeight: 40, // Larger slots for comfortable writing
+  slotHeight: 36, // Optimized to fit all 36 slots from 6:00-23:30
   totalSlots: 36, // 6:00 to 23:30
   
   get dayColumnWidth() {
@@ -63,8 +63,8 @@ export const exportExactGridPDF = async (
     const totalContentWidth = GRID_CONFIG.timeColumnWidth + (7 * GRID_CONFIG.dayColumnWidth);
     const centerX = (GRID_CONFIG.pageWidth - totalContentWidth) / 2; // Perfect horizontal centering
     
-    // Start higher on page to ensure full timeline fits
-    const centerY = 15; // Start near top of page
+    // Start higher on page to ensure full timeline fits (36 * 36 = 1296px + headers = ~1470px total)
+    const centerY = 10; // Start even higher to fit complete timeline
 
     // White background
     pdf.setFillColor(255, 255, 255);
