@@ -36,8 +36,8 @@ export const exportWeeklyCalendarHTML = async (
     container.style.position = 'absolute';
     container.style.left = '-9999px';
     container.style.top = '0';
-    container.style.width = '1404px'; // reMarkable Pro width
-    container.style.height = '1872px'; // reMarkable Pro height
+    container.style.width = '2160px'; // reMarkable Paper Pro width
+    container.style.height = '1620px'; // reMarkable Paper Pro height
     container.style.background = 'white';
     container.style.overflow = 'visible';
     document.body.appendChild(container);
@@ -47,8 +47,8 @@ export const exportWeeklyCalendarHTML = async (
 
     // Convert to canvas using your exact template
     const canvas = await html2canvas(container, {
-      width: 1404,
-      height: 1872,
+      width: 2160,
+      height: 1620,
       scale: 2, // High quality
       backgroundColor: '#ffffff',
       useCORS: true,
@@ -59,16 +59,16 @@ export const exportWeeklyCalendarHTML = async (
     // Remove the temporary container
     document.body.removeChild(container);
 
-    // Create PDF with proper reMarkable Pro dimensions
+    // Create PDF with proper reMarkable Paper Pro dimensions (landscape)
     const pdf = new jsPDF({
-      orientation: 'portrait',
+      orientation: 'landscape',
       unit: 'px',
-      format: [1404, 1872]
+      format: [2160, 1620]
     });
 
     // Add the canvas to PDF
     const imgData = canvas.toDataURL('image/png');
-    pdf.addImage(imgData, 'PNG', 0, 0, 1404, 1872);
+    pdf.addImage(imgData, 'PNG', 0, 0, 2160, 1620);
 
     // Download the PDF
     const filename = `weekly-planner-${weekStartDate.toISOString().split('T')[0]}.pdf`;
