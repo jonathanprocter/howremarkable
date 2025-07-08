@@ -14,6 +14,9 @@ import { exportWeeklyCalendarHTML } from '../utils/htmlWeeklyExport';
 import { exportExactGridPDF } from '../utils/exactGridPDFExport';
 import { generateCompleteExportData, exportToText, exportToJSON, exportToCSV, testExportData } from '../utils/completePDFExport';
 
+// Import the daily PDF export function
+import { exportDailyToPDF } from '../utils/dailyPDFExport';
+
 // NEW: Comprehensive daily PDF export function
 const exportDailyToPDFNew = async (selectedDate: Date, events: CalendarEvent[], dailyNotes: string): Promise<string> => {
   try {
@@ -21,7 +24,18 @@ const exportDailyToPDFNew = async (selectedDate: Date, events: CalendarEvent[], 
     console.log('Selected date:', selectedDate.toDateString());
     console.log('Total events passed:', events.length);
     
-    // Use the new dedicated daily export function
+    // Filter events for the selected date
+    const dayEvents = events.filter(event => {
+      const eventDate = new Date(event.startTime);
+      return eventDate.toDateString() === selectedDate.toDateString();
+    });
+    
+    console.log('Filtered day events:', dayEvents.length);
+    dayEvents.forEach((event, i) => {
+      console.log(`Event ${i + 1}: ${event.title} at ${event.startTime.toLocaleTimeString()}`);
+    });
+    
+    // Use the dedicated daily export function
     await exportDailyToPDF(selectedDate, events);
     
     const filename = `daily-planner-${selectedDate.toISOString().split('T')[0]}.pdf`;
@@ -382,9 +396,9 @@ export default function Planner() {
             // Filter events for debugging
             const dayEvents = currentEvents.filter(event => {
               const eventDate = new Date(event.startTime);
-              return eventDate.getFullYear() === selectedDateForExport.getFullYear() &&
-                     eventDate.getMonth() === selectedDateForExport.getMonth() &&
-                     eventDate.getDate() === selectedDateForExport.getDate();
+              const matches = eventDate.toDateString() === selectedDateForExport.toDateString();
+              console.log(`Daily Export Filter - Event: ${event.title} on ${eventDate.toDateString()}, Selected: ${selectedDateForExport.toDateString()}, Matches: ${matches}`);
+              return matches;
             });
             
             console.log('Day events count:', dayEvents.length);
@@ -393,12 +407,20 @@ export default function Planner() {
               console.log(`Event ${i+1}: "${event.title}" - Duration: ${duration} minutes`);
             });
             
+            if (dayEvents.length === 0) {
+              console.log('WARNING: No events found for selected date');
+              console.log('Available events dates:');
+              currentEvents.forEach(event => {
+                console.log(`  - ${event.title}: ${new Date(event.startTime).toDateString()}`);
+              });
+            }
+            
             // Use the new daily export function
             await exportDailyToPDFNew(selectedDateForExport, currentEvents, dailyNotes);
             
             toast({
               title: "Export Successful",
-              description: `Daily planner PDF downloaded with ${exportData.appointments.length} appointments!`
+              description: `Daily planner PDF downloaded with ${dayEvents.length} appointments!`
             });
             return;
           } catch (dailyError) {

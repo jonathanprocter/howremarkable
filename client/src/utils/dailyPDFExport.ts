@@ -422,13 +422,16 @@ export const exportDailyToPDF = async (
   console.log(`Date: ${selectedDate.toDateString()}`);
   console.log(`Total events: ${events.length}`);
   
-  // Filter events for selected date
+  // Filter events for selected date with improved debugging
   const dayEvents = events.filter(event => {
     const eventDate = new Date(event.startTime);
-    return eventDate.toDateString() === selectedDate.toDateString();
+    const matches = eventDate.toDateString() === selectedDate.toDateString();
+    console.log(`Event: ${event.title} on ${eventDate.toDateString()}, Selected: ${selectedDate.toDateString()}, Matches: ${matches}`);
+    return matches;
   });
   
   console.log(`Day events: ${dayEvents.length}`);
+  console.log('Day events details:', dayEvents.map(e => ({ title: e.title, time: e.startTime.toLocaleTimeString() })));
   
   // Draw layout
   drawDailyHeader(pdf, selectedDate, dayEvents);
