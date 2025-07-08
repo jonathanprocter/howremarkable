@@ -271,17 +271,18 @@ export default function Planner() {
         if (state.viewMode === 'daily') {
           // Export daily view when in daily mode
           try {
-            await exportDailyToPDF(
+            await exportHTMLTemplatePDF(
+              state.selectedDate,
               state.selectedDate,
               currentEvents,
-              currentDailyNotes
+              true // isDailyView flag
             );
             
             toast({
               title: "PDF Export",
               description: "Daily planner PDF downloaded successfully!"
             });
-            return; // exportDailyToPDF handles the download
+            return; // exportHTMLTemplatePDF handles the download
           } catch (dailyError) {
             console.error('Daily export error:', dailyError);
             throw dailyError;
@@ -307,17 +308,18 @@ export default function Planner() {
         }
       } else if (type === 'Daily View') {
         try {
-          await exportDailyToPDF(
+          await exportHTMLTemplatePDF(
+            state.selectedDate,
             state.selectedDate,
             currentEvents,
-            currentDailyNotes
+            true // isDailyView flag
           );
           
           toast({
             title: "PDF Export",
             description: "Daily planner PDF downloaded successfully!"
           });
-          return; // exportDailyToPDF handles the download
+          return; // exportHTMLTemplatePDF handles the download
         } catch (dailyError) {
           console.error('Daily export error:', dailyError);
           throw dailyError;
