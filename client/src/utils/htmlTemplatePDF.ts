@@ -28,12 +28,16 @@ const HTML_TEMPLATE_CONFIG = {
     return this.headerHeight + this.statsHeight + this.legendHeight;
   },
   
-  // Grid configuration
-  timeColumnWidth: 80,
+  // Grid configuration - optimized for better text containment
+  timeColumnWidth: 95,
   get gridStartY() {
     return this.margin + this.totalHeaderHeight + 5; // Minimal spacing below header
   },
-  timeSlotHeight: 18, // Optimal slot height for grid alignment
+  timeSlotHeight: 20, // Increased height for better text visibility
+  
+  // Text and padding configuration
+  cellPadding: 4,
+  eventPadding: 3,
   
   // Calculate day column width dynamically
   get dayColumnWidth() {
@@ -240,7 +244,7 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
   const { margin } = HTML_TEMPLATE_CONFIG;
   const gridY = HTML_TEMPLATE_CONFIG.gridStartY;
   const dayColumnWidth = HTML_TEMPLATE_CONFIG.dayColumnWidth;
-  const headerHeight = 35;
+  const headerHeight = 40;
   
   // Calculate total grid height
   const totalGridHeight = headerHeight + (TIME_SLOTS.length * HTML_TEMPLATE_CONFIG.timeSlotHeight);
@@ -258,10 +262,10 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
   pdf.setFillColor(...HTML_TEMPLATE_CONFIG.colors.lightGray);
   pdf.rect(margin, gridY, HTML_TEMPLATE_CONFIG.timeColumnWidth, headerHeight, 'F');
   
-  pdf.setFontSize(13);
+  pdf.setFontSize(14);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(...HTML_TEMPLATE_CONFIG.colors.black);
-  pdf.text('TIME', margin + HTML_TEMPLATE_CONFIG.timeColumnWidth / 2, gridY + 22, { align: 'center' });
+  pdf.text('TIME', margin + HTML_TEMPLATE_CONFIG.timeColumnWidth / 2, gridY + 25, { align: 'center' });
   
   // === DAY HEADERS ===
   const dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -275,14 +279,14 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
     pdf.rect(x, gridY, dayColumnWidth, headerHeight, 'F');
     
     // Day name
-    pdf.setFontSize(12);
+    pdf.setFontSize(13);
     pdf.setFont('helvetica', 'bold');
-    pdf.text(dayNames[i], x + dayColumnWidth / 2, gridY + 15, { align: 'center' });
+    pdf.text(dayNames[i], x + dayColumnWidth / 2, gridY + 17, { align: 'center' });
     
     // Date number
-    pdf.setFontSize(11);
+    pdf.setFontSize(12);
     pdf.setFont('helvetica', 'normal');
-    pdf.text(dayDate.getDate().toString(), x + dayColumnWidth / 2, gridY + 28, { align: 'center' });
+    pdf.text(dayDate.getDate().toString(), x + dayColumnWidth / 2, gridY + 32, { align: 'center' });
   }
   
   // === TIME GRID ===
@@ -294,11 +298,11 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
     pdf.setFillColor(...(isHour ? HTML_TEMPLATE_CONFIG.colors.lightGray : HTML_TEMPLATE_CONFIG.colors.white));
     pdf.rect(margin, y, HTML_TEMPLATE_CONFIG.timeColumnWidth, HTML_TEMPLATE_CONFIG.timeSlotHeight, 'F');
     
-    // Time text
-    pdf.setFontSize(isHour ? 8 : 7);
+    // Time text with better formatting
+    pdf.setFontSize(isHour ? 9 : 8);
     pdf.setFont('helvetica', isHour ? 'bold' : 'normal');
     pdf.setTextColor(...HTML_TEMPLATE_CONFIG.colors.black);
-    pdf.text(timeSlot, margin + HTML_TEMPLATE_CONFIG.timeColumnWidth / 2, y + 11, { align: 'center' });
+    pdf.text(timeSlot, margin + HTML_TEMPLATE_CONFIG.timeColumnWidth / 2, y + 12, { align: 'center' });
     
     // Day cells
     for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
@@ -395,7 +399,7 @@ function drawAppointments(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
     const duration = (event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60);
     const heightInSlots = Math.max(1, Math.ceil(duration / 30));
     
-    // Position calculation
+    // Position calculation with improved spacing
     const x = margin + HTML_TEMPLATE_CONFIG.timeColumnWidth + (dayIndex * dayColumnWidth) + 1;
     const y = gridStartY + (slotIndex * HTML_TEMPLATE_CONFIG.timeSlotHeight) + 1;
     const width = dayColumnWidth - 2;
@@ -427,30 +431,45 @@ function drawAppointments(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
       pdf.rect(x, y, width, height);
     }
     
-    // Event text
+    // Event text with proper formatting
     const cleanTitle = event.title.replace(/ Appointment$/, '');
     
-    // Name text
-    pdf.setFontSize(7);
+    // Calculate available text area with padding
+    const textWidth = width - (HTML_TEMPLATE_CONFIG.eventPadding * 2);
+    const textHeight = height - (HTML_TEMPLATE_CONFIG.eventPadding * 2);
+    
+    // Event name on first line
+    pdf.setFontSize(8);
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(...HTML_TEMPLATE_CONFIG.colors.black);
     
-    // Multi-line text wrapping
-    const maxWidth = width - 6;
-    const lines = pdf.splitTextToSize(cleanTitle, maxWidth);
+    // Split text to fit width properly
+    const nameLines = pdf.splitTextToSize(cleanTitle, textWidth);
     
-    // Draw text lines (max 2 lines for readability)
-    const lineHeight = 8;
-    for (let i = 0; i < Math.min(lines.length, 2); i++) {
-      pdf.text(lines[i], x + 3, y + 8 + (i * lineHeight));
+    // Draw name (max 2 lines for readability)
+    const nameLineHeight = 9;
+    const maxNameLines = Math.min(nameLines.length, height > 32 ? 2 : 1);
+    
+    for (let i = 0; i < maxNameLines; i++) {
+      pdf.text(nameLines[i], x + HTML_TEMPLATE_CONFIG.eventPadding, y + 10 + (i * nameLineHeight));
     }
     
-    // Time stamp at bottom if there's space
-    if (height > 16) {
-      pdf.setFontSize(6);
+    // Time range on second line if there's space
+    if (textHeight > 18) {
+      pdf.setFontSize(7);
       pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(120, 120, 120);
-      pdf.text(formatTime(event.startTime), x + 3, y + height - 3);
+      pdf.setTextColor(100, 100, 100);
+      
+      // Format time range
+      const startTime = formatTime(event.startTime);
+      const endTime = formatTime(event.endTime);
+      const timeRange = `${startTime} - ${endTime}`;
+      
+      // Position time range below name
+      const timeY = y + 10 + (maxNameLines * nameLineHeight) + 4;
+      if (timeY + 8 <= y + height - HTML_TEMPLATE_CONFIG.eventPadding) {
+        pdf.text(timeRange, x + HTML_TEMPLATE_CONFIG.eventPadding, timeY);
+      }
     }
   });
 }
