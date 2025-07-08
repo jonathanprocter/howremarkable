@@ -174,10 +174,11 @@ html, body {
     background: white;
     height: 1130px;
     width: 100%;
-    overflow: visible;
+    overflow: hidden;
     margin: 0;
     padding: 0;
     border: none;
+    box-sizing: border-box;
 }
 
 .time-header {
@@ -241,11 +242,8 @@ html, body {
     height: 30px;
     line-height: 1;
     box-sizing: border-box;
-}
-
-/* Last time slot (23:30) gets proper styling */
-.time-slot:last-child {
-    border-bottom: 1px solid #ddd;
+    min-height: 30px;
+    max-height: 30px;
 }
 
 
@@ -265,11 +263,9 @@ html, body {
     cursor: pointer;
     height: 30px;
     box-sizing: border-box;
-}
-
-/* Last row of calendar cells (23:30) gets proper bottom border */
-.calendar-cell:nth-last-child(-n+7) {
-    border-bottom: 1px solid #ddd;
+    min-height: 30px;
+    max-height: 30px;
+    overflow: hidden;
 }
 
 /* Light background for half-hour slots across all day columns */
