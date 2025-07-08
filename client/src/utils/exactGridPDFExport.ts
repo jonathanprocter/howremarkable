@@ -64,17 +64,17 @@ export const exportExactGridPDF = async (
 
     // HEADER - exactly like calendar
     pdf.setFont('times', 'bold');
-    pdf.setFontSize(32);
+    pdf.setFontSize(28);
     pdf.setTextColor(0, 0, 0);
-    pdf.text('WEEKLY PLANNER', GRID_CONFIG.pageWidth / 2, GRID_CONFIG.margin + 25, { align: 'center' });
+    pdf.text('WEEKLY PLANNER', GRID_CONFIG.pageWidth / 2, GRID_CONFIG.margin + 22, { align: 'center' });
 
     // Week info
     pdf.setFont('times', 'bold');
-    pdf.setFontSize(16);
+    pdf.setFontSize(14);
     const weekStart = weekStartDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
     const weekEnd = weekEndDate.toLocaleDateString('en-US', { day: 'numeric' });
     const weekNumber = Math.ceil(((weekStartDate.getTime() - new Date(weekStartDate.getFullYear(), 0, 1).getTime()) / 86400000 + 1) / 7);
-    pdf.text(`${weekStart}-${weekEnd} • Week ${weekNumber}`, GRID_CONFIG.pageWidth / 2, GRID_CONFIG.margin + 45, { align: 'center' });
+    pdf.text(`${weekStart}-${weekEnd} • Week ${weekNumber}`, GRID_CONFIG.pageWidth / 2, GRID_CONFIG.margin + 42, { align: 'center' });
 
     // STATS SECTION - exactly like calendar
     const statsY = GRID_CONFIG.margin + GRID_CONFIG.headerHeight;
@@ -243,12 +243,8 @@ export const exportExactGridPDF = async (
         pdf.setDrawColor(slot.isHour ? 0 : 221, slot.isHour ? 0 : 221, slot.isHour ? 0 : 221);
         pdf.rect(cellX, y, GRID_CONFIG.dayColumnWidth, GRID_CONFIG.slotHeight, 'S');
         
-        // Bold vertical lines between days
-        if (dayIndex < 6) {
-          pdf.setDrawColor(0, 0, 0);
-          pdf.setLineWidth(2);
-          pdf.line(cellX + GRID_CONFIG.dayColumnWidth, y, cellX + GRID_CONFIG.dayColumnWidth, y + GRID_CONFIG.slotHeight);
-        }
+        // Bold vertical lines between days (skip to avoid double lines)
+        // The main vertical borders are drawn separately
       }
       
       // Horizontal grid line
@@ -298,28 +294,28 @@ export const exportExactGridPDF = async (
           pdf.setLineWidth(2);
           pdf.rect(eventX, eventY, eventWidth, eventHeight, 'FD');
           
-          // Event text
+          // Event text - improved readability
           const eventTitle = event.title.replace(/\s*Appointment\s*$/i, '').trim();
           const startTime = eventDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
           const endTime = new Date(event.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
           
-          pdf.setFont('times', 'bold');
-          pdf.setFontSize(8);
           pdf.setTextColor(0, 0, 0);
           
-          // Event name (wrapped if needed)
+          // Event name - larger and bolder
+          pdf.setFont('times', 'bold');
+          pdf.setFontSize(9);
           const maxWidth = eventWidth - 8;
           const lines = pdf.splitTextToSize(eventTitle, maxWidth);
-          const nameHeight = Math.min(lines.length * 6, eventHeight - 12);
+          const nameHeight = Math.min(lines.length * 7, eventHeight - 14);
           
-          for (let i = 0; i < lines.length && i * 6 < nameHeight; i++) {
-            pdf.text(lines[i], eventX + 4, eventY + 10 + (i * 6));
+          for (let i = 0; i < lines.length && i * 7 < nameHeight; i++) {
+            pdf.text(lines[i], eventX + 4, eventY + 12 + (i * 7));
           }
           
-          // Event time
+          // Event time - clearer positioning
           pdf.setFont('times', 'normal');
-          pdf.setFontSize(6);
-          pdf.text(`${startTime}-${endTime}`, eventX + 4, eventY + eventHeight - 4);
+          pdf.setFontSize(7);
+          pdf.text(`${startTime}-${endTime}`, eventX + 4, eventY + eventHeight - 6);
         }
       }
     });
@@ -329,21 +325,9 @@ export const exportExactGridPDF = async (
     pdf.setLineWidth(2);
     pdf.setDrawColor(0, 0, 0);
     
-    // Bottom border
-    pdf.line(
-      GRID_CONFIG.margin, 
-      gridEndY, 
-      GRID_CONFIG.margin + GRID_CONFIG.timeColumnWidth + (7 * GRID_CONFIG.dayColumnWidth), 
-      gridEndY
-    );
-    
-    // Left border - to the left of time column
-    pdf.line(
-      GRID_CONFIG.margin, 
-      gridStartY, 
-      GRID_CONFIG.margin, 
-      gridEndY
-    );
+    // Complete grid outline
+    const rightBorder = GRID_CONFIG.margin + GRID_CONFIG.timeColumnWidth + (7 * GRID_CONFIG.dayColumnWidth);
+    pdf.rect(GRID_CONFIG.margin, gridStartY, GRID_CONFIG.timeColumnWidth + (7 * GRID_CONFIG.dayColumnWidth), 50 + GRID_CONFIG.gridHeight, 'S');
     
     // Vertical border between time column and Monday
     pdf.line(
@@ -352,6 +336,12 @@ export const exportExactGridPDF = async (
       GRID_CONFIG.margin + GRID_CONFIG.timeColumnWidth, 
       gridEndY
     );
+    
+    // Bold vertical lines between all day columns
+    for (let i = 1; i < 7; i++) {
+      const x = GRID_CONFIG.margin + GRID_CONFIG.timeColumnWidth + (i * GRID_CONFIG.dayColumnWidth);
+      pdf.line(x, gridStartY, x, gridEndY);
+    }
 
     // Download the PDF
     const filename = `Weekly_Calendar_${weekStartDate.toLocaleDateString('en-US').replace(/\//g, '-')}.pdf`;
