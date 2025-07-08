@@ -185,7 +185,7 @@ html, body {
     text-align: center;
     font-weight: bold;
     font-size: 14px;
-    border-right: 2px solid black;
+    border-right: 3px solid black !important;
     border-bottom: 3px solid black;
     display: flex;
     align-items: center;
@@ -235,7 +235,7 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-right: 2px solid black;
+    border-right: 3px solid black !important;
     border-bottom: 1px solid #ddd;
     height: 30px;
     line-height: 1;
