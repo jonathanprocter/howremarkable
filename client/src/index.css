@@ -150,10 +150,11 @@
 .calendar-grid {
     display: grid;
     grid-template-columns: 100px repeat(7, 1fr);
-    grid-template-rows: 60px repeat(48, 32px);
+    grid-template-rows: 50px repeat(48, 25px);
     background: white;
-    height: calc(100vh - 180px);
+    height: calc(100vh - 160px);
     width: 100%;
+    overflow-y: auto;
 }
 
 .time-header {
@@ -171,7 +172,7 @@
 
 .day-header {
     background: #f0f0f0;
-    padding: 8px 12px;
+    padding: 6px 8px;
     text-align: center;
     font-weight: bold;
     border-right: 1px solid black;
@@ -181,7 +182,7 @@
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    min-height: 50px;
+    min-height: 40px;
 }
 
 .day-header:last-child {
@@ -204,16 +205,16 @@
 
 .time-slot {
     background: #f8f8f8;
-    padding: 6px;
+    padding: 2px;
     text-align: center;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: bold;
     display: flex;
     align-items: center;
     justify-content: center;
     border-right: 2px solid black;
     border-bottom: 1px solid #ddd;
-    min-height: 32px;
+    min-height: 25px;
 }
 
 .time-slot.hour {
@@ -315,9 +316,9 @@
 }
 
 /* Height classes for different durations */
-.appointment.duration-30 { height: 30px; }
-.appointment.duration-60 { height: 66px; }
-.appointment.duration-90 { height: 102px; }
+.appointment.duration-30 { height: 32px; }
+.appointment.duration-60 { height: 68px; }
+.appointment.duration-90 { height: 103px; }
 
 /* Appointment header styling - exact match to HTML template */
 .appointment-header {
