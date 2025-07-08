@@ -258,9 +258,9 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     const slotIndex = ((startHour - 6) * 2) + (startMinute >= 30 ? 1 : 0);
     const topPosition = gridStartY + (slotIndex * timeSlotHeight);
     
-    // Calculate height based on EXACT duration to prevent overlaps
+    // Calculate height based on EXACT duration to fill the time slots completely
     const durationSlots = Math.ceil(durationMinutes / 30);
-    const exactHeight = durationSlots * timeSlotHeight - 4; // Small gap between appointments
+    const exactHeight = durationSlots * timeSlotHeight - 2; // Minimal gap for visual separation
     
     console.log(`📅 Event: ${event.title}`);
     console.log(`  ⏰ Start: ${formatMilitaryTime(eventStart)} (${startHour}:${startMinute.toString().padStart(2, '0')})`);
@@ -289,36 +289,36 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     // Event styling based on type
     const eventType = getEventTypeInfo(event);
     
-    // Draw event background - always white like dashboard
+    // Draw event background - always white like dashboard, aligned exactly with time slots
     pdf.setFillColor(...DAILY_CONFIG.colors.white);
-    pdf.rect(margin + timeColumnWidth + 4, topPosition + 2, appointmentColumnWidth - 8, height, 'F');
+    pdf.rect(margin + timeColumnWidth + 2, topPosition + 1, appointmentColumnWidth - 4, exactHeight, 'F');
     
-    // Draw event borders based on type - match dashboard styling EXACTLY
+    // Draw event borders based on type - match dashboard styling EXACTLY, aligned with time slots
     if (eventType.isSimplePractice) {
       // SimplePractice: white background with cornflower blue border and thick left flag
       pdf.setDrawColor(...DAILY_CONFIG.colors.simplePracticeBlue);
       pdf.setLineWidth(1);
-      pdf.rect(margin + timeColumnWidth + 4, topPosition + 2, appointmentColumnWidth - 8, height, 'D');
+      pdf.rect(margin + timeColumnWidth + 2, topPosition + 1, appointmentColumnWidth - 4, exactHeight, 'D');
       // Thick left flag (4px wide)
       pdf.setFillColor(...DAILY_CONFIG.colors.simplePracticeBlue);
-      pdf.rect(margin + timeColumnWidth + 4, topPosition + 2, 4, height, 'F');
+      pdf.rect(margin + timeColumnWidth + 2, topPosition + 1, 4, exactHeight, 'F');
     } else if (eventType.isGoogle) {
       // Google Calendar: white background with dashed green border all around
       pdf.setDrawColor(...DAILY_CONFIG.colors.googleGreen);
       pdf.setLineWidth(1);
       pdf.setLineDash([3, 3]);
-      pdf.rect(margin + timeColumnWidth + 4, topPosition + 2, appointmentColumnWidth - 8, height, 'D');
+      pdf.rect(margin + timeColumnWidth + 2, topPosition + 1, appointmentColumnWidth - 4, exactHeight, 'D');
       pdf.setLineDash([]);
     } else {
       // Holiday: orange border around appointment
       pdf.setDrawColor(...DAILY_CONFIG.colors.holidayOrange);
       pdf.setLineWidth(1);
-      pdf.rect(margin + timeColumnWidth + 4, topPosition + 2, appointmentColumnWidth - 8, height, 'D');
+      pdf.rect(margin + timeColumnWidth + 2, topPosition + 1, appointmentColumnWidth - 4, exactHeight, 'D');
     }
     
-    // Draw event content in 3-column layout exactly like dashboard
-    const eventX = margin + timeColumnWidth + 12;
-    const eventY = topPosition + 16;
+    // Draw event content in 3-column layout exactly like dashboard, aligned with appointment block
+    const eventX = margin + timeColumnWidth + 8;
+    const eventY = topPosition + 12;
     const columnWidth = (appointmentColumnWidth - 20) / 3;
     
     // Left column: Event title, calendar source, and time
