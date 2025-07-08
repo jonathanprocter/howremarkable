@@ -59,23 +59,24 @@ function getEventTypeInfo(event: CalendarEvent): EventTypeInfo {
 
 // reMarkable Paper Pro specific configuration for daily view
 const REMARKABLE_DAILY_CONFIG = {
-  // Use points instead of mm for consistency with jsPDF
-  pageWidth: 507,   // 179mm * 2.834 points/mm
-  pageHeight: 677,  // 239mm * 2.834 points/mm
-  margin: 20,       // Reduced margin for more space
+  // Optimized for reMarkable Pro portrait (11.8" screen, 2160x1620 resolution)
+  // Using A4 portrait dimensions but optimized for e-ink display
+  pageWidth: 595,   // Standard A4 width in points
+  pageHeight: 842,  // Standard A4 height in points
+  margin: 25,       // Optimal margin for readability
   
-  // Header configuration - more compact
-  headerHeight: 40,  // Reduced from 57
-  statsHeight: 30,   // Reduced from 43
-  legendHeight: 20,  // Reduced from 28
+  // Header configuration - ultra-compact for maximum grid space
+  headerHeight: 35,  // Reduced further
+  statsHeight: 25,   // Reduced further
+  legendHeight: 15,  // Reduced further
   
   get totalHeaderHeight() {
     return this.headerHeight + this.statsHeight + this.legendHeight;
   },
   
-  // Grid configuration - optimized for full day fit
-  timeColumnWidth: 60,  // Reduced from 71
-  timeSlotHeight: 14,   // Reduced from 20 to fit 36 slots (6:00-23:30)
+  // Grid configuration - optimized for 36 time slots (6:00-23:30)
+  timeColumnWidth: 55,  // Reduced for more event space
+  timeSlotHeight: 18,   // Increased slightly for better readability
   
   get gridStartY() {
     return this.margin + this.totalHeaderHeight;
@@ -85,15 +86,15 @@ const REMARKABLE_DAILY_CONFIG = {
     return this.pageWidth - (this.margin * 2) - this.timeColumnWidth;
   },
   
-  // Typography - optimized for compact layout
+  // Typography - optimized for reMarkable Pro readability
   fonts: {
-    title: 14,         // Reduced from 16
-    subtitle: 9,       // Reduced from 10
-    stats: 7,          // Reduced from 8
-    timeSlot: 6,       // Reduced from 7
-    eventTitle: 9,     // Reduced from 11
-    eventSource: 7,    // Reduced from 8
-    eventTime: 8       // Reduced from 9
+    title: 16,         // Increased for better header visibility
+    subtitle: 12,      // Increased for better readability
+    stats: 10,         // Increased for better stats visibility
+    timeSlot: 8,       // Increased for better time readability
+    eventTitle: 10,    // Increased for better event title readability
+    eventSource: 8,    // Increased for better source readability
+    eventTime: 9       // Increased for better time readability
   },
   
   colors: {
@@ -179,11 +180,11 @@ export const exportHTMLTemplatePDF = async (
   let pdf;
   
   if (isDailyView) {
-    // reMarkable Paper Pro portrait dimensions (507pt x 677pt)
+    // reMarkable Paper Pro optimized portrait dimensions
     pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'pt',
-      format: [507, 677]
+      format: [REMARKABLE_DAILY_CONFIG.pageWidth, REMARKABLE_DAILY_CONFIG.pageHeight]
     });
   } else {
     // Weekly view uses landscape
@@ -811,17 +812,17 @@ function drawRemarkableDailyAppointments(pdf: jsPDF, selectedDate: Date, events:
     const eventY = gridStartY + (startSlot * timeSlotHeight) + 1;
     const eventWidth = dayColumnWidth - 6;
     
-    // Adjust height based on content - optimized for compact layout
+    // Adjust height based on content - optimized for reMarkable Pro
     let eventHeight;
     if (needsExpandedLayout) {
       // Calculate height needed for notes and action items
       const notesLines = hasNotes ? event.notes!.split('\n').filter(line => line.trim()).length : 0;
       const actionLines = hasActionItems ? event.actionItems!.split('\n').filter(line => line.trim()).length : 0;
       const maxContentLines = Math.max(notesLines, actionLines);
-      const minimumHeight = 42 + (maxContentLines * 8); // Reduced base height + content
+      const minimumHeight = 55 + (maxContentLines * 10); // Increased base height + content
       eventHeight = Math.max(minimumHeight, (durationSlots * timeSlotHeight) - 2);
     } else {
-      eventHeight = Math.max(35, (durationSlots * timeSlotHeight) - 2); // Reduced minimum height
+      eventHeight = Math.max(45, (durationSlots * timeSlotHeight) - 2); // Increased minimum height
     }
     
     console.log(`Position: X=${eventX}, Y=${eventY}, Width=${eventWidth}, Height=${eventHeight}`);
@@ -896,22 +897,22 @@ function drawRemarkableDailyAppointments(pdf: jsPDF, selectedDate: Date, events:
       pdf.line(col3X - 3, eventY + 5, col3X - 3, eventY + eventHeight - 5);
       
       // === COLUMN 1: Event Info ===
-      let col1Y = eventY + 12; // Reduced from 15
+      let col1Y = eventY + 15; // Restored for better spacing
       
       // Event title
       const cleanTitle = event.title.replace(/ Appointment$/, '').trim();
-      pdf.setFontSize(8); // Reduced from 10
+      pdf.setFontSize(10); // Restored for better readability
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(0, 0, 0);
       
       const titleLines = pdf.splitTextToSize(cleanTitle, col1Width - 5);
       for (let i = 0; i < Math.min(titleLines.length, 2); i++) {
         pdf.text(titleLines[i], col1X, col1Y);
-        col1Y += 9; // Reduced from 11
+        col1Y += 11; // Restored for better spacing
       }
       
       // Source
-      pdf.setFontSize(6); // Reduced from 7
+      pdf.setFontSize(8); // Restored for better readability
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(100, 100, 100);
       
@@ -922,10 +923,10 @@ function drawRemarkableDailyAppointments(pdf: jsPDF, selectedDate: Date, events:
       else sourceText = (event.source || 'MANUAL').toUpperCase();
       
       pdf.text(sourceText, col1X, col1Y);
-      col1Y += 8; // Reduced from 10
+      col1Y += 10; // Restored for better spacing
       
       // Time
-      pdf.setFontSize(7); // Reduced from 8
+      pdf.setFontSize(9); // Restored for better readability
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(0, 0, 0);
       
@@ -941,64 +942,64 @@ function drawRemarkableDailyAppointments(pdf: jsPDF, selectedDate: Date, events:
       
       // === COLUMN 2: Event Notes ===
       if (hasNotes) {
-        let col2Y = eventY + 12; // Reduced from 15
+        let col2Y = eventY + 15; // Restored for better spacing
         
         // Header
-        pdf.setFontSize(7); // Reduced from 8
+        pdf.setFontSize(9); // Restored for better readability
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(0, 0, 0);
         pdf.text('Event Notes', col2X, col2Y);
-        col2Y += 9; // Reduced from 12
+        col2Y += 12; // Restored for better spacing
         
         // Notes content
-        pdf.setFontSize(6); // Reduced from 7
+        pdf.setFontSize(8); // Restored for better readability
         pdf.setFont('helvetica', 'normal');
         pdf.setTextColor(0, 0, 0);
         
         const noteLines = event.notes!.split('\n').filter(line => line.trim());
         noteLines.forEach(note => {
           const cleanNote = note.trim().replace(/^[•\s-]+/, '').trim();
-          if (cleanNote && col2Y + 6 <= eventY + eventHeight - 5) { // Reduced from 8
+          if (cleanNote && col2Y + 8 <= eventY + eventHeight - 5) { // Restored spacing
             // Add bullet point
             pdf.text('•', col2X, col2Y);
             // Wrap text if needed
             const wrappedNote = pdf.splitTextToSize(cleanNote, col2Width - 10);
             for (let i = 0; i < Math.min(wrappedNote.length, 2); i++) {
-              pdf.text(wrappedNote[i], col2X + 6, col2Y + (i * 6)); // Reduced from 8
+              pdf.text(wrappedNote[i], col2X + 8, col2Y + (i * 8)); // Restored spacing
             }
-            col2Y += Math.min(wrappedNote.length, 2) * 6 + 2; // Reduced from 8
+            col2Y += Math.min(wrappedNote.length, 2) * 8 + 2; // Restored spacing
           }
         });
       }
       
       // === COLUMN 3: Action Items ===
       if (hasActionItems) {
-        let col3Y = eventY + 12; // Reduced from 15
+        let col3Y = eventY + 15; // Restored for better spacing
         
         // Header
-        pdf.setFontSize(7); // Reduced from 8
+        pdf.setFontSize(9); // Restored for better readability
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(0, 0, 0);
         pdf.text('Action Items', col3X, col3Y);
-        col3Y += 9; // Reduced from 12
+        col3Y += 12; // Restored for better spacing
         
         // Action items content
-        pdf.setFontSize(6); // Reduced from 7
+        pdf.setFontSize(8); // Restored for better readability
         pdf.setFont('helvetica', 'normal');
         pdf.setTextColor(0, 0, 0);
         
         const actionLines = event.actionItems!.split('\n').filter(line => line.trim());
         actionLines.forEach(action => {
           const cleanAction = action.trim().replace(/^[•\s-]+/, '').trim();
-          if (cleanAction && col3Y + 6 <= eventY + eventHeight - 5) { // Reduced from 8
+          if (cleanAction && col3Y + 8 <= eventY + eventHeight - 5) { // Restored spacing
             // Add bullet point
             pdf.text('•', col3X, col3Y);
             // Wrap text if needed
             const wrappedAction = pdf.splitTextToSize(cleanAction, col3Width - 10);
             for (let i = 0; i < Math.min(wrappedAction.length, 2); i++) {
-              pdf.text(wrappedAction[i], col3X + 6, col3Y + (i * 6)); // Reduced from 8
+              pdf.text(wrappedAction[i], col3X + 8, col3Y + (i * 8)); // Restored spacing
             }
-            col3Y += Math.min(wrappedAction.length, 2) * 6 + 2; // Reduced from 8
+            col3Y += Math.min(wrappedAction.length, 2) * 8 + 2; // Restored spacing
           }
         });
       }
