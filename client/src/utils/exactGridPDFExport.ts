@@ -13,14 +13,14 @@ const GRID_CONFIG = {
   statsHeight: 50,
   legendHeight: 40, // Clear legend visibility
   
-  // Grid structure - optimized for writing with stylus
-  timeColumnWidth: 100, // Narrower time column as requested
+  // Grid structure - maximized for landscape format
+  timeColumnWidth: 120, // Wider time column for better readability
   slotHeight: 40, // Larger slots for comfortable writing
   totalSlots: 36, // 6:00 to 23:30
   
   get dayColumnWidth() {
-    // Target 180px per day column for optimal writing space
-    return 180;
+    // Calculate to use full landscape width: (1404 - margins - timeColumn) / 7 days
+    return Math.floor((1404 - 160 - 120) / 7); // ~160px per day for maximum space utilization
   },
   
   get gridStartY() {
@@ -59,9 +59,9 @@ export const exportExactGridPDF = async (
       format: [GRID_CONFIG.pageWidth, GRID_CONFIG.pageHeight]
     });
 
-    // Position content higher and more to the right for full timeline visibility
+    // Center content for optimal landscape utilization
     const totalContentWidth = GRID_CONFIG.timeColumnWidth + (7 * GRID_CONFIG.dayColumnWidth);
-    const centerX = 80; // Move right from left edge for better positioning
+    const centerX = (GRID_CONFIG.pageWidth - totalContentWidth) / 2; // Perfect horizontal centering
     
     // Start higher on page to ensure full timeline fits
     const centerY = 15; // Start near top of page
@@ -230,6 +230,8 @@ export const exportExactGridPDF = async (
         if (hour === 23 && minute === 30) break;
       }
     }
+    
+    console.log(`Generated ${timeSlots.length} time slots from ${timeSlots[0]?.time} to ${timeSlots[timeSlots.length - 1]?.time}`);
 
     timeSlots.forEach((slot, index) => {
       const y = gridStartY + 50 + (index * GRID_CONFIG.slotHeight);
