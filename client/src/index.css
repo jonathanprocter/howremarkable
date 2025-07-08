@@ -12,7 +12,7 @@
     border: 2px solid black;
     font-family: 'Times New Roman', serif;
     overflow-x: auto;
-    min-height: calc(100vh + 300px);
+    min-height: calc(100vh + 600px);
 }
 
 .header {
@@ -150,9 +150,9 @@
 .calendar-grid {
     display: grid;
     grid-template-columns: 100px repeat(7, 1fr);
-    grid-template-rows: 80px repeat(36, 40px);
+    grid-template-rows: 80px repeat(48, 40px);
     background: white;
-    min-height: calc(100vh + 200px);
+    min-height: calc(100vh + 400px);
     width: 100%;
 }
 
