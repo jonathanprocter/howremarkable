@@ -21,6 +21,12 @@ export const ExportToPDF = ({
   console.log('🔧 onExportCurrentView:', typeof onExportCurrentView);
   console.log('🔧 onExportDailyView:', typeof onExportDailyView);
   
+  // Make the export function globally available for testing
+  (window as any).testDailyExport = () => {
+    console.log('🚀 GLOBAL TEST EXPORT CALLED!');
+    onExportCurrentView('Daily View');
+  };
+
   const testExport = () => {
     console.log('🚀 DIRECT TEST EXPORT CALLED!');
     onExportCurrentView('Test Export');
