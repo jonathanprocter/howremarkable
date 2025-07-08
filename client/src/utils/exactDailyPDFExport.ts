@@ -5,11 +5,11 @@ import { CalendarEvent } from '../types/calendar';
 const DAILY_CONFIG = {
   pageWidth: 595,
   pageHeight: 842,
-  margin: 20,  // Reduced from 40 to move left
-  timeColumnWidth: 80,
-  appointmentColumnWidth: 450,
-  timeSlotHeight: 20,
-  headerHeight: 100,  // Reduced from 120 to move up
+  margin: 15,  // Further reduced for better positioning
+  timeColumnWidth: 85,  // Slightly wider for better time display
+  appointmentColumnWidth: 470,  // Adjusted to maintain proportions
+  timeSlotHeight: 22,  // Slightly taller for better readability
+  headerHeight: 90,  // More compact header
 
   // Typography matching dashboard
   fonts: {
@@ -65,22 +65,22 @@ function getEventTypeInfo(event: CalendarEvent) {
 function drawDashboardHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
   const { margin, pageWidth } = DAILY_CONFIG;
 
-  // Title - moved up
-  pdf.setFontSize(DAILY_CONFIG.fonts.title.size);
-  pdf.setFont('helvetica', DAILY_CONFIG.fonts.title.weight);
+  // Title - more compact
+  pdf.setFontSize(16);  // Smaller, more proportional
+  pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(...DAILY_CONFIG.colors.black);
-  pdf.text('Daily Planner', pageWidth / 2, margin + 15, { align: 'center' });
+  pdf.text('Daily Planner', pageWidth / 2, margin + 12, { align: 'center' });
 
-  // Date - moved up
-  pdf.setFontSize(DAILY_CONFIG.fonts.date.size);
-  pdf.setFont('helvetica', DAILY_CONFIG.fonts.date.weight);
+  // Date - more compact
+  pdf.setFontSize(12);  // Smaller date font
+  pdf.setFont('helvetica', 'normal');
   const dateStr = selectedDate.toLocaleDateString('en-US', { 
     weekday: 'long', 
     year: 'numeric', 
     month: 'long', 
     day: 'numeric' 
   });
-  pdf.text(dateStr, pageWidth / 2, margin + 35, { align: 'center' });
+  pdf.text(dateStr, pageWidth / 2, margin + 28, { align: 'center' });
 
   // Statistics - moved up and left
   const totalEvents = events.length;
@@ -93,59 +93,77 @@ function drawDashboardHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEve
   pdf.setFontSize(DAILY_CONFIG.fonts.stats.size);
   pdf.setFont('helvetica', DAILY_CONFIG.fonts.stats.weight);
   
-  const statsY = margin + 55;  // Moved up
-  const statsSpacing = 110;    // Slightly reduced spacing
+  const statsY = margin + 45;  // More compact positioning
+  const statsSpacing = 125;    // Better spacing for readability
+  
+  // Larger font for statistics
+  pdf.setFontSize(14);
+  pdf.setFont('helvetica', 'bold');
   
   // Appointments
-  pdf.text(`${totalEvents}`, margin + 70, statsY, { align: 'center' });
-  pdf.text('Appointments', margin + 70, statsY + 15, { align: 'center' });
+  pdf.text(`${totalEvents}`, margin + 75, statsY, { align: 'center' });
+  pdf.setFontSize(10);
+  pdf.setFont('helvetica', 'normal');
+  pdf.text('Appointments', margin + 75, statsY + 12, { align: 'center' });
   
   // Scheduled
-  pdf.text(`${totalHours.toFixed(1)}h`, margin + 70 + statsSpacing, statsY, { align: 'center' });
-  pdf.text('Scheduled', margin + 70 + statsSpacing, statsY + 15, { align: 'center' });
+  pdf.setFontSize(14);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text(`${totalHours.toFixed(1)}h`, margin + 75 + statsSpacing, statsY, { align: 'center' });
+  pdf.setFontSize(10);
+  pdf.setFont('helvetica', 'normal');
+  pdf.text('Scheduled', margin + 75 + statsSpacing, statsY + 12, { align: 'center' });
   
   // Available
-  pdf.text(`${availableHours.toFixed(1)}h`, margin + 70 + statsSpacing * 2, statsY, { align: 'center' });
-  pdf.text('Available', margin + 70 + statsSpacing * 2, statsY + 15, { align: 'center' });
+  pdf.setFontSize(14);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text(`${availableHours.toFixed(1)}h`, margin + 75 + statsSpacing * 2, statsY, { align: 'center' });
+  pdf.setFontSize(10);
+  pdf.setFont('helvetica', 'normal');
+  pdf.text('Available', margin + 75 + statsSpacing * 2, statsY + 12, { align: 'center' });
   
   // Free Time
-  pdf.text(`${freeTimePercentage}%`, margin + 70 + statsSpacing * 3, statsY, { align: 'center' });
-  pdf.text('Free Time', margin + 70 + statsSpacing * 3, statsY + 15, { align: 'center' });
+  pdf.setFontSize(14);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text(`${freeTimePercentage}%`, margin + 75 + statsSpacing * 3, statsY, { align: 'center' });
+  pdf.setFontSize(10);
+  pdf.setFont('helvetica', 'normal');
+  pdf.text('Free Time', margin + 75 + statsSpacing * 3, statsY + 12, { align: 'center' });
 }
 
 function drawDashboardLegend(pdf: jsPDF) {
   const { margin, pageWidth } = DAILY_CONFIG;
-  const legendY = margin + 80;  // Moved up
+  const legendY = margin + 67;  // More compact positioning
   
-  pdf.setFontSize(DAILY_CONFIG.fonts.stats.size);
-  pdf.setFont('helvetica', DAILY_CONFIG.fonts.stats.weight);
+  pdf.setFontSize(9);  // Smaller legend font
+  pdf.setFont('helvetica', 'normal');
   
-  // SimplePractice - moved left
+  // SimplePractice - better positioning
   pdf.setFillColor(...DAILY_CONFIG.colors.white);
   pdf.setDrawColor(...DAILY_CONFIG.colors.simplePracticeBlue);
-  pdf.rect(margin + 30, legendY, 12, 8, 'FD');
+  pdf.rect(margin + 35, legendY, 14, 8, 'FD');
   pdf.setFillColor(...DAILY_CONFIG.colors.simplePracticeBlue);
-  pdf.rect(margin + 30, legendY, 4, 8, 'F');
-  pdf.text('SimplePractice', margin + 50, legendY + 6);
+  pdf.rect(margin + 35, legendY, 4, 8, 'F');
+  pdf.text('SimplePractice', margin + 55, legendY + 6);
   
-  // Google Calendar - moved left
+  // Google Calendar - better positioning
   pdf.setFillColor(...DAILY_CONFIG.colors.white);
   pdf.setDrawColor(...DAILY_CONFIG.colors.googleGreen);
   pdf.setLineDash([2, 2]);
-  pdf.rect(margin + 160, legendY, 12, 8, 'FD');
+  pdf.rect(margin + 175, legendY, 14, 8, 'FD');
   pdf.setLineDash([]);
-  pdf.text('Google Calendar', margin + 180, legendY + 6);
+  pdf.text('Google Calendar', margin + 195, legendY + 6);
   
-  // Holidays - moved left
+  // Holidays - better positioning
   pdf.setFillColor(...DAILY_CONFIG.colors.white);
   pdf.setDrawColor(...DAILY_CONFIG.colors.holidayOrange);
-  pdf.rect(margin + 310, legendY, 12, 8, 'FD');
-  pdf.text('Holidays in United States', margin + 330, legendY + 6);
+  pdf.rect(margin + 325, legendY, 14, 8, 'FD');
+  pdf.text('Holidays in United States', margin + 345, legendY + 6);
 }
 
 function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
   const { margin, timeColumnWidth, appointmentColumnWidth, timeSlotHeight } = DAILY_CONFIG;
-  const gridStartY = margin + 105;  // Moved up from 130 to 105
+  const gridStartY = margin + 85;  // More compact grid start
   
   // Filter events for the selected date
   const dayEvents = events.filter(event => {
@@ -177,11 +195,11 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     }
     pdf.rect(margin, y, timeColumnWidth + appointmentColumnWidth, timeSlotHeight, 'F');
     
-    // Time label - match dashboard font sizes
-    pdf.setFontSize(isHour ? 9 : 8);
-    pdf.setFont('helvetica', 'normal');
+    // Time label - better sizing and positioning
+    pdf.setFontSize(isHour ? 10 : 9);
+    pdf.setFont('helvetica', isHour ? 'bold' : 'normal');
     pdf.setTextColor(...DAILY_CONFIG.colors.black);
-    pdf.text(timeSlot, margin + 8, y + 14);
+    pdf.text(timeSlot, margin + 6, y + 15);
     
     // Grid lines - subtle like dashboard
     pdf.setDrawColor(...DAILY_CONFIG.colors.mediumGray);
@@ -208,36 +226,36 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     const topPosition = gridStartY + (slotsFromStart * timeSlotHeight);
     
     // Calculate height based on duration - match dashboard exactly
-    const height = Math.max(56, (durationMinutes / 30) * timeSlotHeight - 4);
+    const height = Math.max(60, (durationMinutes / 30) * timeSlotHeight - 2);
     
     // Event styling based on type
     const eventType = getEventTypeInfo(event);
     
     // Draw event background - always white like dashboard
     pdf.setFillColor(...DAILY_CONFIG.colors.white);
-    pdf.rect(margin + timeColumnWidth + 2, topPosition, appointmentColumnWidth - 4, height, 'F');
+    pdf.rect(margin + timeColumnWidth + 3, topPosition + 1, appointmentColumnWidth - 6, height, 'F');
     
     // Draw event borders based on type - match dashboard styling
     if (eventType.isSimplePractice) {
       // SimplePractice: cornflower blue border with thick left flag
       pdf.setDrawColor(...DAILY_CONFIG.colors.simplePracticeBlue);
       pdf.setLineWidth(1);
-      pdf.rect(margin + timeColumnWidth + 2, topPosition, appointmentColumnWidth - 4, height, 'D');
+      pdf.rect(margin + timeColumnWidth + 3, topPosition + 1, appointmentColumnWidth - 6, height, 'D');
       // Thick left flag
       pdf.setFillColor(...DAILY_CONFIG.colors.simplePracticeBlue);
-      pdf.rect(margin + timeColumnWidth + 2, topPosition, 4, height, 'F');
+      pdf.rect(margin + timeColumnWidth + 3, topPosition + 1, 4, height, 'F');
     } else if (eventType.isGoogle) {
       // Google Calendar: dashed green border
       pdf.setDrawColor(...DAILY_CONFIG.colors.googleGreen);
       pdf.setLineWidth(1);
       pdf.setLineDash([2, 2]);
-      pdf.rect(margin + timeColumnWidth + 2, topPosition, appointmentColumnWidth - 4, height, 'D');
+      pdf.rect(margin + timeColumnWidth + 3, topPosition + 1, appointmentColumnWidth - 6, height, 'D');
       pdf.setLineDash([]);
     } else {
       // Holiday: orange border
       pdf.setDrawColor(...DAILY_CONFIG.colors.holidayOrange);
       pdf.setLineWidth(1);
-      pdf.rect(margin + timeColumnWidth + 2, topPosition, appointmentColumnWidth - 4, height, 'D');
+      pdf.rect(margin + timeColumnWidth + 3, topPosition + 1, appointmentColumnWidth - 6, height, 'D');
     }
     
     // Draw event content in 3-column layout exactly like dashboard
