@@ -4,11 +4,11 @@ import { CalendarEvent } from '../types/calendar';
 // Match the exact dashboard layout
 const DAILY_CONFIG = {
   pageWidth: 595,
-  pageHeight: 2200,  // Much taller to accommodate 60px slots (36 slots * 60px = 2160px + header)
+  pageHeight: 1200,  // Optimized for 30px slots (36 slots * 30px = 1080px + header)
   margin: 12,  // Even more compact for better space usage
   timeColumnWidth: 65,  // Reduced time column width
   appointmentColumnWidth: 495,  // Adjusted to maintain proportions
-  timeSlotHeight: 60,  // EXACT MATCH to dashboard - 60px per slot
+  timeSlotHeight: 30,  // Scaled down for PDF - maintains exact positioning ratios
   headerHeight: 75,  // More compact header
 
   // Typography matching dashboard
