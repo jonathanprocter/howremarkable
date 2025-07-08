@@ -270,7 +270,7 @@ export const DailyView = ({
           <span className="legend-symbol google-calendar"></span>Google Calendar
         </div>
         <div className="legend-item">
-          <span className="legend-symbol personal"></span>Personal
+          <span className="legend-symbol personal"></span>Holidays in United States
         </div>
       </div>
 
