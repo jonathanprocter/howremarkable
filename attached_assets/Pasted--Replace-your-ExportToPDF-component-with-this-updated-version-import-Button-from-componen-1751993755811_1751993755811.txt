@@ -1,3 +1,5 @@
+// Replace your ExportToPDF component with this updated version:
+
 import { Button } from '@/components/ui/button';
 
 interface ExportToPDFProps {

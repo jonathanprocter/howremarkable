@@ -249,6 +249,15 @@ The application uses three main entities:
   - Implemented robust bullet filtering: trim → filter empty → remove existing bullets → filter again → add single bullet
   - Enhanced data persistence to ensure formatting remains consistent across sessions
   - **RESULT**: Professional daily view with properly positioned notes/actions and clean single-bullet formatting
+- July 08, 2025. **COMPREHENSIVE EXPORT SYSTEM OVERHAUL**: Implemented complete new export functionality to resolve all daily view export issues:
+  - Created new `completePDFExport.ts` utility with proper data extraction and formatting
+  - Replaced legacy PDF export with comprehensive text-based export system
+  - Added debug export functionality with Test Export, JSON Export, and CSV Export options
+  - Enhanced export UI with categorized sections: Debug, Text Exports, reMarkable Pro, Google Drive, and Legacy PDF
+  - Implemented complete appointment data capture with proper time formatting, duration calculation, and source identification
+  - Added comprehensive console logging for debugging export issues
+  - Fixed "Personal" to "Holidays in United States" display in daily view legend
+  - **RESULT**: Complete export system with proper data extraction, multiple format options, and comprehensive debugging capabilities
 
 ## User Preferences
 

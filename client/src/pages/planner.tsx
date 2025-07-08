@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { exportHTMLTemplatePDF } from '../utils/htmlTemplatePDF';
 import { exportWeeklyCalendarHTML } from '../utils/htmlWeeklyExport';
 import { exportExactGridPDF } from '../utils/exactGridPDFExport';
+import { generateCompleteExportData, exportToText, exportToJSON, exportToCSV, testExportData } from '../utils/completePDFExport';
 
 // Working daily PDF export function using HTML template
 const exportDailyToPDF = async (selectedDate: Date, events: CalendarEvent[], dailyNotes: string): Promise<string> => {
@@ -248,156 +249,176 @@ export default function Planner() {
 
   const handleExportAction = async (type: string = 'Current View') => {
     try {
-      console.log('Starting PDF export for type:', type);
+      console.log('=== STARTING EXPORT ===');
+      console.log('Export type:', type);
       console.log('Current view mode:', state.viewMode);
       console.log('Current events count:', currentEvents.length);
-      console.log('Current date:', state.currentDate);
-      let pdfContent: string;
-      let filename: string;
+      console.log('Selected date:', state.selectedDate);
+      console.log('Current week start:', state.currentWeek.startDate);
+      console.log('Current week end:', state.currentWeek.endDate);
 
-      // Standard PDF exports
-      if (type === 'Weekly Package') {
-        const weekNumber = getWeekNumber(state.currentDate);
-        pdfContent = await exportWeeklyPackageToPDF(
-          state.currentWeek.startDate,
-          state.currentWeek.endDate,
-          currentEvents,
-          weekNumber,
-          state.dailyNotes
-        );
-        filename = generateFilename('weekly-package', state.currentWeek.startDate);
-      } else if (type === 'Current View') {
-        // Check current view mode to determine export type
-        if (state.viewMode === 'daily') {
-          // Export daily view when in daily mode
-          try {
-            await exportHTMLTemplatePDF(
-              state.selectedDate,
-              state.selectedDate,
-              currentEvents,
-              true // isDailyView flag
-            );
-            
-            toast({
-              title: "PDF Export",
-              description: "Daily planner PDF downloaded successfully!"
-            });
-            return; // exportHTMLTemplatePDF handles the download
-          } catch (dailyError) {
-            console.error('Daily export error:', dailyError);
-            throw dailyError;
-          }
-        } else {
-          // Export weekly view when in weekly mode
-          try {
-            await exportExactGridPDF(
-              state.currentWeek.startDate,
-              state.currentWeek.endDate,
-              currentEvents
-            );
+      // First, let's test the data to see what we're working with
+      console.log('=== DEBUGGING CURRENT EVENTS ===');
+      currentEvents.forEach((event, index) => {
+        console.log(`Event ${index + 1}:`, {
+          id: event.id,
+          title: event.title,
+          startTime: event.startTime,
+          endTime: event.endTime,
+          source: event.source
+        });
+      });
 
-            toast({
-              title: "PDF Export",
-              description: "Weekly calendar PDF downloaded successfully!"
-            });
-            return; // exportExactGridPDF handles the download
-          } catch (calendarError) {
-            console.error('Weekly calendar export error:', calendarError);
-            throw calendarError;
-          }
-        }
-      } else if (type === 'Daily View') {
-        try {
-          await exportHTMLTemplatePDF(
-            state.selectedDate,
-            state.selectedDate,
-            currentEvents,
-            true // isDailyView flag
-          );
-          
-          toast({
-            title: "PDF Export",
-            description: "Daily planner PDF downloaded successfully!"
-          });
-          return; // exportHTMLTemplatePDF handles the download
-        } catch (dailyError) {
-          console.error('Daily export error:', dailyError);
-          throw dailyError;
-        }
-      }
-      // reMarkable Pro optimized exports
-      else if (type === 'reMarkable Weekly') {
-        try {
-          await exportWeeklyRemarkableExact(
-            state.currentWeek.startDate,
-            state.currentWeek.endDate,
-            currentEvents
-          );
-          return; // exportWeeklyRemarkableExact handles the download
-        } catch (remarkableError) {
-          console.error('reMarkable export error:', remarkableError);
-          throw remarkableError;
-        }
-      } else if (type === 'reMarkable Daily') {
-        try {
-          // Filter events for the selected day only
-          const dailyEvents = currentEvents.filter(event => {
-            const eventDate = new Date(event.startTime);
-            return eventDate.toDateString() === state.selectedDate.toDateString();
-          });
-          
-          await exportWeeklyRemarkableExact(
-            state.selectedDate,
-            state.selectedDate,
-            dailyEvents
-          );
-          return; // exportWeeklyRemarkableExact handles the download
-        } catch (remarkableError) {
-          console.error('reMarkable export error:', remarkableError);
-          throw remarkableError;
-        }
-      } else if (type === 'reMarkable Monthly') {
-        try {
-          await exportWeeklyRemarkableExact(
-            state.currentWeek.startDate,
-            state.currentWeek.endDate,
-            currentEvents
-          );
-          return; // exportWeeklyRemarkableExact handles the download
-        } catch (remarkableError) {
-          console.error('reMarkable export error:', remarkableError);
-          throw remarkableError;
-        }
-      } else {
+      // Generate complete export data
+      const selectedDateForExport = state.viewMode === 'daily' ? state.selectedDate : state.currentDate;
+      const currentDateString = selectedDateForExport.toISOString().split('T')[0];
+      const dailyNotes = state.dailyNotes[currentDateString] || '';
+
+      const exportData = generateCompleteExportData(
+        selectedDateForExport,
+        currentEvents,
+        dailyNotes
+      );
+
+      console.log('Generated export data:', exportData);
+
+      if (exportData.appointments.length === 0) {
         toast({
-          title: "PDF Export",
-          description: `${type} export feature coming soon!`
+          title: "No Appointments",
+          description: `No appointments found for ${exportData.date}. Check your calendar filters.`,
+          variant: "destructive"
         });
         return;
       }
 
-      // Create download link
+      // Export based on type
+      let fileContent: string;
+      let fileName: string;
+      let mimeType: string;
+
+      switch (type) {
+        case 'Current View':
+        case 'Daily View':
+        case 'reMarkable Daily':
+          fileContent = exportToText(exportData);
+          fileName = `daily-planner-${selectedDateForExport.toISOString().split('T')[0]}.txt`;
+          mimeType = 'text/plain';
+          break;
+
+        case 'Weekly Package':
+        case 'reMarkable Weekly':
+          // For weekly exports, generate data for each day of the week
+          const weeklyData = [];
+          const weekStart = state.currentWeek.startDate;
+          const weekEnd = state.currentWeek.endDate;
+          
+          for (let d = new Date(weekStart); d <= weekEnd; d.setDate(d.getDate() + 1)) {
+            const dayData = generateCompleteExportData(
+              new Date(d),
+              currentEvents,
+              state.dailyNotes[d.toISOString().split('T')[0]] || ''
+            );
+            weeklyData.push(dayData);
+          }
+          
+          fileContent = generateWeeklyText(weeklyData);
+          fileName = `weekly-planner-${weekStart.toISOString().split('T')[0]}.txt`;
+          mimeType = 'text/plain';
+          break;
+
+        case 'JSON Export':
+          fileContent = exportToJSON(exportData);
+          fileName = `daily-planner-${selectedDateForExport.toISOString().split('T')[0]}.json`;
+          mimeType = 'application/json';
+          break;
+
+        case 'CSV Export':
+          fileContent = exportToCSV(exportData);
+          fileName = `daily-planner-${selectedDateForExport.toISOString().split('T')[0]}.csv`;
+          mimeType = 'text/csv';
+          break;
+
+        case 'Test Export':
+          // This will download a test file and log everything to console
+          testExportData(currentEvents, selectedDateForExport);
+          toast({
+            title: "Test Export Complete",
+            description: "Check console and downloads for test data"
+          });
+          return;
+
+        default:
+          fileContent = exportToText(exportData);
+          fileName = `planner-export-${selectedDateForExport.toISOString().split('T')[0]}.txt`;
+          mimeType = 'text/plain';
+      }
+
+      // Create and download the file
+      const blob = new Blob([fileContent], { type: mimeType });
+      const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = `data:application/pdf;base64,${pdfContent}`;
-      link.download = filename;
+      link.href = url;
+      link.download = fileName;
       link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      console.log('=== EXPORT COMPLETE ===');
+      console.log('File name:', fileName);
+      console.log('File size:', fileContent.length, 'characters');
+      console.log('Appointments exported:', exportData.appointments.length);
 
       toast({
-        title: "PDF Export",
-        description: `${filename} downloaded successfully!`
+        title: "Export Successful",
+        description: `${fileName} downloaded with ${exportData.appointments.length} appointments!`
       });
 
     } catch (error) {
-      console.error('PDF Export Error:', error);
+      console.error('=== EXPORT ERROR ===', error);
       toast({
         title: "Export Error",
-        description: `Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        description: `Failed to generate export: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive"
       });
     }
+  };
+
+  // Helper function for weekly text export
+  const generateWeeklyText = (weeklyData: any[]): string => {
+    let output = 'WEEKLY PLANNER\n';
+    output += `Week of ${weeklyData[0]?.date} - ${weeklyData[weeklyData.length - 1]?.date}\n`;
+    output += '='.repeat(80) + '\n\n';
+
+    let totalAppointments = 0;
+    
+    weeklyData.forEach((dayData, index) => {
+      output += `${dayData.date}\n`;
+      output += '-'.repeat(40) + '\n';
+      
+      if (dayData.appointments.length === 0) {
+        output += 'No appointments\n';
+      } else {
+        dayData.appointments.forEach((apt: any, aptIndex: number) => {
+          output += `${aptIndex + 1}. ${apt.time} - ${apt.title} (${apt.source})\n`;
+          if (apt.notes && apt.notes.trim()) {
+            output += `   Notes: ${apt.notes}\n`;
+          }
+        });
+        totalAppointments += dayData.appointments.length;
+      }
+      
+      if (dayData.dailyNotes && dayData.dailyNotes.trim()) {
+        output += `Daily Notes: ${dayData.dailyNotes}\n`;
+      }
+      
+      output += '\n';
+    });
+
+    output += `\nWEEK SUMMARY: ${totalAppointments} total appointments\n`;
+    
+    return output;
   };
 
   const handleExportToGoogleDrive = async (type: string) => {
