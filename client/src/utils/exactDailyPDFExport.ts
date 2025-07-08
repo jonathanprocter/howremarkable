@@ -283,24 +283,24 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     pdf.setFillColor(...DAILY_CONFIG.colors.white);
     pdf.rect(margin + timeColumnWidth + 4, topPosition + 2, appointmentColumnWidth - 8, height, 'F');
     
-    // Draw event borders based on type - match dashboard styling
+    // Draw event borders based on type - match dashboard styling EXACTLY
     if (eventType.isSimplePractice) {
-      // SimplePractice: cornflower blue border with thick left flag
+      // SimplePractice: white background with cornflower blue border and thick left flag
       pdf.setDrawColor(...DAILY_CONFIG.colors.simplePracticeBlue);
       pdf.setLineWidth(1);
       pdf.rect(margin + timeColumnWidth + 4, topPosition + 2, appointmentColumnWidth - 8, height, 'D');
-      // Thick left flag
+      // Thick left flag (4px wide)
       pdf.setFillColor(...DAILY_CONFIG.colors.simplePracticeBlue);
       pdf.rect(margin + timeColumnWidth + 4, topPosition + 2, 4, height, 'F');
     } else if (eventType.isGoogle) {
-      // Google Calendar: dashed green border
+      // Google Calendar: white background with dashed green border all around
       pdf.setDrawColor(...DAILY_CONFIG.colors.googleGreen);
       pdf.setLineWidth(1);
-      pdf.setLineDash([2, 2]);
+      pdf.setLineDash([3, 3]);
       pdf.rect(margin + timeColumnWidth + 4, topPosition + 2, appointmentColumnWidth - 8, height, 'D');
       pdf.setLineDash([]);
     } else {
-      // Holiday: orange border
+      // Holiday: orange border around appointment
       pdf.setDrawColor(...DAILY_CONFIG.colors.holidayOrange);
       pdf.setLineWidth(1);
       pdf.rect(margin + timeColumnWidth + 4, topPosition + 2, appointmentColumnWidth - 8, height, 'D');
