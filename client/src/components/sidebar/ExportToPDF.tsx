@@ -27,6 +27,12 @@ export const ExportToPDF = ({
     onExportCurrentView('Daily View');
   };
 
+  // Also make it available with a simple name
+  (window as any).export = () => {
+    console.log('🚀 SIMPLE EXPORT CALLED!');
+    onExportCurrentView('Daily View');
+  };
+
   const testExport = () => {
     console.log('🚀 DIRECT TEST EXPORT CALLED!');
     onExportCurrentView('Test Export');
@@ -41,7 +47,11 @@ export const ExportToPDF = ({
         <h4 className="text-xs font-medium text-red-700 mb-2">🐛 Debug Exports</h4>
         <div className="space-y-1">
           <button
-            onClick={testExport}
+            onClick={() => {
+              console.log('🟢 HTML BUTTON CLICKED!');
+              alert('Button clicked!');
+              testExport();
+            }}
             className="w-full text-xs bg-red-50 border-red-200 text-red-700 hover:bg-red-100 border rounded px-2 py-1"
             style={{ pointerEvents: 'auto', zIndex: 9999 }}
           >
