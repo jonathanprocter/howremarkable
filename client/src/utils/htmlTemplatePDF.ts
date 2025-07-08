@@ -23,9 +23,16 @@ const HTML_TEMPLATE_CONFIG = {
   statsHeight: 60,
   legendHeight: 40,
   
+  // Total header section height
+  get totalHeaderHeight() {
+    return this.headerHeight + this.statsHeight + this.legendHeight;
+  },
+  
   // Grid configuration
   timeColumnWidth: 80,
-  gridStartY: 200, // Start grid below header sections
+  get gridStartY() {
+    return this.margin + this.totalHeaderHeight;
+  },
   timeSlotHeight: 20, // Increased slot height for better event positioning
   
   // Calculate day column width dynamically
@@ -69,14 +76,8 @@ export const exportHTMLTemplatePDF = async (
   // Set default font - use helvetica instead of arial for better compatibility
   pdf.setFont('helvetica', 'normal');
 
-  // === HEADER SECTION ===
-  drawHeader(pdf, weekStartDate, weekEndDate);
-  
-  // === STATS SECTION ===
-  drawStats(pdf, events);
-  
-  // === LEGEND SECTION ===
-  drawLegend(pdf);
+  // === HEADER SECTION (includes stats and legend) ===
+  drawHeader(pdf, weekStartDate, weekEndDate, events);
   
   // === CALENDAR GRID ===
   drawCalendarGrid(pdf, weekStartDate, events);
@@ -94,24 +95,20 @@ export const exportHTMLTemplatePDF = async (
   }
 };
 
-function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date): void {
+function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date, events: CalendarEvent[]): void {
   const { margin } = HTML_TEMPLATE_CONFIG;
+  const totalHeaderHeight = HTML_TEMPLATE_CONFIG.headerHeight + HTML_TEMPLATE_CONFIG.statsHeight + HTML_TEMPLATE_CONFIG.legendHeight;
   
   // Page border
   pdf.setLineWidth(2);
   pdf.setDrawColor(...HTML_TEMPLATE_CONFIG.colors.black);
   pdf.rect(margin, margin, HTML_TEMPLATE_CONFIG.pageWidth - (margin * 2), HTML_TEMPLATE_CONFIG.pageHeight - (margin * 2));
   
-  // Header background
+  // Complete header background (title + stats + legend)
   pdf.setFillColor(...HTML_TEMPLATE_CONFIG.colors.white);
-  pdf.rect(margin, margin, HTML_TEMPLATE_CONFIG.pageWidth - (margin * 2), HTML_TEMPLATE_CONFIG.headerHeight, 'F');
+  pdf.rect(margin, margin, HTML_TEMPLATE_CONFIG.pageWidth - (margin * 2), totalHeaderHeight, 'F');
   
-  // Header border
-  pdf.setLineWidth(3);
-  pdf.line(margin, margin + HTML_TEMPLATE_CONFIG.headerHeight, 
-           HTML_TEMPLATE_CONFIG.pageWidth - margin, margin + HTML_TEMPLATE_CONFIG.headerHeight);
-  
-  // Title
+  // === TITLE SECTION ===
   pdf.setFontSize(24);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(...HTML_TEMPLATE_CONFIG.colors.black);
@@ -121,33 +118,30 @@ function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date): void {
   pdf.setFontSize(16);
   pdf.setFont('helvetica', 'normal');
   const weekNumber = getWeekNumber(weekStartDate);
-  const weekText = `Week ${weekNumber} - ${weekStartDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEndDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+  const weekText = `${weekStartDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEndDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • Week ${weekNumber}`;
   pdf.text(weekText, HTML_TEMPLATE_CONFIG.pageWidth / 2, margin + 60, { align: 'center' });
-}
-
-function drawStats(pdf: jsPDF, events: CalendarEvent[]): void {
-  const { margin } = HTML_TEMPLATE_CONFIG;
-  const contentWidth = HTML_TEMPLATE_CONFIG.pageWidth - (margin * 2);
+  
+  // === STATS SECTION ===
   const statsY = margin + HTML_TEMPLATE_CONFIG.headerHeight;
+  const contentWidth = HTML_TEMPLATE_CONFIG.pageWidth - (margin * 2);
   
   // Stats background
   pdf.setFillColor(...HTML_TEMPLATE_CONFIG.colors.lightGray);
   pdf.rect(margin, statsY, contentWidth, HTML_TEMPLATE_CONFIG.statsHeight, 'F');
   
-  // Border
-  pdf.setLineWidth(2);
-  pdf.setDrawColor(...HTML_TEMPLATE_CONFIG.colors.black);
+  // Stats border
+  pdf.setLineWidth(1);
+  pdf.setDrawColor(...HTML_TEMPLATE_CONFIG.colors.mediumGray);
   pdf.rect(margin, statsY, contentWidth, HTML_TEMPLATE_CONFIG.statsHeight);
   
   // Calculate weekly stats
   const totalEvents = events.length;
-  const simplePracticeEvents = events.filter(e => e.title.includes('Appointment')).length;
-  const googleEvents = events.filter(e => !e.title.includes('Appointment')).length;
   const totalHours = events.reduce((sum, e) => {
     const duration = (e.endTime.getTime() - e.startTime.getTime()) / (1000 * 60 * 60);
     return sum + duration;
   }, 0);
   const dailyAverage = totalHours / 7;
+  const availableHours = (17.5 * 7) - totalHours; // 17.5 hours per day (6am-11:30pm)
   
   // Draw stat cards
   const cardWidth = contentWidth / 4;
@@ -155,7 +149,7 @@ function drawStats(pdf: jsPDF, events: CalendarEvent[]): void {
     { label: 'Total Appointments', value: totalEvents.toString() },
     { label: 'Scheduled Time', value: `${totalHours.toFixed(1)}h` },
     { label: 'Daily Average', value: `${dailyAverage.toFixed(1)}h` },
-    { label: 'Available Time', value: `${(89 - totalHours).toFixed(0)}h` }
+    { label: 'Available Time', value: `${availableHours.toFixed(0)}h` }
   ];
   
   stats.forEach((stat, index) => {
@@ -179,27 +173,24 @@ function drawStats(pdf: jsPDF, events: CalendarEvent[]): void {
     pdf.setFont('helvetica', 'normal');
     pdf.text(stat.label, x + cardWidth / 2, statsY + 45, { align: 'center' });
   });
-}
-
-function drawLegend(pdf: jsPDF): void {
-  const { margin } = HTML_TEMPLATE_CONFIG;
-  const contentWidth = HTML_TEMPLATE_CONFIG.pageWidth - (margin * 2);
-  const legendY = margin + HTML_TEMPLATE_CONFIG.headerHeight + HTML_TEMPLATE_CONFIG.statsHeight;
+  
+  // === LEGEND SECTION ===
+  const legendY = statsY + HTML_TEMPLATE_CONFIG.statsHeight;
   
   // Legend background
   pdf.setFillColor(...HTML_TEMPLATE_CONFIG.colors.white);
   pdf.rect(margin, legendY, contentWidth, HTML_TEMPLATE_CONFIG.legendHeight, 'F');
   
   // Legend border
-  pdf.setLineWidth(2);
-  pdf.setDrawColor(...HTML_TEMPLATE_CONFIG.colors.black);
+  pdf.setLineWidth(1);
+  pdf.setDrawColor(...HTML_TEMPLATE_CONFIG.colors.mediumGray);
   pdf.rect(margin, legendY, contentWidth, HTML_TEMPLATE_CONFIG.legendHeight);
   
   // Legend items
   const legendItems = [
     { label: 'SimplePractice', color: HTML_TEMPLATE_CONFIG.colors.simplePracticeBlue, style: 'left-border' },
     { label: 'Google Calendar', color: HTML_TEMPLATE_CONFIG.colors.googleGreen, style: 'filled' },
-    { label: 'US Holidays', color: HTML_TEMPLATE_CONFIG.colors.holidayYellow, style: 'filled' }
+    { label: 'Holidays in United States', color: HTML_TEMPLATE_CONFIG.colors.holidayYellow, style: 'filled' }
   ];
   
   const itemWidth = contentWidth / legendItems.length;
@@ -236,7 +227,14 @@ function drawLegend(pdf: jsPDF): void {
     pdf.setTextColor(...HTML_TEMPLATE_CONFIG.colors.black);
     pdf.text(item.label, x + symbolSize + 8, symbolY + 8);
   });
+  
+  // Complete header border
+  pdf.setLineWidth(3);
+  pdf.setDrawColor(...HTML_TEMPLATE_CONFIG.colors.black);
+  pdf.line(margin, margin + totalHeaderHeight, HTML_TEMPLATE_CONFIG.pageWidth - margin, margin + totalHeaderHeight);
 }
+
+// Remove these functions as they're now integrated into drawHeader
 
 function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent[]): void {
   const { margin } = HTML_TEMPLATE_CONFIG;
