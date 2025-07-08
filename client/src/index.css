@@ -157,13 +157,12 @@
 .calendar-grid {
     display: grid;
     grid-template-columns: 100px repeat(7, 1fr);
-    grid-template-rows: 50px repeat(48, 1fr);
+    grid-template-rows: 50px repeat(48, calc((100vh - 290px) / 48));
     background: white;
-    height: 100%;
+    height: calc(100vh - 240px);
     width: 100%;
-    overflow-y: auto;
+    overflow: hidden;
     flex: 1;
-    min-height: 0;
 }
 
 .time-header {
