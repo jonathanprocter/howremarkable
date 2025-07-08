@@ -28,7 +28,11 @@ export const exportWeeklyCalendarHTML = async (
 
     // Load your EXACT template content
     const templateResponse = await fetch('/attached_assets/weekly_planner_remarkable_1751937137287.html');
+    if (!templateResponse.ok) {
+      throw new Error(`Failed to load template: ${templateResponse.status} ${templateResponse.statusText}`);
+    }
     const exactTemplate = await templateResponse.text();
+    console.log('Template loaded, length:', exactTemplate.length);
 
     // Create a temporary container with your exact template
     const container = document.createElement('div');
@@ -40,21 +44,27 @@ export const exportWeeklyCalendarHTML = async (
     container.style.height = '1620px'; // reMarkable Paper Pro height
     container.style.background = 'white';
     container.style.overflow = 'visible';
+    container.style.zoom = '1';
     document.body.appendChild(container);
 
+    console.log('Container created, content length:', container.innerHTML.length);
+    console.log('Container size:', container.offsetWidth, 'x', container.offsetHeight);
+
     // Wait for layout to stabilize
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Convert to canvas using your exact template
     const canvas = await html2canvas(container, {
       width: 2160,
       height: 1620,
-      scale: 2, // High quality
+      scale: 1, // Reduce scale to avoid memory issues
       backgroundColor: '#ffffff',
       useCORS: true,
       allowTaint: false,
-      logging: false
+      logging: true
     });
+
+    console.log('Canvas created:', canvas.width, 'x', canvas.height);
 
     // Remove the temporary container
     document.body.removeChild(container);
