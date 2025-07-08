@@ -17,11 +17,11 @@ const HTML_TEMPLATE_CONFIG = {
   pageWidth: 1190,
   pageHeight: 842,
   
-  // Layout structure
+  // Layout structure - more compact to provide room for calendar
   margin: 15,
-  headerHeight: 90,
-  statsHeight: 70,
-  legendHeight: 50,
+  headerHeight: 70,
+  statsHeight: 55,
+  legendHeight: 35,
   
   // Total header section height
   get totalHeaderHeight() {
@@ -113,17 +113,17 @@ function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date, events: 
   pdf.rect(margin, margin, HTML_TEMPLATE_CONFIG.pageWidth - (margin * 2), totalHeaderHeight, 'F');
   
   // === TITLE SECTION ===
-  pdf.setFontSize(28);
+  pdf.setFontSize(24);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(...HTML_TEMPLATE_CONFIG.colors.black);
-  pdf.text('WEEKLY PLANNER', HTML_TEMPLATE_CONFIG.pageWidth / 2, margin + 40, { align: 'center' });
+  pdf.text('WEEKLY PLANNER', HTML_TEMPLATE_CONFIG.pageWidth / 2, margin + 30, { align: 'center' });
   
   // Week info
-  pdf.setFontSize(18);
+  pdf.setFontSize(14);
   pdf.setFont('helvetica', 'normal');
   const weekNumber = getWeekNumber(weekStartDate);
   const weekText = `${weekStartDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEndDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • Week ${weekNumber}`;
-  pdf.text(weekText, HTML_TEMPLATE_CONFIG.pageWidth / 2, margin + 70, { align: 'center' });
+  pdf.text(weekText, HTML_TEMPLATE_CONFIG.pageWidth / 2, margin + 50, { align: 'center' });
   
   // === STATS SECTION ===
   const statsY = margin + HTML_TEMPLATE_CONFIG.headerHeight;
@@ -163,19 +163,19 @@ function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date, events: 
     if (index > 0) {
       pdf.setLineWidth(1);
       pdf.setDrawColor(...HTML_TEMPLATE_CONFIG.colors.mediumGray);
-      pdf.line(x, statsY + 15, x, statsY + HTML_TEMPLATE_CONFIG.statsHeight - 15);
+      pdf.line(x, statsY + 8, x, statsY + HTML_TEMPLATE_CONFIG.statsHeight - 8);
     }
     
     // Stat value
-    pdf.setFontSize(24);
+    pdf.setFontSize(18);
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(...HTML_TEMPLATE_CONFIG.colors.black);
-    pdf.text(stat.value, x + cardWidth / 2, statsY + 30, { align: 'center' });
+    pdf.text(stat.value, x + cardWidth / 2, statsY + 22, { align: 'center' });
     
     // Stat label
-    pdf.setFontSize(13);
+    pdf.setFontSize(10);
     pdf.setFont('helvetica', 'normal');
-    pdf.text(stat.label, x + cardWidth / 2, statsY + 52, { align: 'center' });
+    pdf.text(stat.label, x + cardWidth / 2, statsY + 40, { align: 'center' });
   });
   
   // === LEGEND SECTION ===
@@ -200,9 +200,9 @@ function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date, events: 
   const itemWidth = contentWidth / legendItems.length;
   
   legendItems.forEach((item, index) => {
-    const x = margin + (index * itemWidth) + 30;
-    const symbolY = legendY + 20;
-    const symbolSize = 16;
+    const x = margin + (index * itemWidth) + 20;
+    const symbolY = legendY + 12;
+    const symbolSize = 12;
     
     // Draw legend symbol
     if (item.style === 'left-border') {
@@ -226,10 +226,10 @@ function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date, events: 
     }
     
     // Legend text
-    pdf.setFontSize(12);
+    pdf.setFontSize(9);
     pdf.setFont('helvetica', 'normal');
     pdf.setTextColor(...HTML_TEMPLATE_CONFIG.colors.black);
-    pdf.text(item.label, x + symbolSize + 10, symbolY + 12);
+    pdf.text(item.label, x + symbolSize + 6, symbolY + 8);
   });
   
   // Complete header border
@@ -244,7 +244,7 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
   const { margin } = HTML_TEMPLATE_CONFIG;
   const gridY = HTML_TEMPLATE_CONFIG.gridStartY;
   const dayColumnWidth = HTML_TEMPLATE_CONFIG.dayColumnWidth;
-  const headerHeight = 40;
+  const headerHeight = 30;
   
   // Calculate total grid height
   const totalGridHeight = headerHeight + (TIME_SLOTS.length * HTML_TEMPLATE_CONFIG.timeSlotHeight);
@@ -262,10 +262,10 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
   pdf.setFillColor(...HTML_TEMPLATE_CONFIG.colors.lightGray);
   pdf.rect(margin, gridY, HTML_TEMPLATE_CONFIG.timeColumnWidth, headerHeight, 'F');
   
-  pdf.setFontSize(14);
+  pdf.setFontSize(11);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(...HTML_TEMPLATE_CONFIG.colors.black);
-  pdf.text('TIME', margin + HTML_TEMPLATE_CONFIG.timeColumnWidth / 2, gridY + 25, { align: 'center' });
+  pdf.text('TIME', margin + HTML_TEMPLATE_CONFIG.timeColumnWidth / 2, gridY + 18, { align: 'center' });
   
   // === DAY HEADERS ===
   const dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -279,14 +279,14 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
     pdf.rect(x, gridY, dayColumnWidth, headerHeight, 'F');
     
     // Day name
-    pdf.setFontSize(13);
+    pdf.setFontSize(10);
     pdf.setFont('helvetica', 'bold');
-    pdf.text(dayNames[i], x + dayColumnWidth / 2, gridY + 17, { align: 'center' });
+    pdf.text(dayNames[i], x + dayColumnWidth / 2, gridY + 12, { align: 'center' });
     
     // Date number
-    pdf.setFontSize(12);
+    pdf.setFontSize(9);
     pdf.setFont('helvetica', 'normal');
-    pdf.text(dayDate.getDate().toString(), x + dayColumnWidth / 2, gridY + 32, { align: 'center' });
+    pdf.text(dayDate.getDate().toString(), x + dayColumnWidth / 2, gridY + 24, { align: 'center' });
   }
   
   // === TIME GRID ===
@@ -438,8 +438,8 @@ function drawAppointments(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
     const textWidth = width - (HTML_TEMPLATE_CONFIG.eventPadding * 2);
     const textHeight = height - (HTML_TEMPLATE_CONFIG.eventPadding * 2);
     
-    // Event name on first line
-    pdf.setFontSize(8);
+    // Event name on first line - LARGER font for better readability
+    pdf.setFontSize(10);
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(...HTML_TEMPLATE_CONFIG.colors.black);
     
@@ -447,18 +447,18 @@ function drawAppointments(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
     const nameLines = pdf.splitTextToSize(cleanTitle, textWidth);
     
     // Draw name (max 2 lines for readability)
-    const nameLineHeight = 9;
+    const nameLineHeight = 10;
     const maxNameLines = Math.min(nameLines.length, height > 32 ? 2 : 1);
     
     for (let i = 0; i < maxNameLines; i++) {
-      pdf.text(nameLines[i], x + HTML_TEMPLATE_CONFIG.eventPadding, y + 10 + (i * nameLineHeight));
+      pdf.text(nameLines[i], x + HTML_TEMPLATE_CONFIG.eventPadding, y + 11 + (i * nameLineHeight));
     }
     
-    // Time range on second line if there's space
+    // Time range on second line if there's space - LARGER font
     if (textHeight > 18) {
-      pdf.setFontSize(7);
+      pdf.setFontSize(8);
       pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(100, 100, 100);
+      pdf.setTextColor(80, 80, 80);
       
       // Format time range
       const startTime = formatTime(event.startTime);
@@ -466,7 +466,7 @@ function drawAppointments(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
       const timeRange = `${startTime} - ${endTime}`;
       
       // Position time range below name
-      const timeY = y + 10 + (maxNameLines * nameLineHeight) + 4;
+      const timeY = y + 11 + (maxNameLines * nameLineHeight) + 3;
       if (timeY + 8 <= y + height - HTML_TEMPLATE_CONFIG.eventPadding) {
         pdf.text(timeRange, x + HTML_TEMPLATE_CONFIG.eventPadding, timeY);
       }
