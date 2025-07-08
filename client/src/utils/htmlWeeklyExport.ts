@@ -34,30 +34,33 @@ export const exportWeeklyCalendarHTML = async (
     const exactTemplate = await templateResponse.text();
     console.log('Template loaded, length:', exactTemplate.length);
 
-    // Create a temporary container with your exact template
-    const container = document.createElement('div');
-    container.innerHTML = exactTemplate;
-    container.style.position = 'absolute';
-    container.style.left = '-9999px';
-    container.style.top = '0';
-    container.style.width = '2160px'; // reMarkable Paper Pro width
-    container.style.height = '1620px'; // reMarkable Paper Pro height
-    container.style.background = 'white';
-    container.style.overflow = 'visible';
-    container.style.zoom = '1';
-    document.body.appendChild(container);
+    // Create a temporary iframe to render the template properly
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'absolute';
+    iframe.style.left = '-9999px';
+    iframe.style.top = '0';
+    iframe.style.width = '2160px';
+    iframe.style.height = '1620px';
+    iframe.style.border = 'none';
+    iframe.style.background = 'white';
+    document.body.appendChild(iframe);
 
-    console.log('Container created, content length:', container.innerHTML.length);
-    console.log('Container size:', container.offsetWidth, 'x', container.offsetHeight);
+    // Write the template to the iframe
+    iframe.contentDocument.open();
+    iframe.contentDocument.write(exactTemplate);
+    iframe.contentDocument.close();
 
-    // Wait for layout to stabilize
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    console.log('Template written to iframe');
+    console.log('Iframe size:', iframe.offsetWidth, 'x', iframe.offsetHeight);
 
-    // Convert to canvas using your exact template
-    const canvas = await html2canvas(container, {
+    // Wait for the iframe to fully load and render
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Convert the iframe content to canvas
+    const canvas = await html2canvas(iframe.contentDocument.body, {
       width: 2160,
       height: 1620,
-      scale: 1, // Reduce scale to avoid memory issues
+      scale: 1,
       backgroundColor: '#ffffff',
       useCORS: true,
       allowTaint: false,
@@ -66,8 +69,8 @@ export const exportWeeklyCalendarHTML = async (
 
     console.log('Canvas created:', canvas.width, 'x', canvas.height);
 
-    // Remove the temporary container
-    document.body.removeChild(container);
+    // Remove the temporary iframe
+    document.body.removeChild(iframe);
 
     // Create PDF with proper reMarkable Paper Pro dimensions (landscape)
     const pdf = new jsPDF({
