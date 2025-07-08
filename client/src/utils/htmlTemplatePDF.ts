@@ -896,19 +896,14 @@ function drawRemarkableDailyAppointments(pdf: jsPDF, selectedDate: Date, events:
     const startX = eventX + padding;
     const contentWidth = eventWidth - (padding * 2);
     
-    // IMPROVED TITLE PROCESSING - Conservative cleaning
+    // CRITICAL FIX: Conservative title processing to prevent character spacing issues
     let displayTitle = event.title || 'Untitled Event';
     
-    // Clean the title text to prevent character spacing issues
+    // MINIMAL processing - only remove " Appointment" suffix and normalize whitespace
     displayTitle = displayTitle.replace(/\s+/g, ' ').trim();
-    
-    // Only remove " Appointment" suffix, nothing else
     if (displayTitle.endsWith(' Appointment')) {
-      displayTitle = displayTitle.replace(/ Appointment$/, '');
+      displayTitle = displayTitle.slice(0, -12); // Remove " Appointment" (12 characters)
     }
-    
-    // Only trim whitespace, don't remove other characters
-    displayTitle = displayTitle.trim();
     
     console.log(`Original title: "${event.title}"`);
     console.log(`Display title: "${displayTitle}"`);
@@ -952,8 +947,8 @@ function drawRemarkableDailyAppointments(pdf: jsPDF, selectedDate: Date, events:
         
         for (let i = 1; i < words.length; i++) {
           const testLine = line1 + ' ' + words[i];
-          const testWidth = pdf.getTextWidth(testLine);
-          if (testWidth <= col1Width - 4) {
+          // Use simple length check instead of getTextWidth to prevent character spacing issues
+          if (testLine.length <= maxCharsPerLine) {
             line1 = testLine;
           } else {
             line2 = words.slice(i).join(' ');
@@ -1122,36 +1117,18 @@ function drawRemarkableDailyAppointments(pdf: jsPDF, selectedDate: Date, events:
       // ALWAYS SHOW TITLE, SOURCE, AND TIME for simple layout
       if (displayTitle && displayTitle.length > 0) {
         // Simple text wrapping
-        const maxCharsPerLine = Math.floor(contentWidth / 7); // Approximate
-        if (displayTitle.length <= maxCharsPerLine) {
-          // Single line
+        // CRITICAL FIX: Simple text rendering without complex wrapping
+        const maxLength = 22; // Conservative character limit
+        if (displayTitle.length <= maxLength) {
           pdf.text(displayTitle, startX, currentY);
           console.log(`Drew simple title: "${displayTitle}"`);
           currentY += 14;
         } else {
-          // Split into words and wrap
-          const words = displayTitle.split(' ');
-          let line1 = words[0] || '';
-          let line2 = '';
-          
-          for (let i = 1; i < words.length; i++) {
-            if ((line1 + ' ' + words[i]).length <= maxCharsPerLine) {
-              line1 += ' ' + words[i];
-            } else {
-              line2 = words.slice(i).join(' ');
-              break;
-            }
-          }
-          
-          pdf.text(line1, startX, currentY);
-          console.log(`Drew simple title line 1: "${line1}"`);
+          // Simple truncation to prevent character spacing issues
+          const truncated = displayTitle.substring(0, maxLength - 3) + '...';
+          pdf.text(truncated, startX, currentY);
+          console.log(`Drew truncated title: "${truncated}"`);
           currentY += 14;
-          
-          if (line2 && currentY + 14 <= eventY + eventHeight - 25) {
-            pdf.text(line2, startX, currentY);
-            console.log(`Drew simple title line 2: "${line2}"`);
-            currentY += 14;
-          }
         }
       } else {
         console.log('WARNING: No display title for simple layout!');
