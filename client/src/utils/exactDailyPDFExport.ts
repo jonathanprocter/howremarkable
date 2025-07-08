@@ -4,11 +4,11 @@ import { CalendarEvent } from '../types/calendar';
 // Match the exact dashboard layout
 const DAILY_CONFIG = {
   pageWidth: 595,
-  pageHeight: 900,  // Increased height to accommodate full timeline to 23:30
+  pageHeight: 980,  // Increased height to accommodate full timeline to 23:30 with taller rows
   margin: 12,  // Even more compact for better space usage
   timeColumnWidth: 65,  // Reduced time column width
   appointmentColumnWidth: 495,  // Adjusted to maintain proportions
-  timeSlotHeight: 18,  // Reduced row height
+  timeSlotHeight: 22,  // Increased row height for better text clarity
   headerHeight: 75,  // More compact header
 
   // Typography matching dashboard
@@ -154,8 +154,8 @@ function drawDashboardLegend(pdf: jsPDF) {
   pdf.setLineDash([]);
   pdf.text('Google Calendar', margin + 212, legendY + 7);
   
-  // Holidays - better positioning
-  pdf.setFillColor(...DAILY_CONFIG.colors.white);
+  // Holidays - better positioning with yellow fill
+  pdf.setFillColor(...DAILY_CONFIG.colors.holidayYellow);
   pdf.setDrawColor(...DAILY_CONFIG.colors.holidayOrange);
   pdf.rect(margin + 350, legendY, 16, 9, 'FD');
   pdf.text('Holidays in United States', margin + 372, legendY + 7);
@@ -232,9 +232,9 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     const topPosition = gridStartY + (slotsFromStart * timeSlotHeight);
     
     // Calculate height based on duration and content - match dashboard exactly
-    const baseHeight = Math.max(48, (durationMinutes / 30) * timeSlotHeight - 2);
+    const baseHeight = Math.max(55, (durationMinutes / 30) * timeSlotHeight - 2);
     
-    // Calculate additional height needed for wrapped text
+    // Calculate additional height needed for wrapped text with better spacing
     let maxContentLines = 3; // base: title, source, time
     if (event.notes && event.notes.trim()) {
       const noteLines = event.notes.split('\n').filter(n => n.trim()).length;
@@ -245,7 +245,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
       maxContentLines = Math.max(maxContentLines, actionLines + 2); // +2 for header and spacing
     }
     
-    const height = Math.max(baseHeight, maxContentLines * 8 + 20);
+    const height = Math.max(baseHeight, maxContentLines * 10 + 30);
     
     // Event styling based on type
     const eventType = getEventTypeInfo(event);
@@ -326,10 +326,10 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
         // Wrap text to fit within column width
         const maxWidth = columnWidth - 20; // Leave margin for bullet and spacing
         const lines = pdf.splitTextToSize(`• ${note}`, maxWidth);
-        let currentY = eventY + 12 + (index * 8);
+        let currentY = eventY + 12 + (index * 10); // Increased spacing between items
         
         lines.forEach((line, lineIndex) => {
-          pdf.text(line, eventX + columnWidth, currentY + (lineIndex * 6));
+          pdf.text(line, eventX + columnWidth, currentY + (lineIndex * 8)); // Increased line spacing
         });
       });
     }
@@ -351,10 +351,10 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
         // Wrap text to fit within column width
         const maxWidth = columnWidth - 20; // Leave margin for bullet and spacing
         const lines = pdf.splitTextToSize(`• ${item}`, maxWidth);
-        let currentY = eventY + 12 + (index * 8);
+        let currentY = eventY + 12 + (index * 10); // Increased spacing between items
         
         lines.forEach((line, lineIndex) => {
-          pdf.text(line, eventX + columnWidth * 2, currentY + (lineIndex * 6));
+          pdf.text(line, eventX + columnWidth * 2, currentY + (lineIndex * 8)); // Increased line spacing
         });
       });
     }
