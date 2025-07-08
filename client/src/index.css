@@ -147,22 +147,22 @@
 
 .calendar-container {
     position: relative;
-    overflow: hidden;
+    overflow: auto;
     flex: 1;
     display: flex;
     flex-direction: column;
     min-height: 0;
-    height: calc(100vh - 100px);
+    height: calc(100vh - 200px);
 }
 
 .calendar-grid {
     display: grid;
     grid-template-columns: 100px repeat(7, 1fr);
-    grid-template-rows: 50px repeat(48, calc((100vh - 150px) / 48));
+    grid-template-rows: 50px repeat(36, 30px);
     background: white;
-    height: calc(100vh - 100px);
+    height: calc(50px + 36 * 30px);
     width: 100%;
-    overflow: hidden;
+    overflow: visible;
     flex: 1;
     min-height: 0;
 }
@@ -225,7 +225,7 @@
     justify-content: center;
     border-right: 2px solid black;
     border-bottom: 1px solid #ddd;
-    min-height: 30px;
+    height: 30px;
     line-height: 1;
     box-sizing: border-box;
 }
@@ -243,6 +243,8 @@
     border-bottom: 1px solid #ddd;
     position: relative;
     cursor: pointer;
+    height: 30px;
+    box-sizing: border-box;
 }
 
 /* Light background for half-hour slots across all day columns */
@@ -264,10 +266,6 @@
 }
 
 .appointment {
-    position: absolute;
-    left: 2px;
-    right: 2px;
-    top: 2px;
     padding: 3px 4px;
     font-size: 8px;
     font-weight: bold;
@@ -277,7 +275,6 @@
     text-align: center;
     overflow: hidden;
     border-radius: 2px;
-    z-index: 10;
     cursor: pointer;
     color: black;
 }
@@ -330,9 +327,9 @@
 }
 
 /* Height classes for different durations */
-.appointment.duration-30 { height: 38px; }
-.appointment.duration-60 { height: 78px; }
-.appointment.duration-90 { height: 118px; }
+.appointment.duration-30 { height: 26px; }
+.appointment.duration-60 { height: 56px; }
+.appointment.duration-90 { height: 86px; }
 
 /* Appointment header styling - exact match to HTML template */
 .appointment-header {

@@ -95,6 +95,9 @@ export const WeeklyPlannerView = ({
     return slotEvents.map(event => {
       const eventStart = new Date(event.startTime);
       const eventEnd = new Date(event.endTime);
+      const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
+      const slots = Math.ceil(durationMinutes / 30);
+      
       const startTime = eventStart.toLocaleTimeString('en-US', { 
         hour: '2-digit', 
         minute: '2-digit', 
@@ -109,7 +112,15 @@ export const WeeklyPlannerView = ({
       return (
         <div
           key={event.id}
-          className={getEventStyle(event)}
+          className={`appointment ${getEventStyle(event)}`}
+          style={{
+            height: `${slots * 30 - 4}px`,
+            position: 'absolute',
+            top: '2px',
+            left: '2px',
+            right: '2px',
+            zIndex: 10
+          }}
           onClick={() => onEventClick(event)}
           draggable
           onDragStart={(e) => {
