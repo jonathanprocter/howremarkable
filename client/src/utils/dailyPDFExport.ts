@@ -1,3 +1,4 @@
+
 import jsPDF from 'jspdf';
 import { CalendarEvent } from '../types/calendar';
 
@@ -17,7 +18,7 @@ const DAILY_CONFIG = {
     date: { size: 14, weight: 'normal' },
     stats: { size: 12, weight: 'normal' },
     timeLabels: { size: 9, weight: 'normal' },
-    eventTitle: { size: 11, weight: 'bold' },
+    eventTitle: { size: 10, weight: 'bold' },
     eventSource: { size: 8, weight: 'normal' },
     eventTime: { size: 9, weight: 'bold' },
     eventNotes: { size: 8, weight: 'normal' }
@@ -27,8 +28,9 @@ const DAILY_CONFIG = {
   colors: {
     black: [0, 0, 0],
     gray: [100, 100, 100],
-    lightGray: [200, 200, 200],
+    lightGray: [240, 240, 240], // #f0f0f0 for hour rows
     mediumGray: [150, 150, 150],
+    veryLightGray: [248, 248, 248], // #f8f8f8 for half-hour rows
     white: [255, 255, 255],
     simplePracticeBlue: [66, 133, 244],
     googleGreen: [52, 168, 83],
@@ -171,19 +173,19 @@ function drawTimeGrid(pdf: jsPDF) {
   const gridStartY = margin + DAILY_CONFIG.headerHeight;
   const headerHeight = 25;
 
-  // Column headers - match dashboard exactly
-  pdf.setFillColor(...DAILY_CONFIG.colors.lightGray);
+  // Column headers - black background like dashboard
+  pdf.setFillColor(...DAILY_CONFIG.colors.black);
   pdf.setDrawColor(...DAILY_CONFIG.colors.black);
   pdf.setLineWidth(1);
 
   // TIME header
   pdf.rect(margin, gridStartY, timeColumnWidth, headerHeight, 'FD');
-  pdf.setFontSize(8);
+  pdf.setFontSize(10);
   pdf.setFont('helvetica', 'bold');
-  pdf.setTextColor(...DAILY_CONFIG.colors.black);
+  pdf.setTextColor(...DAILY_CONFIG.colors.white);
   pdf.text('TIME', margin + timeColumnWidth / 2, gridStartY + 15, { align: 'center' });
 
-  // Day header - match dashboard format
+  // APPOINTMENTS header
   const dayX = margin + timeColumnWidth;
   pdf.rect(dayX, gridStartY, appointmentColumnWidth, headerHeight, 'FD');
   pdf.text('APPOINTMENTS', dayX + appointmentColumnWidth / 2, gridStartY + 15, { align: 'center' });
@@ -192,38 +194,39 @@ function drawTimeGrid(pdf: jsPDF) {
   TIME_SLOTS_WITH_HOUR.forEach((slot, index) => {
     const y = gridStartY + headerHeight + (index * timeSlotHeight);
 
-    // Time cell - alternate backgrounds like dashboard
-    pdf.setFillColor(...(slot.isHour ? DAILY_CONFIG.colors.lightGray : DAILY_CONFIG.colors.white));
+    // Time cell - gray for hours, light gray for half-hours
+    const bgColor = slot.isHour ? DAILY_CONFIG.colors.lightGray : DAILY_CONFIG.colors.veryLightGray;
+    pdf.setFillColor(...bgColor);
     pdf.rect(margin, y, timeColumnWidth, timeSlotHeight, 'F');
 
     // Time text
     pdf.setFontSize(DAILY_CONFIG.fonts.timeLabels.size);
     pdf.setFont('helvetica', slot.isHour ? 'bold' : 'normal');
     pdf.setTextColor(...DAILY_CONFIG.colors.black);
-    pdf.text(slot.time, margin + timeColumnWidth / 2, y + timeSlotHeight / 2 + 2, { align: 'center' });
+    pdf.text(slot.time, margin + timeColumnWidth / 2, y + timeSlotHeight / 2 + 3, { align: 'center' });
 
-    // Appointment cell
+    // Appointment cell - white background
     pdf.setFillColor(...DAILY_CONFIG.colors.white);
     pdf.rect(dayX, y, appointmentColumnWidth, timeSlotHeight, 'F');
 
     // Grid lines - match dashboard styling
-    pdf.setLineWidth(slot.isHour ? 1 : 0.5);
-    pdf.setDrawColor(...(slot.isHour ? DAILY_CONFIG.colors.mediumGray : DAILY_CONFIG.colors.lightGray));
+    pdf.setLineWidth(0.5);
+    pdf.setDrawColor(...DAILY_CONFIG.colors.lightGray);
     pdf.line(margin, y + timeSlotHeight, margin + timeColumnWidth + appointmentColumnWidth, y + timeSlotHeight);
   });
 
   // Vertical grid lines
-  pdf.setLineWidth(2);
+  pdf.setLineWidth(1);
   pdf.setDrawColor(...DAILY_CONFIG.colors.black);
   pdf.line(margin + timeColumnWidth, gridStartY, margin + timeColumnWidth, gridStartY + headerHeight + (TIME_SLOTS_WITH_HOUR.length * timeSlotHeight));
 
-  // Header separator
-  pdf.line(margin, gridStartY + headerHeight, margin + timeColumnWidth + appointmentColumnWidth, gridStartY + headerHeight);
+  // Outer border
+  pdf.rect(margin, gridStartY, timeColumnWidth + appointmentColumnWidth, headerHeight + (TIME_SLOTS_WITH_HOUR.length * timeSlotHeight));
 }
 
 function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
   const { margin, timeColumnWidth, appointmentColumnWidth, timeSlotHeight } = DAILY_CONFIG;
-  const gridStartY = margin + DAILY_CONFIG.headerHeight + 30;
+  const gridStartY = margin + DAILY_CONFIG.headerHeight + 25; // Add header height
 
   events.forEach((event, index) => {
     console.log(`\n=== Drawing Event ${index + 1}: ${event.title} ===`);
@@ -231,7 +234,7 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
     const eventDate = new Date(event.startTime);
     const endDate = new Date(event.endTime);
 
-    // Calculate position (exactly like daily view)
+    // Calculate position exactly like dashboard
     const startHour = eventDate.getHours();
     const startMinute = eventDate.getMinutes();
     const minutesSince6am = (startHour - 6) * 60 + startMinute;
@@ -256,11 +259,11 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
     // Get event type
     const { isSimplePractice, isGoogle, isHoliday } = getEventTypeInfo(event);
 
-    // Draw background
+    // Draw background - white like dashboard
     pdf.setFillColor(...DAILY_CONFIG.colors.white);
     pdf.rect(eventX, eventY, eventWidth, eventHeight, 'F');
 
-    // Draw borders based on type
+    // Draw borders based on type - match dashboard exactly
     if (isSimplePractice) {
       // Blue left border
       pdf.setDrawColor(...DAILY_CONFIG.colors.simplePracticeBlue);
@@ -299,7 +302,7 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
     }
 
     if (needsExpandedLayout) {
-      // 3-column layout
+      // 3-column layout matching dashboard
       const col1Width = eventWidth * 0.33;
       const col2Width = eventWidth * 0.33;
       const col3Width = eventWidth * 0.34;
@@ -311,8 +314,12 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
       // Column dividers
       pdf.setDrawColor(...DAILY_CONFIG.colors.lightGray);
       pdf.setLineWidth(0.5);
-      pdf.line(col2X - 2, eventY + 5, col2X - 2, eventY + eventHeight - 5);
-      pdf.line(col3X - 2, eventY + 5, col3X - 2, eventY + eventHeight - 5);
+      if (hasNotes) {
+        pdf.line(col2X - 2, eventY + 5, col2X - 2, eventY + eventHeight - 5);
+      }
+      if (hasActionItems) {
+        pdf.line(col3X - 2, eventY + 5, col3X - 2, eventY + eventHeight - 5);
+      }
 
       // Column 1: Event info
       let currentY = eventY + 12;
@@ -386,7 +393,7 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
       }
 
     } else {
-      // Simple layout
+      // Simple layout matching dashboard
       let currentY = eventY + 12;
       const padding = 6;
 
