@@ -325,6 +325,13 @@ html, body {
     line-height: 1.0;
 }
 
+/* Daily view appointment time - larger font */
+.appointment-left .appointment-time {
+    font-size: 16px !important;
+    font-weight: bold !important;
+    opacity: 1 !important;
+}
+
 /* Appointment types - white backgrounds with calendar-specific borders */
 .appointment.simplepractice {
     background: white !important;
@@ -397,7 +404,7 @@ html, body {
 }
 
 .appointment-time {
-    font-size: 12px;
+    font-size: 16px !important;
     line-height: 1.0;
     font-weight: bold;
 }
