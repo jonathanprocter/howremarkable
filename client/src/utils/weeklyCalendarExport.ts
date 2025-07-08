@@ -10,7 +10,7 @@ const WEEKLY_CONFIG = {
   margin: 20,
   
   // Layout
-  headerHeight: 60,
+  headerHeight: 90, // Increased for stats
   legendHeight: 30,
   timeColumnWidth: 60,
   
@@ -70,7 +70,7 @@ function drawCalendarPage(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date, ev
   pdf.rect(margin, margin, contentWidth, WEEKLY_CONFIG.pageHeight - (margin * 2));
   
   // Header
-  drawHeader(pdf, weekStartDate, weekEndDate, margin, contentWidth);
+  drawHeader(pdf, weekStartDate, weekEndDate, margin, contentWidth, events);
   
   // Legend
   drawLegend(pdf, margin, headerHeight, contentWidth);
@@ -85,7 +85,7 @@ function drawCalendarPage(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date, ev
   drawEvents(pdf, weekStartDate, events, margin, headerHeight + legendHeight, timeColumnWidth, dayColumnWidth);
 }
 
-function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date, margin: number, contentWidth: number): void {
+function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date, margin: number, contentWidth: number, events: CalendarEvent[]): void {
   const { headerHeight } = WEEKLY_CONFIG;
   
   // Header background
@@ -101,14 +101,55 @@ function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date, margin: 
   pdf.setFontSize(16);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(0, 0, 0);
-  pdf.text('Weekly Calendar', WEEKLY_CONFIG.pageWidth / 2, margin + 25, { align: 'center' });
+  pdf.text('WEEKLY PLANNER', WEEKLY_CONFIG.pageWidth / 2, margin + 20, { align: 'center' });
   
   // Week info
   pdf.setFontSize(12);
-  pdf.setFont('helvetica', 'normal');
+  pdf.setFont('helvetica', 'bold');
   const weekNumber = getWeekNumber(weekStartDate);
-  const weekText = `Week ${weekNumber}: ${weekStartDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEndDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
-  pdf.text(weekText, WEEKLY_CONFIG.pageWidth / 2, margin + 45, { align: 'center' });
+  const startMonth = weekStartDate.toLocaleDateString('en-US', { month: 'short' });
+  const startDay = weekStartDate.getDate();
+  const endDay = weekEndDate.getDate();
+  const weekText = `${startMonth} ${startDay}-${endDay} • Week ${weekNumber}`;
+  pdf.text(weekText, WEEKLY_CONFIG.pageWidth / 2, margin + 35, { align: 'center' });
+  
+  // Statistics row
+  const statsY = margin + 55;
+  const totalEvents = events.length;
+  const totalHours = events.reduce((sum, e) => {
+    const duration = (e.endTime.getTime() - e.startTime.getTime()) / (1000 * 60 * 60);
+    return sum + duration;
+  }, 0);
+  const dailyAverage = totalHours / 7;
+  const availableTime = (7 * 17.5) - totalHours; // 17.5 hours per day (6:00-23:30)
+  
+  // Stats boxes
+  const boxWidth = (contentWidth - 60) / 4;
+  const statItems = [
+    { label: 'Total Appointments', value: totalEvents.toString() },
+    { label: 'Scheduled Time', value: `${totalHours.toFixed(1)}h` },
+    { label: 'Daily Average', value: `${dailyAverage.toFixed(1)}h` },
+    { label: 'Available Time', value: `${availableTime.toFixed(0)}h` }
+  ];
+  
+  statItems.forEach((item, index) => {
+    const x = margin + 15 + (index * boxWidth);
+    
+    // Stats box border
+    pdf.setLineWidth(1);
+    pdf.setDrawColor(0, 0, 0);
+    pdf.rect(x, statsY, boxWidth - 5, 25);
+    
+    // Value
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(item.value, x + boxWidth/2 - 2.5, statsY + 10, { align: 'center' });
+    
+    // Label
+    pdf.setFontSize(8);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(item.label, x + boxWidth/2 - 2.5, statsY + 20, { align: 'center' });
+  });
 }
 
 function drawLegend(pdf: jsPDF, margin: number, headerHeight: number, contentWidth: number): void {
@@ -317,18 +358,36 @@ function drawEvents(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent[], ma
       pdf.rect(x, y, width, height);
     }
     
-    // Event text
+    // Event text with wrapping
     pdf.setFontSize(7);
     pdf.setFont('helvetica', 'normal');
     pdf.setTextColor(0, 0, 0);
     
-    // Clean title
+    // Clean title and wrap text
     let title = event.title.replace(' Appointment', '');
-    if (title.length > 12) {
-      title = title.substring(0, 12) + '...';
-    }
+    const maxWidth = width - 6;
+    const words = title.split(' ');
+    const lines = [];
+    let currentLine = '';
     
-    pdf.text(title, x + 2, y + 10);
+    words.forEach(word => {
+      const testLine = currentLine + (currentLine ? ' ' : '') + word;
+      const testWidth = pdf.getTextWidth(testLine);
+      
+      if (testWidth > maxWidth && currentLine) {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        currentLine = testLine;
+      }
+    });
+    
+    if (currentLine) lines.push(currentLine);
+    
+    // Draw wrapped text lines
+    lines.slice(0, Math.floor((height - 12) / 8)).forEach((line, index) => {
+      pdf.text(line, x + 2, y + 8 + (index * 8));
+    });
     
     // Time
     const timeText = `${startHour24.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}`;
