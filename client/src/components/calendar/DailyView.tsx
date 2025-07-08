@@ -373,15 +373,14 @@ export const DailyView = ({
                       {event.notes && (
                         <div className="appointment-notes">
                           <div className="appointment-notes-header">Event Notes</div>
-                          {event.notes.split('\n').filter(note => {
-                            const cleaned = note.trim().replace(/^•+\s*/, '');
-                            return cleaned && cleaned !== '';
-                          }).map((note, index) => {
-                            const cleaned = note.trim().replace(/^•+\s*/, '');
-                            return (
-                              <div key={index} className="note-item">• {cleaned}</div>
-                            );
-                          })}
+{event.notes.split('\n')
+                            .map(note => note.trim())
+                            .filter(note => note.length > 0)
+                            .map(note => note.replace(/^•+\s*/, ''))
+                            .filter(note => note.length > 0)
+                            .map((note, index) => (
+                              <div key={index} className="note-item">• {note}</div>
+                            ))}
                         </div>
                       )}
                     </div>
@@ -391,15 +390,14 @@ export const DailyView = ({
                       {event.actionItems && (
                         <div className="appointment-actions">
                           <div className="appointment-actions-header">Action Items</div>
-                          {event.actionItems.split('\n').filter(item => {
-                            const cleaned = item.trim().replace(/^•+\s*/, '').replace(/^\s*$/, '');
-                            return cleaned && cleaned.length > 0;
-                          }).map((item, index) => {
-                            const cleaned = item.trim().replace(/^•+\s*/, '');
-                            return (
-                              <div key={index} className="action-item">• {cleaned}</div>
-                            );
-                          })}
+{event.actionItems.split('\n')
+                            .map(item => item.trim())
+                            .filter(item => item.length > 0)
+                            .map(item => item.replace(/^•+\s*/, ''))
+                            .filter(item => item.length > 0)
+                            .map((item, index) => (
+                              <div key={index} className="action-item">• {item}</div>
+                            ))}
                         </div>
                       )}
                     </div>
