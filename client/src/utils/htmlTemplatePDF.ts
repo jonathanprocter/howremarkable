@@ -11,6 +11,52 @@ function formatTime(date: Date): string {
   });
 }
 
+// Helper function to determine event type and styling
+interface EventTypeInfo {
+  isSimplePractice: boolean;
+  isGoogle: boolean;
+  isHoliday: boolean;
+  sourceText: string;
+}
+
+function getEventTypeInfo(event: CalendarEvent): EventTypeInfo {
+  // Check for SimplePractice events
+  const isSimplePractice = 
+    event.source === 'simplepractice' || 
+    event.title.toLowerCase().includes('appointment') ||
+    event.notes?.toLowerCase().includes('simplepractice') ||
+    event.calendarId === '0np7sib5u30o7oc297j5pb259g'; // Your SimplePractice calendar ID
+  
+  // Check for Google Calendar events  
+  const isGoogle = 
+    event.source === 'google' && !isSimplePractice && !event.title.toLowerCase().includes('holiday');
+  
+  // Check for holidays
+  const isHoliday = 
+    event.title.toLowerCase().includes('holiday') ||
+    event.calendarId === 'en.usa#holiday@group.v.calendar.google.com' ||
+    event.source === 'holiday';
+  
+  // Determine source text for display
+  let sourceText = '';
+  if (isSimplePractice) {
+    sourceText = 'SIMPLEPRACTICE';
+  } else if (isGoogle) {
+    sourceText = 'GOOGLE CALENDAR';
+  } else if (isHoliday) {
+    sourceText = 'HOLIDAYS IN UNITED STATES';
+  } else {
+    sourceText = (event.source || 'MANUAL').toUpperCase();
+  }
+  
+  return {
+    isSimplePractice,
+    isGoogle,
+    isHoliday,
+    sourceText
+  };
+}
+
 // reMarkable Paper Pro specific configuration for daily view
 const REMARKABLE_DAILY_CONFIG = {
   // Portrait dimensions in mm (179mm x 239mm)
@@ -54,7 +100,11 @@ const REMARKABLE_DAILY_CONFIG = {
     white: [255, 255, 255],
     lightGray: [240, 240, 240],
     mediumGray: [200, 200, 200],
-    darkGray: [160, 160, 160]
+    darkGray: [160, 160, 160],
+    simplePracticeBlue: [100, 149, 237],
+    googleGreen: [34, 197, 94],
+    holidayYellow: [255, 235, 59],
+    holidayOrange: [255, 152, 0]
   }
 };
 
@@ -223,10 +273,12 @@ function drawDailyHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]
   const statsY = margin + HTML_TEMPLATE_CONFIG.headerHeight;
   const contentWidth = HTML_TEMPLATE_CONFIG.pageWidth - (margin * 2);
   
-  // Filter events for the selected day
+  // Filter events for the selected day with improved date comparison
   const dayEvents = events.filter(event => {
     const eventDate = new Date(event.startTime);
-    return eventDate.toDateString() === selectedDate.toDateString();
+    return eventDate.getFullYear() === selectedDate.getFullYear() &&
+           eventDate.getMonth() === selectedDate.getMonth() &&
+           eventDate.getDate() === selectedDate.getDate();
   });
   
   // Stats background
@@ -290,11 +342,11 @@ function drawDailyHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]
   pdf.setDrawColor(...HTML_TEMPLATE_CONFIG.colors.mediumGray);
   pdf.rect(margin, legendY, contentWidth, HTML_TEMPLATE_CONFIG.legendHeight);
   
-  // Legend items
+  // Legend items using improved event type detection
   const legendItems = [
-    { label: 'SimplePractice', color: HTML_TEMPLATE_CONFIG.colors.simplePracticeBlue, style: 'left-border' },
-    { label: 'Google Calendar', color: HTML_TEMPLATE_CONFIG.colors.googleGreen, style: 'filled' },
-    { label: 'Holidays in United States', color: HTML_TEMPLATE_CONFIG.colors.holidayYellow, style: 'filled' }
+    { label: 'SimplePractice', color: REMARKABLE_DAILY_CONFIG.colors.simplePracticeBlue, style: 'left-border' },
+    { label: 'Google Calendar', color: REMARKABLE_DAILY_CONFIG.colors.googleGreen, style: 'dashed' },
+    { label: 'Holidays in United States', color: REMARKABLE_DAILY_CONFIG.colors.holidayYellow, style: 'filled' }
   ];
   
   const itemWidth = contentWidth / legendItems.length;
@@ -306,18 +358,29 @@ function drawDailyHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]
     
     // Draw legend symbol
     if (item.style === 'left-border') {
-      pdf.setFillColor(...HTML_TEMPLATE_CONFIG.colors.white);
+      // SimplePractice: White background with blue left border
+      pdf.setFillColor(...REMARKABLE_DAILY_CONFIG.colors.white);
       pdf.rect(x, symbolY, symbolSize, symbolSize, 'F');
-      pdf.setDrawColor(...HTML_TEMPLATE_CONFIG.colors.mediumGray);
-      pdf.setLineWidth(1);
+      pdf.setDrawColor(...REMARKABLE_DAILY_CONFIG.colors.mediumGray);
+      pdf.setLineWidth(0.5);
       pdf.rect(x, symbolY, symbolSize, symbolSize);
       pdf.setDrawColor(...item.color);
-      pdf.setLineWidth(3);
+      pdf.setLineWidth(2);
       pdf.line(x, symbolY, x, symbolY + symbolSize);
+    } else if (item.style === 'dashed') {
+      // Google Calendar: White background with dashed green border
+      pdf.setFillColor(...REMARKABLE_DAILY_CONFIG.colors.white);
+      pdf.rect(x, symbolY, symbolSize, symbolSize, 'F');
+      pdf.setDrawColor(...item.color);
+      pdf.setLineWidth(1);
+      pdf.setLineDash([2, 1]);
+      pdf.rect(x, symbolY, symbolSize, symbolSize);
+      pdf.setLineDash([]);
     } else {
+      // Holiday: Yellow background with orange border
       pdf.setFillColor(...item.color);
       pdf.rect(x, symbolY, symbolSize, symbolSize, 'F');
-      pdf.setDrawColor(...HTML_TEMPLATE_CONFIG.colors.black);
+      pdf.setDrawColor(...REMARKABLE_DAILY_CONFIG.colors.holidayOrange);
       pdf.setLineWidth(1);
       pdf.rect(x, symbolY, symbolSize, symbolSize);
     }
@@ -325,7 +388,7 @@ function drawDailyHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]
     // Legend text
     pdf.setFontSize(8);
     pdf.setFont('helvetica', 'normal');
-    pdf.setTextColor(...HTML_TEMPLATE_CONFIG.colors.black);
+    pdf.setTextColor(...REMARKABLE_DAILY_CONFIG.colors.black);
     pdf.text(item.label, x + symbolSize + 5, symbolY + 6);
   });
   
@@ -680,10 +743,12 @@ function drawRemarkableDailyAppointments(pdf: jsPDF, selectedDate: Date, events:
   const marginPt = REMARKABLE_DAILY_CONFIG.margin * mmToPt;
   const timeColumnWidthPt = REMARKABLE_DAILY_CONFIG.timeColumnWidth * mmToPt;
   
-  // Filter events for the selected day
+  // Filter events for the selected day with improved date comparison
   const dayEvents = events.filter(event => {
     const eventDate = new Date(event.startTime);
-    return eventDate.toDateString() === selectedDate.toDateString();
+    return eventDate.getFullYear() === selectedDate.getFullYear() &&
+           eventDate.getMonth() === selectedDate.getMonth() &&
+           eventDate.getDate() === selectedDate.getDate();
   }).sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
   
   dayEvents.forEach(event => {
@@ -719,62 +784,104 @@ function drawRemarkableDailyAppointments(pdf: jsPDF, selectedDate: Date, events:
     const width = dayColumnWidth - 2;
     const height = (heightInSlots * timeSlotHeight) - 2;
     
-    // Event styling optimized for e-ink
-    const isSimplePractice = event.title.includes('Appointment');
+    // Use EventTypeInfo for better event detection
+    const eventType = getEventTypeInfo(event);
     
-    if (isSimplePractice) {
-      pdf.setFillColor(250, 250, 250);
+    // Event styling based on type
+    if (eventType.isSimplePractice) {
+      // SimplePractice: White background with blue left border
+      pdf.setFillColor(...REMARKABLE_DAILY_CONFIG.colors.white);
       pdf.rect(x, y, width, height, 'F');
-      pdf.setDrawColor(...REMARKABLE_DAILY_CONFIG.colors.black);
-      pdf.setLineWidth(1);
+      
+      // Light gray border around event
+      pdf.setDrawColor(...REMARKABLE_DAILY_CONFIG.colors.mediumGray);
+      pdf.setLineWidth(0.5);
+      pdf.rect(x, y, width, height);
+      
+      // Blue left border
+      pdf.setDrawColor(100, 149, 237); // Cornflower blue
+      pdf.setLineWidth(2);
       pdf.line(x, y, x, y + height);
-    } else {
-      pdf.setFillColor(245, 245, 245);
+      
+    } else if (eventType.isGoogle) {
+      // Google Calendar: White background with dashed green border
+      pdf.setFillColor(...REMARKABLE_DAILY_CONFIG.colors.white);
       pdf.rect(x, y, width, height, 'F');
+      
+      // Dashed green border
+      pdf.setDrawColor(34, 197, 94); // Green
+      pdf.setLineWidth(1);
+      pdf.setLineDash([2, 1]);
+      pdf.rect(x, y, width, height);
+      pdf.setLineDash([]);
+      
+    } else if (eventType.isHoliday) {
+      // Holiday: Yellow background with orange border
+      pdf.setFillColor(255, 235, 59); // Yellow
+      pdf.rect(x, y, width, height, 'F');
+      
+      pdf.setDrawColor(255, 152, 0); // Orange
+      pdf.setLineWidth(1);
+      pdf.rect(x, y, width, height);
+      
+    } else {
+      // Default: White background with gray border
+      pdf.setFillColor(...REMARKABLE_DAILY_CONFIG.colors.white);
+      pdf.rect(x, y, width, height, 'F');
+      
+      pdf.setDrawColor(...REMARKABLE_DAILY_CONFIG.colors.mediumGray);
+      pdf.setLineWidth(0.5);
+      pdf.rect(x, y, width, height);
     }
     
-    // Event border
-    pdf.setDrawColor(...REMARKABLE_DAILY_CONFIG.colors.mediumGray);
-    pdf.setLineWidth(0.25);
-    pdf.rect(x, y, width, height);
+    // Event text layout
+    const textX = x + 2;
+    let textY = y + 8;
     
-    // Event text
-    const cleanTitle = event.title.replace(/ Appointment$/, '');
-    
-    // Event name
+    // 1. Event title (bold, larger)
+    const cleanTitle = event.title.replace(/ Appointment$/, '').trim();
     pdf.setFontSize(REMARKABLE_DAILY_CONFIG.fonts.eventTitle);
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(...REMARKABLE_DAILY_CONFIG.colors.black);
     
-    const nameLines = pdf.splitTextToSize(cleanTitle, width - 4);
-    const maxNameLines = Math.min(nameLines.length, Math.floor(height / 8));
+    // Wrap text if needed
+    const titleLines = pdf.splitTextToSize(cleanTitle, width - 4);
+    const maxTitleLines = Math.min(titleLines.length, 2);
     
-    for (let i = 0; i < maxNameLines; i++) {
-      pdf.text(nameLines[i], x + 2, y + 8 + (i * 8));
+    for (let i = 0; i < maxTitleLines; i++) {
+      pdf.text(titleLines[i], textX, textY);
+      textY += 6;
     }
     
-    // Time range (if space available)
+    // 2. Source (smaller, uppercase)
     if (height > 16) {
-      pdf.setFontSize(REMARKABLE_DAILY_CONFIG.fonts.eventTime);
+      pdf.setFontSize(4);
       pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(80, 80, 80);
+      pdf.setTextColor(...REMARKABLE_DAILY_CONFIG.colors.darkGray);
+      
+      pdf.text(eventType.sourceText, textX, textY);
+      textY += 6;
+    }
+    
+    // 3. Time range (like "08:00-09:00")
+    if (height > 24) {
+      pdf.setFontSize(REMARKABLE_DAILY_CONFIG.fonts.eventTime);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...REMARKABLE_DAILY_CONFIG.colors.black);
       
       const startTime = eventDate.toLocaleTimeString('en-US', { 
-        hour: 'numeric', 
+        hour: '2-digit', 
         minute: '2-digit', 
-        hour12: true 
+        hour12: false 
       });
       const endTime = event.endTime.toLocaleTimeString('en-US', { 
-        hour: 'numeric', 
+        hour: '2-digit', 
         minute: '2-digit', 
-        hour12: true 
+        hour12: false 
       });
-      const timeRange = `${startTime} - ${endTime}`;
+      const timeRange = `${startTime}-${endTime}`;
       
-      const timeY = y + 8 + (maxNameLines * 8) + 2;
-      if (timeY + 6 <= y + height - 2) {
-        pdf.text(timeRange, x + 2, timeY);
-      }
+      pdf.text(timeRange, textX, textY);
     }
   });
 }

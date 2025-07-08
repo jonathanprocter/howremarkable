@@ -265,6 +265,16 @@ The application uses three main entities:
   - Weekly Package and reMarkable Weekly exports maintained as working PDF exports using `exportExactGridPDF`
   - Removed duplicate case statements causing compiler warnings
   - **RESULT**: All export functions now generate PDF files consistently - daily exports produce daily PDFs, weekly exports produce weekly PDFs
+- July 08, 2025. **ENHANCED DAILY PLANNER PDF EXPORT**: Implemented comprehensive improvements to daily planner PDF export functionality:
+  - Added `getEventTypeInfo` helper function for better event type detection and source identification
+  - Enhanced `drawRemarkableDailyAppointments` with improved event styling based on source type
+  - SimplePractice appointments: White background with cornflower blue left border
+  - Google Calendar appointments: White background with dashed green border
+  - Holiday appointments: Yellow background with orange border
+  - Improved event text layout with title, source, and time range display
+  - Fixed date filtering using robust date comparison instead of timezone-sensitive string comparison
+  - Updated legend section to match event styling exactly
+  - **RESULT**: Professional daily planner PDF exports with accurate event detection, proper visual styling, and reliable date filtering
 
 ## User Preferences
 

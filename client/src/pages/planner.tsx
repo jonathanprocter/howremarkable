@@ -19,10 +19,12 @@ const exportDailyToPDF = async (selectedDate: Date, events: CalendarEvent[], dai
   try {
     console.log('Exporting daily view to PDF...');
     
-    // Filter events for the selected day
+    // Filter events for the selected day with improved date comparison
     const dayEvents = events.filter(event => {
       const eventDate = new Date(event.startTime);
-      return eventDate.toDateString() === selectedDate.toDateString();
+      return eventDate.getFullYear() === selectedDate.getFullYear() &&
+             eventDate.getMonth() === selectedDate.getMonth() &&
+             eventDate.getDate() === selectedDate.getDate();
     });
 
     console.log(`Found ${dayEvents.length} events for ${selectedDate.toDateString()}`);
