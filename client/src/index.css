@@ -159,7 +159,7 @@
 
 .time-header {
     background: #f0f0f0;
-    padding: 20px 12px;
+    padding: 0;
     text-align: center;
     font-weight: bold;
     font-size: 14px;
@@ -172,7 +172,7 @@
 
 .day-header {
     background: #f0f0f0;
-    padding: 6px 8px;
+    padding: 0;
     text-align: center;
     font-weight: bold;
     border-right: 1px solid black;
@@ -182,7 +182,7 @@
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    min-height: 40px;
+    height: 50px;
 }
 
 .day-header:last-child {
@@ -195,7 +195,7 @@
 
 .day-name {
     font-size: 12px;
-    margin-bottom: 3px;
+    margin-bottom: 2px;
     text-transform: uppercase;
 }
 
@@ -206,6 +206,7 @@
 .time-slot {
     background: #f8f8f8;
     padding: 0;
+    margin: 0;
     text-align: center;
     font-size: 9px;
     font-weight: bold;
@@ -216,6 +217,7 @@
     border-bottom: 1px solid #ddd;
     height: 25px;
     line-height: 1;
+    box-sizing: border-box;
 }
 
 .time-slot.hour {
@@ -317,10 +319,10 @@
     box-shadow: 0 1px 3px rgba(245, 158, 11, 0.2);
 }
 
-/* Height classes for different durations */
-.appointment.duration-30 { height: 25px; }
-.appointment.duration-60 { height: 50px; }
-.appointment.duration-90 { height: 75px; }
+/* Height classes for different durations - exactly match 25px grid slots */
+.appointment.duration-30 { height: 23px; }
+.appointment.duration-60 { height: 48px; }
+.appointment.duration-90 { height: 73px; }
 
 /* Appointment header styling - exact match to HTML template */
 .appointment-header {
