@@ -127,13 +127,14 @@ export const exportWeeklyCalendarHTML = async (
     const gridY = 180;
     const timeColWidth = 60;
     const dayColWidth = (pdf.internal.pageSize.width - 60 - timeColWidth) / 7;
-    const rowHeight = 20; // Each 30-minute slot
+    const rowHeight = 18; // Each 30-minute slot (reduced to fit more slots)
     const totalGridWidth = pdf.internal.pageSize.width - 60;
+    const totalGridHeight = (23 - 6) * 2 * rowHeight + rowHeight; // 6:00-23:30 = 35 slots
     
     // Grid outer border
     pdf.setLineWidth(1);
     pdf.setDrawColor(0, 0, 0);
-    pdf.rect(30, gridY, totalGridWidth, 600);
+    pdf.rect(30, gridY, totalGridWidth, totalGridHeight + 40);
     
     // TIME header
     pdf.setFont('times', 'bold');
@@ -158,9 +159,9 @@ export const exportWeeklyCalendarHTML = async (
       pdf.text(dayNumbers[index], x + dayColWidth/2, gridY + 35, { align: 'center' });
     });
 
-    // Time slots grid with proper alternating backgrounds
+    // Time slots grid with proper alternating backgrounds - full timeline 6:00-23:30
     let currentY = gridY + 40;
-    let slotCount = 0;
+    const finalY = gridY + totalGridHeight + 40; // Calculate final Y position
     
     for (let hour = 6; hour <= 23; hour++) {
       // Hour row (gray background for hour slots)
@@ -169,10 +170,10 @@ export const exportWeeklyCalendarHTML = async (
       
       // Hour time
       pdf.setFont('times', 'bold');
-      pdf.setFontSize(11);
+      pdf.setFontSize(10);
       pdf.setTextColor(0, 0, 0);
       const hourStr = `${hour.toString().padStart(2, '0')}:00`;
-      pdf.text(hourStr, 30 + timeColWidth/2, currentY + 13, { align: 'center' });
+      pdf.text(hourStr, 30 + timeColWidth/2, currentY + 12, { align: 'center' });
       
       // Horizontal line for hour (solid)
       pdf.setLineWidth(1);
@@ -180,18 +181,17 @@ export const exportWeeklyCalendarHTML = async (
       pdf.line(30, currentY, 30 + totalGridWidth, currentY);
       
       currentY += rowHeight;
-      slotCount++;
       
-      // Half-hour row (white background)
+      // Half-hour row (white background) - always add except after hour 23
       if (hour < 23) {
         pdf.setFillColor(255, 255, 255);
         pdf.rect(30, currentY, totalGridWidth, rowHeight, 'F');
         
         pdf.setFont('times', 'normal');
-        pdf.setFontSize(9);
+        pdf.setFontSize(8);
         pdf.setTextColor(102, 102, 102);
         const halfHourStr = `${hour.toString().padStart(2, '0')}:30`;
-        pdf.text(halfHourStr, 30 + timeColWidth/2, currentY + 13, { align: 'center' });
+        pdf.text(halfHourStr, 30 + timeColWidth/2, currentY + 12, { align: 'center' });
         pdf.setTextColor(0, 0, 0);
         
         // Light horizontal line for half-hour
@@ -200,25 +200,23 @@ export const exportWeeklyCalendarHTML = async (
         pdf.line(30, currentY, 30 + totalGridWidth, currentY);
         
         currentY += rowHeight;
-        slotCount++;
       }
     }
     
-    // 23:30 final row
+    // Add final 23:30 row
     pdf.setFillColor(255, 255, 255);
     pdf.rect(30, currentY, totalGridWidth, rowHeight, 'F');
     pdf.setFont('times', 'normal');
-    pdf.setFontSize(9);
+    pdf.setFontSize(8);
     pdf.setTextColor(102, 102, 102);
-    pdf.text('23:30', 30 + timeColWidth/2, currentY + 13, { align: 'center' });
+    pdf.text('23:30', 30 + timeColWidth/2, currentY + 12, { align: 'center' });
     
-    // Final horizontal line
+    // Final grid bottom line
     pdf.setLineWidth(1);
     pdf.setDrawColor(0, 0, 0);
-    pdf.line(30, currentY, 30 + totalGridWidth, currentY);
     pdf.line(30, currentY + rowHeight, 30 + totalGridWidth, currentY + rowHeight);
     
-    // Vertical lines for day columns
+    // Vertical lines for day columns extending full height
     pdf.setLineWidth(1);
     pdf.setDrawColor(0, 0, 0);
     
