@@ -17,37 +17,7 @@ import { generateCompleteExportData, exportToText, exportToJSON, exportToCSV, te
 // Import the daily PDF export function
 import { exportDailyToPDF } from '../utils/dailyPDFExport';
 
-// NEW: Comprehensive daily PDF export function
-const exportDailyToPDFNew = async (selectedDate: Date, events: CalendarEvent[], dailyNotes: string): Promise<string> => {
-  try {
-    console.log('=== STARTING NEW DAILY PDF EXPORT ===');
-    console.log('Selected date:', selectedDate.toDateString());
-    console.log('Total events passed:', events.length);
-    
-    // Filter events for the selected date
-    const dayEvents = events.filter(event => {
-      const eventDate = new Date(event.startTime);
-      return eventDate.toDateString() === selectedDate.toDateString();
-    });
-    
-    console.log('Filtered day events:', dayEvents.length);
-    dayEvents.forEach((event, i) => {
-      console.log(`Event ${i + 1}: ${event.title} at ${event.startTime.toLocaleTimeString()}`);
-    });
-    
-    // Use the dedicated daily export function
-    await exportDailyToPDF(selectedDate, events);
-    
-    const filename = `daily-planner-${selectedDate.toISOString().split('T')[0]}.pdf`;
-    console.log(`=== NEW DAILY PDF EXPORT COMPLETE: ${filename} ===`);
-    return filename;
-  } catch (error) {
-    console.error('=== NEW DAILY PDF EXPORT ERROR ===');
-    console.error('Error details:', error);
-    console.error('Error stack:', error.stack);
-    throw error;
-  }
-};
+
 
 // Temporary stub functions for other exports until they're fixed
 const exportWeeklyPackageToPDF = async (...args: any[]): Promise<string> => { 
@@ -346,11 +316,11 @@ export default function Planner() {
                 console.log(`Event ${i+1}: "${event.title}" - Duration: ${duration} minutes`);
               });
               
-              await exportDailyToPDFNew(selectedDateForExport, currentEvents, dailyNotes);
+              await exportDailyToPDF(selectedDateForExport, currentEvents);
               
               toast({
                 title: "Export Successful",
-                description: `Daily planner PDF downloaded with ${exportData.appointments.length} appointments!`
+                description: `Daily planner PDF downloaded with ${dayEvents.length} appointments!`
               });
               return;
             } catch (dailyError) {
@@ -415,8 +385,8 @@ export default function Planner() {
               });
             }
             
-            // Use the new daily export function
-            await exportDailyToPDFNew(selectedDateForExport, currentEvents, dailyNotes);
+            // Use the dedicated daily export function directly
+            await exportDailyToPDF(selectedDateForExport, currentEvents);
             
             toast({
               title: "Export Successful",
@@ -434,7 +404,6 @@ export default function Planner() {
             });
             return;
           }
-          break;
 
         case 'Weekly Package':
           // Export weekly view as PDF using the working export function
