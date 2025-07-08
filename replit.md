@@ -311,6 +311,14 @@ The application uses three main entities:
   - **User Confirmed Success**: Daily view PDF export now shows all 11 events correctly with proper 3-column layout and clean text formatting
   - **PROJECT MILESTONE**: Export system fully functional with professional-grade PDF generation for both daily and weekly views
   - **RESULT**: Perfect daily and weekly PDF exports with complete event display, proper formatting, and optimized reMarkable Pro compatibility
+- July 08, 2025. **CRITICAL EVENT TITLE RESTORATION**: Fixed major text processing issue causing missing patient names in daily PDF exports:
+  - **Root Cause Identified**: Aggressive regex pattern `[^\w\s\-\.,:;!?'"()]` was removing characters from patient names
+  - **Conservative Text Processing**: Replaced with minimal processing that only removes " Appointment" suffix while preserving all other characters
+  - **Consistent Variable Usage**: Fixed `cleanTitle` vs `displayTitle` inconsistency throughout 3-column and simple layouts
+  - **Enhanced Debug Logging**: Added comprehensive console logging to track title processing: "Original title" → "Display title" → "Drew simple title"
+  - **All Event Types Fixed**: Both SimplePractice appointments and Google Calendar events now display correct titles with proper time ranges
+  - **User Issue Resolved**: Patient names like "Nancy Grossman", "Amberly Comeau" now display correctly instead of generic "SIMPLEPRACTICE"
+  - **RESULT**: Complete restoration of event titles in daily PDF exports with proper patient name display and time range formatting
 
 ## User Preferences
 

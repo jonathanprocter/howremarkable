@@ -894,17 +894,19 @@ function drawRemarkableDailyAppointments(pdf: jsPDF, selectedDate: Date, events:
     const startX = eventX + padding;
     const contentWidth = eventWidth - (padding * 2);
     
-    // CLEAN EVENT TITLE (Fix text formatting issues)
-    let cleanTitle = event.title.replace(/ Appointment$/, '').trim();
+    // IMPROVED TITLE PROCESSING - Don't over-clean!
+    let displayTitle = event.title || 'Untitled Event';
     
-    // Fix common text encoding issues
-    cleanTitle = cleanTitle
-      .replace(/\s+/g, ' ')  // Remove extra spaces
-      .replace(/[^\w\s\-\.,:;!?'"()]/g, '') // Remove problematic characters
-      .trim();
+    // Only remove " Appointment" suffix, nothing else
+    if (displayTitle.endsWith(' Appointment')) {
+      displayTitle = displayTitle.replace(/ Appointment$/, '');
+    }
+    
+    // Only trim whitespace, don't remove other characters
+    displayTitle = displayTitle.trim();
     
     console.log(`Original title: "${event.title}"`);
-    console.log(`Clean title: "${cleanTitle}"`);
+    console.log(`Display title: "${displayTitle}"`);
     
     if (needsExpandedLayout) {
       // === 3-COLUMN LAYOUT ===
@@ -930,23 +932,38 @@ function drawRemarkableDailyAppointments(pdf: jsPDF, selectedDate: Date, events:
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(0, 0, 0);
       
-      // Better text wrapping
-      const titleWords = cleanTitle.split(' ');
-      const titleLines = [];
-      let currentLine = '';
-      
-      for (const word of titleWords) {
-        const testLine = currentLine ? `${currentLine} ${word}` : word;
-        const textWidth = pdf.getTextWidth(testLine);
+      // Simple text wrapping - don't overcomplicate
+      const maxCharsPerLine = Math.floor(col1Width / 6); // Approximate
+      if (displayTitle.length <= maxCharsPerLine) {
+        // Single line
+        pdf.text(displayTitle, col1X, col1Y);
+        console.log(`Drew single-line title: "${displayTitle}"`);
+        col1Y += 12;
+      } else {
+        // Split into words and wrap
+        const words = displayTitle.split(' ');
+        let line1 = words[0] || '';
+        let line2 = '';
         
-        if (textWidth <= col1Width - 5) {
-          currentLine = testLine;
-        } else {
-          if (currentLine) titleLines.push(currentLine);
-          currentLine = word;
+        for (let i = 1; i < words.length; i++) {
+          if ((line1 + ' ' + words[i]).length <= maxCharsPerLine) {
+            line1 += ' ' + words[i];
+          } else {
+            line2 = words.slice(i).join(' ');
+            break;
+          }
+        }
+        
+        pdf.text(line1, col1X, col1Y);
+        console.log(`Drew title line 1: "${line1}"`);
+        col1Y += 12;
+        
+        if (line2 && col1Y + 12 <= eventY + eventHeight - 30) {
+          pdf.text(line2, col1X, col1Y);
+          console.log(`Drew title line 2: "${line2}"`);
+          col1Y += 12;
         }
       }
-      if (currentLine) titleLines.push(currentLine);
       
       // Render title lines
       for (let i = 0; i < Math.min(titleLines.length, 2); i++) {
@@ -1103,31 +1120,42 @@ function drawRemarkableDailyAppointments(pdf: jsPDF, selectedDate: Date, events:
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(0, 0, 0);
       
-      // Better text wrapping for simple layout
-      const titleWords = cleanTitle.split(' ');
-      const titleLines = [];
-      let currentLine = '';
-      
-      for (const word of titleWords) {
-        const testLine = currentLine ? `${currentLine} ${word}` : word;
-        const textWidth = pdf.getTextWidth(testLine);
-        
-        if (textWidth <= contentWidth - 5) {
-          currentLine = testLine;
+      // ALWAYS SHOW TITLE, SOURCE, AND TIME for simple layout
+      if (displayTitle && displayTitle.length > 0) {
+        // Simple text wrapping
+        const maxCharsPerLine = Math.floor(contentWidth / 7); // Approximate
+        if (displayTitle.length <= maxCharsPerLine) {
+          // Single line
+          pdf.text(displayTitle, startX, currentY);
+          console.log(`Drew simple title: "${displayTitle}"`);
+          currentY += 14;
         } else {
-          if (currentLine) titleLines.push(currentLine);
-          currentLine = word;
+          // Split into words and wrap
+          const words = displayTitle.split(' ');
+          let line1 = words[0] || '';
+          let line2 = '';
+          
+          for (let i = 1; i < words.length; i++) {
+            if ((line1 + ' ' + words[i]).length <= maxCharsPerLine) {
+              line1 += ' ' + words[i];
+            } else {
+              line2 = words.slice(i).join(' ');
+              break;
+            }
+          }
+          
+          pdf.text(line1, startX, currentY);
+          console.log(`Drew simple title line 1: "${line1}"`);
+          currentY += 14;
+          
+          if (line2 && currentY + 14 <= eventY + eventHeight - 25) {
+            pdf.text(line2, startX, currentY);
+            console.log(`Drew simple title line 2: "${line2}"`);
+            currentY += 14;
+          }
         }
-      }
-      if (currentLine) titleLines.push(currentLine);
-      
-      // Render title lines
-      for (let i = 0; i < Math.min(titleLines.length, 2); i++) {
-        if (currentY + 12 <= eventY + eventHeight - 20) {
-          pdf.text(titleLines[i], startX, currentY);
-          console.log(`Drew simple title line ${i + 1}: "${titleLines[i]}"`);
-          currentY += 12;
-        }
+      } else {
+        console.log('WARNING: No display title for simple layout!');
       }
       
       // Source
@@ -1143,6 +1171,7 @@ function drawRemarkableDailyAppointments(pdf: jsPDF, selectedDate: Date, events:
         else sourceText = (event.source || 'MANUAL').toUpperCase();
         
         pdf.text(sourceText, startX, currentY);
+        console.log(`Drew simple source: "${sourceText}"`);
         currentY += 12;
       }
       
@@ -1161,6 +1190,7 @@ function drawRemarkableDailyAppointments(pdf: jsPDF, selectedDate: Date, events:
         const timeRange = `${startTimeStr}-${endTimeStr}`;
         
         pdf.text(timeRange, startX, currentY);
+        console.log(`Drew simple time range: "${timeRange}"`);
       }
     }
     
