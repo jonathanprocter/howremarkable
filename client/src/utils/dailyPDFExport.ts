@@ -228,7 +228,15 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
   const { margin, timeColumnWidth, appointmentColumnWidth, timeSlotHeight } = DAILY_CONFIG;
   const gridStartY = margin + DAILY_CONFIG.headerHeight + 25; // Add header height
 
-  events.forEach((event, index) => {
+  // Sort events by start time to ensure proper rendering order
+  const sortedEvents = [...events].sort((a, b) => 
+    new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+  );
+
+  // Track used vertical positions to prevent overlaps
+  const usedPositions: { [key: number]: number } = {};
+
+  sortedEvents.forEach((event, index) => {
     console.log(`\n=== Drawing Event ${index + 1}: ${event.title} ===`);
 
     const eventDate = new Date(event.startTime);
@@ -243,18 +251,36 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
 
     // Calculate duration
     const durationMinutes = (endDate.getTime() - eventDate.getTime()) / (1000 * 60);
-    const eventHeight = Math.max(50, (durationMinutes / 30) * timeSlotHeight - 2); // Increased minimum height
+    const eventHeight = Math.max(60, (durationMinutes / 30) * timeSlotHeight - 4); // Increased minimum height for better text display
 
-    // Skip if outside range
+    // Skip if outside range (6:00 to 23:30)
     if (minutesSince6am < 0 || minutesSince6am > (17.5 * 60)) {
       console.log('Event outside time range, skipping');
       return;
     }
 
-    // Position
-    const eventX = margin + timeColumnWidth + 2;
+    // Check for overlapping events and adjust horizontal positioning
+    let horizontalOffset = 0;
+    const timeSlot = Math.floor(slotsFromStart);
+    
+    // Find available horizontal position for overlapping events
+    while (usedPositions[timeSlot + horizontalOffset] !== undefined) {
+      horizontalOffset += 1;
+      if (horizontalOffset > 3) break; // Max 4 overlapping events
+    }
+    
+    // Mark this position as used
+    const endSlot = Math.ceil((minutesSince6am + durationMinutes) / 30);
+    for (let i = timeSlot; i < endSlot; i++) {
+      usedPositions[i + horizontalOffset] = index;
+    }
+
+    // Position with horizontal offset for overlapping events
+    const maxOverlaps = 4;
+    const availableWidth = appointmentColumnWidth - 4;
+    const eventWidth = horizontalOffset > 0 ? Math.max(120, availableWidth / (horizontalOffset + 1)) : availableWidth;
+    const eventX = margin + timeColumnWidth + 2 + (horizontalOffset * (eventWidth + 2));
     const eventY = gridStartY + topPosition;
-    const eventWidth = appointmentColumnWidth - 4;
 
     // Get event type
     const { isSimplePractice, isGoogle, isHoliday } = getEventTypeInfo(event);
@@ -301,11 +327,11 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
     const hasActionItems = !!(event.actionItems && event.actionItems.trim());
     const needsExpandedLayout = hasNotes || hasActionItems;
 
-    if (needsExpandedLayout && eventHeight >= 60) {
+    if (needsExpandedLayout && eventHeight >= 70) {
       // 3-column layout for events with notes/action items (only if enough height)
-      const col1Width = eventWidth * 0.33;
-      const col2Width = eventWidth * 0.33;
-      const col3Width = eventWidth * 0.34;
+      const col1Width = Math.min(eventWidth * 0.33, 140);
+      const col2Width = Math.min(eventWidth * 0.33, 140);
+      const col3Width = eventWidth - col1Width - col2Width;
 
       const col1X = eventX + 6;
       const col2X = eventX + col1Width + 8;
@@ -422,7 +448,7 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
       }
     }
 
-    console.log(`Event positioned at Y=${eventY}, height=${eventHeight}, layout=${needsExpandedLayout ? '3-column' : 'simple'}`);
+    console.log(`Event positioned at Y=${eventY}, height=${eventHeight}, width=${eventWidth}, offset=${horizontalOffset}, layout=${needsExpandedLayout ? '3-column' : 'simple'}`);
   });
 }
 
