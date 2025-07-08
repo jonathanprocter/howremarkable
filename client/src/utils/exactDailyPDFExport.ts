@@ -5,11 +5,11 @@ import { CalendarEvent } from '../types/calendar';
 const DAILY_CONFIG = {
   pageWidth: 595,
   pageHeight: 842,
-  margin: 40,
+  margin: 20,  // Reduced from 40 to move left
   timeColumnWidth: 80,
   appointmentColumnWidth: 450,
   timeSlotHeight: 20,
-  headerHeight: 120,
+  headerHeight: 100,  // Reduced from 120 to move up
 
   // Typography matching dashboard
   fonts: {
@@ -65,13 +65,13 @@ function getEventTypeInfo(event: CalendarEvent) {
 function drawDashboardHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
   const { margin, pageWidth } = DAILY_CONFIG;
 
-  // Title
+  // Title - moved up
   pdf.setFontSize(DAILY_CONFIG.fonts.title.size);
   pdf.setFont('helvetica', DAILY_CONFIG.fonts.title.weight);
   pdf.setTextColor(...DAILY_CONFIG.colors.black);
-  pdf.text('Daily Planner', pageWidth / 2, margin + 20, { align: 'center' });
+  pdf.text('Daily Planner', pageWidth / 2, margin + 15, { align: 'center' });
 
-  // Date
+  // Date - moved up
   pdf.setFontSize(DAILY_CONFIG.fonts.date.size);
   pdf.setFont('helvetica', DAILY_CONFIG.fonts.date.weight);
   const dateStr = selectedDate.toLocaleDateString('en-US', { 
@@ -80,9 +80,9 @@ function drawDashboardHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEve
     month: 'long', 
     day: 'numeric' 
   });
-  pdf.text(dateStr, pageWidth / 2, margin + 40, { align: 'center' });
+  pdf.text(dateStr, pageWidth / 2, margin + 35, { align: 'center' });
 
-  // Statistics - exactly like dashboard
+  // Statistics - moved up and left
   const totalEvents = events.length;
   const totalHours = events.reduce((sum, event) => {
     return sum + (new Date(event.endTime).getTime() - new Date(event.startTime).getTime()) / (1000 * 60 * 60);
@@ -93,59 +93,59 @@ function drawDashboardHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEve
   pdf.setFontSize(DAILY_CONFIG.fonts.stats.size);
   pdf.setFont('helvetica', DAILY_CONFIG.fonts.stats.weight);
   
-  const statsY = margin + 60;
-  const statsSpacing = 120;
+  const statsY = margin + 55;  // Moved up
+  const statsSpacing = 110;    // Slightly reduced spacing
   
   // Appointments
-  pdf.text(`${totalEvents}`, margin + 80, statsY, { align: 'center' });
-  pdf.text('Appointments', margin + 80, statsY + 15, { align: 'center' });
+  pdf.text(`${totalEvents}`, margin + 70, statsY, { align: 'center' });
+  pdf.text('Appointments', margin + 70, statsY + 15, { align: 'center' });
   
   // Scheduled
-  pdf.text(`${totalHours.toFixed(1)}h`, margin + 80 + statsSpacing, statsY, { align: 'center' });
-  pdf.text('Scheduled', margin + 80 + statsSpacing, statsY + 15, { align: 'center' });
+  pdf.text(`${totalHours.toFixed(1)}h`, margin + 70 + statsSpacing, statsY, { align: 'center' });
+  pdf.text('Scheduled', margin + 70 + statsSpacing, statsY + 15, { align: 'center' });
   
   // Available
-  pdf.text(`${availableHours.toFixed(1)}h`, margin + 80 + statsSpacing * 2, statsY, { align: 'center' });
-  pdf.text('Available', margin + 80 + statsSpacing * 2, statsY + 15, { align: 'center' });
+  pdf.text(`${availableHours.toFixed(1)}h`, margin + 70 + statsSpacing * 2, statsY, { align: 'center' });
+  pdf.text('Available', margin + 70 + statsSpacing * 2, statsY + 15, { align: 'center' });
   
   // Free Time
-  pdf.text(`${freeTimePercentage}%`, margin + 80 + statsSpacing * 3, statsY, { align: 'center' });
-  pdf.text('Free Time', margin + 80 + statsSpacing * 3, statsY + 15, { align: 'center' });
+  pdf.text(`${freeTimePercentage}%`, margin + 70 + statsSpacing * 3, statsY, { align: 'center' });
+  pdf.text('Free Time', margin + 70 + statsSpacing * 3, statsY + 15, { align: 'center' });
 }
 
 function drawDashboardLegend(pdf: jsPDF) {
   const { margin, pageWidth } = DAILY_CONFIG;
-  const legendY = margin + 100;
+  const legendY = margin + 80;  // Moved up
   
   pdf.setFontSize(DAILY_CONFIG.fonts.stats.size);
   pdf.setFont('helvetica', DAILY_CONFIG.fonts.stats.weight);
   
-  // SimplePractice
+  // SimplePractice - moved left
   pdf.setFillColor(...DAILY_CONFIG.colors.white);
   pdf.setDrawColor(...DAILY_CONFIG.colors.simplePracticeBlue);
-  pdf.rect(margin + 40, legendY, 12, 8, 'FD');
+  pdf.rect(margin + 30, legendY, 12, 8, 'FD');
   pdf.setFillColor(...DAILY_CONFIG.colors.simplePracticeBlue);
-  pdf.rect(margin + 40, legendY, 4, 8, 'F');
-  pdf.text('SimplePractice', margin + 60, legendY + 6);
+  pdf.rect(margin + 30, legendY, 4, 8, 'F');
+  pdf.text('SimplePractice', margin + 50, legendY + 6);
   
-  // Google Calendar
+  // Google Calendar - moved left
   pdf.setFillColor(...DAILY_CONFIG.colors.white);
   pdf.setDrawColor(...DAILY_CONFIG.colors.googleGreen);
   pdf.setLineDash([2, 2]);
-  pdf.rect(margin + 180, legendY, 12, 8, 'FD');
+  pdf.rect(margin + 160, legendY, 12, 8, 'FD');
   pdf.setLineDash([]);
-  pdf.text('Google Calendar', margin + 200, legendY + 6);
+  pdf.text('Google Calendar', margin + 180, legendY + 6);
   
-  // Holidays
+  // Holidays - moved left
   pdf.setFillColor(...DAILY_CONFIG.colors.white);
   pdf.setDrawColor(...DAILY_CONFIG.colors.holidayOrange);
-  pdf.rect(margin + 340, legendY, 12, 8, 'FD');
-  pdf.text('Holidays in United States', margin + 360, legendY + 6);
+  pdf.rect(margin + 310, legendY, 12, 8, 'FD');
+  pdf.text('Holidays in United States', margin + 330, legendY + 6);
 }
 
 function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
   const { margin, timeColumnWidth, appointmentColumnWidth, timeSlotHeight } = DAILY_CONFIG;
-  const gridStartY = margin + 130;
+  const gridStartY = margin + 105;  // Moved up from 130 to 105
   
   // Filter events for the selected date
   const dayEvents = events.filter(event => {
@@ -171,9 +171,9 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     
     // Time slot background - match dashboard exactly
     if (isHour) {
-      pdf.setFillColor(...DAILY_CONFIG.colors.lightGray);  // Gray for hour rows
+      pdf.setFillColor(...DAILY_CONFIG.colors.lightGray);  // Gray for top of hour (hour marks)
     } else {
-      pdf.setFillColor(...DAILY_CONFIG.colors.veryLightGray);  // Very light gray for half-hour rows
+      pdf.setFillColor(...DAILY_CONFIG.colors.white);  // White for bottom of hour (30-minute marks)
     }
     pdf.rect(margin, y, timeColumnWidth + appointmentColumnWidth, timeSlotHeight, 'F');
     
