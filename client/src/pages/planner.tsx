@@ -262,6 +262,12 @@ export default function Planner() {
 
   const handleExportAction = async (type: string = 'Current View') => {
     console.log('🚀 EXPORT BUTTON CLICKED! Type:', type);
+    
+    // Make export function globally available for testing
+    (window as any).directExport = () => {
+      console.log('🌐 DIRECT EXPORT CALLED!');
+      handleExportAction('Daily View');
+    };
     try {
       console.log('=== STARTING EXPORT ===');
       console.log('Export type:', type);
