@@ -225,15 +225,20 @@ export const exportExactGridPDF = async (
         pdf.setFillColor(slot.isHour ? 235 : 255, slot.isHour ? 235 : 255, slot.isHour ? 235 : 255);
         pdf.rect(cellX, y, GRID_CONFIG.dayColumnWidth, GRID_CONFIG.slotHeight, 'F');
 
-        // Cell border
-        pdf.setLineWidth(slot.isHour ? 2 : 0.5);
-        pdf.setDrawColor(slot.isHour ? 0 : 200, slot.isHour ? 0 : 200, slot.isHour ? 0 : 200);
+        // Cell border - consistent grid lines
+        pdf.setLineWidth(0.5);
+        pdf.setDrawColor(200, 200, 200);
         pdf.rect(cellX, y, GRID_CONFIG.dayColumnWidth, GRID_CONFIG.slotHeight, 'S');
       }
 
-      // Horizontal grid line extending across entire width
-      pdf.setLineWidth(slot.isHour ? 2 : 0.5);
-      pdf.setDrawColor(slot.isHour ? 0 : 200, slot.isHour ? 0 : 200, slot.isHour ? 0 : 200);
+      // Horizontal grid lines - stronger for hour marks
+      if (slot.isHour) {
+        pdf.setLineWidth(1.5);
+        pdf.setDrawColor(100, 100, 100);
+      } else {
+        pdf.setLineWidth(0.5);
+        pdf.setDrawColor(200, 200, 200);
+      }
       pdf.line(centerX, y, centerX + GRID_CONFIG.totalGridWidth, y);
     });
 
@@ -325,20 +330,44 @@ export const exportExactGridPDF = async (
             displayTitle = displayTitle.substring(0, maxChars - 3) + '...';
           }
 
-          // Event name - better sizing for larger grid
+          // Event name - improved readability
           pdf.setFont('times', 'bold');
-          pdf.setFontSize(8);
+          pdf.setFontSize(9);
           
-          // Only show title if event is tall enough
-          if (eventHeight >= 12) {
-            pdf.text(displayTitle, textX, eventY + 10);
+          // Show title for all events that are tall enough
+          if (eventHeight >= 10) {
+            // Handle text wrapping for longer titles
+            const words = displayTitle.split(' ');
+            const maxCharsPerLine = Math.floor(maxWidth / 4.5);
+            let currentLine = '';
+            let lineCount = 0;
+            const maxLines = Math.floor((eventHeight - 8) / 10);
+            
+            for (const word of words) {
+              if ((currentLine + word).length <= maxCharsPerLine) {
+                currentLine += (currentLine ? ' ' : '') + word;
+              } else {
+                if (lineCount < maxLines) {
+                  pdf.text(currentLine, textX, eventY + 9 + (lineCount * 10));
+                  lineCount++;
+                  currentLine = word;
+                } else {
+                  break;
+                }
+              }
+            }
+            
+            // Print remaining text if there's space
+            if (currentLine && lineCount < maxLines) {
+              pdf.text(currentLine, textX, eventY + 9 + (lineCount * 10));
+            }
           }
 
-          // Event time - only show if there's enough space
-          if (eventHeight >= 18) {
+          // Event time - show for medium to large events
+          if (eventHeight >= 20) {
             pdf.setFont('times', 'normal');
-            pdf.setFontSize(7);
-            pdf.text(`${startTime}-${endTime}`, textX, eventY + eventHeight - 4);
+            pdf.setFontSize(8);
+            pdf.text(`${startTime}-${endTime}`, textX, eventY + eventHeight - 5);
           }
         }
       }
