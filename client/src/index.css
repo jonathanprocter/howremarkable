@@ -174,11 +174,10 @@ html, body {
     background: white;
     height: 1130px;
     width: 100%;
-    overflow: hidden;
+    overflow: visible;
     margin: 0;
     padding: 0;
     border: none;
-    box-sizing: border-box;
 }
 
 .time-header {
@@ -242,8 +241,6 @@ html, body {
     height: 30px;
     line-height: 1;
     box-sizing: border-box;
-    min-height: 30px;
-    max-height: 30px;
 }
 
 
@@ -263,9 +260,6 @@ html, body {
     cursor: pointer;
     height: 30px;
     box-sizing: border-box;
-    min-height: 30px;
-    max-height: 30px;
-    overflow: hidden;
 }
 
 /* Light background for half-hour slots across all day columns */
