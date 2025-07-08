@@ -325,11 +325,12 @@ html, body {
     line-height: 1.0;
 }
 
-/* Daily view appointment time - larger font */
-.appointment-left .appointment-time {
-    font-size: 16px !important;
+/* Daily view appointment time - much larger font */
+.appointment-layout .appointment-left .appointment-time {
+    font-size: 24px !important;
     font-weight: bold !important;
     opacity: 1 !important;
+    color: #000 !important;
 }
 
 /* Appointment types - white backgrounds with calendar-specific borders */
@@ -403,10 +404,12 @@ html, body {
     margin-bottom: 1px;
 }
 
-.appointment-time {
-    font-size: 16px !important;
+/* Override for daily view specifically */
+.appointment-layout .appointment-time {
+    font-size: 24px !important;
     line-height: 1.0;
-    font-weight: bold;
+    font-weight: bold !important;
+    color: #000 !important;
 }
 
 .appointment-notes .note-item,
