@@ -62,9 +62,9 @@ export const exportExactGridPDF = async (
     const totalContentWidth = GRID_CONFIG.timeColumnWidth + (7 * GRID_CONFIG.dayColumnWidth);
     const centerX = (GRID_CONFIG.pageWidth - totalContentWidth) / 2;
     
-    // Calculate total content height for vertical centering
+    // Calculate total content height for vertical centering with better balance
     const totalContentHeight = GRID_CONFIG.headerHeight + GRID_CONFIG.statsHeight + GRID_CONFIG.legendHeight + 50 + GRID_CONFIG.gridHeight;
-    const centerY = (GRID_CONFIG.pageHeight - totalContentHeight) / 2;
+    const centerY = Math.max(30, (GRID_CONFIG.pageHeight - totalContentHeight) / 2 - 50); // Better vertical positioning
 
     // White background
     pdf.setFillColor(255, 255, 255);

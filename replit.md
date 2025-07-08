@@ -191,6 +191,12 @@ The application uses three main entities:
   - Better legend positioning with larger icons (16x14) and increased item spacing (170px)
   - Optimized time labels (10pt hours, 8pt half-hours) for compact full timeline display
   - **RESULT**: Complete timeline visibility from 6:00-23:30 with professional header and legend layout
+- July 08, 2025. **PDF LAYOUT CENTERING OPTIMIZATION**: Implemented comprehensive page centering system:
+  - Added dynamic horizontal and vertical centering calculations for all PDF elements
+  - Updated all positioning coordinates to use centerX and centerY for perfect alignment
+  - Improved vertical positioning with optimized offset for better visual balance
+  - Centered header, stats, legend, grid structure, and all event positioning
+  - **RESULT**: Perfectly centered PDF layout with equal margins and professional appearance
 
 ## User Preferences
 
