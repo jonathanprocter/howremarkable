@@ -214,13 +214,14 @@
     justify-content: center;
     border-right: 2px solid black;
     border-bottom: 1px solid #ddd;
-    min-height: 25px;
+    height: 30px;
 }
 
 .time-slot.hour {
     background: #f0f0f0;
     border-bottom: 2px solid black;
     font-size: 11px;
+    font-weight: bold;
 }
 
 .calendar-cell {
@@ -520,11 +521,11 @@
         font-size: 4px;
         line-height: 1.0;
     }
-    
+
     .time-slot {
         height: 55px;
     }
-    
+
     .appointment-slot {
         height: 55px;
     }
@@ -596,23 +597,23 @@
     max-width: 1404px;
     margin: 0 auto;
   }
-  
+
   /* reMarkable Pro optimizations */
   .remarkable-optimized {
     /* Optimize for e-ink display refresh rates */
     backface-visibility: hidden;
     transform: translateZ(0);
-    
+
     /* Better touch targets for stylus */
     touch-action: manipulation;
-    
+
     /* Disable text selection for better stylus interaction */
     user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
   }
-  
+
   /* Allow text selection in editable areas */
   .remarkable-optimized input,
   .remarkable-optimized textarea,
@@ -622,12 +623,12 @@
     -moz-user-select: text;
     -ms-user-select: text;
   }
-  
+
   .time-slot {
     min-height: 40px;
     border-bottom: 1px solid hsl(20, 5.9%, 90%);
   }
-  
+
   .event-block {
     position: relative;
     background: white;
@@ -641,43 +642,43 @@
     word-wrap: break-word;
     hyphens: auto;
   }
-  
+
   .event-block:hover {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     transform: translateY(-1px);
   }
-  
+
   .event-block[draggable="true"] {
     cursor: grab;
   }
-  
+
   .event-block[draggable="true"]:active {
     cursor: grabbing;
     opacity: 0.8;
     transform: rotate(2deg);
   }
-  
+
   .time-slot:hover {
     background-color: rgba(59, 130, 246, 0.05);
   }
-  
+
   .event-block.simplepractice {
     border-left: 4px solid var(--simplepractice-color);
   }
-  
+
   .event-block.google {
     border-left: 4px solid var(--google-color);
   }
-  
+
   .event-block.manual {
     border-left: 4px solid var(--primary);
   }
-  
+
   .event-block.all-day {
     border-left: 4px solid #ef4444;
     background-color: #fef2f2;
   }
-  
+
   .calendar-day {
     width: 32px;
     height: 32px;
@@ -689,21 +690,21 @@
     font-size: 14px;
     transition: background-color 0.2s ease;
   }
-  
+
   .calendar-day:hover {
     background-color: hsl(60, 4.8%, 95.9%);
   }
-  
+
   .calendar-day.today {
     font-weight: 700;
     color: var(--primary);
   }
-  
+
   .calendar-day.current-week {
     background-color: hsl(207, 90%, 95%);
     color: hsl(207, 90%, 30%);
   }
-  
+
   .sidebar-section {
     background: white;
     border: 1px solid hsl(20, 5.9%, 90%);
@@ -711,20 +712,20 @@
     padding: 16px;
     margin-bottom: 16px;
   }
-  
+
   .main-content {
     background: white;
     border: 1px solid hsl(20, 5.9%, 90%);
     border-radius: 8px;
     min-height: 100vh;
   }
-  
+
   .time-header {
     background: hsl(60, 4.8%, 95.9%);
     border-bottom: 2px solid hsl(20, 5.9%, 90%);
     font-weight: 600;
   }
-  
+
   .day-header {
     background: hsl(60, 4.8%, 95.9%);
     border-bottom: 2px solid hsl(20, 5.9%, 90%);
@@ -732,11 +733,11 @@
     cursor: pointer;
     transition: background-color 0.2s ease;
   }
-  
+
   .day-header:hover {
     background: hsl(60, 4.8%, 92%);
   }
-  
+
   .expanded-event {
     background: hsl(60, 4.8%, 95.9%);
     border-left: 4px solid var(--primary);
@@ -744,7 +745,7 @@
     margin-top: 8px;
     border-radius: 4px;
   }
-  
+
   .notes-area {
     border-left: 4px solid var(--primary);
     padding-left: 12px;
