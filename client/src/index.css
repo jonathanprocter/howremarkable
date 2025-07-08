@@ -384,11 +384,19 @@ html, body {
     gap: 2px;
 }
 
+.appointment-center .appointment-notes {
+    text-align: left;
+}
+
 .appointment-right {
     text-align: right;
     display: flex;
     flex-direction: column;
     gap: 2px;
+}
+
+.appointment-right .appointment-actions {
+    text-align: left;
 }
 
 .appointment-title-bold {
@@ -427,21 +435,25 @@ html, body {
     text-decoration: underline;
     font-style: normal;
     margin-left: 0;
+    text-align: left;
 }
 
 .appointment-notes {
     margin-top: 4px;
     padding-left: 0;
+    text-align: left;
 }
 
 .appointment-actions {
     margin-top: 4px;
     padding-left: 0;
+    text-align: left;
 }
 
 .appointment-notes .note-item,
 .appointment-actions .action-item {
     margin-left: 12px;
+    text-align: left;
 }
 
 /* Appointment header styling - exact match to HTML template */
