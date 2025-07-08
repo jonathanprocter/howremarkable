@@ -307,7 +307,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     // Only remove lock emoji and preserve all other text
     cleanTitle = cleanTitle.replace(/🔒\s*/, '').trim();
     
-    console.log(`Event ${event.id}: "${event.title}" -> "${cleanTitle}" at ${formatMilitaryTime(eventStart)}`);
+    console.log(`Event ${event.id}: "${event.title}" -> "${cleanTitle}"`);
     pdf.text(cleanTitle, eventX, eventY);
     
     // Source line
@@ -399,32 +399,49 @@ export const exportExactDailyPDF = async (
   selectedDate: Date,
   events: CalendarEvent[]
 ): Promise<void> => {
-  const pdf = new jsPDF({
-    orientation: 'portrait',
-    unit: 'pt',
-    format: 'a4'
-  });
+  try {
+    console.log(`=== EXACT DAILY PDF EXPORT START ===`);
+    console.log(`Date: ${selectedDate.toDateString()}`);
+    console.log(`Total events: ${events.length}`);
 
-  console.log(`=== EXACT DAILY PDF EXPORT ===`);
-  console.log(`Date: ${selectedDate.toDateString()}`);
-  console.log(`Total events: ${events.length}`);
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'pt',
+      format: 'a4'
+    });
 
-  // Filter events for selected date
-  const dayEvents = events.filter(event => {
-    const eventDate = new Date(event.startTime);
-    return eventDate.toDateString() === selectedDate.toDateString();
-  });
+    // Filter events for selected date
+    const dayEvents = events.filter(event => {
+      const eventDate = new Date(event.startTime);
+      return eventDate.toDateString() === selectedDate.toDateString();
+    });
 
-  console.log(`Day events: ${dayEvents.length}`);
+    console.log(`Day events: ${dayEvents.length}`);
+    dayEvents.forEach((event, i) => {
+      console.log(`Event ${i + 1}: ${event.title} at ${formatMilitaryTime(new Date(event.startTime))}`);
+    });
 
-  // Draw exactly what the dashboard shows
-  drawDashboardHeader(pdf, selectedDate, dayEvents);
-  drawDashboardLegend(pdf);
-  drawDashboardGrid(pdf, selectedDate, events);
+    // Draw exactly what the dashboard shows
+    console.log('Drawing header...');
+    drawDashboardHeader(pdf, selectedDate, dayEvents);
+    
+    console.log('Drawing legend...');
+    drawDashboardLegend(pdf);
+    
+    console.log('Drawing grid...');
+    drawDashboardGrid(pdf, selectedDate, events);
 
-  // Save PDF
-  const fileName = `daily-planner-${selectedDate.toISOString().split('T')[0]}.pdf`;
-  pdf.save(fileName);
+    // Save PDF
+    const fileName = `daily-planner-${selectedDate.toISOString().split('T')[0]}.pdf`;
+    console.log(`Saving PDF as: ${fileName}`);
+    pdf.save(fileName);
 
-  console.log(`PDF saved as: ${fileName}`);
+    console.log(`=== EXACT DAILY PDF EXPORT COMPLETE ===`);
+    
+  } catch (error) {
+    console.error('=== EXACT DAILY PDF EXPORT ERROR ===');
+    console.error('Error details:', error);
+    console.error('Error stack:', error.stack);
+    throw error;
+  }
 };
