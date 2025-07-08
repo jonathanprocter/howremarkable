@@ -40,15 +40,20 @@ export const exportWeeklyCalendarHTML = async (
     container.style.position = 'absolute';
     container.style.left = '-9999px';
     container.style.top = '0';
-    container.style.width = '842px'; // A4 landscape width
+    container.style.width = '1200px'; // Increased width to accommodate full layout
+    container.style.height = '900px'; // Increased height for full timeline
     container.style.background = 'white';
+    container.style.overflow = 'visible';
     document.body.appendChild(container);
 
-    // Convert to canvas
+    // Wait for layout to stabilize
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Convert to canvas with proper dimensions
     const canvas = await html2canvas(container, {
-      width: 842,
-      height: 720,
-      scale: 2,
+      width: 1200,
+      height: 900,
+      scale: 1, // Reduced scale to fit everything
       backgroundColor: '#ffffff',
       useCORS: true,
       allowTaint: false,
@@ -58,16 +63,16 @@ export const exportWeeklyCalendarHTML = async (
     // Remove the temporary container
     document.body.removeChild(container);
 
-    // Create PDF
+    // Create PDF in A3 landscape format to accommodate full layout
     const pdf = new jsPDF({
       orientation: 'landscape',
       unit: 'pt',
-      format: [842, 720]
+      format: [1190, 842] // A3 landscape dimensions
     });
 
-    // Add the canvas to PDF
+    // Add the canvas to PDF, scaled to fit A3 landscape
     const imgData = canvas.toDataURL('image/png');
-    pdf.addImage(imgData, 'PNG', 0, 0, 842, 720);
+    pdf.addImage(imgData, 'PNG', 0, 0, 1190, 842);
 
     // Download the PDF
     const filename = `weekly-calendar-${weekStartDate.getFullYear()}-${(weekStartDate.getMonth() + 1).toString().padStart(2, '0')}-${weekStartDate.getDate().toString().padStart(2, '0')}.pdf`;
@@ -130,8 +135,8 @@ function generateWeeklyHTML(
             color: black;
             font-size: 11px;
             line-height: 1.1;
-            width: 842px;
-            height: 720px;
+            width: 1200px;
+            height: 900px;
             box-sizing: border-box;
         }
         
@@ -289,7 +294,7 @@ function generateWeeklyHTML(
             border: 1px solid black;
             vertical-align: top;
             padding: 0;
-            height: 15px;
+            height: 20px;
             position: relative;
             width: calc((100% - 70px) / 7);
         }
