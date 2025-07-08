@@ -158,11 +158,12 @@ export const exportWeeklyCalendarHTML = async (
       pdf.text(dayNumbers[index], x + dayColWidth/2, gridY + 35, { align: 'center' });
     });
 
-    // Time slots grid
+    // Time slots grid with proper alternating backgrounds
     let currentY = gridY + 40;
+    let slotCount = 0;
     
     for (let hour = 6; hour <= 23; hour++) {
-      // Hour row (gray background across entire width)
+      // Hour row (gray background for hour slots)
       pdf.setFillColor(245, 245, 245);
       pdf.rect(50, currentY, totalGridWidth, rowHeight, 'F');
       
@@ -173,12 +174,13 @@ export const exportWeeklyCalendarHTML = async (
       const hourStr = `${hour.toString().padStart(2, '0')}:00`;
       pdf.text(hourStr, 50 + timeColWidth/2, currentY + 13, { align: 'center' });
       
-      // Horizontal line for hour
+      // Horizontal line for hour (solid)
       pdf.setLineWidth(1);
       pdf.setDrawColor(0, 0, 0);
       pdf.line(50, currentY, 50 + totalGridWidth, currentY);
       
       currentY += rowHeight;
+      slotCount++;
       
       // Half-hour row (white background)
       if (hour < 23) {
@@ -193,11 +195,12 @@ export const exportWeeklyCalendarHTML = async (
         pdf.setTextColor(0, 0, 0);
         
         // Light horizontal line for half-hour
-        pdf.setLineWidth(0.5);
-        pdf.setDrawColor(180, 180, 180);
+        pdf.setLineWidth(0.3);
+        pdf.setDrawColor(200, 200, 200);
         pdf.line(50, currentY, 50 + totalGridWidth, currentY);
         
         currentY += rowHeight;
+        slotCount++;
       }
     }
     
@@ -213,44 +216,59 @@ export const exportWeeklyCalendarHTML = async (
     pdf.setLineWidth(1);
     pdf.setDrawColor(0, 0, 0);
     pdf.line(50, currentY, 50 + totalGridWidth, currentY);
+    pdf.line(50, currentY + rowHeight, 50 + totalGridWidth, currentY + rowHeight);
     
     // Vertical lines for day columns
     pdf.setLineWidth(1);
     pdf.setDrawColor(0, 0, 0);
+    
+    // Draw vertical lines for each day column
     for (let i = 0; i <= 7; i++) {
       const x = 50 + timeColWidth + (i * dayColWidth);
-      pdf.line(x, gridY, x, gridY + 760);
+      pdf.line(x, gridY, x, currentY + rowHeight);
     }
     
     // Vertical line after TIME column
-    pdf.line(50 + timeColWidth, gridY, 50 + timeColWidth, gridY + 760);
+    pdf.line(50 + timeColWidth, gridY, 50 + timeColWidth, currentY + rowHeight);
+    
+    // Left border of time column
+    pdf.line(50, gridY, 50, currentY + rowHeight);
 
-    // Add appointments to grid
+    // Add appointments to grid - Calculate exact positioning
     weekEvents.forEach(event => {
       const dayIndex = event.startTime.getDay() === 0 ? 6 : event.startTime.getDay() - 1; // Convert Sunday=0 to be index 6
       const startHour = event.startTime.getHours();
       const startMinute = event.startTime.getMinutes();
-      const duration = (event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60); // minutes
+      const endHour = event.endTime.getHours();
+      const endMinute = event.endTime.getMinutes();
       
       if (startHour >= 6 && startHour <= 23) {
-        const slotIndex = ((startHour - 6) * 2) + (startMinute >= 30 ? 1 : 0);
-        const appointmentY = gridY + 40 + (slotIndex * rowHeight);
+        // Calculate precise positioning based on time
+        const startMinutesFromSix = (startHour - 6) * 60 + startMinute;
+        const endMinutesFromSix = (endHour - 6) * 60 + endMinute;
+        const duration = endMinutesFromSix - startMinutesFromSix;
+        
+        // Position calculation (each 30-min slot = 20px)
+        const appointmentY = gridY + 40 + (startMinutesFromSix / 30) * rowHeight;
         const appointmentX = 50 + timeColWidth + (dayIndex * dayColWidth);
-        const appointmentHeight = Math.max(rowHeight - 1, (duration / 30) * rowHeight);
+        const appointmentHeight = Math.max(18, (duration / 30) * rowHeight);
         
         // Draw appointment background
         if (event.title.includes('Appointment')) {
+          // SimplePractice styling
           pdf.setFillColor(255, 255, 255);
           pdf.setDrawColor(100, 149, 237);
           pdf.setLineWidth(2);
-          // Add thick left border for SimplePractice
           pdf.rect(appointmentX + 2, appointmentY + 1, dayColWidth - 4, appointmentHeight - 2, 'FD');
+          // Thick left border
           pdf.setLineWidth(4);
+          pdf.setDrawColor(100, 149, 237);
           pdf.line(appointmentX + 2, appointmentY + 1, appointmentX + 2, appointmentY + appointmentHeight - 1);
         } else {
+          // Google Calendar styling
           pdf.setFillColor(255, 255, 255);
           pdf.setDrawColor(76, 175, 80);
-          pdf.setLineWidth(1);
+          pdf.setLineWidth(2);
           pdf.setLineDashPattern([2, 2], 0);
           pdf.rect(appointmentX + 2, appointmentY + 1, dayColWidth - 4, appointmentHeight - 2, 'FD');
           pdf.setLineDashPattern([], 0);
@@ -258,12 +276,12 @@ export const exportWeeklyCalendarHTML = async (
         
         // Appointment text
         pdf.setFont('times', 'bold');
-        pdf.setFontSize(6);
+        pdf.setFontSize(7);
         pdf.setTextColor(0, 0, 0);
         const cleanTitle = event.title.replace(' Appointment', '');
         
-        // Split long names into multiple lines
-        const maxWidth = dayColWidth - 8;
+        // Wrap text for long names
+        const maxWidth = dayColWidth - 10;
         const words = cleanTitle.split(' ');
         let lines = [];
         let currentLine = '';
@@ -281,16 +299,20 @@ export const exportWeeklyCalendarHTML = async (
         if (currentLine) lines.push(currentLine);
         
         // Draw text lines
+        let textY = appointmentY + 10;
         lines.forEach((line, index) => {
-          pdf.text(line, appointmentX + 4, appointmentY + 8 + (index * 7), { maxWidth: maxWidth });
+          if (textY < appointmentY + appointmentHeight - 8) {
+            pdf.text(line, appointmentX + 5, textY, { maxWidth: maxWidth });
+            textY += 8;
+          }
         });
         
         // Time text at bottom
         pdf.setFont('times', 'normal');
-        pdf.setFontSize(5);
+        pdf.setFontSize(6);
         pdf.setTextColor(51, 51, 51);
-        const timeStr = `${event.startTime.getHours().toString().padStart(2, '0')}:${event.startTime.getMinutes().toString().padStart(2, '0')}`;
-        pdf.text(timeStr, appointmentX + 4, appointmentY + appointmentHeight - 3);
+        const timeStr = `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}`;
+        pdf.text(timeStr, appointmentX + 5, appointmentY + appointmentHeight - 4);
       }
     });
 
