@@ -372,9 +372,15 @@ export const DailyView = ({
                       {event.notes && (
                         <div className="appointment-notes">
                           <div className="appointment-notes-header">Event Notes</div>
-                          {event.notes.split('\n').filter(note => note.trim()).map((note, index) => (
-                            <div key={index} className="note-item">• {note.trim().replace(/^•+\s*/, '')}</div>
-                          ))}
+                          {event.notes.split('\n').filter(note => {
+                            const cleaned = note.trim().replace(/^•+\s*/, '');
+                            return cleaned && cleaned !== '';
+                          }).map((note, index) => {
+                            const cleaned = note.trim().replace(/^•+\s*/, '');
+                            return (
+                              <div key={index} className="note-item">• {cleaned}</div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -384,9 +390,15 @@ export const DailyView = ({
                       {event.actionItems && (
                         <div className="appointment-actions">
                           <div className="appointment-actions-header">Action Items</div>
-                          {event.actionItems.split('\n').filter(item => item.trim()).map((item, index) => (
-                            <div key={index} className="action-item">• {item.trim().replace(/^•+\s*/, '')}</div>
-                          ))}
+                          {event.actionItems.split('\n').filter(item => {
+                            const cleaned = item.trim().replace(/^•+\s*/, '');
+                            return cleaned && cleaned !== '';
+                          }).map((item, index) => {
+                            const cleaned = item.trim().replace(/^•+\s*/, '');
+                            return (
+                              <div key={index} className="action-item">• {cleaned}</div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
