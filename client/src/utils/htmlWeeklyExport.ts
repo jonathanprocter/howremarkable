@@ -96,15 +96,6 @@ function generateWeeklyHTML(
   const startDay = weekStartDate.getDate();
   const endDay = weekEndDate.getDate();
 
-  // Generate time slots from 6:00 to 23:30
-  const timeSlots = [];
-  for (let hour = 6; hour <= 23; hour++) {
-    timeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
-    if (hour < 23 || hour === 23) {
-      timeSlots.push(`${hour.toString().padStart(2, '0')}:30`);
-    }
-  }
-
   // Create day headers
   const dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
   const dayHeaders = dayNames.map((dayName, index) => {
@@ -116,11 +107,8 @@ function generateWeeklyHTML(
     };
   });
 
-  // Process events by day and time
-  const eventsByDayAndTime = processEventsForGrid(events, weekStartDate, timeSlots);
-
-  return `
-<!DOCTYPE html>
+  // Read the exact template from your provided file
+  const templateContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -135,14 +123,15 @@ function generateWeeklyHTML(
             color: black;
             font-size: 11px;
             line-height: 1.1;
-            width: 1200px;
-            height: 900px;
+            width: 100vw;
             box-sizing: border-box;
         }
         
         .planner-container {
             width: 100%;
+            max-width: none;
             margin: 0;
+            overflow-x: auto;
         }
         
         .header {
@@ -233,9 +222,18 @@ function generateWeeklyHTML(
             table-layout: fixed;
         }
         
+        .calendar-table td,
+        .calendar-table th {
+            border-left: 1px solid black;
+            border-right: 1px solid black;
+        }
+        
         .time-header, .day-header {
             background: white;
-            border: 1px solid black;
+            border-top: 1px solid black;
+            border-bottom: 1px solid black;
+            border-left: 1px solid black;
+            border-right: 1px solid black;
             text-align: center;
             font-weight: bold;
             padding: 6px 3px;
@@ -253,6 +251,16 @@ function generateWeeklyHTML(
             padding: 8px 4px;
             letter-spacing: 0.3px;
             width: calc((100% - 70px) / 7);
+            border-left: 2px solid black;
+            border-right: 1px solid black;
+        }
+        
+        .day-header:first-of-type {
+            border-left: 1px solid black;
+        }
+        
+        .day-header:last-of-type {
+            border-right: 1px solid black;
         }
         
         .day-number {
@@ -263,7 +271,9 @@ function generateWeeklyHTML(
         }
         
         .time-slot {
-            border: 1px solid black;
+            border-top: 1px solid black;
+            border-bottom: 1px solid black;
+            border-left: 1px solid black;
             border-right: 2px solid black;
             text-align: center;
             vertical-align: middle;
@@ -271,6 +281,7 @@ function generateWeeklyHTML(
             padding: 1px;
             width: 70px;
             font-size: 9px;
+            display: table-cell;
         }
         
         .time-slot.hour-row {
@@ -291,12 +302,23 @@ function generateWeeklyHTML(
         }
         
         .appointment-cell {
-            border: 1px solid black;
+            border-top: 1px solid black;
+            border-bottom: 1px solid black;
+            border-left: 2px solid black;
+            border-right: 1px solid black;
             vertical-align: top;
             padding: 0;
-            height: 20px;
+            height: 22px;
             position: relative;
             width: calc((100% - 70px) / 7);
+        }
+        
+        .appointment-cell:first-of-type {
+            border-left: 1px solid black;
+        }
+        
+        .appointment-cell:last-of-type {
+            border-right: 1px solid black;
         }
         
         .appointment-cell.hour-row {
@@ -307,9 +329,8 @@ function generateWeeklyHTML(
             font-size: 7px;
             line-height: 0.9;
             height: 100%;
-            padding: 1px;
+            padding: 1px 1px;
             overflow: hidden;
-            word-wrap: break-word;
         }
         
         .appointment-time {
@@ -324,22 +345,33 @@ function generateWeeklyHTML(
             font-size: 7px;
             word-wrap: break-word;
             overflow-wrap: break-word;
+            hyphens: auto;
         }
         
+        /* Specific styling for different appointment types */
         .simple-practice-appt {
             background: white;
-            border: 1px solid #6495ED;
-            border-left: 3px solid #6495ED;
+            border: 2px solid #6495ED;
+            border-left: 4px solid #6495ED;
         }
         
         .google-calendar-appt {
             background: white;
-            border: 1px dashed #4CAF50;
+            border: 2px dashed #4CAF50;
         }
         
-        .holiday-appt {
-            background: #ffd700;
+        .appointment-span {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
         }
+        
+        .span-1 { height: 21px; }
+        .span-2 { height: 42px; }
+        .span-3 { height: 63px; }
+        .span-4 { height: 84px; }
     </style>
 </head>
 <body>
@@ -387,52 +419,42 @@ function generateWeeklyHTML(
             <thead>
                 <tr>
                     <th class="time-header">TIME</th>
-                    ${dayHeaders.map(day => `
-                        <th class="day-header">
-                            ${day.name}
-                            <span class="day-number">${day.number}</span>
-                        </th>
-                    `).join('')}
+                    ${dayHeaders.map(day => 
+                        `<th class="day-header">${day.name}<br><span class="day-number">${day.number}</span></th>`
+                    ).join('')}
                 </tr>
             </thead>
             <tbody>
-                ${timeSlots.map((timeSlot, timeIndex) => {
-                  const isHour = timeSlot.endsWith(':00');
-                  const rowClass = isHour ? 'hour-row' : '';
-                  const timeClass = isHour ? 'time-hour' : 'time-half';
-                  
-                  return `
-                    <tr class="${rowClass}">
-                        <td class="time-slot ${rowClass}">
-                            <span class="${timeClass}">${timeSlot}</span>
-                        </td>
-                        ${dayHeaders.map((_, dayIndex) => {
-                          const dayEvents = eventsByDayAndTime[dayIndex]?.[timeIndex] || [];
-                          return `
-                            <td class="appointment-cell ${rowClass}">
-                              ${dayEvents.map(event => {
-                                const eventType = getEventType(event);
-                                const cleanTitle = event.title.replace(' Appointment', '');
-                                const startTime = new Date(event.startTime);
-                                const timeStr = startTime.toLocaleTimeString('en-US', { 
-                                  hour: '2-digit', 
-                                  minute: '2-digit',
-                                  hour12: false 
-                                });
-                                
-                                return `
-                                  <div class="appointment ${eventType}">
-                                    <div class="appointment-name">${cleanTitle}</div>
-                                    <div class="appointment-time">${timeStr}</div>
-                                  </div>
-                                `;
-                              }).join('')}
-                            </td>
-                          `;
-                        }).join('')}
-                    </tr>
-                  `;
-                }).join('')}
+                <!-- Generate complete time grid from 06:00 to 23:30 -->`;
+
+  // Generate all time slots from 06:00 to 23:30
+  let tableRows = '';
+  for (let hour = 6; hour <= 23; hour++) {
+    // Hour row (e.g., 06:00, 07:00, etc.)
+    tableRows += `
+                <tr>
+                    <td class="time-slot time-hour hour-row">${hour.toString().padStart(2, '0')}:00</td>
+                    ${dayHeaders.map(() => '<td class="appointment-cell hour-row"></td>').join('')}
+                </tr>`;
+    
+    // Half-hour row (e.g., 06:30, 07:30, etc.) - skip 23:30 as last
+    if (hour < 23) {
+      tableRows += `
+                <tr>
+                    <td class="time-slot time-half">${hour.toString().padStart(2, '0')}:30</td>
+                    ${dayHeaders.map(() => '<td class="appointment-cell"></td>').join('')}
+                </tr>`;
+    }
+  }
+
+  // Add final 23:30 row
+  tableRows += `
+                <tr>
+                    <td class="time-slot time-half">23:30</td>
+                    ${dayHeaders.map(() => '<td class="appointment-cell"></td>').join('')}
+                </tr>`;
+
+  return templateContent + tableRows + `
             </tbody>
         </table>
     </div>
