@@ -135,8 +135,8 @@ export const exportExactGridPDF = async (
 
     legendX += legendItemSpacing;
 
-    // Holidays - white background with orange border
-    pdf.setFillColor(255, 255, 255);
+    // Holidays - filled yellow square
+    pdf.setFillColor(255, 255, 0);
     pdf.rect(legendX, legendY + 12, 18, 12, 'F');
     pdf.setDrawColor(245, 158, 11);
     pdf.setLineWidth(1);
