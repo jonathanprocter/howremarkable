@@ -14,8 +14,9 @@ import { exportWeeklyCalendarHTML } from '../utils/htmlWeeklyExport';
 import { exportExactGridPDF } from '../utils/exactGridPDFExport';
 import { generateCompleteExportData, exportToText, exportToJSON, exportToCSV, testExportData } from '../utils/completePDFExport';
 
-// Import the daily PDF export function
+// Import the daily PDF export functions
 import { exportDailyToPDF } from '../utils/dailyPDFExport';
+import { exportExactDailyPDF } from '../utils/exactDailyPDFExport';
 
 
 
@@ -316,7 +317,7 @@ export default function Planner() {
                 console.log(`Event ${i+1}: "${event.title}" - Duration: ${duration} minutes`);
               });
               
-              await exportDailyToPDF(selectedDateForExport, currentEvents);
+              await exportExactDailyPDF(selectedDateForExport, currentEvents);
               
               toast({
                 title: "Export Successful",
@@ -386,7 +387,7 @@ export default function Planner() {
             }
             
             // Use the dedicated daily export function directly
-            await exportDailyToPDF(selectedDateForExport, currentEvents);
+            await exportExactDailyPDF(selectedDateForExport, currentEvents);
             
             toast({
               title: "Export Successful",
