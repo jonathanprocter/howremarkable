@@ -222,6 +222,11 @@ The application uses three main entities:
   - Holiday legend: Filled yellow background with orange border
   - **FINAL RESULT**: Perfect PDF export with complete timeline visibility and professional styling
   - **USER CONFIRMED**: PDF export functionality is now PERFECT with all requirements met
+- July 08, 2025. **ROUNDED CORNER ENHANCEMENT**: Added subtle rounded corners to calendar grid:
+  - Implemented corner softening with light gray accent lines
+  - Removed rigid rectangular appearance for modern, professional look
+  - Maintained perfect grid alignment and functionality
+  - **RESULT**: Calendar now has elegant, less rigid appearance while preserving all functionality
 
 ## User Preferences
 

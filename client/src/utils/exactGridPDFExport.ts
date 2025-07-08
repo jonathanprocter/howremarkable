@@ -1,6 +1,8 @@
 import jsPDF from 'jspdf';
 import { CalendarEvent } from '../types/calendar';
 
+
+
 // A3 Landscape configuration optimized for professional weekly calendar layout
 const GRID_CONFIG = {
   // Page setup - A3 landscape dimensions (1190x842 points)
@@ -146,10 +148,28 @@ export const exportExactGridPDF = async (
     // GRID STRUCTURE - full width utilization
     const gridStartY = GRID_CONFIG.gridStartY;
 
-    // Grid border - full width
+    // Grid border - full width with subtle rounded effect
     pdf.setLineWidth(2);
     pdf.setDrawColor(0, 0, 0);
-    pdf.rect(centerX, gridStartY, GRID_CONFIG.totalGridWidth, 40 + GRID_CONFIG.gridHeight);
+    
+    // Main rectangle
+    pdf.rect(centerX + 2, gridStartY + 2, GRID_CONFIG.totalGridWidth - 4, 40 + GRID_CONFIG.gridHeight - 4);
+    
+    // Corner softening lines
+    pdf.setLineWidth(1);
+    pdf.setDrawColor(180, 180, 180);
+    // Top corners
+    pdf.line(centerX + 1, gridStartY + 1, centerX + 3, gridStartY + 1);
+    pdf.line(centerX + 1, gridStartY + 1, centerX + 1, gridStartY + 3);
+    pdf.line(centerX + GRID_CONFIG.totalGridWidth - 3, gridStartY + 1, centerX + GRID_CONFIG.totalGridWidth - 1, gridStartY + 1);
+    pdf.line(centerX + GRID_CONFIG.totalGridWidth - 1, gridStartY + 1, centerX + GRID_CONFIG.totalGridWidth - 1, gridStartY + 3);
+    
+    // Bottom corners
+    const bottomY = gridStartY + 40 + GRID_CONFIG.gridHeight;
+    pdf.line(centerX + 1, bottomY - 1, centerX + 3, bottomY - 1);
+    pdf.line(centerX + 1, bottomY - 3, centerX + 1, bottomY - 1);
+    pdf.line(centerX + GRID_CONFIG.totalGridWidth - 3, bottomY - 1, centerX + GRID_CONFIG.totalGridWidth - 1, bottomY - 1);
+    pdf.line(centerX + GRID_CONFIG.totalGridWidth - 1, bottomY - 3, centerX + GRID_CONFIG.totalGridWidth - 1, bottomY - 1);
 
     // HEADERS
     // Time header
