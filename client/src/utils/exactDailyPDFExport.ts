@@ -414,15 +414,20 @@ export const exportExactDailyPDF = async (
   events: CalendarEvent[]
 ): Promise<void> => {
   try {
-    console.log(`=== EXACT DAILY PDF EXPORT START ===`);
-    console.log(`Date: ${selectedDate.toDateString()}`);
-    console.log(`Total events: ${events.length}`);
+    console.log(`🚀🚀🚀 EXACT DAILY PDF EXPORT START 🚀🚀🚀`);
+    console.log(`📅 Date: ${selectedDate.toDateString()}`);
+    console.log(`📊 Total events: ${events.length}`);
+    
+    // Add a visible alert to confirm the function is being called
+    console.log('🔥 CREATING PDF OBJECT...');
 
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'pt',
       format: 'a4'
     });
+    
+    console.log('✅ PDF OBJECT CREATED SUCCESSFULLY');
 
     // Filter events for selected date
     const dayEvents = events.filter(event => {
