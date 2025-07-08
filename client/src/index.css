@@ -177,6 +177,7 @@ html, body {
     margin: 0;
     padding: 0;
     border: none;
+    border-bottom: 2px solid black;
 }
 
 .time-header {
