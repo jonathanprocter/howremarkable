@@ -15,6 +15,7 @@
     height: 100vh;
     display: flex;
     flex-direction: column;
+    box-sizing: border-box;
 }
 
 .header {
@@ -150,17 +151,19 @@
     flex: 1;
     display: flex;
     flex-direction: column;
+    min-height: 0;
 }
 
 .calendar-grid {
     display: grid;
     grid-template-columns: 100px repeat(7, 1fr);
-    grid-template-rows: 50px repeat(48, 40px);
+    grid-template-rows: 50px repeat(48, minmax(30px, 1fr));
     background: white;
     height: 100%;
     width: 100%;
     overflow-y: auto;
     flex: 1;
+    min-height: 0;
 }
 
 .time-header {
