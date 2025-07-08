@@ -151,13 +151,13 @@ export const WeeklyCalendarGrid = ({
       ))}
 
       {/* All-Day Events Section */}
-      <div className="all-day-header p-2 text-sm font-medium text-gray-600 bg-red-100 border-r border-gray-300 border-b border-gray-300 text-center">
+      <div className="all-day-header p-2 text-sm font-medium text-gray-600 bg-white border-r border-gray-300 border-b border-gray-300 text-center">
         All Day
       </div>
       {week.map((day, dayIndex) => {
         const allDayEvents = getAllDayEventsForDate(day.date);
         return (
-          <div key={`allday-${dayIndex}`} className="all-day-slot p-2 bg-red-50 border-r border-gray-300 border-b border-gray-300 last:border-r-0 min-h-[60px]">
+          <div key={`allday-${dayIndex}`} className="all-day-slot p-2 bg-white border-r border-gray-300 border-b border-gray-300 last:border-r-0 min-h-[60px]">
             {allDayEvents.map((event) => (
               <div
                 key={event.id}
@@ -183,7 +183,7 @@ export const WeeklyCalendarGrid = ({
       {timeSlots.map((timeSlot, slotIndex) => (
         <div key={slotIndex} className="contents">
           {/* Time column */}
-          <div className="time-slot p-2 border-r border-gray-300 bg-gray-50">
+          <div className="time-slot p-2 border-r border-gray-300 bg-white">
             <div className={cn(
               "text-gray-600 font-medium",
               timeSlot.minute === 0 ? "text-sm" : "text-xs" // Top of hour (larger), 30-minute (smaller)

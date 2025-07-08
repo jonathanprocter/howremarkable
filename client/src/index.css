@@ -246,7 +246,7 @@ html, body {
 
 
 .time-slot.hour {
-    background: #f0f0f0;
+    background: white;
     border-bottom: 2px solid black;
     font-size: 12px;
     font-weight: bold;
@@ -267,9 +267,9 @@ html, body {
     border-right: none;
 }
 
-/* Light background for half-hour slots across all day columns */
+/* White background for half-hour slots across all day columns */
 .calendar-cell.half-hour {
-    background: #f8f8f8;
+    background: white;
 }
 
 .calendar-cell:last-child {
@@ -280,7 +280,7 @@ html, body {
 
 .calendar-cell.hour {
     border-bottom: 2px solid black;
-    background: #f0f0f0 !important; /* Grey background for hour rows across entire week */
+    background: white !important; /* White background for hour rows across entire week */
 }
 
 .calendar-cell:hover {
@@ -694,20 +694,24 @@ html, body {
   }
 
   .event-block.simplepractice {
-    border-left: 4px solid var(--simplepractice-color);
+    background: white;
+    border: 1px solid #6495ED;
+    border-left: 4px solid #6495ED;
   }
 
   .event-block.google {
-    border-left: 4px solid var(--google-color);
+    background: white;
+    border: 1px dashed #22c55e;
   }
 
   .event-block.manual {
-    border-left: 4px solid var(--primary);
+    background: white;
+    border: 1px solid #f59e0b;
   }
 
   .event-block.all-day {
-    border-left: 4px solid #ef4444;
-    background-color: #fef2f2;
+    background: white;
+    border: 1px solid #ef4444;
   }
 
   .calendar-day {
