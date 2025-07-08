@@ -11,6 +11,53 @@ function formatTime(date: Date): string {
   });
 }
 
+// reMarkable Paper Pro specific configuration for daily view
+const REMARKABLE_DAILY_CONFIG = {
+  // Portrait dimensions in mm (179mm x 239mm)
+  pageWidth: 179,
+  pageHeight: 239,
+  margin: 8,
+  
+  // Header configuration
+  headerHeight: 25,
+  statsHeight: 20,
+  legendHeight: 12,
+  
+  get totalHeaderHeight() {
+    return this.headerHeight + this.statsHeight + this.legendHeight;
+  },
+  
+  // Grid configuration optimized for portrait
+  timeColumnWidth: 25,
+  get gridStartY() {
+    return this.margin + this.totalHeaderHeight;
+  },
+  timeSlotHeight: 4.5, // Smaller slots for portrait format
+  
+  get dayColumnWidth() {
+    return this.pageWidth - (this.margin * 2) - this.timeColumnWidth;
+  },
+  
+  // Typography for e-ink display
+  fonts: {
+    title: 14,
+    subtitle: 8,
+    stats: 6,
+    timeSlot: 5,
+    eventTitle: 6,
+    eventTime: 4
+  },
+  
+  // Colors optimized for e-ink
+  colors: {
+    black: [0, 0, 0],
+    white: [255, 255, 255],
+    lightGray: [240, 240, 240],
+    mediumGray: [200, 200, 200],
+    darkGray: [160, 160, 160]
+  }
+};
+
 // HTML Template Configuration - Professional calendar layout
 const HTML_TEMPLATE_CONFIG = {
   // Page dimensions - A3 landscape for professional presentation
@@ -66,17 +113,36 @@ const TIME_SLOTS = [
   '22:00', '22:30', '23:00', '23:30'
 ];
 
+// Compact time slots for reMarkable daily view (hourly only)
+const REMARKABLE_TIME_SLOTS = [
+  '06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00',
+  '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00',
+  '20:00', '21:00', '22:00', '23:00'
+];
+
 export const exportHTMLTemplatePDF = async (
   weekStartDate: Date,
   weekEndDate: Date,
   events: CalendarEvent[],
   isDailyView: boolean = false
 ): Promise<void> => {
-  const pdf = new jsPDF({
-    orientation: 'landscape',
-    unit: 'pt',
-    format: [HTML_TEMPLATE_CONFIG.pageWidth, HTML_TEMPLATE_CONFIG.pageHeight]
-  });
+  let pdf;
+  
+  if (isDailyView) {
+    // reMarkable Paper Pro portrait dimensions (179mm x 239mm)
+    pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: [179, 239]
+    });
+  } else {
+    // Weekly view uses landscape
+    pdf = new jsPDF({
+      orientation: 'landscape',
+      unit: 'pt',
+      format: [HTML_TEMPLATE_CONFIG.pageWidth, HTML_TEMPLATE_CONFIG.pageHeight]
+    });
+  }
 
   // Set default font - use helvetica instead of arial for better compatibility
   pdf.setFont('helvetica', 'normal');
@@ -117,26 +183,33 @@ export const exportHTMLTemplatePDF = async (
 };
 
 function drawDailyHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]): void {
-  const { margin } = HTML_TEMPLATE_CONFIG;
-  const totalHeaderHeight = HTML_TEMPLATE_CONFIG.headerHeight + HTML_TEMPLATE_CONFIG.statsHeight + HTML_TEMPLATE_CONFIG.legendHeight;
+  const { margin, pageWidth, pageHeight } = REMARKABLE_DAILY_CONFIG;
+  const totalHeaderHeight = REMARKABLE_DAILY_CONFIG.totalHeaderHeight;
+  
+  // Convert mm to points (1mm = 2.834 points)
+  const mmToPt = 2.834;
+  const pageWidthPt = pageWidth * mmToPt;
+  const pageHeightPt = pageHeight * mmToPt;
+  const marginPt = margin * mmToPt;
+  const totalHeaderHeightPt = totalHeaderHeight * mmToPt;
   
   // Page border
-  pdf.setLineWidth(2);
-  pdf.setDrawColor(...HTML_TEMPLATE_CONFIG.colors.black);
-  pdf.rect(margin, margin, HTML_TEMPLATE_CONFIG.pageWidth - (margin * 2), HTML_TEMPLATE_CONFIG.pageHeight - (margin * 2));
+  pdf.setLineWidth(1);
+  pdf.setDrawColor(...REMARKABLE_DAILY_CONFIG.colors.black);
+  pdf.rect(marginPt, marginPt, pageWidthPt - (marginPt * 2), pageHeightPt - (marginPt * 2));
   
   // Complete header background
-  pdf.setFillColor(...HTML_TEMPLATE_CONFIG.colors.white);
-  pdf.rect(margin, margin, HTML_TEMPLATE_CONFIG.pageWidth - (margin * 2), totalHeaderHeight, 'F');
+  pdf.setFillColor(...REMARKABLE_DAILY_CONFIG.colors.white);
+  pdf.rect(marginPt, marginPt, pageWidthPt - (marginPt * 2), totalHeaderHeightPt, 'F');
   
   // === TITLE SECTION ===
-  pdf.setFontSize(26);
+  pdf.setFontSize(REMARKABLE_DAILY_CONFIG.fonts.title);
   pdf.setFont('helvetica', 'bold');
-  pdf.setTextColor(...HTML_TEMPLATE_CONFIG.colors.black);
-  pdf.text('DAILY PLANNER', HTML_TEMPLATE_CONFIG.pageWidth / 2, margin + 28, { align: 'center' });
+  pdf.setTextColor(...REMARKABLE_DAILY_CONFIG.colors.black);
+  pdf.text('DAILY PLANNER', pageWidthPt / 2, marginPt + 15, { align: 'center' });
   
   // Date info
-  pdf.setFontSize(13);
+  pdf.setFontSize(REMARKABLE_DAILY_CONFIG.fonts.subtitle);
   pdf.setFont('helvetica', 'normal');
   const dateText = selectedDate.toLocaleDateString('en-US', { 
     weekday: 'long',
@@ -144,7 +217,7 @@ function drawDailyHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]
     month: 'long', 
     day: 'numeric' 
   });
-  pdf.text(dateText, HTML_TEMPLATE_CONFIG.pageWidth / 2, margin + 46, { align: 'center' });
+  pdf.text(dateText, pageWidthPt / 2, marginPt + 22, { align: 'center' });
   
   // === STATS SECTION ===
   const statsY = margin + HTML_TEMPLATE_CONFIG.headerHeight;
@@ -405,96 +478,93 @@ function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date, events: 
 // Remove these functions as they're now integrated into drawHeader
 
 function drawDailyGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]): void {
-  const { margin } = HTML_TEMPLATE_CONFIG;
-  const gridY = HTML_TEMPLATE_CONFIG.gridStartY;
-  const headerHeight = 26;
+  const { margin, pageWidth, pageHeight, timeColumnWidth } = REMARKABLE_DAILY_CONFIG;
+  const mmToPt = 2.834;
+  const marginPt = margin * mmToPt;
+  const gridY = REMARKABLE_DAILY_CONFIG.gridStartY * mmToPt;
+  const headerHeight = 15;
   
   // Calculate single day column width (much wider for daily view)
-  const dayColumnWidth = HTML_TEMPLATE_CONFIG.pageWidth - (margin * 2) - HTML_TEMPLATE_CONFIG.timeColumnWidth;
+  const dayColumnWidth = (pageWidth - (margin * 2) - timeColumnWidth) * mmToPt;
+  const timeColumnWidthPt = timeColumnWidth * mmToPt;
   
-  // Calculate total grid height
-  const totalGridHeight = headerHeight + (TIME_SLOTS.length * HTML_TEMPLATE_CONFIG.timeSlotHeight);
+  // Calculate total grid height using compact time slots
+  const timeSlotHeightPt = REMARKABLE_DAILY_CONFIG.timeSlotHeight * mmToPt;
+  const totalGridHeight = headerHeight + (REMARKABLE_TIME_SLOTS.length * timeSlotHeightPt);
   
   // === GRID BACKGROUND ===
-  pdf.setFillColor(...HTML_TEMPLATE_CONFIG.colors.white);
-  pdf.rect(margin, gridY, HTML_TEMPLATE_CONFIG.timeColumnWidth + dayColumnWidth, totalGridHeight, 'F');
+  pdf.setFillColor(...REMARKABLE_DAILY_CONFIG.colors.white);
+  pdf.rect(marginPt, gridY, timeColumnWidthPt + dayColumnWidth, totalGridHeight, 'F');
   
   // === GRID BORDER ===
-  pdf.setLineWidth(2);
-  pdf.setDrawColor(...HTML_TEMPLATE_CONFIG.colors.black);
-  pdf.rect(margin, gridY, HTML_TEMPLATE_CONFIG.timeColumnWidth + dayColumnWidth, totalGridHeight);
+  pdf.setLineWidth(0.5);
+  pdf.setDrawColor(...REMARKABLE_DAILY_CONFIG.colors.black);
+  pdf.rect(marginPt, gridY, timeColumnWidthPt + dayColumnWidth, totalGridHeight);
   
   // === TIME COLUMN HEADER ===
-  pdf.setFillColor(...HTML_TEMPLATE_CONFIG.colors.lightGray);
-  pdf.rect(margin, gridY, HTML_TEMPLATE_CONFIG.timeColumnWidth, headerHeight, 'F');
+  pdf.setFillColor(...REMARKABLE_DAILY_CONFIG.colors.lightGray);
+  pdf.rect(marginPt, gridY, timeColumnWidthPt, headerHeight, 'F');
   
-  pdf.setFontSize(9);
+  pdf.setFontSize(REMARKABLE_DAILY_CONFIG.fonts.stats);
   pdf.setFont('helvetica', 'bold');
-  pdf.setTextColor(...HTML_TEMPLATE_CONFIG.colors.black);
-  pdf.text('TIME', margin + HTML_TEMPLATE_CONFIG.timeColumnWidth / 2, gridY + 16, { align: 'center' });
+  pdf.setTextColor(...REMARKABLE_DAILY_CONFIG.colors.black);
+  pdf.text('TIME', marginPt + timeColumnWidthPt / 2, gridY + 10, { align: 'center' });
   
   // === DAY HEADER ===
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const x = margin + HTML_TEMPLATE_CONFIG.timeColumnWidth;
+  const x = marginPt + timeColumnWidthPt;
   
   // Day header background
-  pdf.setFillColor(...HTML_TEMPLATE_CONFIG.colors.lightGray);
+  pdf.setFillColor(...REMARKABLE_DAILY_CONFIG.colors.lightGray);
   pdf.rect(x, gridY, dayColumnWidth, headerHeight, 'F');
   
   // Day name and date
-  pdf.setFontSize(14);
+  pdf.setFontSize(REMARKABLE_DAILY_CONFIG.fonts.subtitle);
   pdf.setFont('helvetica', 'bold');
   const dayName = dayNames[selectedDate.getDay()];
-  pdf.text(dayName, x + dayColumnWidth / 2, gridY + 12, { align: 'center' });
+  pdf.text(dayName, x + dayColumnWidth / 2, gridY + 8, { align: 'center' });
   
-  pdf.setFontSize(12);
+  pdf.setFontSize(REMARKABLE_DAILY_CONFIG.fonts.stats);
   pdf.setFont('helvetica', 'normal');
   const dateText = selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  pdf.text(dateText, x + dayColumnWidth / 2, gridY + 22, { align: 'center' });
+  pdf.text(dateText, x + dayColumnWidth / 2, gridY + 12, { align: 'center' });
   
   // === TIME GRID ===
-  TIME_SLOTS.forEach((timeSlot, index) => {
-    const isHour = timeSlot.endsWith(':00');
-    const y = gridY + headerHeight + (index * HTML_TEMPLATE_CONFIG.timeSlotHeight);
+  REMARKABLE_TIME_SLOTS.forEach((timeSlot, index) => {
+    const y = gridY + headerHeight + (index * timeSlotHeightPt);
     
     // Time column cell
-    pdf.setFillColor(...(isHour ? HTML_TEMPLATE_CONFIG.colors.lightGray : HTML_TEMPLATE_CONFIG.colors.white));
-    pdf.rect(margin, y, HTML_TEMPLATE_CONFIG.timeColumnWidth, HTML_TEMPLATE_CONFIG.timeSlotHeight, 'F');
+    pdf.setFillColor(...REMARKABLE_DAILY_CONFIG.colors.lightGray);
+    pdf.rect(marginPt, y, timeColumnWidthPt, timeSlotHeightPt, 'F');
     
     // Time text
-    pdf.setFontSize(isHour ? 9 : 8);
-    pdf.setFont('helvetica', isHour ? 'bold' : 'normal');
-    pdf.setTextColor(...HTML_TEMPLATE_CONFIG.colors.black);
-    pdf.text(timeSlot, margin + HTML_TEMPLATE_CONFIG.timeColumnWidth / 2, y + 12, { align: 'center' });
+    pdf.setFontSize(REMARKABLE_DAILY_CONFIG.fonts.timeSlot);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(...REMARKABLE_DAILY_CONFIG.colors.black);
+    pdf.text(timeSlot, marginPt + timeColumnWidthPt / 2, y + timeSlotHeightPt / 2 + 1, { align: 'center' });
     
     // Day cell
-    pdf.setFillColor(...HTML_TEMPLATE_CONFIG.colors.white);
-    pdf.rect(x, y, dayColumnWidth, HTML_TEMPLATE_CONFIG.timeSlotHeight, 'F');
+    pdf.setFillColor(...REMARKABLE_DAILY_CONFIG.colors.white);
+    pdf.rect(x, y, dayColumnWidth, timeSlotHeightPt, 'F');
     
     // Horizontal grid lines
-    if (isHour) {
-      pdf.setLineWidth(1);
-      pdf.setDrawColor(...HTML_TEMPLATE_CONFIG.colors.darkGray);
-    } else {
-      pdf.setLineWidth(0.5);
-      pdf.setDrawColor(...HTML_TEMPLATE_CONFIG.colors.mediumGray);
-    }
-    
-    const lineY = y + HTML_TEMPLATE_CONFIG.timeSlotHeight;
-    pdf.line(margin, lineY, margin + HTML_TEMPLATE_CONFIG.timeColumnWidth + dayColumnWidth, lineY);
+    pdf.setLineWidth(0.25);
+    pdf.setDrawColor(...REMARKABLE_DAILY_CONFIG.colors.mediumGray);
+    const lineY = y + timeSlotHeightPt;
+    pdf.line(marginPt, lineY, marginPt + timeColumnWidthPt + dayColumnWidth, lineY);
   });
   
   // === VERTICAL GRID LINES ===
   // Time column separator
-  pdf.setLineWidth(2);
-  pdf.setDrawColor(...HTML_TEMPLATE_CONFIG.colors.black);
-  pdf.line(margin + HTML_TEMPLATE_CONFIG.timeColumnWidth, gridY, margin + HTML_TEMPLATE_CONFIG.timeColumnWidth, gridY + totalGridHeight);
+  pdf.setLineWidth(0.5);
+  pdf.setDrawColor(...REMARKABLE_DAILY_CONFIG.colors.black);
+  pdf.line(marginPt + timeColumnWidthPt, gridY, marginPt + timeColumnWidthPt, gridY + totalGridHeight);
   
   // Header separator
-  pdf.line(margin, gridY + headerHeight, margin + HTML_TEMPLATE_CONFIG.timeColumnWidth + dayColumnWidth, gridY + headerHeight);
+  pdf.line(marginPt, gridY + headerHeight, marginPt + timeColumnWidthPt + dayColumnWidth, gridY + headerHeight);
   
   // === EVENTS ===
-  drawDailyAppointments(pdf, selectedDate, events, gridY + headerHeight, dayColumnWidth);
+  drawRemarkableDailyAppointments(pdf, selectedDate, events, gridY + headerHeight, dayColumnWidth, timeSlotHeightPt);
 }
 
 function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent[]): void {
@@ -603,6 +673,110 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
   
   // === EVENTS ===
   drawAppointments(pdf, weekStartDate, events, gridY + headerHeight);
+}
+
+function drawRemarkableDailyAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[], gridStartY: number, dayColumnWidth: number, timeSlotHeight: number): void {
+  const mmToPt = 2.834;
+  const marginPt = REMARKABLE_DAILY_CONFIG.margin * mmToPt;
+  const timeColumnWidthPt = REMARKABLE_DAILY_CONFIG.timeColumnWidth * mmToPt;
+  
+  // Filter events for the selected day
+  const dayEvents = events.filter(event => {
+    const eventDate = new Date(event.startTime);
+    return eventDate.toDateString() === selectedDate.toDateString();
+  }).sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+  
+  dayEvents.forEach(event => {
+    const eventDate = new Date(event.startTime);
+    const startHour = eventDate.getHours();
+    
+    // Find the time slot index (hourly slots only)
+    let slotIndex = -1;
+    for (let i = 0; i < REMARKABLE_TIME_SLOTS.length; i++) {
+      const slotHour = parseInt(REMARKABLE_TIME_SLOTS[i].split(':')[0]);
+      if (startHour === slotHour) {
+        slotIndex = i;
+        break;
+      } else if (startHour < slotHour) {
+        slotIndex = Math.max(0, i - 1);
+        break;
+      }
+    }
+    
+    if (slotIndex === -1 && startHour >= 23) {
+      slotIndex = REMARKABLE_TIME_SLOTS.length - 1;
+    }
+    
+    if (slotIndex === -1) return;
+    
+    // Calculate event height (minimum 1 slot)
+    const duration = (event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60 * 60);
+    const heightInSlots = Math.max(1, Math.ceil(duration));
+    
+    // Position calculation
+    const x = marginPt + timeColumnWidthPt + 1;
+    const y = gridStartY + (slotIndex * timeSlotHeight) + 1;
+    const width = dayColumnWidth - 2;
+    const height = (heightInSlots * timeSlotHeight) - 2;
+    
+    // Event styling optimized for e-ink
+    const isSimplePractice = event.title.includes('Appointment');
+    
+    if (isSimplePractice) {
+      pdf.setFillColor(250, 250, 250);
+      pdf.rect(x, y, width, height, 'F');
+      pdf.setDrawColor(...REMARKABLE_DAILY_CONFIG.colors.black);
+      pdf.setLineWidth(1);
+      pdf.line(x, y, x, y + height);
+    } else {
+      pdf.setFillColor(245, 245, 245);
+      pdf.rect(x, y, width, height, 'F');
+    }
+    
+    // Event border
+    pdf.setDrawColor(...REMARKABLE_DAILY_CONFIG.colors.mediumGray);
+    pdf.setLineWidth(0.25);
+    pdf.rect(x, y, width, height);
+    
+    // Event text
+    const cleanTitle = event.title.replace(/ Appointment$/, '');
+    
+    // Event name
+    pdf.setFontSize(REMARKABLE_DAILY_CONFIG.fonts.eventTitle);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(...REMARKABLE_DAILY_CONFIG.colors.black);
+    
+    const nameLines = pdf.splitTextToSize(cleanTitle, width - 4);
+    const maxNameLines = Math.min(nameLines.length, Math.floor(height / 8));
+    
+    for (let i = 0; i < maxNameLines; i++) {
+      pdf.text(nameLines[i], x + 2, y + 8 + (i * 8));
+    }
+    
+    // Time range (if space available)
+    if (height > 16) {
+      pdf.setFontSize(REMARKABLE_DAILY_CONFIG.fonts.eventTime);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(80, 80, 80);
+      
+      const startTime = eventDate.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit', 
+        hour12: true 
+      });
+      const endTime = event.endTime.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit', 
+        hour12: true 
+      });
+      const timeRange = `${startTime} - ${endTime}`;
+      
+      const timeY = y + 8 + (maxNameLines * 8) + 2;
+      if (timeY + 6 <= y + height - 2) {
+        pdf.text(timeRange, x + 2, timeY);
+      }
+    }
+  });
 }
 
 function drawDailyAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[], gridStartY: number, dayColumnWidth: number): void {
