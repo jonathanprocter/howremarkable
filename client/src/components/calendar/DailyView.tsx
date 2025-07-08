@@ -378,7 +378,7 @@ export const DailyView = ({
                             .map(note => note.trim().replace(/^[•\s-]+/, '').trim())
                             .filter(note => note.length > 0 && note !== '•' && note !== '-')
                             .map((note, index) => (
-                              <div key={index} className="note-item">• {note}</div>
+                              <div key={index} className="note-item">{note}</div>
                             ))}
                         </div>
                       )}
@@ -394,7 +394,7 @@ export const DailyView = ({
                             .map(item => item.trim().replace(/^[•\s-]+/, '').trim())
                             .filter(item => item.length > 0 && item !== '•' && item !== '-')
                             .map((item, index) => (
-                              <div key={index} className="action-item">• {item}</div>
+                              <div key={index} className="action-item">{item}</div>
                             ))}
                         </div>
                       )}

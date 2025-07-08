@@ -407,7 +407,7 @@ html, body {
 }
 
 .appointment-calendar {
-    font-size: 6px;
+    font-size: 12px;
     line-height: 1.0;
     margin-bottom: 1px;
 }
@@ -422,14 +422,14 @@ html, body {
 
 .appointment-notes .note-item,
 .appointment-actions .action-item {
-    font-size: 10px;
+    font-size: 12px;
     line-height: 1.2;
     margin-bottom: 2px;
 }
 
 .appointment-notes-header,
 .appointment-actions-header {
-    font-size: 8px;
+    font-size: 12px;
     font-weight: bold;
     margin-bottom: 3px;
     text-decoration: underline;
@@ -636,11 +636,24 @@ html, body {
 
 .action-item {
     margin: 1px 0;
-    padding-left: 6px;
+    padding-left: 12px;
     position: relative;
 }
 
 .action-item:before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    font-weight: bold;
+}
+
+.note-item {
+    margin: 1px 0;
+    padding-left: 12px;
+    position: relative;
+}
+
+.note-item:before {
     content: "•";
     position: absolute;
     left: 0;
