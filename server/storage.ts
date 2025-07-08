@@ -75,6 +75,15 @@ export class DatabaseStorage implements IStorage {
     return updatedEvent;
   }
 
+  async updateEventBySourceId(userId: number, sourceId: string, updates: Partial<Event>): Promise<Event> {
+    const [updatedEvent] = await db
+      .update(events)
+      .set(updates)
+      .where(and(eq(events.userId, userId), eq(events.sourceId, sourceId)))
+      .returning();
+    return updatedEvent;
+  }
+
   async deleteEvent(eventId: number): Promise<void> {
     await db.delete(events).where(eq(events.id, eventId));
   }
@@ -89,7 +98,7 @@ export class DatabaseStorage implements IStorage {
 
   async createOrUpdateDailyNote(note: InsertDailyNote): Promise<DailyNote> {
     const existing = await this.getDailyNote(note.userId!, note.date);
-    
+
     if (existing) {
       const [updatedNote] = await db
         .update(dailyNotes)

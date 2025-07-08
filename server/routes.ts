@@ -632,8 +632,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/events", async (req, res) => {
     try {
-      const eventData = insertEventSchema.parse(req.body);
-      const event = await storage.createEvent(eventData);
+      const eventData = req.body;
+      
+      // Convert string dates to Date objects if needed
+      if (typeof eventData.startTime === 'string') {
+        eventData.startTime = new Date(eventData.startTime);
+      }
+      if (typeof eventData.endTime === 'string') {
+        eventData.endTime = new Date(eventData.endTime);
+      }
+      
+      const validatedData = insertEventSchema.parse(eventData);
+      const event = await storage.createEvent(validatedData);
       res.json(event);
     } catch (error) {
       console.error('Create event error:', error);
@@ -651,6 +661,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(event);
     } catch (error) {
       console.error('Update event error:', error);
+      if (!res.headersSent) {
+        res.status(400).json({ error: "Failed to update event", details: error instanceof Error ? error.message : 'Unknown error' });
+      }
+    }
+  });
+
+  // Update event by sourceId (for Google Calendar events)
+  app.put("/api/events/source/:sourceId", async (req, res) => {
+    try {
+      const sourceId = req.params.sourceId;
+      const updates = req.body;
+      
+      if (!req.user) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      const user = req.user as any;
+      const event = await storage.updateEventBySourceId(parseInt(user.id), sourceId, updates);
+      
+      if (!event) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+      
+      res.json(event);
+    } catch (error) {
+      console.error('Update event by sourceId error:', error);
       if (!res.headersSent) {
         res.status(400).json({ error: "Failed to update event", details: error instanceof Error ? error.message : 'Unknown error' });
       }

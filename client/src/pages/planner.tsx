@@ -82,7 +82,7 @@ export default function Planner() {
             // Database times are already in correct timezone, just parse them directly
             const startTime = new Date(event.startTime);
             const endTime = new Date(event.endTime);
-            
+
             return {
               id: event.id,
               title: event.title,
@@ -97,16 +97,16 @@ export default function Planner() {
               calendarId: event.calendarId
             };
           });
-          
+
           updateEvents(convertedEvents);
-          
+
           // Auto-select calendars from database events
           const googleEvents = convertedEvents.filter(event => event.source === 'google' && event.calendarId);
           const calendarIds = Array.from(new Set(googleEvents.map(event => event.calendarId))).filter(id => id) as string[];
-          
+
           if (calendarIds.length > 0) {
             setSelectedCalendars(new Set(calendarIds));
-            
+
             // Create calendar objects for the legend
             const calendarsForLegend = calendarIds.map(calendarId => {
               if (calendarId === 'en.usa#holiday@group.v.calendar.google.com') {
@@ -256,7 +256,7 @@ export default function Planner() {
             state.currentWeek.endDate,
             currentEvents
           );
-          
+
           toast({
             title: "PDF Export",
             description: "Weekly calendar PDF downloaded successfully!"
@@ -410,37 +410,53 @@ export default function Planner() {
   // Enhanced function to sync all event notes to database
   const syncEventToDatabase = async (eventId: string, updates: Partial<CalendarEvent>) => {
     try {
+      console.log('Syncing event to database:', eventId, updates);
+
+      // Find the event in our state
       const event = state.events.find(e => e.id === eventId);
-      if (!event) return;
+      if (!event) {
+        console.error('Event not found in state:', eventId);
+        return;
+      }
 
-      let apiEndpoint = '';
-      let payload = updates;
+      // Prepare the payload with only the fields we want to sync
+      const payload: any = {};
+      if (updates.notes !== undefined) payload.notes = updates.notes;
+      if (updates.actionItems !== undefined) payload.actionItems = updates.actionItems;
 
-      if (event.source === 'manual') {
-        // Manual events: sync directly to database
-        const numericId = parseInt(eventId.replace('manual-', ''));
-        if (!isNaN(numericId)) {
-          apiEndpoint = `/api/events/${numericId}`;
+      let apiEndpoint = null;
+      let method = 'PUT';
+
+      if (event.source === 'google' && event.sourceId) {
+        // For Google Calendar events, update by sourceId
+        apiEndpoint = `/api/events/source/${event.sourceId}`;
+        method = 'PUT';
+      } else if (event.source === 'manual') {
+        // For manual events, update by database ID
+        // Try to parse the ID as a number, if it fails, it might be a temporary ID
+        const dbId = parseInt(eventId.replace('temp-', ''));
+        if (!isNaN(dbId) && !eventId.startsWith('temp-')) {
+          apiEndpoint = `/api/events/${dbId}`;
+          method = 'PUT';
+        } else {
+          // This is a new manual event, create it
+          payload.userId = 1; // Default user for development
+          payload.title = event.title;
+          payload.description = event.description || '';
+          payload.startTime = event.startTime;
+          payload.endTime = event.endTime;
+          payload.source = 'manual';
+          payload.color = event.color;
+
+          apiEndpoint = '/api/events';
+          method = 'POST';
         }
       } else {
-        // For Google Calendar and SimplePractice events: create/update database record for notes
-        // Store notes as a separate record linked to the external event
-        apiEndpoint = '/api/events';
-        payload = {
-          title: event.title,
-          description: event.description || '',
-          startTime: event.startTime,
-          endTime: event.endTime,
-          source: event.source,
-          sourceId: eventId,
-          notes: updates.notes || event.notes || '',
-          actionItems: updates.actionItems || event.actionItems || '',
-          color: event.color
-        };
+        console.log('Skipping sync for unsupported event type:', event.source);
+        return;
       }
 
       if (apiEndpoint) {
-        const method = event.source === 'manual' ? 'PUT' : 'POST';
         const response = await fetch(apiEndpoint, {
           method,
           headers: { 'Content-Type': 'application/json' },
@@ -448,10 +464,17 @@ export default function Planner() {
         });
 
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          const errorText = await response.text();
+          throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
         }
 
-        console.log('Event notes synced successfully to database');
+        const result = await response.json();
+        console.log('Event notes synced successfully to database:', result);
+
+        // Update the event ID if it was a temporary one
+        if (method === 'POST' && result.id) {
+          updateEvent(eventId, { id: result.id.toString() });
+        }
       }
     } catch (error) {
       console.error('Failed to sync event to database:', error);
@@ -471,7 +494,7 @@ export default function Planner() {
         // Sync all manual event notes to database
         const manualEvents = state.events.filter(event => event.source === 'manual');
         let syncedCount = 0;
-        
+
         for (const event of manualEvents) {
           try {
             await syncEventToDatabase(event.id, {
@@ -483,7 +506,7 @@ export default function Planner() {
             console.error(`Failed to sync event ${event.id}:`, error);
           }
         }
-        
+
         toast({
           title: "Notes Synced",
           description: `Successfully synced ${syncedCount} events to database`
@@ -499,12 +522,12 @@ export default function Planner() {
       try {
         const weekStart = state.currentWeek.startDate;
         const weekEnd = state.currentWeek.endDate;
-        
+
         const { events, calendars } = await fetchCalendarEvents(
           weekStart.toISOString(),
           weekEnd.toISOString()
         );
-        
+
         // Convert Google Calendar events to our format
         const googleEvents: CalendarEvent[] = events.map((event: any) => ({
           id: event.id,
@@ -518,31 +541,31 @@ export default function Planner() {
           notes: event.calendarName,
           calendarId: event.calendarId // Calendar ID for filtering
         }));
-        
+
         // Don't override existing events if they already exist in the database
         // Just update calendars and selection - events are already loaded from database
-        
+
         // Only update if no events are currently loaded
         if (state.events.length === 0) {
           updateEvents(googleEvents);
         }
         setGoogleCalendars(calendars);
-        
+
         // Only update calendar selection if none are currently selected
         if (selectedCalendars.size === 0) {
           const calendarIds = calendars?.map((cal: { id: string }) => cal.id) || [];
           const newSelectedCalendars = new Set<string>(calendarIds);
           setSelectedCalendars(newSelectedCalendars);
         }
-        
+
         toast({
           title: "Google Calendar Events Loaded",
           description: `Loaded ${googleEvents.length} events from ${calendars?.length || 0} calendars`
         });
-        
+
       } catch (error) {
         console.error('Failed to fetch calendar events:', error);
-        
+
         // Since authentication was working before, try to re-authenticate
         if (!authStatus.authenticated && !autoAuthenticate()) {
           toast({
@@ -592,7 +615,7 @@ export default function Planner() {
   const handleUpdateEventWithSync = async (eventId: string, updates: Partial<CalendarEvent>) => {
     // Update local state first
     updateEvent(eventId, updates);
-    
+
     // Auto-sync to database if it's a manual event and contains notes/actionItems
     if (updates.notes !== undefined || updates.actionItems !== undefined) {
       await syncEventToDatabase(eventId, updates);
@@ -613,7 +636,7 @@ export default function Planner() {
 
     // Add to local state immediately for responsiveness
     addEvent(newEvent);
-    
+
     // Create in database and update with real ID
     try {
       const response = await fetch('/api/events', {
@@ -630,12 +653,12 @@ export default function Planner() {
           notes: newEvent.notes || ''
         })
       });
-      
+
       if (response.ok) {
         const savedEvent = await response.json();
         // Update the event with the real database ID
         updateEvent(newEvent.id, { id: `db-${savedEvent.id}` });
-        
+
         toast({
           title: "Event Created",
           description: "New appointment added and saved to database."
@@ -657,7 +680,7 @@ export default function Planner() {
     // Remove from state
     const updatedEvents = state.events.filter(event => event.id !== eventId);
     updateEvents(updatedEvents);
-    
+
     toast({
       title: "Event Deleted",
       description: "Appointment has been removed."
@@ -687,7 +710,7 @@ export default function Planner() {
   });
 
 
-  
+
   const currentDateString = state.selectedDate.toISOString().split('T')[0];
   const currentDailyNotes = state.dailyNotes[currentDateString] || '';
 
@@ -727,7 +750,7 @@ export default function Planner() {
         selectedCalendars={selectedCalendars}
         onCalendarToggle={handleCalendarToggle}
       />
-      
+
       {state.viewMode === 'weekly' ? (
         <WeeklyPlannerView
           week={state.currentWeek.days}
