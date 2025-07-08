@@ -4,9 +4,9 @@ import { getWeekNumber } from './dateUtils';
 
 // Clean weekly calendar export with proper formatting
 const WEEKLY_CONFIG = {
-  // Page setup - A4 landscape
+  // Page setup - Extended landscape for full timeline
   pageWidth: 842,
-  pageHeight: 595,
+  pageHeight: 720, // Increased to accommodate full 6:00-23:30 timeline
   margin: 20,
   
   // Layout
@@ -27,8 +27,9 @@ const WEEKLY_CONFIG = {
   hourLine: [150, 150, 150],
   eventBg: [255, 255, 255], // White background for events
   googleEventBorder: [52, 168, 83], // Green for Google Calendar
-  simplePracticeEventBorder: [66, 133, 244], // Blue for SimplePractice
-  personalEventBorder: [255, 152, 0] // Orange for personal events
+  simplePracticeEventBorder: [100, 149, 237], // Cornflower blue for SimplePractice
+  personalEventBorder: [255, 193, 7], // Yellow for holidays/personal events
+  usHolidaysColor: [255, 193, 7] // Yellow for US holidays
 };
 
 export const exportWeeklyCalendar = async (
@@ -165,29 +166,42 @@ function drawLegend(pdf: jsPDF, margin: number, headerHeight: number, contentWid
   pdf.setDrawColor(0, 0, 0);
   pdf.line(margin, legendY + legendHeight, margin + contentWidth, legendY + legendHeight);
   
-  // Legend items
+  // Legend items with specific styling
   const legendItems = [
-    { label: 'SimplePractice', color: WEEKLY_CONFIG.simplePracticeEventBorder, style: 'solid' },
-    { label: 'Google Calendar', color: WEEKLY_CONFIG.googleEventBorder, style: 'dashed' },
-    { label: 'Personal', color: WEEKLY_CONFIG.personalEventBorder, style: 'solid' }
+    { label: 'SimplePractice', type: 'simplepractice' },
+    { label: 'Google Calendar', type: 'google' },
+    { label: 'Holidays in United States', type: 'holiday' }
   ];
   
   let x = margin + 50;
   legendItems.forEach((item) => {
-    // Draw legend box
-    pdf.setFillColor(...WEEKLY_CONFIG.eventBg);
-    pdf.rect(x, legendY + 8, 16, 12, 'F');
-    
-    if (item.style === 'dashed') {
-      pdf.setDrawColor(...item.color);
+    if (item.type === 'simplepractice') {
+      // SimplePractice: white background with thin cornflower blue border and thick left edge
+      pdf.setFillColor(255, 255, 255);
+      pdf.rect(x, legendY + 8, 16, 12, 'F');
+      
+      pdf.setDrawColor(...WEEKLY_CONFIG.simplePracticeEventBorder);
+      pdf.setLineWidth(0.5);
+      pdf.rect(x, legendY + 8, 16, 12); // Thin border
+      
       pdf.setLineWidth(2);
+      pdf.line(x, legendY + 8, x, legendY + 20); // Thick left border
+      
+    } else if (item.type === 'google') {
+      // Google Calendar: white background with green dashed border
+      pdf.setFillColor(255, 255, 255);
+      pdf.rect(x, legendY + 8, 16, 12, 'F');
+      
+      pdf.setDrawColor(...WEEKLY_CONFIG.googleEventBorder);
+      pdf.setLineWidth(1);
       pdf.setLineDashPattern([2, 2], 0);
       pdf.rect(x, legendY + 8, 16, 12);
-      pdf.setLineDashPattern([], 0);
-    } else {
-      pdf.setDrawColor(...item.color);
-      pdf.setLineWidth(2);
-      pdf.rect(x, legendY + 8, 16, 12);
+      pdf.setLineDashPattern([], 0); // Reset dash pattern
+      
+    } else if (item.type === 'holiday') {
+      // US Holidays: completely filled yellow square
+      pdf.setFillColor(...WEEKLY_CONFIG.usHolidaysColor);
+      pdf.rect(x, legendY + 8, 16, 12, 'F');
     }
     
     // Legend label
@@ -334,28 +348,34 @@ function drawEvents(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent[], ma
     const width = dayColumnWidth - 2;
     const height = Math.max(slotHeight - 2, (endSlotIndex - startSlotIndex) * slotHeight - 2);
     
-    // Draw event with white background
-    pdf.setFillColor(...WEEKLY_CONFIG.eventBg); // White background
-    pdf.rect(x, y, width, height, 'F');
-    
-    // Event border styling based on source
+    // Event styling based on source
     if (event.title.includes('Appointment')) {
-      // SimplePractice events - solid blue border
+      // SimplePractice events - white background with thin cornflower blue border and thick left edge
+      pdf.setFillColor(...WEEKLY_CONFIG.eventBg); // White background
+      pdf.rect(x, y, width, height, 'F');
+      
       pdf.setDrawColor(...WEEKLY_CONFIG.simplePracticeEventBorder);
+      pdf.setLineWidth(0.5);
+      pdf.rect(x, y, width, height); // Thin border
+      
       pdf.setLineWidth(2);
-      pdf.rect(x, y, width, height);
+      pdf.line(x, y, x, y + height); // Thick left border
+      
     } else if (event.source === 'google') {
-      // Google Calendar events - dashed green border
+      // Google Calendar events - white background with green dashed border
+      pdf.setFillColor(...WEEKLY_CONFIG.eventBg); // White background
+      pdf.rect(x, y, width, height, 'F');
+      
       pdf.setDrawColor(...WEEKLY_CONFIG.googleEventBorder);
-      pdf.setLineWidth(2);
-      pdf.setLineDashPattern([3, 3], 0);
+      pdf.setLineWidth(1);
+      pdf.setLineDashPattern([2, 2], 0);
       pdf.rect(x, y, width, height);
       pdf.setLineDashPattern([], 0); // Reset dash pattern
+      
     } else {
-      // Personal events - solid orange border
-      pdf.setDrawColor(...WEEKLY_CONFIG.personalEventBorder);
-      pdf.setLineWidth(2);
-      pdf.rect(x, y, width, height);
+      // US Holidays/Personal events - completely filled yellow square
+      pdf.setFillColor(...WEEKLY_CONFIG.usHolidaysColor);
+      pdf.rect(x, y, width, height, 'F');
     }
     
     // Event text with wrapping
