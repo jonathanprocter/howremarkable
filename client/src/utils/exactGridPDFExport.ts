@@ -154,10 +154,11 @@ export const exportExactGridPDF = async (
 
     // HEADERS
     // Time header
-    pdf.setFillColor(240, 240, 240);
+    pdf.setFillColor(255, 255, 255);
     pdf.rect(centerX, gridStartY, GRID_CONFIG.timeColumnWidth, 40, 'F');
     pdf.setFont('times', 'bold');
     pdf.setFontSize(14);
+    pdf.setTextColor(0, 0, 0);
     pdf.text('TIME', centerX + GRID_CONFIG.timeColumnWidth/2, gridStartY + 25, { align: 'center' });
 
     // Day headers
@@ -168,16 +169,18 @@ export const exportExactGridPDF = async (
       dayDate.setDate(weekStartDate.getDate() + index);
 
       // Day header background
-      pdf.setFillColor(240, 240, 240);
+      pdf.setFillColor(255, 255, 255);
       pdf.rect(dayX, gridStartY, GRID_CONFIG.dayColumnWidth, 40, 'F');
 
       // Day name
       pdf.setFont('times', 'bold');
       pdf.setFontSize(12);
+      pdf.setTextColor(0, 0, 0);
       pdf.text(dayName, dayX + GRID_CONFIG.dayColumnWidth/2, gridStartY + 15, { align: 'center' });
 
       // Day number
       pdf.setFontSize(16);
+      pdf.setTextColor(0, 0, 0);
       pdf.text(dayDate.getDate().toString(), dayX + GRID_CONFIG.dayColumnWidth/2, gridStartY + 30, { align: 'center' });
 
       // Vertical border between days
@@ -276,37 +279,38 @@ export const exportExactGridPDF = async (
           const isGoogle = event.source === 'google';
           const isHoliday = event.title.toLowerCase().includes('holiday') || event.source === 'holiday';
 
-          // White background for all appointments
+          // White background for ALL appointments
           pdf.setFillColor(255, 255, 255);
           pdf.rect(eventX, eventY, eventWidth, eventHeight, 'F');
 
           if (isSimplePractice) {
-            // Light blue background with blue left border
-            pdf.setFillColor(240, 248, 255);
-            pdf.rect(eventX, eventY, eventWidth, eventHeight, 'F');
-            pdf.setFillColor(100, 149, 237);
-            pdf.rect(eventX, eventY, 2, eventHeight, 'F');
+            // SimplePractice: Thin cornflower blue border with thick left flag
+            // Cornflower blue color: RGB(100, 149, 237)
             pdf.setDrawColor(100, 149, 237);
-            pdf.setLineWidth(0.5);
-            pdf.rect(eventX, eventY, eventWidth, eventHeight, 'S');
-          } else if (isGoogle) {
-            // Light green background with dashed green border
-            pdf.setFillColor(240, 255, 240);
-            pdf.rect(eventX, eventY, eventWidth, eventHeight, 'F');
-            pdf.setDrawColor(16, 185, 129);
             pdf.setLineWidth(1);
-            pdf.setLineDash([2, 2]);
+            pdf.rect(eventX, eventY, eventWidth, eventHeight, 'S');
+            
+            // Thick left side flag
+            pdf.setLineWidth(4);
+            pdf.line(eventX, eventY, eventX, eventY + eventHeight);
+            
+          } else if (isGoogle) {
+            // Google Calendar: Dashed green border around entire event
+            // Green color: RGB(34, 197, 94)
+            pdf.setDrawColor(34, 197, 94);
+            pdf.setLineWidth(1);
+            pdf.setLineDash([3, 2]);
             pdf.rect(eventX, eventY, eventWidth, eventHeight, 'S');
             pdf.setLineDash([]);
+            
           } else if (isHoliday) {
-            // Light yellow background with orange border
-            pdf.setFillColor(254, 243, 199);
-            pdf.rect(eventX, eventY, eventWidth, eventHeight, 'F');
+            // Holidays: Orange border
             pdf.setDrawColor(245, 158, 11);
             pdf.setLineWidth(1);
             pdf.rect(eventX, eventY, eventWidth, eventHeight, 'S');
+            
           } else {
-            // Default white with gray border
+            // Default: Gray border
             pdf.setDrawColor(156, 163, 175);
             pdf.setLineWidth(1);
             pdf.rect(eventX, eventY, eventWidth, eventHeight, 'S');
@@ -319,9 +323,9 @@ export const exportExactGridPDF = async (
 
           pdf.setTextColor(0, 0, 0);
 
-          // Calculate available text space
-          const textX = isSimplePractice ? eventX + 4 : eventX + 2;
-          const maxWidth = eventWidth - (isSimplePractice ? 8 : 4);
+          // Calculate available text space - account for thick left border on SimplePractice
+          const textX = isSimplePractice ? eventX + 6 : eventX + 3;
+          const maxWidth = eventWidth - (isSimplePractice ? 12 : 6);
           
           // Truncate long event names to fit properly
           let displayTitle = eventTitle;
