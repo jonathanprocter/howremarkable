@@ -104,10 +104,14 @@ export const WeeklyCalendarGrid = ({
 
   const getEventStyle = (event: CalendarEvent) => {
     const duration = getEventDurationInSlots(event);
-    const height = duration * 40; // 40px per slot
+    // Calculate precise height based on actual duration
+    const actualDurationMs = event.endTime.getTime() - event.startTime.getTime();
+    const actualDurationHours = actualDurationMs / (1000 * 60 * 60);
+    const slotHeight = 40; // 40px per 30-minute slot
+    const preciseHeight = Math.min(duration * slotHeight, actualDurationHours * 2 * slotHeight);
     
     return {
-      height: `${height}px`,
+      height: `${preciseHeight}px`,
       marginBottom: duration > 1 ? '0px' : '2px',
       zIndex: 20 // Ensure events appear above other elements
     };

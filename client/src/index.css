@@ -152,15 +152,15 @@
     display: flex;
     flex-direction: column;
     min-height: 0;
-    height: calc(100vh - 140px);
+    height: calc(100vh - 100px);
 }
 
 .calendar-grid {
     display: grid;
     grid-template-columns: 100px repeat(7, 1fr);
-    grid-template-rows: 50px repeat(48, calc((100vh - 190px) / 48));
+    grid-template-rows: 50px repeat(48, calc((100vh - 150px) / 48));
     background: white;
-    height: calc(100vh - 140px);
+    height: calc(100vh - 100px);
     width: 100%;
     overflow: hidden;
     flex: 1;
