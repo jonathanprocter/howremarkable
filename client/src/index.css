@@ -337,7 +337,7 @@ html, body {
 .appointment.google-calendar {
     background: white !important;
     color: #374151;
-    border: 1px dashed #22c55e;
+    border: 1px dashed #22c55e !important;
     box-shadow: 0 1px 3px rgba(34, 197, 94, 0.2);
 }
 
@@ -359,13 +359,13 @@ html, body {
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 3px;
-    border-bottom: 1px solid rgba(255,255,255,0.3);
+    border-bottom: none !important;
     padding-bottom: 2px;
 }
 
 .appointment.google-calendar .appointment-header,
 .appointment.personal .appointment-header {
-    border-bottom: 1px solid rgba(0,0,0,0.3);
+    border-bottom: none !important;
 }
 
 .appointment-title {
