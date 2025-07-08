@@ -18,7 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 // import { exportWeeklyRemarkable } from '../utils/simplePDFExport';
 // import { exportTemplateMatchPDF } from '../utils/templateMatchPDF';
 import { exportHTMLTemplatePDF } from '../utils/htmlTemplatePDF';
-import { exportWeeklyCalendar } from '../utils/weeklyCalendarExport';
+import { exportWeeklyCalendarHTML } from '../utils/htmlWeeklyExport';
 
 // Temporary stub functions until PDF exports are fixed
 const exportWeeklyPackageToPDF = async (...args: any[]): Promise<string> => { 
@@ -250,7 +250,7 @@ export default function Planner() {
         filename = generateFilename('weekly-package', state.currentWeek.startDate);
       } else if (type === 'Current View') {
         try {
-          await exportWeeklyCalendar(
+          await exportWeeklyCalendarHTML(
             state.currentWeek.startDate,
             state.currentWeek.endDate,
             currentEvents
@@ -260,7 +260,7 @@ export default function Planner() {
             title: "PDF Export",
             description: "Weekly calendar PDF downloaded successfully!"
           });
-          return; // exportWeeklyCalendar handles the download
+          return; // exportWeeklyCalendarHTML handles the download
         } catch (calendarError) {
           console.error('Weekly calendar export error:', calendarError);
           throw calendarError;
