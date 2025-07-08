@@ -27,7 +27,10 @@ export const ExportToPDF = ({
         <div className="space-y-1">
           <Button 
             variant="outline" 
-            onClick={() => onExportCurrentView('Test Export')}
+            onClick={() => {
+              console.log('🔥 TEST EXPORT BUTTON CLICKED!');
+              onExportCurrentView('Test Export');
+            }}
             className="w-full text-xs bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
             size="sm"
           >
@@ -66,7 +69,10 @@ export const ExportToPDF = ({
           </Button>
           <Button 
             variant="outline" 
-            onClick={() => onExportCurrentView('Daily View')}
+            onClick={() => {
+              console.log('🔥 DAILY VIEW BUTTON CLICKED!');
+              onExportCurrentView('Daily View');
+            }}
             className="w-full text-xs"
             size="sm"
           >
