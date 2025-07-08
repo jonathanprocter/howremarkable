@@ -229,6 +229,12 @@ The application uses three main entities:
   - Google Calendar appointments: White background with dashed green border
   - Personal appointments: White background with orange border
   - **RESULT**: Dashboard now has clean white backgrounds matching the PDF export styling
+- July 08, 2025. **HOUR ROW BACKGROUND RESTORATION**: Fixed dashboard styling to maintain proper visual hierarchy:
+  - Restored gray backgrounds (#f0f0f0) for hour rows (top of each hour) across entire week
+  - Maintained white backgrounds for half-hour time slots (#f8f8f8 for subtle distinction)
+  - Kept appointment/event backgrounds as white with calendar-specific borders
+  - Applied proper background alternation in WeeklyCalendarGrid component
+  - **RESULT**: Professional dashboard with gray hour rows for visual separation and white appointment backgrounds
 
 ## User Preferences
 

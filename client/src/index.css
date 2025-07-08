@@ -246,7 +246,7 @@ html, body {
 
 
 .time-slot.hour {
-    background: white;
+    background: #f0f0f0;
     border-bottom: 2px solid black;
     font-size: 12px;
     font-weight: bold;
@@ -267,9 +267,9 @@ html, body {
     border-right: none;
 }
 
-/* White background for half-hour slots across all day columns */
+/* Light background for half-hour slots across all day columns */
 .calendar-cell.half-hour {
-    background: white;
+    background: #f8f8f8;
 }
 
 .calendar-cell:last-child {
@@ -280,7 +280,7 @@ html, body {
 
 .calendar-cell.hour {
     border-bottom: 2px solid black;
-    background: white !important; /* White background for hour rows across entire week */
+    background: #f0f0f0 !important; /* Gray background for hour rows across entire week */
 }
 
 .calendar-cell:hover {

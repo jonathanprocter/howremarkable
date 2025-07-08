@@ -183,7 +183,10 @@ export const WeeklyCalendarGrid = ({
       {timeSlots.map((timeSlot, slotIndex) => (
         <div key={slotIndex} className="contents">
           {/* Time column */}
-          <div className="time-slot p-2 border-r border-gray-300 bg-white">
+          <div className={cn(
+            "time-slot p-2 border-r border-gray-300",
+            timeSlot.minute === 0 ? "bg-gray-50" : "bg-white"
+          )}>
             <div className={cn(
               "text-gray-600 font-medium",
               timeSlot.minute === 0 ? "text-sm" : "text-xs" // Top of hour (larger), 30-minute (smaller)
@@ -211,7 +214,10 @@ export const WeeklyCalendarGrid = ({
             return (
               <div
                 key={dayIndex}
-                className="time-slot border-r border-gray-300 last:border-r-0 relative cursor-pointer hover:bg-gray-50"
+                className={cn(
+                  "time-slot border-r border-gray-300 last:border-r-0 relative cursor-pointer hover:bg-gray-50",
+                  timeSlot.minute === 0 ? "bg-gray-50" : "bg-white"
+                )}
                 onClick={() => onTimeSlotClick(day.date, timeSlot.time)}
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, day.date, timeSlot)}
