@@ -34,9 +34,24 @@ export const exportWeeklyCalendarHTML = async (
     const exactTemplate = await templateResponse.text();
     console.log('Template loaded, length:', exactTemplate.length);
 
-    // Create a temporary div with explicit styling
+    // Parse the template to extract styles and body content
+    const parser = new DOMParser();
+    const templateDoc = parser.parseFromString(exactTemplate, 'text/html');
+    
+    // Extract the styles from the template
+    const styleTag = templateDoc.querySelector('style');
+    const bodyContent = templateDoc.body.innerHTML;
+    
+    // Create a temporary div with the body content
     const container = document.createElement('div');
-    container.innerHTML = exactTemplate;
+    container.innerHTML = bodyContent;
+    
+    // Create and inject the style tag
+    if (styleTag) {
+      const newStyle = document.createElement('style');
+      newStyle.textContent = styleTag.textContent;
+      document.head.appendChild(newStyle);
+    }
     
     // Force explicit dimensions and positioning
     container.style.position = 'fixed';
@@ -49,6 +64,13 @@ export const exportWeeklyCalendarHTML = async (
     container.style.overflow = 'visible';
     container.style.transform = 'scale(1)';
     container.style.transformOrigin = 'top left';
+    container.style.fontFamily = "'Times New Roman', serif";
+    container.style.fontSize = '11px';
+    container.style.lineHeight = '1.1';
+    container.style.color = 'black';
+    container.style.padding = '15px';
+    container.style.margin = '0';
+    container.style.boxSizing = 'border-box';
     
     // Append to body and make visible temporarily
     document.body.appendChild(container);
@@ -72,8 +94,14 @@ export const exportWeeklyCalendarHTML = async (
 
     console.log('Canvas created:', canvas.width, 'x', canvas.height);
 
-    // Remove the container
+    // Remove the container and injected styles
     document.body.removeChild(container);
+    if (styleTag) {
+      const injectedStyle = document.head.querySelector('style:last-child');
+      if (injectedStyle) {
+        document.head.removeChild(injectedStyle);
+      }
+    }
 
     // Create PDF with proper reMarkable Paper Pro dimensions (landscape)
     const pdf = new jsPDF({
