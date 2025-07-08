@@ -276,53 +276,72 @@ export const exportExactGridPDF = async (
       pdf.line(centerX, y, centerX + GRID_CONFIG.totalGridWidth, y);
     });
 
-    // EVENTS - place them exactly like in the calendar
+    // EVENTS - place them exactly like in the calendar with precise positioning
     weekEvents.forEach(event => {
       const eventDate = new Date(event.startTime);
+      const eventEndDate = new Date(event.endTime);
+      
+      // Calculate which day of the week this event falls on
       const dayIndex = Math.floor((eventDate.getTime() - weekStartDate.getTime()) / (1000 * 60 * 60 * 24));
 
       if (dayIndex >= 0 && dayIndex < 7) {
         const eventHour = eventDate.getHours();
         const eventMinute = eventDate.getMinutes();
+        const endHour = eventEndDate.getHours();
+        const endMinute = eventEndDate.getMinutes();
 
-        // Calculate slot index based on our 36-slot grid (6:00-23:30)
-        const slotIndex = ((eventHour - 6) * 2) + (eventMinute >= 30 ? 1 : 0);
-
-        // Only place events within our time range
-        if (slotIndex >= 0 && slotIndex < 36) {
-          const duration = (new Date(event.endTime).getTime() - new Date(event.startTime).getTime()) / (1000 * 60);
-          const slots = Math.ceil(duration / 30);
-
-          const eventX = centerX + GRID_CONFIG.timeColumnWidth + (dayIndex * GRID_CONFIG.dayColumnWidth) + 1;
-          const eventY = gridStartY + 30 + (slotIndex * GRID_CONFIG.slotHeight) + 1;
-          const eventWidth = GRID_CONFIG.dayColumnWidth - 2;
-          const eventHeight = (slots * GRID_CONFIG.slotHeight) - 2;
+        // Only show events within our time range (6:00-23:30)
+        if (eventHour >= 6 && eventHour <= 23) {
+          // Calculate precise position within the time slot
+          const startMinuteOfDay = (eventHour - 6) * 60 + eventMinute;
+          const endMinuteOfDay = (endHour - 6) * 60 + endMinute;
+          
+          // Convert to slot positions (each slot is 30 minutes)
+          const startSlot = startMinuteOfDay / 30;
+          const endSlot = Math.min(endMinuteOfDay / 30, 35.5); // Cap at 23:30
+          
+          const eventX = centerX + GRID_CONFIG.timeColumnWidth + (dayIndex * GRID_CONFIG.dayColumnWidth) + 2;
+          const eventY = gridStartY + 30 + (startSlot * GRID_CONFIG.slotHeight) + 1;
+          const eventWidth = GRID_CONFIG.dayColumnWidth - 4;
+          const eventHeight = Math.max((endSlot - startSlot) * GRID_CONFIG.slotHeight - 2, GRID_CONFIG.slotHeight * 0.8);
 
           // Event styling based on type
           const isSimplePractice = event.source === 'simplepractice' || event.title.includes('Appointment');
           const isGoogle = event.source === 'google';
+          const isHoliday = event.title.toLowerCase().includes('holiday') || event.source === 'holiday';
 
           // White background for all appointments
           pdf.setFillColor(255, 255, 255);
           pdf.rect(eventX, eventY, eventWidth, eventHeight, 'F');
 
           if (isSimplePractice) {
-            // Cornflower blue left flag and thin blue border
+            // Light blue background with blue left border
+            pdf.setFillColor(240, 248, 255);
+            pdf.rect(eventX, eventY, eventWidth, eventHeight, 'F');
             pdf.setFillColor(100, 149, 237);
             pdf.rect(eventX, eventY, 4, eventHeight, 'F');
             pdf.setDrawColor(100, 149, 237);
             pdf.setLineWidth(1);
             pdf.rect(eventX, eventY, eventWidth, eventHeight, 'S');
           } else if (isGoogle) {
-            // Dashed green border for Google Calendar
+            // Light green background with dashed green border
+            pdf.setFillColor(240, 255, 240);
+            pdf.rect(eventX, eventY, eventWidth, eventHeight, 'F');
             pdf.setDrawColor(16, 185, 129);
             pdf.setLineWidth(1);
-            pdf.setLineDash([3, 2]);
+            pdf.setLineDash([2, 2]);
             pdf.rect(eventX, eventY, eventWidth, eventHeight, 'S');
             pdf.setLineDash([]);
-          } else {
-            // Orange border for other events
+          } else if (isHoliday) {
+            // Light yellow background with orange border
+            pdf.setFillColor(254, 243, 199);
+            pdf.rect(eventX, eventY, eventWidth, eventHeight, 'F');
             pdf.setDrawColor(245, 158, 11);
+            pdf.setLineWidth(1);
+            pdf.rect(eventX, eventY, eventWidth, eventHeight, 'S');
+          } else {
+            // Default white with gray border
+            pdf.setDrawColor(156, 163, 175);
             pdf.setLineWidth(1);
             pdf.rect(eventX, eventY, eventWidth, eventHeight, 'S');
           }
@@ -330,27 +349,31 @@ export const exportExactGridPDF = async (
           // Event text
           const eventTitle = event.title.replace(/\s*Appointment\s*$/i, '').trim();
           const startTime = eventDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-          const endTime = new Date(event.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+          const endTime = eventEndDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 
           pdf.setTextColor(0, 0, 0);
 
-          // Event name
+          // Event name - larger and more readable
           pdf.setFont('times', 'bold');
-          pdf.setFontSize(6);
-          const maxWidth = eventWidth - (isSimplePractice ? 6 : 4);
+          pdf.setFontSize(7);
+          const maxWidth = eventWidth - (isSimplePractice ? 8 : 6);
           const lines = pdf.splitTextToSize(eventTitle, maxWidth);
-          const nameHeight = Math.min(lines.length * 4, eventHeight - 8);
 
-          const textX = isSimplePractice ? eventX + 4 : eventX + 2;
+          const textX = isSimplePractice ? eventX + 6 : eventX + 3;
+          const lineHeight = 5;
+          const maxLines = Math.floor((eventHeight - 8) / lineHeight);
 
-          for (let i = 0; i < lines.length && i * 4 < nameHeight; i++) {
-            pdf.text(lines[i], textX, eventY + 6 + (i * 4));
+          // Event name
+          for (let i = 0; i < Math.min(lines.length, maxLines); i++) {
+            pdf.text(lines[i], textX, eventY + 8 + (i * lineHeight));
           }
 
-          // Event time
-          pdf.setFont('times', 'normal');
-          pdf.setFontSize(5);
-          pdf.text(`${startTime}-${endTime}`, textX, eventY + eventHeight - 4);
+          // Event time - only show if there's space
+          if (eventHeight > 15) {
+            pdf.setFont('times', 'normal');
+            pdf.setFontSize(6);
+            pdf.text(`${startTime}-${endTime}`, textX, eventY + eventHeight - 4);
+          }
         }
       }
     });
