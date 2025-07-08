@@ -3,19 +3,19 @@ import { CalendarEvent } from '../types/calendar';
 
 // Exact grid configuration matching our fixed calendar
 const GRID_CONFIG = {
-  // Page setup - A3 landscape optimized for 36 time slots
-  pageWidth: 1190,
-  pageHeight: 1400, // Optimized height for complete timeline visibility
+  // Page setup - Custom format to fit complete timeline
+  pageWidth: 1400,
+  pageHeight: 1600, // Sufficient height for all 36 time slots plus headers
   
-  // Layout dimensions matching calendar
-  margin: 30,
-  headerHeight: 50,
-  statsHeight: 40,
-  legendHeight: 25,
+  // Layout dimensions optimized for full visibility
+  margin: 25,
+  headerHeight: 40,
+  statsHeight: 35,
+  legendHeight: 20,
   
   // Grid structure - exactly 36 time slots
-  timeColumnWidth: 100,
-  slotHeight: 30, // Match web calendar's 30px slots
+  timeColumnWidth: 85,
+  slotHeight: 28, // Slightly reduced for better fit while maintaining readability
   totalSlots: 36, // 6:00 to 23:30
   
   get dayColumnWidth() {
@@ -62,19 +62,19 @@ export const exportExactGridPDF = async (
     pdf.setFillColor(255, 255, 255);
     pdf.rect(0, 0, GRID_CONFIG.pageWidth, GRID_CONFIG.pageHeight, 'F');
 
-    // HEADER - exactly like calendar
+    // HEADER - compact for maximum grid space
     pdf.setFont('times', 'bold');
-    pdf.setFontSize(28);
+    pdf.setFontSize(24);
     pdf.setTextColor(0, 0, 0);
-    pdf.text('WEEKLY PLANNER', GRID_CONFIG.pageWidth / 2, GRID_CONFIG.margin + 22, { align: 'center' });
+    pdf.text('WEEKLY PLANNER', GRID_CONFIG.pageWidth / 2, GRID_CONFIG.margin + 18, { align: 'center' });
 
     // Week info
     pdf.setFont('times', 'bold');
-    pdf.setFontSize(14);
+    pdf.setFontSize(12);
     const weekStart = weekStartDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
     const weekEnd = weekEndDate.toLocaleDateString('en-US', { day: 'numeric' });
     const weekNumber = Math.ceil(((weekStartDate.getTime() - new Date(weekStartDate.getFullYear(), 0, 1).getTime()) / 86400000 + 1) / 7);
-    pdf.text(`${weekStart}-${weekEnd} • Week ${weekNumber}`, GRID_CONFIG.pageWidth / 2, GRID_CONFIG.margin + 42, { align: 'center' });
+    pdf.text(`${weekStart}-${weekEnd} • Week ${weekNumber}`, GRID_CONFIG.pageWidth / 2, GRID_CONFIG.margin + 35, { align: 'center' });
 
     // STATS SECTION - exactly like calendar
     const statsY = GRID_CONFIG.margin + GRID_CONFIG.headerHeight;
@@ -106,15 +106,15 @@ export const exportExactGridPDF = async (
         pdf.line(x, statsY, x, statsY + GRID_CONFIG.statsHeight);
       }
       
-      // Stat number
+      // Stat number - compact
       pdf.setFont('times', 'bold');
-      pdf.setFontSize(18);
-      pdf.text(stat.value, x + statBoxWidth/2, statsY + 20, { align: 'center' });
+      pdf.setFontSize(14);
+      pdf.text(stat.value, x + statBoxWidth/2, statsY + 16, { align: 'center' });
       
       // Stat label
       pdf.setFont('times', 'normal');
-      pdf.setFontSize(12);
-      pdf.text(stat.label, x + statBoxWidth/2, statsY + 35, { align: 'center' });
+      pdf.setFontSize(10);
+      pdf.text(stat.label, x + statBoxWidth/2, statsY + 28, { align: 'center' });
     });
 
     // LEGEND - exactly like calendar
@@ -125,7 +125,7 @@ export const exportExactGridPDF = async (
     pdf.rect(GRID_CONFIG.margin, legendY, statsWidth, GRID_CONFIG.legendHeight, 'S');
 
     pdf.setFont('times', 'normal');
-    pdf.setFontSize(10);
+    pdf.setFontSize(9);
     
     // Legend items
     let legendX = GRID_CONFIG.margin + 20;
@@ -224,11 +224,11 @@ export const exportExactGridPDF = async (
       pdf.setFillColor(slot.isHour ? 240 : 248, slot.isHour ? 240 : 248, slot.isHour ? 240 : 248);
       pdf.rect(GRID_CONFIG.margin, y, GRID_CONFIG.timeColumnWidth, GRID_CONFIG.slotHeight, 'F');
       
-      // Time label
+      // Time label - compact for full timeline visibility
       pdf.setFont('times', slot.isHour ? 'bold' : 'normal');
-      pdf.setFontSize(slot.isHour ? 12 : 10);
+      pdf.setFontSize(slot.isHour ? 10 : 8);
       pdf.setTextColor(0, 0, 0);
-      pdf.text(slot.time, GRID_CONFIG.margin + GRID_CONFIG.timeColumnWidth/2, y + GRID_CONFIG.slotHeight/2 + 3, { align: 'center' });
+      pdf.text(slot.time, GRID_CONFIG.margin + GRID_CONFIG.timeColumnWidth/2, y + GRID_CONFIG.slotHeight/2 + 2, { align: 'center' });
       
       // Day cells
       for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
