@@ -314,6 +314,17 @@ export const exportExactGridPDF = async (
       }
     });
 
+    // BOTTOM BORDER - close the grid properly at 23:30
+    const gridEndY = gridStartY + 50 + GRID_CONFIG.gridHeight;
+    pdf.setLineWidth(2);
+    pdf.setDrawColor(0, 0, 0);
+    pdf.line(
+      GRID_CONFIG.margin, 
+      gridEndY, 
+      GRID_CONFIG.margin + GRID_CONFIG.timeColumnWidth + (7 * GRID_CONFIG.dayColumnWidth), 
+      gridEndY
+    );
+
     // Download the PDF
     const filename = `Weekly_Calendar_${weekStartDate.toLocaleDateString('en-US').replace(/\//g, '-')}.pdf`;
     pdf.save(filename);

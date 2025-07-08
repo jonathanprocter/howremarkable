@@ -168,6 +168,12 @@ The application uses three main entities:
     - Improved font sizing hierarchy for better readability
     - Enhanced grid line visibility and consistency
   - **RESULT**: Professional-grade PDF exports with comprehensive table formatting improvements
+- July 08, 2025. **CALENDAR GRID WHITE SPACE FIX**: Successfully eliminated persistent white space below 23:30 row:
+  - Identified calendar-container was expanding beyond grid content using diagnostic background colors
+  - Changed calendar-container from flex to block display to prevent unwanted expansion
+  - Set overflow to hidden to contain content within exact boundaries
+  - Grid now ends cleanly at 23:30 without extra white space
+  - **RESULT**: Perfect calendar grid alignment with no visual artifacts at bottom boundary
 
 ## User Preferences
 
