@@ -39,14 +39,17 @@ export const exportWeeklyCalendarHTML = async (
 
     // Header - WEEKLY PLANNER
     pdf.setFont('times', 'bold');
-    pdf.setFontSize(20);
+    pdf.setFontSize(14);
     pdf.setTextColor(0, 0, 0);
-    pdf.text('WEEKLY PLANNER', pdf.internal.pageSize.width / 2, 50, { align: 'center' });
+    pdf.text('WEEKLY PLANNER', pdf.internal.pageSize.width / 2, 40, { align: 'center' });
 
     // Week info
     pdf.setFont('times', 'normal');
-    pdf.setFontSize(14);
-    pdf.text('Jul 7-13 • Week 28', pdf.internal.pageSize.width / 2, 75, { align: 'center' });
+    pdf.setFontSize(12);
+    const weekStart = `${weekStartDate.getMonth() + 1}/${weekStartDate.getDate()}`;
+    const weekEnd = `${weekEndDate.getMonth() + 1}/${weekEndDate.getDate()}`;
+    const weekNumber = Math.ceil(((weekStartDate.getTime() - new Date(weekStartDate.getFullYear(), 0, 1).getTime()) / 86400000 + 1) / 7);
+    pdf.text(`${weekStart}-${weekEnd} • Week ${weekNumber}`, pdf.internal.pageSize.width / 2, 60, { align: 'center' });
 
     // Stats container
     const statsY = 100;
@@ -124,16 +127,19 @@ export const exportWeeklyCalendarHTML = async (
     const gridY = 200;
     const timeColWidth = 70;
     const dayColWidth = (pdf.internal.pageSize.width - 100 - timeColWidth) / 7;
-    const rowHeight = 22;
+    const rowHeight = 20;
+    const totalGridWidth = pdf.internal.pageSize.width - 100;
     
     // Grid outer border
     pdf.setLineWidth(2);
-    pdf.rect(50, gridY, pdf.internal.pageSize.width - 100, 800);
+    pdf.setDrawColor(0, 0, 0);
+    pdf.rect(50, gridY, totalGridWidth, 760);
     
     // TIME header
     pdf.setFont('times', 'bold');
     pdf.setFontSize(13);
-    pdf.rect(50, gridY, timeColWidth, 40);
+    pdf.setFillColor(255, 255, 255);
+    pdf.rect(50, gridY, timeColWidth, 40, 'FD');
     pdf.text('TIME', 50 + timeColWidth/2, gridY + 25, { align: 'center' });
     
     // Day headers
@@ -142,7 +148,8 @@ export const exportWeeklyCalendarHTML = async (
     
     days.forEach((day, index) => {
       const x = 50 + timeColWidth + (index * dayColWidth);
-      pdf.rect(x, gridY, dayColWidth, 40);
+      pdf.setFillColor(255, 255, 255);
+      pdf.rect(x, gridY, dayColWidth, 40, 'FD');
       
       pdf.setFont('times', 'bold');
       pdf.setFontSize(13);
@@ -155,30 +162,40 @@ export const exportWeeklyCalendarHTML = async (
     let currentY = gridY + 40;
     
     for (let hour = 6; hour <= 23; hour++) {
-      // Hour row (gray background)
+      // Hour row (gray background across entire width)
       pdf.setFillColor(245, 245, 245);
-      pdf.rect(50, currentY, pdf.internal.pageSize.width - 100, rowHeight, 'F');
+      pdf.rect(50, currentY, totalGridWidth, rowHeight, 'F');
       
       // Hour time
       pdf.setFont('times', 'bold');
       pdf.setFontSize(11);
       pdf.setTextColor(0, 0, 0);
       const hourStr = `${hour.toString().padStart(2, '0')}:00`;
-      pdf.text(hourStr, 50 + timeColWidth/2, currentY + 14, { align: 'center' });
+      pdf.text(hourStr, 50 + timeColWidth/2, currentY + 13, { align: 'center' });
+      
+      // Horizontal line for hour
+      pdf.setLineWidth(1);
+      pdf.setDrawColor(0, 0, 0);
+      pdf.line(50, currentY, 50 + totalGridWidth, currentY);
       
       currentY += rowHeight;
       
       // Half-hour row (white background)
       if (hour < 23) {
         pdf.setFillColor(255, 255, 255);
-        pdf.rect(50, currentY, pdf.internal.pageSize.width - 100, rowHeight, 'F');
+        pdf.rect(50, currentY, totalGridWidth, rowHeight, 'F');
         
         pdf.setFont('times', 'normal');
         pdf.setFontSize(9);
         pdf.setTextColor(102, 102, 102);
         const halfHourStr = `${hour.toString().padStart(2, '0')}:30`;
-        pdf.text(halfHourStr, 50 + timeColWidth/2, currentY + 14, { align: 'center' });
+        pdf.text(halfHourStr, 50 + timeColWidth/2, currentY + 13, { align: 'center' });
         pdf.setTextColor(0, 0, 0);
+        
+        // Light horizontal line for half-hour
+        pdf.setLineWidth(0.5);
+        pdf.setDrawColor(180, 180, 180);
+        pdf.line(50, currentY, 50 + totalGridWidth, currentY);
         
         currentY += rowHeight;
       }
@@ -186,11 +203,27 @@ export const exportWeeklyCalendarHTML = async (
     
     // 23:30 final row
     pdf.setFillColor(255, 255, 255);
-    pdf.rect(50, currentY, pdf.internal.pageSize.width - 100, rowHeight, 'F');
+    pdf.rect(50, currentY, totalGridWidth, rowHeight, 'F');
     pdf.setFont('times', 'normal');
     pdf.setFontSize(9);
     pdf.setTextColor(102, 102, 102);
-    pdf.text('23:30', 50 + timeColWidth/2, currentY + 14, { align: 'center' });
+    pdf.text('23:30', 50 + timeColWidth/2, currentY + 13, { align: 'center' });
+    
+    // Final horizontal line
+    pdf.setLineWidth(1);
+    pdf.setDrawColor(0, 0, 0);
+    pdf.line(50, currentY, 50 + totalGridWidth, currentY);
+    
+    // Vertical lines for day columns
+    pdf.setLineWidth(1);
+    pdf.setDrawColor(0, 0, 0);
+    for (let i = 0; i <= 7; i++) {
+      const x = 50 + timeColWidth + (i * dayColWidth);
+      pdf.line(x, gridY, x, gridY + 760);
+    }
+    
+    // Vertical line after TIME column
+    pdf.line(50 + timeColWidth, gridY, 50 + timeColWidth, gridY + 760);
 
     // Add appointments to grid
     weekEvents.forEach(event => {
@@ -203,36 +236,61 @@ export const exportWeeklyCalendarHTML = async (
         const slotIndex = ((startHour - 6) * 2) + (startMinute >= 30 ? 1 : 0);
         const appointmentY = gridY + 40 + (slotIndex * rowHeight);
         const appointmentX = 50 + timeColWidth + (dayIndex * dayColWidth);
-        const appointmentHeight = Math.max(rowHeight, (duration / 30) * rowHeight);
+        const appointmentHeight = Math.max(rowHeight - 1, (duration / 30) * rowHeight);
         
         // Draw appointment background
         if (event.title.includes('Appointment')) {
           pdf.setFillColor(255, 255, 255);
           pdf.setDrawColor(100, 149, 237);
           pdf.setLineWidth(2);
+          // Add thick left border for SimplePractice
+          pdf.rect(appointmentX + 2, appointmentY + 1, dayColWidth - 4, appointmentHeight - 2, 'FD');
+          pdf.setLineWidth(4);
+          pdf.line(appointmentX + 2, appointmentY + 1, appointmentX + 2, appointmentY + appointmentHeight - 1);
         } else {
           pdf.setFillColor(255, 255, 255);
           pdf.setDrawColor(76, 175, 80);
           pdf.setLineWidth(1);
           pdf.setLineDashPattern([2, 2], 0);
+          pdf.rect(appointmentX + 2, appointmentY + 1, dayColWidth - 4, appointmentHeight - 2, 'FD');
+          pdf.setLineDashPattern([], 0);
         }
-        
-        pdf.rect(appointmentX + 1, appointmentY + 1, dayColWidth - 2, appointmentHeight - 2, 'FD');
-        pdf.setLineDashPattern([], 0);
         
         // Appointment text
         pdf.setFont('times', 'bold');
-        pdf.setFontSize(7);
+        pdf.setFontSize(6);
         pdf.setTextColor(0, 0, 0);
         const cleanTitle = event.title.replace(' Appointment', '');
-        pdf.text(cleanTitle, appointmentX + 3, appointmentY + 10, { maxWidth: dayColWidth - 6 });
         
-        // Time text
+        // Split long names into multiple lines
+        const maxWidth = dayColWidth - 8;
+        const words = cleanTitle.split(' ');
+        let lines = [];
+        let currentLine = '';
+        
+        for (const word of words) {
+          const testLine = currentLine ? `${currentLine} ${word}` : word;
+          const textWidth = pdf.getTextWidth(testLine);
+          if (textWidth > maxWidth && currentLine) {
+            lines.push(currentLine);
+            currentLine = word;
+          } else {
+            currentLine = testLine;
+          }
+        }
+        if (currentLine) lines.push(currentLine);
+        
+        // Draw text lines
+        lines.forEach((line, index) => {
+          pdf.text(line, appointmentX + 4, appointmentY + 8 + (index * 7), { maxWidth: maxWidth });
+        });
+        
+        // Time text at bottom
         pdf.setFont('times', 'normal');
-        pdf.setFontSize(6);
+        pdf.setFontSize(5);
         pdf.setTextColor(51, 51, 51);
         const timeStr = `${event.startTime.getHours().toString().padStart(2, '0')}:${event.startTime.getMinutes().toString().padStart(2, '0')}`;
-        pdf.text(timeStr, appointmentX + 3, appointmentY + appointmentHeight - 5);
+        pdf.text(timeStr, appointmentX + 4, appointmentY + appointmentHeight - 3);
       }
     });
 
