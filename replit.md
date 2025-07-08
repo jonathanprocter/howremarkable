@@ -183,6 +183,14 @@ The application uses three main entities:
   - **TEXT READABILITY UPGRADE**: Improved event text with larger fonts (9pt names, 7pt times) and better positioning
   - **HEADER OPTIMIZATION**: Reduced header font sizes (28pt title, 14pt week info) for better proportions
   - **RESULT**: Professional-grade PDF exports with accurate appointment positioning, complete timeline visibility, and clear visual separation
+- July 08, 2025. **HEADER AND LEGEND SPACING OPTIMIZATION**: Enhanced PDF layout with improved visual hierarchy:
+  - Expanded page dimensions to 1400x1600 for complete timeline accommodation
+  - Increased header height to 60px and legend height to 30px for better visibility
+  - Enhanced header fonts (28pt title, 14pt week info) with proper spacing
+  - Improved stats section with 16pt values and 11pt labels
+  - Better legend positioning with larger icons (16x14) and increased item spacing (170px)
+  - Optimized time labels (10pt hours, 8pt half-hours) for compact full timeline display
+  - **RESULT**: Complete timeline visibility from 6:00-23:30 with professional header and legend layout
 
 ## User Preferences
 

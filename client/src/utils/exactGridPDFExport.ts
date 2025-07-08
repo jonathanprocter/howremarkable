@@ -8,10 +8,10 @@ const GRID_CONFIG = {
   pageHeight: 1600, // Sufficient height for all 36 time slots plus headers
   
   // Layout dimensions optimized for full visibility
-  margin: 25,
-  headerHeight: 40,
-  statsHeight: 35,
-  legendHeight: 20,
+  margin: 30,
+  headerHeight: 60, // More space for header
+  statsHeight: 40,
+  legendHeight: 30, // More space for legend visibility
   
   // Grid structure - exactly 36 time slots
   timeColumnWidth: 85,
@@ -62,19 +62,19 @@ export const exportExactGridPDF = async (
     pdf.setFillColor(255, 255, 255);
     pdf.rect(0, 0, GRID_CONFIG.pageWidth, GRID_CONFIG.pageHeight, 'F');
 
-    // HEADER - compact for maximum grid space
+    // HEADER - with proper spacing
     pdf.setFont('times', 'bold');
-    pdf.setFontSize(24);
+    pdf.setFontSize(28);
     pdf.setTextColor(0, 0, 0);
-    pdf.text('WEEKLY PLANNER', GRID_CONFIG.pageWidth / 2, GRID_CONFIG.margin + 18, { align: 'center' });
+    pdf.text('WEEKLY PLANNER', GRID_CONFIG.pageWidth / 2, GRID_CONFIG.margin + 25, { align: 'center' });
 
     // Week info
     pdf.setFont('times', 'bold');
-    pdf.setFontSize(12);
+    pdf.setFontSize(14);
     const weekStart = weekStartDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
     const weekEnd = weekEndDate.toLocaleDateString('en-US', { day: 'numeric' });
     const weekNumber = Math.ceil(((weekStartDate.getTime() - new Date(weekStartDate.getFullYear(), 0, 1).getTime()) / 86400000 + 1) / 7);
-    pdf.text(`${weekStart}-${weekEnd} • Week ${weekNumber}`, GRID_CONFIG.pageWidth / 2, GRID_CONFIG.margin + 35, { align: 'center' });
+    pdf.text(`${weekStart}-${weekEnd} • Week ${weekNumber}`, GRID_CONFIG.pageWidth / 2, GRID_CONFIG.margin + 50, { align: 'center' });
 
     // STATS SECTION - exactly like calendar
     const statsY = GRID_CONFIG.margin + GRID_CONFIG.headerHeight;
@@ -106,15 +106,15 @@ export const exportExactGridPDF = async (
         pdf.line(x, statsY, x, statsY + GRID_CONFIG.statsHeight);
       }
       
-      // Stat number - compact
+      // Stat number - with better spacing
       pdf.setFont('times', 'bold');
-      pdf.setFontSize(14);
-      pdf.text(stat.value, x + statBoxWidth/2, statsY + 16, { align: 'center' });
+      pdf.setFontSize(16);
+      pdf.text(stat.value, x + statBoxWidth/2, statsY + 18, { align: 'center' });
       
       // Stat label
       pdf.setFont('times', 'normal');
-      pdf.setFontSize(10);
-      pdf.text(stat.label, x + statBoxWidth/2, statsY + 28, { align: 'center' });
+      pdf.setFontSize(11);
+      pdf.text(stat.label, x + statBoxWidth/2, statsY + 32, { align: 'center' });
     });
 
     // LEGEND - exactly like calendar
@@ -125,39 +125,45 @@ export const exportExactGridPDF = async (
     pdf.rect(GRID_CONFIG.margin, legendY, statsWidth, GRID_CONFIG.legendHeight, 'S');
 
     pdf.setFont('times', 'normal');
-    pdf.setFontSize(9);
+    pdf.setFontSize(10);
     
-    // Legend items
-    let legendX = GRID_CONFIG.margin + 20;
+    // Legend items - better positioned with more space
+    let legendX = GRID_CONFIG.margin + 30;
     
     // SimplePractice
     pdf.setFillColor(240, 248, 255);
     pdf.setDrawColor(100, 149, 237);
     pdf.setLineWidth(2);
-    pdf.rect(legendX, legendY + 8, 14, 12, 'FD');
+    pdf.rect(legendX, legendY + 10, 16, 14, 'FD');
     pdf.setLineWidth(6);
     pdf.setDrawColor(100, 149, 237);
-    pdf.line(legendX, legendY + 14, legendX + 6, legendY + 14);
+    pdf.line(legendX, legendY + 17, legendX + 8, legendY + 17);
     pdf.setTextColor(0, 0, 0);
-    pdf.text('SimplePractice', legendX + 20, legendY + 16);
+    pdf.text('SimplePractice', legendX + 22, legendY + 19);
     
-    legendX += 120;
+    legendX += 170;
     
     // Google Calendar
     pdf.setFillColor(255, 255, 255);
     pdf.setDrawColor(16, 185, 129);
     pdf.setLineWidth(2);
-    pdf.rect(legendX, legendY + 8, 14, 12, 'FD');
-    pdf.text('Google Calendar', legendX + 20, legendY + 16);
+    pdf.rect(legendX, legendY + 10, 16, 14, 'FD');
+    pdf.setLineWidth(6);
+    pdf.setDrawColor(16, 185, 129);
+    pdf.line(legendX, legendY + 17, legendX + 8, legendY + 17);
+    pdf.text('Google Calendar', legendX + 22, legendY + 19);
     
-    legendX += 120;
+    legendX += 170;
     
     // Holidays
     pdf.setFillColor(254, 243, 199);
     pdf.setDrawColor(245, 158, 11);
     pdf.setLineWidth(2);
-    pdf.rect(legendX, legendY + 8, 14, 12, 'FD');
-    pdf.text('Holidays in United States', legendX + 20, legendY + 16);
+    pdf.rect(legendX, legendY + 10, 16, 14, 'FD');
+    pdf.setLineWidth(6);
+    pdf.setDrawColor(245, 158, 11);
+    pdf.line(legendX, legendY + 17, legendX + 8, legendY + 17);
+    pdf.text('Holidays in United States', legendX + 22, legendY + 19);
 
     // GRID STRUCTURE - exactly like calendar
     const gridStartY = GRID_CONFIG.gridStartY;
