@@ -503,7 +503,7 @@ html, body {
 
 .time-column {
     display: grid;
-    grid-template-rows: repeat(35, 60px); /* 35 slots for 6:00-23:30 */
+    grid-template-rows: repeat(36, 60px); /* 36 slots for 6:00-23:30 */
     border-right: 2px solid black;
 }
 
@@ -527,7 +527,7 @@ html, body {
 
 .appointments-column {
     display: grid;
-    grid-template-rows: repeat(35, 60px); /* 35 slots for 6:00-23:30 */
+    grid-template-rows: repeat(36, 60px); /* 36 slots for 6:00-23:30 */
     position: relative;
 }
 
