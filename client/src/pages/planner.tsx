@@ -298,32 +298,107 @@ export default function Planner() {
 
       switch (type) {
         case 'Current View':
+          // For current view, use the appropriate export based on view mode
+          if (state.viewMode === 'daily') {
+            // Export daily view as PDF
+            try {
+              await exportHTMLTemplatePDF(
+                selectedDateForExport,
+                selectedDateForExport,
+                currentEvents,
+                true // isDailyView flag
+              );
+              
+              toast({
+                title: "Export Successful",
+                description: `Daily planner PDF downloaded with ${exportData.appointments.length} appointments!`
+              });
+              return;
+            } catch (dailyError) {
+              console.error('Daily PDF export error:', dailyError);
+              throw dailyError;
+            }
+          } else {
+            // Export weekly view as PDF
+            try {
+              await exportExactGridPDF(
+                state.currentWeek.startDate,
+                state.currentWeek.endDate,
+                currentEvents
+              );
+
+              toast({
+                title: "Export Successful",
+                description: "Weekly calendar PDF downloaded successfully!"
+              });
+              return;
+            } catch (weeklyError) {
+              console.error('Weekly PDF export error:', weeklyError);
+              throw weeklyError;
+            }
+          }
+          break;
+        
         case 'Daily View':
         case 'reMarkable Daily':
-          fileContent = exportToText(exportData);
-          fileName = `daily-planner-${selectedDateForExport.toISOString().split('T')[0]}.txt`;
-          mimeType = 'text/plain';
+          // Export daily view as PDF
+          try {
+            await exportHTMLTemplatePDF(
+              selectedDateForExport,
+              selectedDateForExport,
+              currentEvents,
+              true // isDailyView flag
+            );
+            
+            toast({
+              title: "Export Successful",
+              description: `Daily planner PDF downloaded with ${exportData.appointments.length} appointments!`
+            });
+            return;
+          } catch (dailyError) {
+            console.error('Daily PDF export error:', dailyError);
+            throw dailyError;
+          }
           break;
 
         case 'Weekly Package':
-        case 'reMarkable Weekly':
-          // For weekly exports, generate data for each day of the week
-          const weeklyData = [];
-          const weekStart = state.currentWeek.startDate;
-          const weekEnd = state.currentWeek.endDate;
-          
-          for (let d = new Date(weekStart); d <= weekEnd; d.setDate(d.getDate() + 1)) {
-            const dayData = generateCompleteExportData(
-              new Date(d),
-              currentEvents,
-              state.dailyNotes[d.toISOString().split('T')[0]] || ''
+          // Export weekly view as PDF using the working export function
+          try {
+            await exportExactGridPDF(
+              state.currentWeek.startDate,
+              state.currentWeek.endDate,
+              currentEvents
             );
-            weeklyData.push(dayData);
+
+            toast({
+              title: "Export Successful",
+              description: "Weekly calendar PDF downloaded successfully!"
+            });
+            return;
+          } catch (weeklyError) {
+            console.error('Weekly PDF export error:', weeklyError);
+            throw weeklyError;
           }
-          
-          fileContent = generateWeeklyText(weeklyData);
-          fileName = `weekly-planner-${weekStart.toISOString().split('T')[0]}.txt`;
-          mimeType = 'text/plain';
+          break;
+
+        case 'reMarkable Weekly':
+          // Export weekly view as PDF using the working export function
+          try {
+            await exportExactGridPDF(
+              state.currentWeek.startDate,
+              state.currentWeek.endDate,
+              currentEvents
+            );
+
+            toast({
+              title: "Export Successful",
+              description: "Weekly calendar PDF downloaded successfully!"
+            });
+            return;
+          } catch (weeklyError) {
+            console.error('Weekly PDF export error:', weeklyError);
+            throw weeklyError;
+          }
           break;
 
         case 'JSON Export':
