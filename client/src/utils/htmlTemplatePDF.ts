@@ -295,10 +295,10 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
     pdf.rect(margin, y, HTML_TEMPLATE_CONFIG.timeColumnWidth, HTML_TEMPLATE_CONFIG.timeSlotHeight, 'F');
     
     // Time text
-    pdf.setFontSize(isHour ? 9 : 7);
+    pdf.setFontSize(isHour ? 8 : 7);
     pdf.setFont('helvetica', isHour ? 'bold' : 'normal');
     pdf.setTextColor(...HTML_TEMPLATE_CONFIG.colors.black);
-    pdf.text(timeSlot, margin + HTML_TEMPLATE_CONFIG.timeColumnWidth / 2, y + 12, { align: 'center' });
+    pdf.text(timeSlot, margin + HTML_TEMPLATE_CONFIG.timeColumnWidth / 2, y + 11, { align: 'center' });
     
     // Day cells
     for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
@@ -348,7 +348,7 @@ function drawAppointments(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
   const { margin } = HTML_TEMPLATE_CONFIG;
   const dayColumnWidth = HTML_TEMPLATE_CONFIG.dayColumnWidth;
   
-  // Filter and organize events by day
+  // Filter events for the current week
   const weekEvents = events.filter(event => {
     const eventDate = new Date(event.startTime);
     const weekEnd = new Date(weekStartDate);
@@ -362,39 +362,56 @@ function drawAppointments(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
     
     if (dayIndex < 0 || dayIndex >= 7) return;
     
-    // Calculate precise time positioning
+    // Get event time
     const startHour = eventDate.getHours();
     const startMinute = eventDate.getMinutes();
-    const totalMinutes = startHour * 60 + startMinute;
     
-    // Calculate exact position within grid using precise math
-    const startTimeMinutes = 6 * 60; // 06:00 start
-    const relativeMinutes = totalMinutes - startTimeMinutes;
-    const slotPosition = relativeMinutes / 30; // 30-minute slots
+    // Find the exact time slot this event should align with
+    const timeString = `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`;
     
-    if (slotPosition < 0) return; // Event before grid start
+    // Find the slot index by matching against TIME_SLOTS
+    let slotIndex = -1;
+    for (let i = 0; i < TIME_SLOTS.length; i++) {
+      const slot = TIME_SLOTS[i];
+      if (slot === timeString) {
+        slotIndex = i;
+        break;
+      }
+      // Also check if this time falls within a 30-minute slot
+      const [slotHour, slotMin] = slot.split(':').map(Number);
+      const nextSlotMin = slotMin === 0 ? 30 : 0;
+      const nextSlotHour = slotMin === 0 ? slotHour : slotHour + 1;
+      
+      if (startHour === slotHour && startMinute >= slotMin && 
+          (startHour < nextSlotHour || (startHour === nextSlotHour && startMinute < nextSlotMin))) {
+        slotIndex = i;
+        break;
+      }
+    }
     
-    // Calculate dimensions
+    if (slotIndex === -1) return; // Event time not found in grid
+    
+    // Calculate event height based on duration
     const duration = (event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60);
-    const heightInSlots = Math.max(1, duration / 30);
+    const heightInSlots = Math.max(1, Math.ceil(duration / 30));
     
-    // Precise positioning with header offset
-    const x = margin + HTML_TEMPLATE_CONFIG.timeColumnWidth + (dayIndex * dayColumnWidth) + 2;
-    const y = gridStartY + (slotPosition * HTML_TEMPLATE_CONFIG.timeSlotHeight) + 1;
-    const width = dayColumnWidth - 4;
-    const height = heightInSlots * HTML_TEMPLATE_CONFIG.timeSlotHeight - 2;
+    // Position calculation
+    const x = margin + HTML_TEMPLATE_CONFIG.timeColumnWidth + (dayIndex * dayColumnWidth) + 1;
+    const y = gridStartY + (slotIndex * HTML_TEMPLATE_CONFIG.timeSlotHeight) + 1;
+    const width = dayColumnWidth - 2;
+    const height = (heightInSlots * HTML_TEMPLATE_CONFIG.timeSlotHeight) - 2;
     
     // Event styling
     const isSimplePractice = event.title.includes('Appointment');
     
     if (isSimplePractice) {
-      // SimplePractice: light background with blue left border
-      pdf.setFillColor(250, 250, 250);
+      // SimplePractice: light gray background with blue left border
+      pdf.setFillColor(248, 248, 248);
       pdf.rect(x, y, width, height, 'F');
       
-      // Blue left border (4px thick)
+      // Blue left border
       pdf.setDrawColor(...HTML_TEMPLATE_CONFIG.colors.simplePracticeBlue);
-      pdf.setLineWidth(4);
+      pdf.setLineWidth(3);
       pdf.line(x, y, x, y + height);
       
       // Light border around event
@@ -403,35 +420,37 @@ function drawAppointments(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
       pdf.rect(x, y, width, height);
     } else {
       // Google Calendar: light green filled
-      pdf.setFillColor(230, 255, 230);
+      pdf.setFillColor(240, 255, 240);
       pdf.rect(x, y, width, height, 'F');
       pdf.setDrawColor(...HTML_TEMPLATE_CONFIG.colors.googleGreen);
       pdf.setLineWidth(1);
       pdf.rect(x, y, width, height);
     }
     
-    // Event text with better positioning
+    // Event text
     const cleanTitle = event.title.replace(/ Appointment$/, '');
     
     // Name text
-    pdf.setFontSize(8);
+    pdf.setFontSize(7);
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(...HTML_TEMPLATE_CONFIG.colors.black);
     
-    // Multi-line text with proper wrapping
-    const maxWidth = width - 8;
+    // Multi-line text wrapping
+    const maxWidth = width - 6;
     const lines = pdf.splitTextToSize(cleanTitle, maxWidth);
     
-    // Draw name (max 2 lines)
-    const lineHeight = 9;
+    // Draw text lines (max 2 lines for readability)
+    const lineHeight = 8;
     for (let i = 0; i < Math.min(lines.length, 2); i++) {
-      pdf.text(lines[i], x + 4, y + 10 + (i * lineHeight));
+      pdf.text(lines[i], x + 3, y + 8 + (i * lineHeight));
     }
     
-    // Time stamp at bottom
-    pdf.setFontSize(7);
-    pdf.setFont('helvetica', 'normal');
-    pdf.setTextColor(100, 100, 100); // Gray color for time
-    pdf.text(formatTime(event.startTime), x + 4, y + height - 4);
+    // Time stamp at bottom if there's space
+    if (height > 16) {
+      pdf.setFontSize(6);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(120, 120, 120);
+      pdf.text(formatTime(event.startTime), x + 3, y + height - 3);
+    }
   });
 }
