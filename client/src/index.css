@@ -353,6 +353,43 @@ html, body {
 .appointment.duration-60 { height: 56px; }
 .appointment.duration-90 { height: 86px; }
 
+/* Daily View Appointment Layout - 3 column structure */
+.appointment-layout {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    gap: 8px;
+    align-items: start;
+    height: 100%;
+}
+
+.appointment-left {
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.appointment-center {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.appointment-right {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.appointment-notes .note-item,
+.appointment-actions .action-item {
+    font-size: 6px;
+    line-height: 1.1;
+    margin-bottom: 1px;
+}
+
 /* Appointment header styling - exact match to HTML template */
 .appointment-header {
     display: flex;

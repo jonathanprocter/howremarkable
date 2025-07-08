@@ -359,22 +359,36 @@ export const DailyView = ({
                   onDragStart={(e) => handleDragStart(e, event)}
                   onClick={() => toggleEventExpansion(event.id)}
                 >
-                  <div className="appointment-header">
-                    <div className="appointment-title">{event.title}</div>
-                    <div className="appointment-time">{formatEventTime(event)}</div>
-                  </div>
-                  <div className="appointment-calendar">{event.source} calendar</div>
-                  {event.description && (
-                    <div className="appointment-description">{event.description}</div>
-                  )}
-                  {event.notes && (
-                    <div className="appointment-notes">{event.notes}</div>
-                  )}
-                  {event.actionItems && (
-                    <div className="appointment-actions">
-                      <div className="action-item">{event.actionItems}</div>
+                  <div className="appointment-layout">
+                    {/* Left: Calendar and Time */}
+                    <div className="appointment-left">
+                      <div className="appointment-calendar">{event.source} calendar</div>
+                      <div className="appointment-time">{formatEventTime(event)}</div>
                     </div>
-                  )}
+                    
+                    {/* Center: Event Notes (bulleted) */}
+                    <div className="appointment-center">
+                      <div className="appointment-title">{event.title}</div>
+                      {event.notes && (
+                        <div className="appointment-notes">
+                          {event.notes.split('\n').filter(note => note.trim()).map((note, index) => (
+                            <div key={index} className="note-item">• {note.trim()}</div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Right: Action Items */}
+                    <div className="appointment-right">
+                      {event.actionItems && (
+                        <div className="appointment-actions">
+                          {event.actionItems.split('\n').filter(item => item.trim()).map((item, index) => (
+                            <div key={index} className="action-item">• {item.trim()}</div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
                 
                 {/* Expanded event details */}
