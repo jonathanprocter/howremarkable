@@ -18,6 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 // import { exportWeeklyRemarkable } from '../utils/simplePDFExport';
 // import { exportTemplateMatchPDF } from '../utils/templateMatchPDF';
 import { exportHTMLTemplatePDF } from '../utils/htmlTemplatePDF';
+import { exportWeeklyCalendar } from '../utils/weeklyCalendarExport';
 
 // Temporary stub functions until PDF exports are fixed
 const exportWeeklyPackageToPDF = async (...args: any[]): Promise<string> => { 
@@ -249,7 +250,7 @@ export default function Planner() {
         filename = generateFilename('weekly-package', state.currentWeek.startDate);
       } else if (type === 'Current View') {
         try {
-          await exportHTMLTemplatePDF(
+          await exportWeeklyCalendar(
             state.currentWeek.startDate,
             state.currentWeek.endDate,
             currentEvents
@@ -257,12 +258,12 @@ export default function Planner() {
           
           toast({
             title: "PDF Export",
-            description: "HTML template PDF downloaded successfully!"
+            description: "Weekly calendar PDF downloaded successfully!"
           });
-          return; // exportHTMLTemplatePDF handles the download
-        } catch (htmlError) {
-          console.error('HTML template PDF export error:', htmlError);
-          throw htmlError;
+          return; // exportWeeklyCalendar handles the download
+        } catch (calendarError) {
+          console.error('Weekly calendar export error:', calendarError);
+          throw calendarError;
         }
       } else if (type === 'Daily View') {
         pdfContent = await exportDailyToPDF(
