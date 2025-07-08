@@ -231,8 +231,9 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     const slotsFromStart = minutesSince6am / 30;
     const topPosition = gridStartY + (slotsFromStart * timeSlotHeight);
     
-    // Calculate height based on duration and content - match dashboard exactly
-    const baseHeight = Math.max(55, (durationMinutes / 30) * timeSlotHeight - 2);
+    // Calculate height based on EXACT duration to prevent overlaps
+    const durationSlots = Math.ceil(durationMinutes / 30);
+    const exactHeight = durationSlots * timeSlotHeight - 4; // Small gap between appointments
     
     // Calculate additional height needed for wrapped text with better spacing
     let maxContentLines = 3; // base: title, source, time
@@ -245,7 +246,8 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
       maxContentLines = Math.max(maxContentLines, actionLines + 2); // +2 for header and spacing
     }
     
-    const height = Math.max(baseHeight, maxContentLines * 10 + 30);
+    const contentHeight = maxContentLines * 10 + 30;
+    const height = Math.max(exactHeight, contentHeight);
     
     // Event styling based on type
     const eventType = getEventTypeInfo(event);
@@ -303,10 +305,15 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
                    eventType.isGoogle ? 'Google Calendar' : 'Holidays';
     pdf.text(source, eventX, eventY + 11);
     
-    // Time range - match dashboard size exactly
+    // Time range - military time format
     pdf.setFontSize(12);
     pdf.setFont('helvetica', 'bold');
-    const timeRange = `${eventStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${eventEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    const formatMilitaryTime = (date: Date) => {
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      return `${hours}:${minutes}`;
+    };
+    const timeRange = `${formatMilitaryTime(eventStart)} - ${formatMilitaryTime(eventEnd)}`;
     pdf.text(timeRange, eventX, eventY + 22);
     
     // Center column: Event Notes (if they exist)

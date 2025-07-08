@@ -319,6 +319,14 @@ The application uses three main entities:
   - **All Event Types Fixed**: Both SimplePractice appointments and Google Calendar events now display correct titles with proper time ranges
   - **User Issue Resolved**: Patient names like "Nancy Grossman", "Amberly Comeau" now display correctly instead of generic "SIMPLEPRACTICE"
   - **RESULT**: Complete restoration of event titles in daily PDF exports with proper patient name display and time range formatting
+- July 08, 2025. **MILITARY TIME FORMAT AND APPOINTMENT POSITIONING**: Fixed time display and overlap issues in daily PDF exports:
+  - **Military Time Implementation**: Updated all time displays to use 24-hour format (HH:MM) instead of 12-hour format with AM/PM
+  - **Exact Duration Positioning**: Replaced approximate height calculations with exact slot-based positioning to prevent appointment overlaps
+  - **Precise Height Calculation**: Appointments now use exact duration slots (durationSlots * timeSlotHeight) with 4px gap between appointments
+  - **Consistent Time Formatting**: Created formatMilitaryTime helper function for consistent HH:MM display throughout PDF
+  - **Overlap Prevention**: Appointments now begin and end exactly within their time slots without bleeding into adjacent appointments
+  - **Enhanced Row Heights**: Maintained 22px row height with 980px page height for optimal text clarity and full timeline coverage
+  - **RESULT**: Perfect appointment positioning with military time format and complete elimination of appointment overlaps
 
 ## User Preferences
 
