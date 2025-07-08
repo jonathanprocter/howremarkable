@@ -426,17 +426,22 @@ html, body {
     margin-bottom: 3px;
     text-decoration: underline;
     font-style: normal;
-    margin-left: -15px;
+    margin-left: 0;
 }
 
 .appointment-notes {
     margin-top: 4px;
-    padding-left: 15px;
+    padding-left: 0;
 }
 
 .appointment-actions {
     margin-top: 4px;
-    padding-left: 15px;
+    padding-left: 0;
+}
+
+.appointment-notes .note-item,
+.appointment-actions .action-item {
+    margin-left: 12px;
 }
 
 /* Appointment header styling - exact match to HTML template */
