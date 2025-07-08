@@ -9,25 +9,38 @@ import { DailyView } from '../components/calendar/DailyView';
 import { CalendarLegend } from '../components/calendar/CalendarLegend';
 import { CalendarEvent } from '../types/calendar';
 import { useToast } from '@/hooks/use-toast';
-// Temporarily disabled problematic imports
-// import { exportWeeklyToPDF, exportDailyToPDF, exportWeeklyPackageToPDF, generateFilename } from '../utils/pdfExportNew';
-// import { 
-//   exportWeeklyRemarkableExact,
-//   generateRemarkableFilename 
-// } from '../utils/remarkablePDFExactMatch';
-// import { exportWeeklyRemarkable } from '../utils/simplePDFExport';
-// import { exportTemplateMatchPDF } from '../utils/templateMatchPDF';
 import { exportHTMLTemplatePDF } from '../utils/htmlTemplatePDF';
 import { exportWeeklyCalendarHTML } from '../utils/htmlWeeklyExport';
 import { exportExactGridPDF } from '../utils/exactGridPDFExport';
 
-// Temporary stub functions until PDF exports are fixed
+// Working daily PDF export function using HTML template
+const exportDailyToPDF = async (selectedDate: Date, events: CalendarEvent[], dailyNotes: string): Promise<string> => {
+  try {
+    console.log('Exporting daily view to PDF...');
+    
+    // Filter events for the selected day
+    const dayEvents = events.filter(event => {
+      const eventDate = new Date(event.startTime);
+      return eventDate.toDateString() === selectedDate.toDateString();
+    });
+
+    console.log(`Found ${dayEvents.length} events for ${selectedDate.toDateString()}`);
+
+    // Use the HTML template export for daily view
+    await exportHTMLTemplatePDF(selectedDate, selectedDate, dayEvents, true); // true for daily view
+    
+    const filename = `daily-planner-${selectedDate.toISOString().split('T')[0]}.pdf`;
+    console.log(`Daily PDF exported: ${filename}`);
+    return filename;
+  } catch (error) {
+    console.error('Daily PDF export error:', error);
+    throw error;
+  }
+};
+
+// Temporary stub functions for other exports until they're fixed
 const exportWeeklyPackageToPDF = async (...args: any[]): Promise<string> => { 
   console.log('Weekly package export temporarily disabled'); 
-  return Promise.resolve(''); 
-};
-const exportDailyToPDF = async (...args: any[]): Promise<string> => { 
-  console.log('Daily export temporarily disabled'); 
   return Promise.resolve(''); 
 };
 const exportWeeklyToPDF = async (...args: any[]): Promise<string> => { 
@@ -38,7 +51,10 @@ const exportWeeklyRemarkableExact = async (...args: any[]): Promise<void> => {
   console.log('Remarkable export temporarily disabled'); 
   return Promise.resolve(); 
 };
-const generateFilename = (...args: any[]): string => 'export.pdf';
+const generateFilename = (type: string, date: Date): string => {
+  const dateStr = date.toISOString().split('T')[0];
+  return `${type}-${dateStr}.pdf`;
+};
 import { getWeekNumber } from '../utils/dateUtils';
 import { initializeRemarkableOptimizations } from '../utils/remarkableDisplayOptimizer';
 
@@ -254,12 +270,22 @@ export default function Planner() {
         // Check current view mode to determine export type
         if (state.viewMode === 'daily') {
           // Export daily view when in daily mode
-          pdfContent = await exportDailyToPDF(
-            state.selectedDate,
-            currentEvents,
-            currentDailyNotes
-          );
-          filename = generateFilename('daily', state.selectedDate);
+          try {
+            await exportDailyToPDF(
+              state.selectedDate,
+              currentEvents,
+              currentDailyNotes
+            );
+            
+            toast({
+              title: "PDF Export",
+              description: "Daily planner PDF downloaded successfully!"
+            });
+            return; // exportDailyToPDF handles the download
+          } catch (dailyError) {
+            console.error('Daily export error:', dailyError);
+            throw dailyError;
+          }
         } else {
           // Export weekly view when in weekly mode
           try {
@@ -280,12 +306,22 @@ export default function Planner() {
           }
         }
       } else if (type === 'Daily View') {
-        pdfContent = await exportDailyToPDF(
-          state.selectedDate,
-          currentEvents,
-          currentDailyNotes
-        );
-        filename = generateFilename('daily', state.selectedDate);
+        try {
+          await exportDailyToPDF(
+            state.selectedDate,
+            currentEvents,
+            currentDailyNotes
+          );
+          
+          toast({
+            title: "PDF Export",
+            description: "Daily planner PDF downloaded successfully!"
+          });
+          return; // exportDailyToPDF handles the download
+        } catch (dailyError) {
+          console.error('Daily export error:', dailyError);
+          throw dailyError;
+        }
       }
       // reMarkable Pro optimized exports
       else if (type === 'reMarkable Weekly') {
@@ -389,12 +425,13 @@ export default function Planner() {
       } else if (type === 'current') {
         // Check current view mode to determine export type
         if (state.viewMode === 'daily') {
-          pdfContent = await exportDailyToPDF(
-            state.selectedDate,
-            currentEvents,
-            currentDailyNotes
-          );
-          filename = generateFilename('daily', state.selectedDate);
+          // For Google Drive, we need to generate the PDF content, not download it
+          // So we'll use a different approach for daily export to Drive
+          toast({
+            title: "Google Drive Export",
+            description: "Daily view Google Drive export feature coming soon!"
+          });
+          return;
         } else {
           const weekNumber = getWeekNumber(state.currentDate);
           pdfContent = await exportWeeklyToPDF(
@@ -406,12 +443,12 @@ export default function Planner() {
           filename = generateFilename('weekly', state.currentWeek.startDate);
         }
       } else if (type === 'daily') {
-        pdfContent = await exportDailyToPDF(
-          state.selectedDate,
-          currentEvents,
-          currentDailyNotes
-        );
-        filename = generateFilename('daily', state.selectedDate);
+        // For Google Drive, daily export needs special handling
+        toast({
+          title: "Google Drive Export",
+          description: "Daily view Google Drive export feature coming soon!"
+        });
+        return;
       } else {
         toast({
           title: "Google Drive Export",
