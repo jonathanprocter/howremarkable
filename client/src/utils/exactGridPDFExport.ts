@@ -300,10 +300,10 @@ export const exportExactGridPDF = async (
           const startSlot = startMinuteOfDay / 30;
           const endSlot = Math.min(endMinuteOfDay / 30, 35.5); // Cap at 23:30
           
-          const eventX = centerX + GRID_CONFIG.timeColumnWidth + (dayIndex * GRID_CONFIG.dayColumnWidth) + 2;
-          const eventY = gridStartY + 30 + (startSlot * GRID_CONFIG.slotHeight) + 1;
-          const eventWidth = GRID_CONFIG.dayColumnWidth - 4;
-          const eventHeight = Math.max((endSlot - startSlot) * GRID_CONFIG.slotHeight - 2, GRID_CONFIG.slotHeight * 0.8);
+          const eventX = centerX + GRID_CONFIG.timeColumnWidth + (dayIndex * GRID_CONFIG.dayColumnWidth) + 1;
+          const eventY = gridStartY + 30 + (startSlot * GRID_CONFIG.slotHeight) + 0.5;
+          const eventWidth = GRID_CONFIG.dayColumnWidth - 2;
+          const eventHeight = Math.max((endSlot - startSlot) * GRID_CONFIG.slotHeight - 1, 6);
 
           // Event styling based on type
           const isSimplePractice = event.source === 'simplepractice' || event.title.includes('Appointment');
@@ -319,9 +319,9 @@ export const exportExactGridPDF = async (
             pdf.setFillColor(240, 248, 255);
             pdf.rect(eventX, eventY, eventWidth, eventHeight, 'F');
             pdf.setFillColor(100, 149, 237);
-            pdf.rect(eventX, eventY, 4, eventHeight, 'F');
+            pdf.rect(eventX, eventY, 2, eventHeight, 'F');
             pdf.setDrawColor(100, 149, 237);
-            pdf.setLineWidth(1);
+            pdf.setLineWidth(0.5);
             pdf.rect(eventX, eventY, eventWidth, eventHeight, 'S');
           } else if (isGoogle) {
             // Light green background with dashed green border
@@ -353,26 +353,31 @@ export const exportExactGridPDF = async (
 
           pdf.setTextColor(0, 0, 0);
 
-          // Event name - larger and more readable
-          pdf.setFont('times', 'bold');
-          pdf.setFontSize(7);
-          const maxWidth = eventWidth - (isSimplePractice ? 8 : 6);
-          const lines = pdf.splitTextToSize(eventTitle, maxWidth);
-
-          const textX = isSimplePractice ? eventX + 6 : eventX + 3;
-          const lineHeight = 5;
-          const maxLines = Math.floor((eventHeight - 8) / lineHeight);
-
-          // Event name
-          for (let i = 0; i < Math.min(lines.length, maxLines); i++) {
-            pdf.text(lines[i], textX, eventY + 8 + (i * lineHeight));
+          // Calculate available text space
+          const textX = isSimplePractice ? eventX + 4 : eventX + 2;
+          const maxWidth = eventWidth - (isSimplePractice ? 8 : 4);
+          
+          // Truncate long event names to fit properly
+          let displayTitle = eventTitle;
+          const maxChars = Math.floor(maxWidth / 3); // Approximate character limit based on width
+          if (displayTitle.length > maxChars) {
+            displayTitle = displayTitle.substring(0, maxChars - 3) + '...';
           }
 
-          // Event time - only show if there's space
-          if (eventHeight > 15) {
+          // Event name - smaller font to fit better
+          pdf.setFont('times', 'bold');
+          pdf.setFontSize(5);
+          
+          // Only show title if event is tall enough
+          if (eventHeight >= 8) {
+            pdf.text(displayTitle, textX, eventY + 6);
+          }
+
+          // Event time - only show if there's enough space
+          if (eventHeight >= 12) {
             pdf.setFont('times', 'normal');
-            pdf.setFontSize(6);
-            pdf.text(`${startTime}-${endTime}`, textX, eventY + eventHeight - 4);
+            pdf.setFontSize(4);
+            pdf.text(`${startTime}-${endTime}`, textX, eventY + eventHeight - 3);
           }
         }
       }
