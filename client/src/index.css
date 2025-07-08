@@ -439,13 +439,13 @@ html, body {
 }
 
 .appointment-notes {
-    margin-top: 6px;
+    margin-top: -14px;
     padding-left: 0;
     text-align: left;
 }
 
 .appointment-actions {
-    margin-top: 6px;
+    margin-top: -14px;
     padding-left: 0;
     text-align: left;
 }

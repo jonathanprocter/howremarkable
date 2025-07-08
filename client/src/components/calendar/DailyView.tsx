@@ -359,28 +359,17 @@ export const DailyView = ({
                   onDragStart={(e) => handleDragStart(e, event)}
                   onClick={() => toggleEventExpansion(event.id)}
                 >
-                  <div className="appointment-layout">
-                    {/* Top row: Title, Calendar, and Time in a 3-column layout */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '6px' }}>
-                      {/* Left: Title, Calendar, and Time */}
-                      <div className="appointment-left">
-                        <div className="appointment-title-bold">{event.title}</div>
-                        <div className="appointment-calendar">{event.source} calendar</div>
-                        <div className="appointment-time">{formatEventTime(event)}</div>
-                      </div>
-                      
-                      {/* Center: Empty for now */}
-                      <div className="appointment-center">
-                      </div>
-                      
-                      {/* Right: Empty for now */}
-                      <div className="appointment-right">
-                      </div>
+                  <div className="appointment-layout" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', padding: '4px' }}>
+                    
+                    {/* Left: Event title, calendar, and time */}
+                    <div className="appointment-left">
+                      <div className="appointment-title-bold">{event.title}</div>
+                      <div className="appointment-calendar">{event.source} calendar</div>
+                      <div className="appointment-time">{formatEventTime(event)}</div>
                     </div>
                     
-                    {/* Bottom row: Event Notes and Action Items below appointment info */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                      {/* Event Notes */}
+                    {/* Center: Event Notes (bulleted) - only if they exist */}
+                    <div className="appointment-center">
                       {event.notes && (
                         <div className="appointment-notes">
                           <div className="appointment-notes-header">Event Notes</div>
@@ -395,8 +384,10 @@ export const DailyView = ({
                           })}
                         </div>
                       )}
-                      
-                      {/* Action Items */}
+                    </div>
+                    
+                    {/* Right: Action Items - only if they exist */}
+                    <div className="appointment-right">
                       {event.actionItems && (
                         <div className="appointment-actions">
                           <div className="appointment-actions-header">Action Items</div>
