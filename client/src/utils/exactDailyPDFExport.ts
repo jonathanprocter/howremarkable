@@ -225,8 +225,21 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     const slotsFromStart = minutesSince6am / 30;
     const topPosition = gridStartY + (slotsFromStart * timeSlotHeight);
     
-    // Calculate height based on duration - match dashboard exactly
-    const height = Math.max(48, (durationMinutes / 30) * timeSlotHeight - 2);
+    // Calculate height based on duration and content - match dashboard exactly
+    const baseHeight = Math.max(48, (durationMinutes / 30) * timeSlotHeight - 2);
+    
+    // Calculate additional height needed for wrapped text
+    let maxContentLines = 3; // base: title, source, time
+    if (event.notes && event.notes.trim()) {
+      const noteLines = event.notes.split('\n').filter(n => n.trim()).length;
+      maxContentLines = Math.max(maxContentLines, noteLines + 2); // +2 for header and spacing
+    }
+    if (event.actionItems && event.actionItems.trim()) {
+      const actionLines = event.actionItems.split('\n').filter(a => a.trim()).length;
+      maxContentLines = Math.max(maxContentLines, actionLines + 2); // +2 for header and spacing
+    }
+    
+    const height = Math.max(baseHeight, maxContentLines * 8 + 20);
     
     // Event styling based on type
     const eventType = getEventTypeInfo(event);
@@ -304,7 +317,14 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
         .filter(note => note.length > 0 && note !== '•' && note !== '-');
       
       notes.forEach((note, index) => {
-        pdf.text(`• ${note}`, eventX + columnWidth, eventY + 12 + (index * 8));
+        // Wrap text to fit within column width
+        const maxWidth = columnWidth - 20; // Leave margin for bullet and spacing
+        const lines = pdf.splitTextToSize(`• ${note}`, maxWidth);
+        let currentY = eventY + 12 + (index * 8);
+        
+        lines.forEach((line, lineIndex) => {
+          pdf.text(line, eventX + columnWidth, currentY + (lineIndex * 6));
+        });
       });
     }
     
@@ -322,8 +342,27 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
         .filter(item => item.length > 0 && item !== '•' && item !== '-');
       
       actionItems.forEach((item, index) => {
-        pdf.text(`• ${item}`, eventX + columnWidth * 2, eventY + 12 + (index * 8));
+        // Wrap text to fit within column width
+        const maxWidth = columnWidth - 20; // Leave margin for bullet and spacing
+        const lines = pdf.splitTextToSize(`• ${item}`, maxWidth);
+        let currentY = eventY + 12 + (index * 8);
+        
+        lines.forEach((line, lineIndex) => {
+          pdf.text(line, eventX + columnWidth * 2, currentY + (lineIndex * 6));
+        });
       });
+    }
+    
+    // Draw column dividers for 3-column layout
+    if ((event.notes && event.notes.trim()) || (event.actionItems && event.actionItems.trim())) {
+      pdf.setDrawColor(...DAILY_CONFIG.colors.lightGray);
+      pdf.setLineWidth(0.3);
+      
+      // Vertical line between left and center columns
+      pdf.line(eventX + columnWidth - 8, eventY + 5, eventX + columnWidth - 8, eventY + height - 10);
+      
+      // Vertical line between center and right columns  
+      pdf.line(eventX + columnWidth * 2 - 8, eventY + 5, eventX + columnWidth * 2 - 8, eventY + height - 10);
     }
   });
 }
