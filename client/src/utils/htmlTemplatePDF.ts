@@ -804,14 +804,16 @@ function drawRemarkableDailyAppointments(pdf: jsPDF, selectedDate: Date, events:
     console.log(`Has notes: ${!!(event.notes && event.notes.trim())}`);
     console.log(`Has action items: ${!!(event.actionItems && event.actionItems.trim())}`);
     
-    // Calculate position based on 30-minute slots from 6:00
-    const startMinutesFrom6 = (startHour - 6) * 60 + startMinute;
-    const endMinutesFrom6 = (endHour - 6) * 60 + endMinute;
-    const startSlot = Math.max(0, startMinutesFrom6 / 30);
-    const endSlot = Math.min(35, endMinutesFrom6 / 30);
-    const durationSlots = Math.max(2, endSlot - startSlot);
+    // Calculate position EXACTLY like daily view (DailyView.tsx line 101-106)
+    const minutesSince6am = (startHour - 6) * 60 + startMinute;
+    const slotsFromStart = minutesSince6am / 30;
+    const topPosition = Math.max(0, slotsFromStart * timeSlotHeight); // Use PDF timeSlotHeight
     
-    if (startSlot < 0 || startSlot > 35) {
+    // Calculate duration in minutes like daily view
+    const durationMinutes = (endDate.getTime() - eventDate.getTime()) / (1000 * 60);
+    
+    // Skip events outside time range
+    if (minutesSince6am < 0 || minutesSince6am > (17.5 * 60)) { // 6:00 to 23:30
       console.log('Event outside time range, skipping');
       return;
     }
@@ -821,32 +823,32 @@ function drawRemarkableDailyAppointments(pdf: jsPDF, selectedDate: Date, events:
     const hasActionItems = !!(event.actionItems && event.actionItems.trim());
     const needsExpandedLayout = hasNotes || hasActionItems;
     
-    // Position calculation
+    // Position calculation - match daily view exactly
     const eventX = margin + timeColumnWidth + 3;
-    const eventY = gridStartY + (startSlot * timeSlotHeight) + 1;
+    const eventY = gridStartY + topPosition + 1;
     const eventWidth = dayColumnWidth - 6;
     
-    // Adjust height based on content - optimized for reMarkable Pro
-    let eventHeight;
+    // Height calculation - match daily view logic (line 106)
+    let eventHeight = Math.max(56, (durationMinutes / 30) * timeSlotHeight - 4); // 60px per 30min slot, minus padding
+    
+    // For expanded layout, ensure minimum height for 3 columns
     if (needsExpandedLayout) {
-      // Calculate height needed for notes and action items
       const notesLines = hasNotes ? event.notes!.split('\n').filter(line => line.trim()).length : 0;
       const actionLines = hasActionItems ? event.actionItems!.split('\n').filter(line => line.trim()).length : 0;
       const maxContentLines = Math.max(notesLines, actionLines);
-      const minimumHeight = 55 + (maxContentLines * 10); // Increased base height + content
-      eventHeight = Math.max(minimumHeight, (durationSlots * timeSlotHeight) - 2);
-    } else {
-      eventHeight = Math.max(45, (durationSlots * timeSlotHeight) - 2); // Increased minimum height
+      const minimumHeight = 70 + (maxContentLines * 12); // More space for 3-column layout
+      eventHeight = Math.max(minimumHeight, eventHeight);
     }
     
     console.log(`Position: X=${eventX}, Y=${eventY}, Width=${eventWidth}, Height=${eventHeight}`);
     console.log(`Expanded layout: ${needsExpandedLayout}`);
     
-    // Determine event type
+    // Determine event type - EXACTLY match daily view logic (line 110-114)
     const isSimplePractice = event.source === 'simplepractice' || 
-                           event.title.toLowerCase().includes('appointment') ||
-                           event.calendarId?.includes('simplepractice') ||
-                           event.calendarId === '0np7sib5u30o7oc297j5pb259g';
+                           event.notes?.toLowerCase().includes('simple practice') ||
+                           event.title?.toLowerCase().includes('simple practice') ||
+                           event.description?.toLowerCase().includes('simple practice') ||
+                           event.title?.toLowerCase().includes('appointment'); // SimplePractice appointments sync as "X Appointment"
     
     const isHoliday = event.title.toLowerCase().includes('holiday') ||
                      event.calendarId === 'en.usa#holiday@group.v.calendar.google.com';
@@ -894,8 +896,11 @@ function drawRemarkableDailyAppointments(pdf: jsPDF, selectedDate: Date, events:
     const startX = eventX + padding;
     const contentWidth = eventWidth - (padding * 2);
     
-    // IMPROVED TITLE PROCESSING - Don't over-clean!
+    // IMPROVED TITLE PROCESSING - Conservative cleaning
     let displayTitle = event.title || 'Untitled Event';
+    
+    // Clean the title text to prevent character spacing issues
+    displayTitle = displayTitle.replace(/\s+/g, ' ').trim();
     
     // Only remove " Appointment" suffix, nothing else
     if (displayTitle.endsWith(' Appointment')) {
@@ -946,8 +951,10 @@ function drawRemarkableDailyAppointments(pdf: jsPDF, selectedDate: Date, events:
         let line2 = '';
         
         for (let i = 1; i < words.length; i++) {
-          if ((line1 + ' ' + words[i]).length <= maxCharsPerLine) {
-            line1 += ' ' + words[i];
+          const testLine = line1 + ' ' + words[i];
+          const testWidth = pdf.getTextWidth(testLine);
+          if (testWidth <= col1Width - 4) {
+            line1 = testLine;
           } else {
             line2 = words.slice(i).join(' ');
             break;
@@ -996,6 +1003,7 @@ function drawRemarkableDailyAppointments(pdf: jsPDF, selectedDate: Date, events:
         const timeRange = `${startTimeStr}-${endTimeStr}`;
         
         pdf.text(timeRange, col1X, col1Y);
+        col1Y += 12;
       }
       
       // === COLUMN 2: Event Notes ===
