@@ -960,7 +960,10 @@ export default function Planner() {
           onSyncNotes={() => handleQuickAction('sync notes')}
           onSelectAll={() => handleQuickAction('select all')}
           onDeselectAll={() => handleQuickAction('deselect all')}
-          onExportCurrentView={() => handleExportAction('Current View')}
+          onExportCurrentView={(type) => {
+            console.log('🎯 onExportCurrentView called with type:', type);
+            handleExportAction(type || 'Current View');
+          }}
           onExportWeeklyPackage={() => handleExportAction('Weekly Package')}
           onExportDailyView={() => {
             console.log('📱 Daily View Export Button Clicked!');
