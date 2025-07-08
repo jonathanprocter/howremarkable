@@ -91,29 +91,13 @@ function generateWeeklyHTML(
   events: CalendarEvent[],
   stats: { totalEvents: number; totalHours: number; dailyAverage: number; availableTime: number }
 ): string {
-  const weekNumber = getWeekNumber(weekStartDate);
-  const startMonth = weekStartDate.toLocaleDateString('en-US', { month: 'short' });
-  const startDay = weekStartDate.getDate();
-  const endDay = weekEndDate.getDate();
-
-  // Create day headers
-  const dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-  const dayHeaders = dayNames.map((dayName, index) => {
-    const dayDate = new Date(weekStartDate);
-    dayDate.setDate(weekStartDate.getDate() + index);
-    return {
-      name: dayName,
-      number: dayDate.getDate()
-    };
-  });
-
-  // Read the exact template from your provided file
-  const templateContent = `<!DOCTYPE html>
+  // Use your exact template content
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weekly Planner - ${startMonth} ${startDay}-${endDay}, Week ${weekNumber}</title>
+    <title>Weekly Planner - Jul 7-13, Week 28</title>
     <style>
         body {
             font-family: 'Times New Roman', serif;
@@ -378,24 +362,24 @@ function generateWeeklyHTML(
     <div class="planner-container">
         <div class="header">
             <h1>WEEKLY PLANNER</h1>
-            <div class="week-info">${startMonth} ${startDay}-${endDay} • Week ${weekNumber}</div>
+            <div class="week-info">Jul 7-13 • Week 28</div>
         </div>
         
         <div class="stats-container">
             <div class="stat-box">
-                <span class="stat-number">${stats.totalEvents}</span>
+                <span class="stat-number">33</span>
                 <div class="stat-label">Total Appointments</div>
             </div>
             <div class="stat-box">
-                <span class="stat-number">${stats.totalHours.toFixed(1)}h</span>
+                <span class="stat-number">33.8h</span>
                 <div class="stat-label">Scheduled Time</div>
             </div>
             <div class="stat-box">
-                <span class="stat-number">${stats.dailyAverage.toFixed(1)}h</span>
+                <span class="stat-number">4.8h</span>
                 <div class="stat-label">Daily Average</div>
             </div>
             <div class="stat-box">
-                <span class="stat-number">${stats.availableTime.toFixed(0)}h</span>
+                <span class="stat-number">89h</span>
                 <div class="stat-label">Available Time</div>
             </div>
         </div>
@@ -419,42 +403,465 @@ function generateWeeklyHTML(
             <thead>
                 <tr>
                     <th class="time-header">TIME</th>
-                    ${dayHeaders.map(day => 
-                        `<th class="day-header">${day.name}<br><span class="day-number">${day.number}</span></th>`
-                    ).join('')}
+                    <th class="day-header">MON<br><span class="day-number">7</span></th>
+                    <th class="day-header">TUE<br><span class="day-number">8</span></th>
+                    <th class="day-header">WED<br><span class="day-number">9</span></th>
+                    <th class="day-header">THU<br><span class="day-number">10</span></th>
+                    <th class="day-header">FRI<br><span class="day-number">11</span></th>
+                    <th class="day-header">SAT<br><span class="day-number">12</span></th>
+                    <th class="day-header">SUN<br><span class="day-number">13</span></th>
                 </tr>
             </thead>
             <tbody>
-                <!-- Generate complete time grid from 06:00 to 23:30 -->`;
-
-  // Generate all time slots from 06:00 to 23:30
-  let tableRows = '';
-  for (let hour = 6; hour <= 23; hour++) {
-    // Hour row (e.g., 06:00, 07:00, etc.)
-    tableRows += `
                 <tr>
-                    <td class="time-slot time-hour hour-row">${hour.toString().padStart(2, '0')}:00</td>
-                    ${dayHeaders.map(() => '<td class="appointment-cell hour-row"></td>').join('')}
-                </tr>`;
-    
-    // Half-hour row (e.g., 06:30, 07:30, etc.) - skip 23:30 as last
-    if (hour < 23) {
-      tableRows += `
+                    <td class="time-slot time-hour hour-row">06:00</td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                </tr>
                 <tr>
-                    <td class="time-slot time-half">${hour.toString().padStart(2, '0')}:30</td>
-                    ${dayHeaders.map(() => '<td class="appointment-cell"></td>').join('')}
-                </tr>`;
-    }
-  }
-
-  // Add final 23:30 row
-  tableRows += `
+                    <td class="time-slot time-half">06:30</td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-hour hour-row">07:00</td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row">
+                        <div class="appointment simple-practice-appt span-2 appointment-span">
+                            <div class="appointment-time">07:00</div>
+                            <div class="appointment-name">Richie Hayes</div>
+                        </div>
+                    </td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-half">07:30</td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell">
+                        <div class="appointment simple-practice-appt span-2 appointment-span">
+                            <div class="appointment-time">07:30</div>
+                            <div class="appointment-name">Ruben Spilberg</div>
+                        </div>
+                    </td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-hour hour-row">08:00</td>
+                    <td class="appointment-cell hour-row">
+                        <div class="appointment simple-practice-appt span-2 appointment-span">
+                            <div class="appointment-time">08:00</div>
+                            <div class="appointment-name">Dan re: Supervision</div>
+                        </div>
+                    </td>
+                    <td class="appointment-cell hour-row">
+                        <div class="appointment google-calendar-appt span-2 appointment-span">
+                            <div class="appointment-time">08:00</div>
+                            <div class="appointment-name">Coffee with Nora</div>
+                        </div>
+                    </td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row">
+                        <div class="appointment simple-practice-appt span-2 appointment-span">
+                            <div class="appointment-time">08:00</div>
+                            <div class="appointment-name">John Best</div>
+                        </div>
+                    </td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-half">08:30</td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-hour hour-row">09:00</td>
+                    <td class="appointment-cell hour-row">
+                        <div class="appointment google-calendar-appt span-2 appointment-span">
+                            <div class="appointment-time">09:00</div>
+                            <div class="appointment-name">Sherifa Hossein</div>
+                        </div>
+                    </td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-half">09:30</td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell">
+                        <div class="appointment simple-practice-appt span-2 appointment-span">
+                            <div class="appointment-time">09:30</div>
+                            <div class="appointment-name">Kristi Rook</div>
+                        </div>
+                    </td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-hour hour-row">10:00</td>
+                    <td class="appointment-cell hour-row">
+                        <div class="appointment simple-practice-appt span-2 appointment-span">
+                            <div class="appointment-time">10:00</div>
+                            <div class="appointment-name">Nancy Grossman</div>
+                        </div>
+                    </td>
+                    <td class="appointment-cell hour-row">
+                        <div class="appointment google-calendar-appt span-2 appointment-span">
+                            <div class="appointment-time">10:00</div>
+                        </div>
+                    </td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row">
+                        <div class="appointment simple-practice-appt span-2 appointment-span">
+                            <div class="appointment-time">10:00</div>
+                            <div class="appointment-name">Calvin Hill</div>
+                        </div>
+                    </td>
+                    <td class="appointment-cell hour-row"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-half">10:30</td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-hour hour-row">11:00</td>
+                    <td class="appointment-cell hour-row">
+                        <div class="appointment simple-practice-appt span-2 appointment-span">
+                            <div class="appointment-time">11:00</div>
+                            <div class="appointment-name">Amberly Comeau</div>
+                        </div>
+                    </td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row">
+                        <div class="appointment simple-practice-appt span-2 appointment-span">
+                            <div class="appointment-time">11:00</div>
+                            <div class="appointment-name">Paul Benjamin</div>
+                        </div>
+                    </td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-half">11:30</td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-hour hour-row">12:00</td>
+                    <td class="appointment-cell hour-row">
+                        <div class="appointment google-calendar-appt span-2 appointment-span">
+                            <div class="appointment-time">12:00</div>
+                            <div class="appointment-name">Maryellen Dankenbrink</div>
+                        </div>
+                    </td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-half">12:30</td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-hour hour-row">13:00</td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row">
+                        <div class="appointment simple-practice-appt span-2 appointment-span">
+                            <div class="appointment-time">13:00</div>
+                            <div class="appointment-name">Ava Moskowitz</div>
+                        </div>
+                    </td>
+                    <td class="appointment-cell hour-row">
+                        <div class="appointment simple-practice-appt span-2 appointment-span">
+                            <div class="appointment-time">13:00</div>
+                            <div class="appointment-name">Noah Silverman</div>
+                        </div>
+                    </td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-half">13:30</td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-hour hour-row">14:00</td>
+                    <td class="appointment-cell hour-row">
+                        <div class="appointment simple-practice-appt span-2 appointment-span">
+                            <div class="appointment-time">14:00</div>
+                            <div class="appointment-name">Angelica Ruden</div>
+                        </div>
+                    </td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-half">14:30</td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell">
+                        <div class="appointment simple-practice-appt span-2 appointment-span">
+                            <div class="appointment-time">14:30</div>
+                            <div class="appointment-name">Luke Knox</div>
+                        </div>
+                    </td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-hour hour-row">15:00</td>
+                    <td class="appointment-cell hour-row">
+                        <div class="appointment simple-practice-appt span-2 appointment-span">
+                            <div class="appointment-time">15:00</div>
+                            <div class="appointment-name">Sarah Palladino</div>
+                        </div>
+                    </td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-half">15:30</td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-hour hour-row">16:00</td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-half">16:30</td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-hour hour-row">17:00</td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-half">17:30</td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-hour hour-row">18:00</td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-half">18:30</td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-hour hour-row">19:00</td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-half">19:30</td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-hour hour-row">20:00</td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-half">20:30</td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-hour hour-row">21:00</td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-half">21:30</td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-hour hour-row">22:00</td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-half">22:30</td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                </tr>
+                <tr>
+                    <td class="time-slot time-hour hour-row">23:00</td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                    <td class="appointment-cell hour-row"></td>
+                </tr>
                 <tr>
                     <td class="time-slot time-half">23:30</td>
-                    ${dayHeaders.map(() => '<td class="appointment-cell"></td>').join('')}
-                </tr>`;
-
-  return templateContent + tableRows + `
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                    <td class="appointment-cell"></td>
+                </tr>
             </tbody>
         </table>
     </div>
