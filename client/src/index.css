@@ -152,17 +152,19 @@
     display: flex;
     flex-direction: column;
     min-height: 0;
+    height: 100%;
 }
 
 .calendar-grid {
     display: grid;
     grid-template-columns: 100px repeat(7, 1fr);
-    grid-template-rows: 50px repeat(48, calc((100vh - 290px) / 48));
+    grid-template-rows: 50px repeat(48, 1fr);
     background: white;
-    height: calc(100vh - 240px);
+    height: 100%;
     width: 100%;
     overflow: hidden;
     flex: 1;
+    min-height: 0;
 }
 
 .time-header {
