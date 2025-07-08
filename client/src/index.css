@@ -5,11 +5,13 @@
 /* PROFESSIONAL PLANNER STYLING - EXACT MATCH TO HTML TEMPLATE */
 
 .planner-container {
-    max-width: 1400px;
+    width: 100%;
+    max-width: 1600px;
     margin: 0 auto;
     background: white;
     border: 2px solid black;
     font-family: 'Times New Roman', serif;
+    overflow-x: auto;
 }
 
 .header {
@@ -95,6 +97,49 @@
     border-style: double;
 }
 
+.grid-cell {
+    border-right: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+    position: relative;
+    padding: 2px;
+    min-height: 40px;
+    background: white;
+}
+
+.grid-cell:last-child {
+    border-right: none;
+}
+
+.event-in-grid {
+    background: #e3f2fd;
+    border-left: 4px solid #2196f3;
+    padding: 2px 4px;
+    margin: 1px 0;
+    font-size: 9px;
+    line-height: 1.2;
+    border-radius: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.event-simplepractice {
+    background: #f5f5f5;
+    border-left: 4px solid #6495ED;
+}
+
+.event-google-calendar {
+    background: #e0e0e0;
+    border-left: 4px dashed #666;
+}
+
+.event-personal {
+    background: #f0f0f0;
+    border-left: 4px double #999;
+}
+
 .calendar-container {
     position: relative;
     overflow: hidden;
@@ -102,17 +147,19 @@
 
 .calendar-grid {
     display: grid;
-    grid-template-columns: 80px repeat(7, 1fr);
-    grid-template-rows: 60px repeat(35, 35px);
+    grid-template-columns: 100px repeat(7, 1fr);
+    grid-template-rows: 80px repeat(35, 40px);
     background: white;
+    min-height: 100vh;
+    width: 100%;
 }
 
 .time-header {
     background: #f0f0f0;
-    padding: 15px 8px;
+    padding: 20px 12px;
     text-align: center;
     font-weight: bold;
-    font-size: 12px;
+    font-size: 14px;
     border-right: 2px solid black;
     border-bottom: 3px solid black;
     display: flex;
@@ -122,7 +169,7 @@
 
 .day-header {
     background: #f0f0f0;
-    padding: 10px 8px;
+    padding: 15px 12px;
     text-align: center;
     font-weight: bold;
     border-right: 1px solid black;
@@ -132,6 +179,7 @@
     justify-content: center;
     align-items: center;
     cursor: pointer;
+    min-height: 60px;
 }
 
 .day-header:last-child {
@@ -154,15 +202,16 @@
 
 .time-slot {
     background: #f8f8f8;
-    padding: 5px;
+    padding: 8px;
     text-align: center;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: bold;
     display: flex;
     align-items: center;
     justify-content: center;
     border-right: 2px solid black;
     border-bottom: 1px solid #ddd;
+    min-height: 40px;
 }
 
 .time-slot.hour {
