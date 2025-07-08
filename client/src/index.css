@@ -175,6 +175,7 @@ html, body {
     height: 1130px;
     width: 100%;
     overflow: visible;
+    border-bottom: 1px solid #ddd;
 }
 
 .time-header {
@@ -240,10 +241,7 @@ html, body {
     box-sizing: border-box;
 }
 
-/* Last time slot gets proper bottom border */
-.time-slot:nth-child(37) {
-    border-bottom: 2px solid black;
-}
+
 
 .time-slot.hour {
     background: #f0f0f0;
@@ -271,10 +269,7 @@ html, body {
     border-right: none;
 }
 
-/* Ensure the last row has proper bottom border */
-.calendar-cell:nth-last-child(-n+7) {
-    border-bottom: 2px solid black;
-}
+
 
 .calendar-cell.hour {
     border-bottom: 2px solid black;
