@@ -47,6 +47,13 @@ const TIME_SLOTS = [
   '22:00', '22:30', '23:00', '23:30'
 ];
 
+// Helper function for military time formatting
+const formatMilitaryTime = (date: Date) => {
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  return `${hours}:${minutes}`;
+};
+
 function getEventTypeInfo(event: CalendarEvent) {
   const isSimplePractice = event.source === 'simplepractice' || 
                            event.notes?.toLowerCase().includes('simple practice') ||
@@ -315,11 +322,6 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     pdf.setFontSize(12);
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(...DAILY_CONFIG.colors.black); // Ensure black text
-    const formatMilitaryTime = (date: Date) => {
-      const hours = date.getHours().toString().padStart(2, '0');
-      const minutes = date.getMinutes().toString().padStart(2, '0');
-      return `${hours}:${minutes}`;
-    };
     const timeRange = `${formatMilitaryTime(eventStart)} - ${formatMilitaryTime(eventEnd)}`;
     pdf.text(timeRange, eventX, eventY + 22);
     
