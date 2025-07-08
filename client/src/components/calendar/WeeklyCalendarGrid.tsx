@@ -137,13 +137,13 @@ export const WeeklyCalendarGrid = ({
   return (
     <div className="grid grid-cols-8 border border-gray-300 rounded-lg overflow-hidden">
       {/* Headers */}
-      <div className="time-header p-3 text-sm font-semibold text-center border-r border-gray-300">
+      <div className="time-header p-3 text-sm font-semibold text-center border-r border-gray-300 bg-white">
         Time
       </div>
       {week.map((day, index) => (
         <div
           key={index}
-          className="day-header p-3 text-sm font-semibold text-center border-r border-gray-300 last:border-r-0"
+          className="day-header p-3 text-sm font-semibold text-center border-r border-gray-300 last:border-r-0 bg-white"
           onClick={() => onDayClick(day.date)}
         >
           {day.dayOfWeek} {formatDateShort(day.date)}

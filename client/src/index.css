@@ -756,13 +756,13 @@ html, body {
   }
 
   .time-header {
-    background: white;
+    background: white !important;
     border-bottom: 2px solid hsl(20, 5.9%, 90%);
     font-weight: 600;
   }
 
   .day-header {
-    background: white;
+    background: white !important;
     border-bottom: 2px solid hsl(20, 5.9%, 90%);
     font-weight: 600;
     cursor: pointer;
