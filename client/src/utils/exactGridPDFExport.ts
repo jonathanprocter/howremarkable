@@ -314,14 +314,24 @@ export const exportExactGridPDF = async (
       }
     });
 
-    // BOTTOM BORDER - close the grid properly at 23:30
+    // GRID BORDERS - complete border around the entire grid
     const gridEndY = gridStartY + 50 + GRID_CONFIG.gridHeight;
     pdf.setLineWidth(2);
     pdf.setDrawColor(0, 0, 0);
+    
+    // Bottom border
     pdf.line(
       GRID_CONFIG.margin, 
       gridEndY, 
       GRID_CONFIG.margin + GRID_CONFIG.timeColumnWidth + (7 * GRID_CONFIG.dayColumnWidth), 
+      gridEndY
+    );
+    
+    // Left border - to the left of time column
+    pdf.line(
+      GRID_CONFIG.margin, 
+      gridStartY, 
+      GRID_CONFIG.margin, 
       gridEndY
     );
 

@@ -176,6 +176,7 @@ html, body {
     padding: 0;
     border: none;
     border-bottom: 2px solid black;
+    border-left: 2px solid black;
 }
 
 .time-header {
@@ -196,7 +197,7 @@ html, body {
     padding: 0;
     text-align: center;
     font-weight: bold;
-    border-right: 1px solid black;
+    border-right: 2px solid black;
     border-bottom: 3px solid black;
     display: flex;
     flex-direction: column;
@@ -252,12 +253,17 @@ html, body {
 
 .calendar-cell {
     background: white;
-    border-right: 1px solid #ddd;
+    border-right: 2px solid black;
     border-bottom: 1px solid #ddd;
     position: relative;
     cursor: pointer;
     height: 30px;
     box-sizing: border-box;
+}
+
+/* Last column shouldn't have right border */
+.calendar-cell:nth-child(8n) {
+    border-right: none;
 }
 
 /* Light background for half-hour slots across all day columns */
