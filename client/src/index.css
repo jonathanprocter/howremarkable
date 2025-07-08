@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent viewport overflow */
+html, body {
+    overflow-x: hidden;
+    height: auto;
+    min-height: 100vh;
+}
+
+#root {
+    height: auto;
+    min-height: 100vh;
+}
+
 /* PROFESSIONAL PLANNER STYLING - EXACT MATCH TO HTML TEMPLATE */
 
 .planner-container {
@@ -12,7 +24,7 @@
     border: 2px solid black;
     font-family: 'Times New Roman', serif;
     overflow-x: auto;
-    height: 100vh;
+    height: fit-content;
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
@@ -152,7 +164,7 @@
     display: flex;
     flex-direction: column;
     min-height: 0;
-    height: calc(100vh - 200px);
+    height: fit-content;
 }
 
 .calendar-grid {
@@ -160,11 +172,10 @@
     grid-template-columns: 100px repeat(7, 1fr);
     grid-template-rows: 50px repeat(36, 30px);
     background: white;
-    height: calc(50px + 36 * 30px);
+    height: 1130px;
     width: 100%;
     overflow: visible;
-    flex: 1;
-    min-height: 0;
+    border-bottom: 2px solid black;
 }
 
 .time-header {
@@ -230,6 +241,11 @@
     box-sizing: border-box;
 }
 
+/* Last time slot gets proper bottom border */
+.time-slot:nth-child(37) {
+    border-bottom: 2px solid black;
+}
+
 .time-slot.hour {
     background: #f0f0f0;
     border-bottom: 2px solid black;
@@ -254,6 +270,11 @@
 
 .calendar-cell:last-child {
     border-right: none;
+}
+
+/* Ensure the last row has proper bottom border */
+.calendar-cell:nth-child(n+289) {
+    border-bottom: 2px solid black;
 }
 
 .calendar-cell.hour {
