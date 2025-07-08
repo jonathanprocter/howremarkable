@@ -319,10 +319,10 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
       pdf.rect(margin + timeColumnWidth + 2, topPosition + 1, appointmentColumnWidth - 4, exactHeight, 'D');
     }
     
-    // Draw event content in 3-column layout exactly like dashboard, aligned with appointment block
+    // Draw event content in 3-column layout optimized for reMarkable Paper Pro
     const eventX = margin + timeColumnWidth + 8;
     const eventY = topPosition + 12;
-    const columnWidth = (appointmentColumnWidth - 20) / 3;
+    const columnWidth = (appointmentColumnWidth - 25) / 3;  // Wider columns for better text fitting
     
     // Left column: Event title, calendar source, and time
     pdf.setFontSize(10);
@@ -361,10 +361,10 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     
     // Center column: Event Notes (if they exist)
     if (event.notes && event.notes.trim()) {
-      pdf.setFontSize(8);
+      pdf.setFontSize(6);
       pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(...DAILY_CONFIG.colors.black); // Ensure black text
-      pdf.text('Event Notes', eventX + columnWidth, eventY);
+      pdf.setTextColor(...DAILY_CONFIG.colors.black);
+      pdf.text('Event Notes', eventX + columnWidth + 2, eventY);
       
       pdf.setFontSize(7);
       pdf.setFont('helvetica', 'normal');
@@ -374,25 +374,27 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
         .map(note => note.trim().replace(/^[•\s-]+/, '').trim())
         .filter(note => note.length > 0 && note !== '•' && note !== '-');
       
+      let currentY = eventY + 12;
       notes.forEach((note, index) => {
         // Wrap text to fit within column width
-        const maxWidth = columnWidth - 20; // Leave margin for bullet and spacing
+        const maxWidth = columnWidth - 15; // Leave margin for bullet and spacing
         const lines = pdf.splitTextToSize(`• ${note}`, maxWidth);
-        let currentY = eventY + 12 + (index * 10); // Increased spacing between items
         
         lines.forEach((line, lineIndex) => {
-          pdf.setTextColor(...DAILY_CONFIG.colors.black); // Ensure black text for each line
-          pdf.text(line, eventX + columnWidth, currentY + (lineIndex * 8)); // Increased line spacing
+          pdf.setTextColor(...DAILY_CONFIG.colors.black);
+          pdf.text(line, eventX + columnWidth + 5, currentY);
+          currentY += 6; // Compact line spacing for reMarkable Paper Pro
         });
+        currentY += 2; // Small gap between bullet points
       });
     }
     
     // Right column: Action Items (if they exist)
     if (event.actionItems && event.actionItems.trim()) {
-      pdf.setFontSize(8);
+      pdf.setFontSize(6);
       pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(...DAILY_CONFIG.colors.black); // Ensure black text
-      pdf.text('Action Items', eventX + columnWidth * 2, eventY);
+      pdf.setTextColor(...DAILY_CONFIG.colors.black);
+      pdf.text('Action Items', eventX + columnWidth * 2 + 2, eventY);
       
       pdf.setFontSize(7);
       pdf.setFont('helvetica', 'normal');
@@ -402,16 +404,18 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
         .map(item => item.trim().replace(/^[•\s-]+/, '').trim())
         .filter(item => item.length > 0 && item !== '•' && item !== '-');
       
+      let currentY = eventY + 12;
       actionItems.forEach((item, index) => {
         // Wrap text to fit within column width
-        const maxWidth = columnWidth - 20; // Leave margin for bullet and spacing
+        const maxWidth = columnWidth - 15; // Leave margin for bullet and spacing
         const lines = pdf.splitTextToSize(`• ${item}`, maxWidth);
-        let currentY = eventY + 12 + (index * 10); // Increased spacing between items
         
         lines.forEach((line, lineIndex) => {
-          pdf.setTextColor(...DAILY_CONFIG.colors.black); // Ensure black text for each line
-          pdf.text(line, eventX + columnWidth * 2, currentY + (lineIndex * 8)); // Increased line spacing
+          pdf.setTextColor(...DAILY_CONFIG.colors.black);
+          pdf.text(line, eventX + columnWidth * 2 + 5, currentY);
+          currentY += 6; // Compact line spacing for reMarkable Paper Pro
         });
+        currentY += 2; // Small gap between bullet points
       });
     }
     
