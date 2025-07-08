@@ -296,7 +296,7 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
       displayTitle = displayTitle.slice(0, -12);
     }
 
-    // Check for notes/action items to determine layout
+    // Check for notes/action items to determine layout - only show 3-column if content exists
     const hasNotes = !!(event.notes && event.notes.trim());
     const hasActionItems = !!(event.actionItems && event.actionItems.trim());
     const needsExpandedLayout = hasNotes || hasActionItems;
@@ -311,7 +311,7 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
       const col2X = eventX + col1Width + 8;
       const col3X = eventX + col1Width + col2Width + 10;
 
-      // Column dividers - only draw if we have content
+      // Column dividers - only draw if we have content in those columns
       pdf.setDrawColor(...DAILY_CONFIG.colors.lightGray);
       pdf.setLineWidth(0.5);
       if (hasNotes) {
