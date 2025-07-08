@@ -244,7 +244,7 @@ The application uses three main entities:
   - **RESULT**: Clean, organized daily view with clear information hierarchy and large, readable time display
 - July 08, 2025. **EVENT NOTES AND ACTION ITEMS POSITIONING FIX**: Optimized daily view layout for better information hierarchy:
   - Moved Event Notes and Action Items to start 0.5 lines below appointment name using negative margin (-14px)
-  - Increased appointment title font size from 8px to 10px for better readability
+  - Increased appointment title font size from 8px to 11px for better readability
   - Fixed persistent double bullet issue in both Event Notes and Action Items sections
   - Implemented robust bullet filtering: trim → filter empty → remove existing bullets → filter again → add single bullet
   - Enhanced data persistence to ensure formatting remains consistent across sessions

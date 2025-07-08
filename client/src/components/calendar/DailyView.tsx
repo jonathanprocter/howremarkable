@@ -375,8 +375,8 @@ export const DailyView = ({
                           <div className="appointment-notes-header">Event Notes</div>
 {event.notes.split('\n')
                             .map(note => note.trim())
-                            .filter(note => note.length > 0)
-                            .map(note => note.replace(/^•+\s*/, ''))
+                            .filter(note => note.length > 0 && note !== '•' && note !== '• ')
+                            .map(note => note.replace(/^[•\s]+/, '').trim())
                             .filter(note => note.length > 0)
                             .map((note, index) => (
                               <div key={index} className="note-item">• {note}</div>
@@ -392,8 +392,8 @@ export const DailyView = ({
                           <div className="appointment-actions-header">Action Items</div>
 {event.actionItems.split('\n')
                             .map(item => item.trim())
-                            .filter(item => item.length > 0)
-                            .map(item => item.replace(/^•+\s*/, ''))
+                            .filter(item => item.length > 0 && item !== '•' && item !== '• ')
+                            .map(item => item.replace(/^[•\s]+/, '').trim())
                             .filter(item => item.length > 0)
                             .map((item, index) => (
                               <div key={index} className="action-item">• {item}</div>
