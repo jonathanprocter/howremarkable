@@ -157,7 +157,7 @@
 .calendar-grid {
     display: grid;
     grid-template-columns: 100px repeat(7, 1fr);
-    grid-template-rows: 50px repeat(48, calc((100vh - 200px) / 48));
+    grid-template-rows: 50px repeat(48, 1fr);
     background: white;
     height: 100%;
     width: 100%;
@@ -224,7 +224,7 @@
     justify-content: center;
     border-right: 2px solid black;
     border-bottom: 1px solid #ddd;
-    height: 40px;
+    min-height: 30px;
     line-height: 1;
     box-sizing: border-box;
 }
