@@ -40,9 +40,20 @@ export const DailyView = ({
   const [noteTimers, setNoteTimers] = useState<{[key: string]: NodeJS.Timeout}>({});
 
   // Get events for the selected date
-  const dayEvents = events.filter(event => 
-    new Date(event.startTime).toDateString() === selectedDate.toDateString()
-  );
+  const dayEvents = events.filter(event => {
+    const eventDate = new Date(event.startTime);
+    const selectedDateString = selectedDate.toDateString();
+    const eventDateString = eventDate.toDateString();
+    const matches = eventDateString === selectedDateString;
+    
+    console.log(`Event: ${event.title} on ${eventDateString}, Selected: ${selectedDateString}, Matches: ${matches}`);
+    
+    return matches;
+  });
+
+  console.log(`Daily View - Selected date: ${selectedDate.toDateString()}`);
+  console.log(`Daily View - Total events: ${events.length}`);
+  console.log(`Daily View - Day events: ${dayEvents.length}`);
 
   // Calculate daily statistics
   const totalEvents = dayEvents.length;

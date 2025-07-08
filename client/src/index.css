@@ -427,6 +427,13 @@ html, body {
     position: relative;
 }
 
+.appointments-column .appointment {
+    position: absolute !important;
+    width: calc(100% - 8px);
+    margin: 0 4px;
+    z-index: 10;
+}
+
 .appointment-slot {
     height: 60px;
     border-bottom: 1px solid black;
