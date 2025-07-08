@@ -239,11 +239,11 @@ export const exportExactGridPDF = async (
       pdf.setFillColor(slot.isHour ? 240 : 248, slot.isHour ? 240 : 248, slot.isHour ? 240 : 248);
       pdf.rect(centerX, y, GRID_CONFIG.timeColumnWidth, GRID_CONFIG.slotHeight, 'F');
       
-      // Time label - compact for full timeline visibility
+      // Time label - larger for reMarkable Pro readability
       pdf.setFont('times', slot.isHour ? 'bold' : 'normal');
-      pdf.setFontSize(slot.isHour ? 10 : 8);
+      pdf.setFontSize(slot.isHour ? 12 : 10); // Larger fonts for better readability
       pdf.setTextColor(0, 0, 0);
-      pdf.text(slot.time, centerX + GRID_CONFIG.timeColumnWidth/2, y + GRID_CONFIG.slotHeight/2 + 2, { align: 'center' });
+      pdf.text(slot.time, centerX + GRID_CONFIG.timeColumnWidth/2, y + GRID_CONFIG.slotHeight/2 + 4, { align: 'center' });
       
       // Day cells
       for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
@@ -291,23 +291,34 @@ export const exportExactGridPDF = async (
           const eventWidth = GRID_CONFIG.dayColumnWidth - 4;
           const eventHeight = (slots * GRID_CONFIG.slotHeight) - 4;
           
-          // Event styling based on type
+          // Event styling based on type - white backgrounds with colored borders
           const isSimplePractice = event.source === 'simplepractice' || event.title.includes('Appointment');
           const isGoogle = event.source === 'google';
           
-          if (isSimplePractice) {
-            pdf.setFillColor(240, 248, 255);
-            pdf.setDrawColor(100, 149, 237);
-          } else if (isGoogle) {
-            pdf.setFillColor(255, 255, 255);
-            pdf.setDrawColor(16, 185, 129);
-          } else {
-            pdf.setFillColor(254, 243, 199);
-            pdf.setDrawColor(245, 158, 11);
-          }
+          // White background for all appointments
+          pdf.setFillColor(255, 255, 255);
+          pdf.rect(eventX, eventY, eventWidth, eventHeight, 'F');
           
-          pdf.setLineWidth(2);
-          pdf.rect(eventX, eventY, eventWidth, eventHeight, 'FD');
+          if (isSimplePractice) {
+            // Cornflower blue left flag and thin blue border
+            pdf.setFillColor(100, 149, 237);
+            pdf.rect(eventX, eventY, 4, eventHeight, 'F'); // Left flag
+            pdf.setDrawColor(100, 149, 237);
+            pdf.setLineWidth(1);
+            pdf.rect(eventX, eventY, eventWidth, eventHeight, 'S'); // Thin border
+          } else if (isGoogle) {
+            // Dashed green border for Google Calendar
+            pdf.setDrawColor(16, 185, 129);
+            pdf.setLineWidth(1);
+            pdf.setLineDash([3, 2]); // Dashed line
+            pdf.rect(eventX, eventY, eventWidth, eventHeight, 'S');
+            pdf.setLineDash([]); // Reset line dash
+          } else {
+            // Orange border for other events
+            pdf.setDrawColor(245, 158, 11);
+            pdf.setLineWidth(1);
+            pdf.rect(eventX, eventY, eventWidth, eventHeight, 'S');
+          }
           
           // Event text - improved readability
           const eventTitle = event.title.replace(/\s*Appointment\s*$/i, '').trim();
@@ -316,21 +327,24 @@ export const exportExactGridPDF = async (
           
           pdf.setTextColor(0, 0, 0);
           
-          // Event name - larger and bolder
+          // Event name - larger for reMarkable Pro
           pdf.setFont('times', 'bold');
-          pdf.setFontSize(9);
-          const maxWidth = eventWidth - 8;
+          pdf.setFontSize(11); // Larger for better readability
+          const maxWidth = eventWidth - (isSimplePractice ? 12 : 8);
           const lines = pdf.splitTextToSize(eventTitle, maxWidth);
           const nameHeight = Math.min(lines.length * 7, eventHeight - 14);
           
+          // Event text positioning - account for left flag in SimplePractice events
+          const textX = isSimplePractice ? eventX + 8 : eventX + 4;
+          
           for (let i = 0; i < lines.length && i * 7 < nameHeight; i++) {
-            pdf.text(lines[i], eventX + 4, eventY + 12 + (i * 7));
+            pdf.text(lines[i], textX, eventY + 12 + (i * 7));
           }
           
-          // Event time - clearer positioning
+          // Event time - larger and clearer positioning
           pdf.setFont('times', 'normal');
-          pdf.setFontSize(7);
-          pdf.text(`${startTime}-${endTime}`, eventX + 4, eventY + eventHeight - 6);
+          pdf.setFontSize(9); // Larger for better readability
+          pdf.text(`${startTime}-${endTime}`, textX, eventY + eventHeight - 8);
         }
       }
     });
