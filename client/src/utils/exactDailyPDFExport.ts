@@ -2,28 +2,26 @@ import jsPDF from 'jspdf';
 import { CalendarEvent } from '../types/calendar';
 import { cleanEventTitle, cleanTextForPDF } from './titleCleaner';
 
-// reMarkable Paper Pro portrait dimensions optimized
+// Daily PDF export - 8.5x11 inches format
 const DAILY_CONFIG = {
-  // reMarkable Paper Pro portrait: 179 x 239 mm active display area
-  // Convert to points: 179mm = 507.4pt, 239mm = 677.5pt
-  pageWidth: 507,   // 179mm in points (179 * 72 / 25.4)
-  pageHeight: 677,  // 239mm in points (239 * 72 / 25.4)  
-  margin: 8,        // Minimal margins for maximum space usage
-  timeColumnWidth: 50,  // Compact time column for narrow screen
-  appointmentColumnWidth: 449,  // Remaining width for appointments
-  timeSlotHeight: 16,  // Compact slots to fit full timeline in portrait
-  headerHeight: 90,     // Adjusted for new header structure
+  pageWidth: 612,   // 8.5 inches = 612 points
+  pageHeight: 792,  // 11 inches = 792 points
+  margin: 40,       // Standard margin for readability
+  timeColumnWidth: 80,  // Time column width matching dashboard
+  appointmentColumnWidth: 492,  // Remaining width for appointments
+  timeSlotHeight: 20,  // Time slot height for proper spacing
+  headerHeight: 120,     // Header space for title, date, and navigation
 
-  // Typography optimized for reMarkable Paper Pro e-ink display
+  // Typography matching dashboard daily view
   fonts: {
-    title: { size: 12, weight: 'bold' },      // Smaller title for narrow screen
-    date: { size: 8, weight: 'normal' },      // Compact date info
-    stats: { size: 6, weight: 'normal' },     // Very compact stats
-    timeLabels: { size: 5, weight: 'normal' }, // Tiny time labels
-    eventTitle: { size: 7, weight: 'bold' },  // Appointment name size - scaled to dashboard proportions
-    eventSource: { size: 6, weight: 'normal' }, // Calendar source size - scaled to dashboard proportions
-    eventTime: { size: 6, weight: 'bold' },   // Appointment time size - scaled to dashboard proportions
-    eventNotes: { size: 4, weight: 'normal' }  // Very compact notes
+    title: { size: 20, weight: 'bold' },      // Large title for "DAILY PLANNER"
+    date: { size: 16, weight: 'normal' },     // Date display
+    stats: { size: 12, weight: 'normal' },    // Statistics display
+    timeLabels: { size: 10, weight: 'normal' }, // Time labels
+    eventTitle: { size: 12, weight: 'bold' },  // Appointment title
+    eventSource: { size: 10, weight: 'normal' }, // Calendar source
+    eventTime: { size: 24, weight: 'bold' },   // Large time display
+    eventNotes: { size: 10, weight: 'normal' }  // Notes section
   },
 
   // Colors matching dashboard

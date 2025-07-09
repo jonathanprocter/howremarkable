@@ -2,29 +2,31 @@
 import jsPDF from 'jspdf';
 import { CalendarEvent } from '../types/calendar';
 
-// Configuration that matches the daily view exactly
+// Configuration that matches the dashboard daily view exactly (8.5x11 inches)
 const DAILY_CONFIG = {
-  pageWidth: 595,
-  pageHeight: 842,
-  margin: 40,
-  timeColumnWidth: 80,
-  appointmentColumnWidth: 450,
-  timeSlotHeight: 20,
-  headerHeight: 120,
+  pageWidth: 612,   // 8.5 inches = 612 points
+  pageHeight: 792,  // 11 inches = 792 points
+  margin: 40,       // Standard margin for readability
+  timeColumnWidth: 80,  // Time column width matching dashboard
+  appointmentColumnWidth: 492,  // Remaining width for appointments (612 - 80 - 40 = 492)
+  timeSlotHeight: 20,  // 60px slots scaled to PDF points
+  headerHeight: 120,     // Header space for title, date, and navigation
 
-  // Typography - match daily view exactly
+  // Typography - match dashboard daily view exactly
   fonts: {
-    title: { size: 20, weight: 'bold' },
-    date: { size: 14, weight: 'normal' },
-    stats: { size: 12, weight: 'normal' },
-    timeLabels: { size: 9, weight: 'normal' },
-    eventTitle: { size: 12, weight: 'bold' }, // Increased from 10
-    eventSource: { size: 8, weight: 'normal' },
-    eventTime: { size: 10, weight: 'bold' }, // Increased from 9
-    eventNotes: { size: 8, weight: 'normal' }
+    title: { size: 20, weight: 'bold' },      // Large title for "DAILY PLANNER"
+    date: { size: 16, weight: 'normal' },     // Date display
+    stats: { size: 12, weight: 'normal' },    // Statistics display
+    timeLabels: { size: 10, weight: 'normal' }, // Time labels (6:00, 6:30, etc.)
+    eventTitle: { size: 12, weight: 'bold' },  // Appointment title font
+    eventSource: { size: 10, weight: 'normal' }, // Calendar source font
+    eventTime: { size: 24, weight: 'bold' },   // Large time display matching dashboard
+    eventNotes: { size: 10, weight: 'normal' },  // Notes section
+    notesHeader: { size: 10, weight: 'bold' },   // "Event Notes" header
+    actionsHeader: { size: 10, weight: 'bold' }  // "Action Items" header
   },
 
-  // Colors - match daily view exactly
+  // Colors - match dashboard daily view exactly
   colors: {
     black: [0, 0, 0],
     gray: [100, 100, 100],
@@ -32,9 +34,9 @@ const DAILY_CONFIG = {
     mediumGray: [150, 150, 150],
     veryLightGray: [248, 248, 248], // #f8f8f8 for half-hour rows
     white: [255, 255, 255],
-    simplePracticeBlue: [66, 133, 244],
-    googleGreen: [52, 168, 83],
-    holidayOrange: [255, 152, 0],
+    simplePracticeBlue: [100, 149, 237], // #6495ED cornflower blue
+    googleGreen: [34, 197, 94], // #22c55e dashed green
+    holidayOrange: [245, 158, 11], // #f59e0b
     holidayYellow: [251, 188, 4]
   }
 };
@@ -291,9 +293,11 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
 
     // Draw borders based on type - match dashboard exactly
     if (isSimplePractice) {
-      // Blue left border
+      // Cornflower blue border with thick left flag
       pdf.setDrawColor(...DAILY_CONFIG.colors.simplePracticeBlue);
-      pdf.setLineWidth(3);
+      pdf.setLineWidth(1);
+      pdf.rect(eventX, eventY, eventWidth, eventHeight);
+      pdf.setLineWidth(4);
       pdf.line(eventX, eventY, eventX, eventY + eventHeight);
 
       // Thin border around rest
