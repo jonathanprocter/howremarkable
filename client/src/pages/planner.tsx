@@ -17,7 +17,6 @@ import { generateCompleteExportData, exportToText, exportToJSON, exportToCSV, te
 // Import the daily PDF export functions
 import { exportDailyToPDF } from '../utils/dailyPDFExport';
 import { exportExactDailyPDF } from '../utils/exactDailyPDFExport';
-import { exportDashboardExactWeeklyPDF, exportDashboardExactDailyPDF } from '../utils/dashboardExactPDF';
 
 
 
@@ -360,7 +359,7 @@ export default function Planner() {
                 console.log(`Event ${i+1}: "${event.title}" - Duration: ${duration} minutes`);
               });
               
-              await exportDashboardExactDailyPDF(selectedDateForExport, currentEvents);
+              await exportExactDailyPDF(selectedDateForExport, currentEvents);
               
               toast({
                 title: "Export Successful",
@@ -381,7 +380,7 @@ export default function Planner() {
           } else {
             // Export weekly view as PDF
             try {
-              await exportDashboardExactWeeklyPDF(
+              await exportExactGridPDF(
                 state.currentWeek.startDate,
                 state.currentWeek.endDate,
                 currentEvents
@@ -430,7 +429,7 @@ export default function Planner() {
             }
             
             // Use the dedicated daily export function directly
-            await exportDashboardExactDailyPDF(selectedDateForExport, currentEvents);
+            await exportExactDailyPDF(selectedDateForExport, currentEvents);
             
             toast({
               title: "Export Successful",
@@ -493,7 +492,7 @@ export default function Planner() {
         case 'reMarkable Weekly':
           // Export weekly view as PDF using the working export function
           try {
-            await exportDashboardExactWeeklyPDF(
+            await exportExactGridPDF(
               state.currentWeek.startDate,
               state.currentWeek.endDate,
               currentEvents

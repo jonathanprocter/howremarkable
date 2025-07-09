@@ -216,16 +216,20 @@ export const WeeklyPlannerView = ({
           {timeSlots.map((slot, slotIndex) => {
             const isHour = slot.minute === 0;
             
+            const slotElements = [];
+            
             // Time slot label
-            return [
+            slotElements.push(
               <div key={`time-${slot.hour}-${slot.minute}`} className={`time-slot ${isHour ? 'hour' : ''}`}>
                 <span className={isHour ? 'text-sm' : 'text-xs'}>
                   {slot.time}
                 </span>
-              </div>,
-              
-              // Calendar cells for each day
-              ...week.map((day, dayIndex) => (
+              </div>
+            );
+            
+            // Calendar cells for each day
+            week.forEach((day, dayIndex) => {
+              slotElements.push(
                 <div
                   key={`${slotIndex}-${dayIndex}`}
                   className={`calendar-cell ${isHour ? 'hour' : 'half-hour'}`}
@@ -250,12 +254,13 @@ export const WeeklyPlannerView = ({
                 >
                   {renderTimeSlotEvents(day.date, slot, slotIndex)}
                 </div>
-              ))
-            ];
+              );
+            });
+            
+            return slotElements;
           }).flat()}
         </div>
       </div>
-
     </div>
   );
 };

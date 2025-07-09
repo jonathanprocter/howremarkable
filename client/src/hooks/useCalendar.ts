@@ -42,7 +42,7 @@ const sampleGoogleEvents: CalendarEvent[] = [
 const initialState: CalendarState = {
   currentDate: new Date(2025, 6, 7), // July 7, 2025 (Monday)
   selectedDate: new Date(2025, 6, 7), // July 7, 2025 (Monday)
-  viewMode: 'daily',
+  viewMode: 'weekly',
   currentWeek: {
     weekNumber: 1,
     startDate: new Date(),

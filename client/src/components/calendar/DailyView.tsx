@@ -225,74 +225,52 @@ export const DailyView = ({
 
   return (
     <div className="planner-container daily-planner">
-      {/* Exact Header from Dashboard Screenshot */}
-      <div className="dashboard-header">
-        <div className="header-top">
-          <div className="appointment-types">
-            <span className="label">Appointment Types</span>
-            <div className="checkbox-group">
-              <label><input type="checkbox" defaultChecked /> SimplePractice</label>
-              <label><input type="checkbox" defaultChecked /> Google Calendar</label>
-              <label><input type="checkbox" defaultChecked /> Holidays in United States</label>
-            </div>
+      {/* Header Navigation Bar - styled buttons implementation */}
+      <div className="nav-header">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onBackToWeek}
+          className="nav-btn weekly-btn"
+          aria-label="Navigate to weekly overview"
+          tabIndex={0}
+        >
+          📅 Weekly Overview
+        </Button>
+        <div className="page-title">
+          <h2>{getDayName(selectedDate)}, {getDateString(selectedDate)}</h2>
+          <span className="appointment-count">{totalEvents} appointments</span>
+        </div>
+        <div className="legend">
+          <div className="legend-item">
+            <span className="legend-symbol simplepractice"></span>SimplePractice
           </div>
-          <div className="google-calendars">
-            <span className="label">Google Calendars</span>
-            <div className="calendar-list">
-              <div className="calendar-item">
-                <span className="calendar-icon holidays"></span>Holidays in United States
-              </div>
-              <div className="calendar-item">
-                <span className="calendar-icon simplepractice"></span>Simple Practice
-              </div>
-              <div className="calendar-item">
-                <span className="calendar-icon google"></span>Google
-              </div>
-            </div>
+          <div className="legend-item">
+            <span className="legend-symbol google-calendar"></span>Google Calendar
+          </div>
+          <div className="legend-item">
+            <span className="legend-symbol personal"></span>Holidays in United States
           </div>
         </div>
-        <div className="header-main">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onBackToWeek}
-            className="weekly-overview-btn"
-          >
-            📅 Weekly Overview
-          </Button>
-          <div className="date-title">
-            <h2>{getDayName(selectedDate)}, {getDateString(selectedDate)}</h2>
-            <span className="appointment-count">{totalEvents} appointments</span>
-          </div>
-          <div className="legend-inline">
-            <div className="legend-item">
-              <span className="legend-symbol simplepractice"></span>SimplePractice
-            </div>
-            <div className="legend-item">
-              <span className="legend-symbol google-calendar"></span>Google Calendar
-            </div>
-            <div className="legend-item">
-              <span className="legend-symbol personal"></span>Holidays in United States
-            </div>
-          </div>
+      </div>
+
+      {/* Daily Statistics - exact match to HTML template */}
+      <div className="daily-stats">
+        <div className="stat-item">
+          <span className="stat-number">{totalEvents}</span>
+          Appointments
         </div>
-        <div className="stats-bar">
-          <div className="stat-item">
-            <span className="stat-number">{totalEvents}</span>
-            <span className="stat-label">Appointments</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-number">{totalHours.toFixed(1)}h</span>
-            <span className="stat-label">Scheduled</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-number">{availableHours.toFixed(1)}h</span>
-            <span className="stat-label">Available</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-number">{freeTimePercentage}%</span>
-            <span className="stat-label">Free Time</span>
-          </div>
+        <div className="stat-item">
+          <span className="stat-number">{totalHours.toFixed(1)}h</span>
+          Scheduled
+        </div>
+        <div className="stat-item">
+          <span className="stat-number">{availableHours.toFixed(1)}h</span>
+          Available
+        </div>
+        <div className="stat-item">
+          <span className="stat-number">{freeTimePercentage}%</span>
+          Free Time
         </div>
       </div>
 
@@ -500,37 +478,38 @@ export const DailyView = ({
         </div>
       </div>
       
-      {/* Exact Footer from Dashboard Screenshot */}
-      <div className="dashboard-footer">
-        <div className="footer-nav">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onPreviousDay}
-            className="footer-nav-btn"
-          >
-            ← {getDayNavigationName(getPreviousDay())}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onBackToWeek}
-            className="footer-nav-btn weekly-btn"
-          >
-            📅 Weekly Overview
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onNextDay}
-            className="footer-nav-btn"
-          >
-            {getDayNavigationName(getNextDay())} →
-          </Button>
-        </div>
-        <div className="footer-time">
-          <span className="time-display">23:30</span>
-        </div>
+      {/* Footer Navigation Bar - styled buttons implementation */}
+      <div className="nav-footer">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onPreviousDay}
+          className="nav-btn prev-btn"
+          aria-label={`Navigate to ${getDayNavigationName(getPreviousDay())}`}
+          tabIndex={0}
+        >
+          ← {getDayNavigationName(getPreviousDay())}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onBackToWeek}
+          className="nav-btn weekly-btn"
+          aria-label="Navigate to weekly overview"
+          tabIndex={0}
+        >
+          📅 Weekly Overview
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onNextDay}
+          className="nav-btn next-btn"
+          aria-label={`Navigate to ${getDayNavigationName(getNextDay())}`}
+          tabIndex={0}
+        >
+          {getDayNavigationName(getNextDay())} →
+        </Button>
       </div>
     </div>
   );
