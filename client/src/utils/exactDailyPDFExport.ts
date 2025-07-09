@@ -11,7 +11,7 @@ const DAILY_CONFIG = {
   timeColumnWidth: 50,  // Compact time column for narrow screen
   appointmentColumnWidth: 449,  // Remaining width for appointments
   timeSlotHeight: 16,  // Compact slots to fit full timeline in portrait
-  headerHeight: 108,     // Increased header space for legend + statistics table
+  headerHeight: 98,     // Restored original header height
 
   // Typography optimized for reMarkable Paper Pro e-ink display
   fonts: {
@@ -135,7 +135,7 @@ function drawDashboardHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEve
   const availableTime = Math.max(0, 12 - scheduledHours); // Assuming 12-hour workday
   
   // Statistics table positioned below the legend
-  const tableY = margin + 50;
+  const tableY = margin + 67;
   const tableHeight = 25;
   const colWidth = (pageWidth - 4) / 4;
   
@@ -173,7 +173,7 @@ function drawDashboardHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEve
 
 function drawDashboardLegend(pdf: jsPDF) {
   const { margin, pageWidth } = DAILY_CONFIG;
-  const legendY = margin + 38;  // Positioned between date and statistics table
+  const legendY = margin + 40;  // Positioned directly below the date
   
   pdf.setFontSize(8);  // Smaller font for compact layout
   pdf.setFont('helvetica', 'normal');
