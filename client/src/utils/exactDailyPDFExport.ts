@@ -233,11 +233,11 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     }
     pdf.rect(margin, y, timeColumnWidth + appointmentColumnWidth, timeSlotHeight, 'F');
     
-    // Time label - centered both vertically and horizontally
+    // Time label - aligned to left border
     pdf.setFontSize(isHour ? DAILY_CONFIG.fonts.timeLabels.size + 1 : DAILY_CONFIG.fonts.timeLabels.size);
     pdf.setFont('helvetica', isHour ? 'bold' : 'normal');
     pdf.setTextColor(...DAILY_CONFIG.colors.black);
-    pdf.text(timeSlot, margin + timeColumnWidth / 2, y + timeSlotHeight / 2 + 2, { align: 'center' });
+    pdf.text(timeSlot, 2, y + timeSlotHeight / 2 + 2, { align: 'left' });
     
     // Grid lines - subtle like dashboard
     pdf.setDrawColor(...DAILY_CONFIG.colors.mediumGray);
