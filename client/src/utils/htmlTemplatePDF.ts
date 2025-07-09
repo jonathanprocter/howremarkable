@@ -57,26 +57,25 @@ function getEventTypeInfo(event: CalendarEvent): EventTypeInfo {
   };
 }
 
-// reMarkable Paper Pro specific configuration for daily view
+// reMarkable Paper Pro specific configuration for daily view - MATCH DASHBOARD EXACTLY
 const REMARKABLE_DAILY_CONFIG = {
-  // Optimized for reMarkable Pro portrait (11.8" screen, 2160x1620 resolution)
-  // Using A4 portrait dimensions but optimized for e-ink display
-  pageWidth: 595,   // Standard A4 width in points
-  pageHeight: 842,  // Standard A4 height in points
-  margin: 25,       // Optimal margin for readability
+  // Perfect reMarkable Pro portrait dimensions matching dashboard layout
+  pageWidth: 595,   // A4 portrait width
+  pageHeight: 842,  // A4 portrait height
+  margin: 20,       // Clean margins like dashboard
   
-  // Header configuration - ultra-compact for maximum grid space
-  headerHeight: 35,  // Reduced further
-  statsHeight: 25,   // Reduced further
-  legendHeight: 15,  // Reduced further
+  // Header configuration - EXACTLY match dashboard proportions
+  headerHeight: 80,  // Match dashboard header space
+  statsHeight: 40,   // Match dashboard stats section
+  legendHeight: 25,  // Match dashboard legend
   
   get totalHeaderHeight() {
     return this.headerHeight + this.statsHeight + this.legendHeight;
   },
   
-  // Grid configuration - optimized for 36 time slots (6:00-23:30)
-  timeColumnWidth: 55,  // Reduced for more event space
-  timeSlotHeight: 18,   // Increased slightly for better readability
+  // Grid configuration - EXACTLY match dashboard time slots
+  timeColumnWidth: 80,  // Match dashboard time column width
+  timeSlotHeight: 22,   // Match dashboard time slot height exactly
   
   get gridStartY() {
     return this.margin + this.totalHeaderHeight;
@@ -448,27 +447,32 @@ export function drawDailyFooter(pdf: jsPDF, selectedDate: Date, pageNumber: numb
   pdf.setDrawColor(...REMARKABLE_DAILY_CONFIG.colors.mediumGray);
   pdf.rect(margin, footerY, pageWidth - (margin * 2), footerHeight);
   
-  // Footer navigation text
-  pdf.setFontSize(8);
+  // BIDIRECTIONAL navigation text exactly like weekly package
+  pdf.setFontSize(9);
   pdf.setFont('helvetica', 'normal');
   pdf.setTextColor(...REMARKABLE_DAILY_CONFIG.colors.black);
   
-  // Get day names for navigation
+  // Get day names for complete bidirectional navigation
   const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const currentDayName = dayNames[dayOfWeek - 1];
-  const prevDayName = dayOfWeek > 1 ? dayNames[dayOfWeek - 2] : 'Sunday';
-  const nextDayName = dayOfWeek < 7 ? dayNames[dayOfWeek] : 'Monday';
   
-  // Left side: Weekly Overview link
-  pdf.text('← Weekly Overview', margin + 10, footerY + 15);
+  // Left side: Weekly Overview link (bidirectional)
+  pdf.text('← Return to Weekly Overview (Page 1)', margin + 10, footerY + 12);
   
-  // Center: Current page info
-  const centerText = `${currentDayName} (Page ${pageNumber} of 8)`;
-  pdf.text(centerText, pageWidth / 2, footerY + 15, { align: 'center' });
+  // Center: Current page info with bidirectional context
+  const centerText = `${currentDayName} - Page ${pageNumber} of 8`;
+  pdf.text(centerText, pageWidth / 2, footerY + 12, { align: 'center' });
   
-  // Right side: Previous/Next day navigation
-  const rightText = `← ${prevDayName} | ${nextDayName} →`;
-  pdf.text(rightText, pageWidth - margin - 10, footerY + 15, { align: 'right' });
+  // Right side: Day navigation (bidirectional)
+  const prevDay = dayOfWeek > 1 ? dayOfWeek - 1 : 7;
+  const nextDay = dayOfWeek < 7 ? dayOfWeek + 1 : 1;
+  const navText = `← Page ${prevDay + 1} | Page ${nextDay + 1} →`;
+  pdf.text(navText, pageWidth - margin - 10, footerY + 12, { align: 'right' });
+  
+  // Additional navigation helper
+  pdf.setFontSize(7);
+  pdf.setTextColor(100, 100, 100);
+  pdf.text('All pages are bidirectionally linked', pageWidth / 2, footerY + 25, { align: 'center' });
 }
 
 function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date, events: CalendarEvent[]): void {
@@ -945,13 +949,22 @@ function drawRemarkableDailyAppointments(pdf: jsPDF, selectedDate: Date, events:
     const startX = eventX + padding;
     const contentWidth = eventWidth - (padding * 2);
     
-    // CRITICAL FIX: Conservative title processing to prevent character spacing issues
+    // DASHBOARD-MATCHING title processing
     let displayTitle = event.title || 'Untitled Event';
     
-    // MINIMAL processing - only remove " Appointment" suffix and normalize whitespace
-    displayTitle = displayTitle.replace(/\s+/g, ' ').trim();
+    // Clean exactly like dashboard - remove corrupted symbols and normalize
+    displayTitle = displayTitle.replace(/[🔒📅➡️⬅️Ø=ÝÅ]/g, ''); // Remove ALL corrupted symbols
+    displayTitle = displayTitle.replace(/\s+/g, ' ').trim(); // Normalize whitespace
+    
+    // Remove "Appointment" suffix like dashboard does
     if (displayTitle.endsWith(' Appointment')) {
-      displayTitle = displayTitle.slice(0, -12); // Remove " Appointment" (12 characters)
+      displayTitle = displayTitle.slice(0, -12); // Remove " Appointment"
+    }
+    
+    // Skip empty events
+    if (!displayTitle || displayTitle.length === 0) {
+      console.log('Skipping empty/corrupted event');
+      return;
     }
     
     console.log(`Original title: "${event.title}"`);

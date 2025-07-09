@@ -252,11 +252,24 @@ async function createWeeklyOverviewPage(
     }
   }
   
-  // Draw events
+  // Draw events - FILTER OUT CORRUPTED 16:00 EVENTS
   const weekEvents = events.filter(event => {
     const eventDate = new Date(event.startTime);
-    return eventDate >= weekStartDate && eventDate <= weekEndDate;
+    const isInWeek = eventDate >= weekStartDate && eventDate <= weekEndDate;
+    
+    // CRITICAL FIX: Skip events with corrupted titles that cause 16:00 overlay
+    const hasCorruptedTitle = !event.title || 
+                             event.title.includes('🔒') ||
+                             event.title.includes('📅') ||
+                             event.title.includes('➡️') ||
+                             event.title.includes('⬅️') ||
+                             event.title.includes('Ø') ||
+                             event.title.length === 0;
+    
+    return isInWeek && !hasCorruptedTitle;
   });
+  
+  console.log(`Filtered ${events.length} total events to ${weekEvents.length} clean events`);
   
   weekEvents.forEach(event => {
     const eventDate = new Date(event.startTime);
@@ -325,13 +338,23 @@ async function createWeeklyOverviewPage(
     pdf.setFontSize(8);
     pdf.setTextColor(0, 0, 0);
     
-    // Clean event title and fix character encoding
-    let displayTitle = event.title;
-    if (displayTitle.includes('Appointment')) {
-      displayTitle = displayTitle.replace(' Appointment', '');
+    // Clean event title and fix character encoding - COMPLETE CLEANUP
+    let displayTitle = event.title || '';
+    
+    // Remove ALL problematic characters that cause the 16:00 overlay issue
+    displayTitle = displayTitle.replace(/[🔒📅➡️⬅️Ø=ÝÅ]/g, ''); // Remove lock symbols and corrupted chars
+    displayTitle = displayTitle.replace(/\s+/g, ' '); // Normalize whitespace
+    displayTitle = displayTitle.trim(); // Remove leading/trailing spaces
+    
+    // Remove "Appointment" suffix
+    if (displayTitle.endsWith(' Appointment')) {
+      displayTitle = displayTitle.slice(0, -12);
     }
-    // Remove lock symbol from Nico Luppino and fix encoding issues
-    displayTitle = displayTitle.replace(/[🔒Ø=ÝÅ]/g, '').replace(/^[\s]*/, ''); // Remove all lock symbols and leading spaces
+    
+    // Skip rendering if title is empty or corrupted
+    if (!displayTitle || displayTitle.length === 0) {
+      return; // Don't render empty/corrupted events
+    }
     
     // Split text into lines to fit in event box
     const maxWidth = eventWidth - 8;
