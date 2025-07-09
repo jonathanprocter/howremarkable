@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import { CalendarEvent } from '../types/calendar';
+import { cleanEventTitle, cleanTextForPDF } from './titleCleaner';
 
 // A3 Landscape configuration optimized for professional weekly calendar layout
 const GRID_CONFIG = {
@@ -316,7 +317,7 @@ export const exportExactGridPDF = async (
           }
 
           // Event text
-          const eventTitle = event.title.replace(/\s*Appointment\s*$/i, '').trim();
+          const eventTitle = cleanEventTitle(event.title);
           const startTime = eventDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
           const endTime = eventEndDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 
@@ -337,12 +338,8 @@ export const exportExactGridPDF = async (
           pdf.setFont('times', 'bold');
           pdf.setFontSize(9);
           
-          // CLEAN EVENT TITLE (Fix text formatting issues)
-          let cleanTitle = displayTitle
-            .replace(/[🔒Ø=Ý]/g, '') // Remove lock symbols and encoding issues
-            .replace(/\s+/g, ' ')  // Remove extra spaces
-            .replace(/^[\s]*/, '') // Remove leading spaces
-            .trim();
+          // Use the cleaned title directly
+          const cleanTitle = cleanTextForPDF(displayTitle);
           
           // Show title for all events that are tall enough
           if (eventHeight >= 10) {

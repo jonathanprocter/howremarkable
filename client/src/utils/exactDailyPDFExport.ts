@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import { CalendarEvent } from '../types/calendar';
+import { cleanEventTitle, cleanTextForPDF } from './titleCleaner';
 
 // reMarkable Paper Pro portrait dimensions optimized
 const DAILY_CONFIG = {
@@ -127,7 +128,8 @@ function drawDashboardHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEve
   const daysSinceStart = Math.floor((weekStart.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
   const weekNumber = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
   
-  const dateRange = `July ${weekStart.getDate()}-${weekEnd.getDate()} • Week ${weekNumber}`;
+  // Format date range as "July 7 - 13, 2025"
+  const dateRange = `July ${weekStart.getDate()} - ${weekEnd.getDate()}, ${selectedDate.getFullYear()}`;
   pdf.text(dateRange, pageWidth / 2, headerBoxY + 28, { align: 'center' });
 
   // Statistics table - full width spanning the four boxes
@@ -360,20 +362,10 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     pdf.setFont('helvetica', DAILY_CONFIG.fonts.eventTitle.weight);
     pdf.setTextColor(...DAILY_CONFIG.colors.black);
     
-    // Clean title - minimal processing to preserve patient names
-    let cleanTitle = event.title;
-    if (cleanTitle.endsWith(' Appointment')) {
-      cleanTitle = cleanTitle.replace(' Appointment', '');
-    }
-    // Only remove lock emoji and preserve all other text
-    cleanTitle = cleanTitle.replace(/🔒\s*/, '').trim();
+    // Clean title using centralized function
+    const cleanTitle = cleanEventTitle(event.title);
     
     console.log(`Event ${event.id}: "${event.title}" -> "${cleanTitle}"`);
-    
-    // Handle case where title might be empty or just "Appointment"
-    if (!cleanTitle || cleanTitle === 'Appointment' || cleanTitle.trim() === '') {
-      cleanTitle = 'Untitled Appointment';
-    }
     
     // Appointment name at the very top
     pdf.text(cleanTitle, eventX, eventY + 8);
