@@ -755,41 +755,39 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
     pdf.text(dayDate.getDate().toString(), x + dayColumnWidth / 2, gridY + 20, { align: 'center' });
   }
   
-  // === TIME GRID ===
-  TIME_SLOTS.forEach((timeSlot, index) => {
-    const isHour = timeSlot.endsWith(':00');
-    const y = gridY + headerHeight + (index * HTML_TEMPLATE_CONFIG.timeSlotHeight);
+  // === TIME GRID - SIMPLIFIED WITHOUT INDIVIDUAL HOUR BOXES ===
+  // Create simplified time blocks (6am to 11:30pm in 1-hour blocks)
+  const simplifiedTimeSlots = [];
+  for (let hour = 6; hour <= 23; hour++) {
+    simplifiedTimeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
+  }
+  
+  simplifiedTimeSlots.forEach((timeSlot, index) => {
+    const y = gridY + headerHeight + (index * (HTML_TEMPLATE_CONFIG.timeSlotHeight * 2)); // Double height for hourly blocks
     
-    // Time column cell
-    pdf.setFillColor(...(isHour ? HTML_TEMPLATE_CONFIG.colors.lightGray : HTML_TEMPLATE_CONFIG.colors.white));
-    pdf.rect(margin, y, HTML_TEMPLATE_CONFIG.timeColumnWidth, HTML_TEMPLATE_CONFIG.timeSlotHeight, 'F');
+    // Time column cell - only show time label, no individual boxes
+    pdf.setFillColor(...HTML_TEMPLATE_CONFIG.colors.lightGray);
+    pdf.rect(margin, y, HTML_TEMPLATE_CONFIG.timeColumnWidth, HTML_TEMPLATE_CONFIG.timeSlotHeight * 2, 'F');
     
-    // Time text with better formatting
-    pdf.setFontSize(isHour ? 9 : 8);
-    pdf.setFont('helvetica', isHour ? 'bold' : 'normal');
+    // Time text
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(...HTML_TEMPLATE_CONFIG.colors.black);
-    pdf.text(timeSlot, margin + HTML_TEMPLATE_CONFIG.timeColumnWidth / 2, y + 12, { align: 'center' });
+    pdf.text(timeSlot, margin + HTML_TEMPLATE_CONFIG.timeColumnWidth / 2, y + 20, { align: 'center' });
     
-    // Day cells
+    // Day area - clean white space without individual boxes
     for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
       const x = margin + HTML_TEMPLATE_CONFIG.timeColumnWidth + (dayIndex * dayColumnWidth);
       
-      // Cell background
+      // Clean day area background
       pdf.setFillColor(...HTML_TEMPLATE_CONFIG.colors.white);
-      pdf.rect(x, y, dayColumnWidth, HTML_TEMPLATE_CONFIG.timeSlotHeight, 'F');
+      pdf.rect(x, y, dayColumnWidth, HTML_TEMPLATE_CONFIG.timeSlotHeight * 2, 'F');
     }
     
-    // Horizontal grid lines
-    if (isHour) {
-      pdf.setLineWidth(1);
-      pdf.setDrawColor(...HTML_TEMPLATE_CONFIG.colors.darkGray);
-    } else {
-      pdf.setLineWidth(0.5);
-      pdf.setDrawColor(...HTML_TEMPLATE_CONFIG.colors.mediumGray);
-    }
-    
-    // Draw horizontal line across entire width
-    const lineY = y + HTML_TEMPLATE_CONFIG.timeSlotHeight;
+    // Only draw horizontal lines between hours (not half-hours)
+    pdf.setLineWidth(1);
+    pdf.setDrawColor(...HTML_TEMPLATE_CONFIG.colors.mediumGray);
+    const lineY = y + (HTML_TEMPLATE_CONFIG.timeSlotHeight * 2);
     pdf.line(margin, lineY, margin + HTML_TEMPLATE_CONFIG.timeColumnWidth + (7 * dayColumnWidth), lineY);
   });
   
@@ -1355,40 +1353,21 @@ function drawAppointments(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
     const startHour = eventDate.getHours();
     const startMinute = eventDate.getMinutes();
     
-    // Find the exact time slot this event should align with
-    const timeString = `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`;
+    // Calculate position based on simplified hourly grid
+    const hourIndex = startHour - 6; // 6am = index 0
+    const minuteOffset = (startMinute / 60) * (HTML_TEMPLATE_CONFIG.timeSlotHeight * 2); // Position within hour block
     
-    // Find the slot index by matching against TIME_SLOTS
-    let slotIndex = -1;
-    for (let i = 0; i < TIME_SLOTS.length; i++) {
-      const slot = TIME_SLOTS[i];
-      if (slot === timeString) {
-        slotIndex = i;
-        break;
-      }
-      // Also check if this time falls within a 30-minute slot
-      const [slotHour, slotMin] = slot.split(':').map(Number);
-      const nextSlotMin = slotMin === 0 ? 30 : 0;
-      const nextSlotHour = slotMin === 0 ? slotHour : slotHour + 1;
-      
-      if (startHour === slotHour && startMinute >= slotMin && 
-          (startHour < nextSlotHour || (startHour === nextSlotHour && startMinute < nextSlotMin))) {
-        slotIndex = i;
-        break;
-      }
-    }
-    
-    if (slotIndex === -1) return; // Event time not found in grid
+    if (hourIndex < 0 || hourIndex >= 18) return; // Event outside 6am-11pm range
     
     // Calculate event height based on duration
     const duration = (event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60);
-    const heightInSlots = Math.max(1, Math.ceil(duration / 30));
+    const heightInPixels = (duration / 60) * (HTML_TEMPLATE_CONFIG.timeSlotHeight * 2); // Height based on hours
     
-    // Position calculation with improved spacing
+    // Position calculation for simplified grid
     const x = margin + HTML_TEMPLATE_CONFIG.timeColumnWidth + (dayIndex * dayColumnWidth) + 1;
-    const y = gridStartY + (slotIndex * HTML_TEMPLATE_CONFIG.timeSlotHeight) + 1;
+    const y = gridStartY + (hourIndex * HTML_TEMPLATE_CONFIG.timeSlotHeight * 2) + minuteOffset + 1;
     const width = dayColumnWidth - 2;
-    const height = (heightInSlots * HTML_TEMPLATE_CONFIG.timeSlotHeight) - 2;
+    const height = Math.max(20, heightInPixels - 2);
     
     // Event styling
     const isSimplePractice = event.title.includes('Appointment');
