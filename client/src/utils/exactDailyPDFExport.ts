@@ -2,26 +2,26 @@ import jsPDF from 'jspdf';
 import { CalendarEvent } from '../types/calendar';
 import { cleanEventTitle, cleanTextForPDF } from './titleCleaner';
 
-// Daily PDF export - 8.5x11 inches format
+// Daily PDF export - larger format to match dashboard screen size
 const DAILY_CONFIG = {
-  pageWidth: 612,   // 8.5 inches = 612 points
-  pageHeight: 792,  // 11 inches = 792 points
-  margin: 40,       // Standard margin for readability
-  timeColumnWidth: 80,  // Time column width matching dashboard
-  appointmentColumnWidth: 492,  // Remaining width for appointments
-  timeSlotHeight: 20,  // Time slot height for proper spacing
-  headerHeight: 120,     // Header space for title, date, and navigation
+  pageWidth: 1200,   // Larger width to match screen dimensions
+  pageHeight: 1600,  // Larger height for better readability
+  margin: 60,        // Increased margin for better proportions
+  timeColumnWidth: 160,  // Wider time column to match dashboard proportions
+  appointmentColumnWidth: 980,  // Remaining width for appointments
+  timeSlotHeight: 40,  // Larger time slots to match dashboard proportions
+  headerHeight: 180,     // Larger header space
 
-  // Typography matching dashboard daily view
+  // Typography scaled up to match larger PDF dimensions and dashboard proportions
   fonts: {
-    title: { size: 20, weight: 'bold' },      // Large title for "DAILY PLANNER"
-    date: { size: 16, weight: 'normal' },     // Date display
-    stats: { size: 12, weight: 'normal' },    // Statistics display
-    timeLabels: { size: 10, weight: 'normal' }, // Time labels
-    eventTitle: { size: 12, weight: 'bold' },  // Appointment title
-    eventSource: { size: 10, weight: 'normal' }, // Calendar source
-    eventTime: { size: 24, weight: 'bold' },   // Large time display
-    eventNotes: { size: 10, weight: 'normal' }  // Notes section
+    title: { size: 32, weight: 'bold' },      // Large title for "DAILY PLANNER"
+    date: { size: 24, weight: 'normal' },     // Date display
+    stats: { size: 18, weight: 'normal' },    // Statistics display
+    timeLabels: { size: 16, weight: 'normal' }, // Time labels
+    eventTitle: { size: 18, weight: 'bold' },  // Appointment title
+    eventSource: { size: 14, weight: 'normal' }, // Calendar source
+    eventTime: { size: 32, weight: 'bold' },   // Large time display matching dashboard
+    eventNotes: { size: 14, weight: 'normal' }  // Notes section
   },
 
   // Colors matching dashboard
@@ -295,9 +295,9 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     const slotEndY = gridStartY + ((slotIndex + durationSlots) * timeSlotHeight);
 
     // Strictly contain within grid boundaries with conservative margins
-    const topPosition = slotStartY + 4; // Start 4px below the grid line
-    const bottomPosition = slotEndY - 4; // End 4px before the next grid line
-    const exactHeight = Math.max(bottomPosition - topPosition, 8); // Minimum 8px height, strictly contained
+    const topPosition = slotStartY + 8; // Start 8px below the grid line
+    const bottomPosition = slotEndY - 8; // End 8px before the next grid line
+    const exactHeight = Math.max(bottomPosition - topPosition, 32); // Minimum 32px height for larger format
 
     console.log(`📅 Event: ${event.title}`);
     console.log(`  ⏰ Start: ${formatMilitaryTime(eventStart)} (${startHour}:${startMinute.toString().padStart(2, '0')})`);
@@ -310,8 +310,8 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     const eventType = getEventTypeInfo(event);
 
     // Draw event background - always white like dashboard, STRICTLY contained within grid boundaries
-    const eventBoxX = margin + timeColumnWidth + 8; // Start even further from time column
-    const eventBoxWidth = appointmentColumnWidth - 16; // Much smaller width to ensure strict containment
+    const eventBoxX = margin + timeColumnWidth + 16; // Start even further from time column
+    const eventBoxWidth = appointmentColumnWidth - 32; // Much smaller width to ensure strict containment
     pdf.setFillColor(...DAILY_CONFIG.colors.white);
     pdf.rect(eventBoxX, topPosition, eventBoxWidth, exactHeight, 'F');
 
@@ -338,10 +338,10 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
       pdf.rect(eventBoxX, topPosition, eventBoxWidth, exactHeight, 'D');
     }
 
-    // Draw event content in 3-column layout optimized for reMarkable Paper Pro
-    const eventX = margin + timeColumnWidth + 11; // Align with further reduced event box
-    const eventY = topPosition + 2;  // Position at the very top of the appointment square
-    const columnWidth = (appointmentColumnWidth - 35) / 3;  // Further reduced column width to match contained appointment box
+    // Draw event content in 3-column layout optimized for larger format
+    const eventX = margin + timeColumnWidth + 24; // Align with further reduced event box
+    const eventY = topPosition + 8;  // Position at the very top of the appointment square
+    const columnWidth = (appointmentColumnWidth - 70) / 3;  // Further reduced column width to match contained appointment box
 
     // Left column: Event title, calendar source, and time
     pdf.setFontSize(DAILY_CONFIG.fonts.eventTitle.size);
@@ -354,33 +354,33 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     console.log(`Event ${event.id}: "${event.title}" -> "${cleanTitle}"`);
 
     // Appointment name at the very top
-    pdf.text(cleanTitle, eventX, eventY + 8);
+    pdf.text(cleanTitle, eventX, eventY + 14);
 
     // Source line below the name with small spacing
     pdf.setFontSize(DAILY_CONFIG.fonts.eventSource.size);
     pdf.setFont('helvetica', DAILY_CONFIG.fonts.eventSource.weight);
     pdf.setTextColor(...DAILY_CONFIG.colors.black);
-    pdf.text(eventType.source, eventX, eventY + 14);
+    pdf.text(eventType.source, eventX, eventY + 28);
 
     // Time range below the source with small spacing
     pdf.setFontSize(DAILY_CONFIG.fonts.eventTime.size);
     pdf.setFont('helvetica', DAILY_CONFIG.fonts.eventTime.weight);
     pdf.setTextColor(...DAILY_CONFIG.colors.black);
     const timeRange = `${formatMilitaryTime(eventStart)} - ${formatMilitaryTime(eventEnd)}`;
-    pdf.text(timeRange, eventX, eventY + 20);
+    pdf.text(timeRange, eventX, eventY + 42);
 
     // Center column: Event Notes (if they exist)
     if (event.notes && event.notes.trim()) {
-      pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size + 1);
+      pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size + 2);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(...DAILY_CONFIG.colors.black);
       const notesHeaderX = eventX + columnWidth; // Position directly over vertical line
-      pdf.text('Event Notes', notesHeaderX, eventY + 2); // Move up to align with vertical line
+      pdf.text('Event Notes', notesHeaderX, eventY + 4); // Move up to align with vertical line
 
       // Draw underline for Event Notes header
       pdf.setDrawColor(...DAILY_CONFIG.colors.black);
-      pdf.setLineWidth(0.3);
-      pdf.line(notesHeaderX, eventY + 3, notesHeaderX + 30, eventY + 3);
+      pdf.setLineWidth(0.5);
+      pdf.line(notesHeaderX, eventY + 6, notesHeaderX + 60, eventY + 6);
 
       pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size);
       pdf.setFont('helvetica', 'normal');
@@ -390,33 +390,33 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
         .map(note => note.trim().replace(/^[•\s-]+/, '').trim())
         .filter(note => note.length > 0 && note !== '•' && note !== '-');
 
-      let currentY = eventY + 10;
+      let currentY = eventY + 18;
       notes.forEach((note, index) => {
         // Wrap text to fit within column width with block text formatting
-        const maxWidth = columnWidth - 10; // Leave margin for bullet and spacing
+        const maxWidth = columnWidth - 20; // Leave margin for bullet and spacing
         const lines = pdf.splitTextToSize(`- ${note}`, maxWidth);
 
         lines.forEach((line, lineIndex) => {
           pdf.setTextColor(...DAILY_CONFIG.colors.black);
           pdf.text(line, notesHeaderX, currentY);
-          currentY += 5; // Compact line spacing scaled to dashboard
+          currentY += 8; // Compact line spacing scaled to dashboard
         });
-        currentY += 1; // Minimal gap between bullet points
+        currentY += 2; // Minimal gap between bullet points
       });
     }
 
     // Right column: Action Items (if they exist)
     if (event.actionItems && event.actionItems.trim()) {
-      pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size + 1);
+      pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size + 2);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(...DAILY_CONFIG.colors.black);
       const actionHeaderX = eventX + columnWidth * 2; // Position directly over vertical line
-      pdf.text('Action Items', actionHeaderX, eventY + 2); // Move up to align with vertical line
+      pdf.text('Action Items', actionHeaderX, eventY + 4); // Move up to align with vertical line
 
       // Draw underline for Action Items header
       pdf.setDrawColor(...DAILY_CONFIG.colors.black);
-      pdf.setLineWidth(0.3);
-      pdf.line(actionHeaderX, eventY + 3, actionHeaderX + 30, eventY + 3);
+      pdf.setLineWidth(0.5);
+      pdf.line(actionHeaderX, eventY + 6, actionHeaderX + 60, eventY + 6);
 
       pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size);
       pdf.setFont('helvetica', 'normal');
@@ -426,18 +426,18 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
         .map(item => item.trim().replace(/^[•\s-]+/, '').trim())
         .filter(item => item.length > 0 && item !== '•' && item !== '-');
 
-      let currentY = eventY + 10;
+      let currentY = eventY + 18;
       actionItems.forEach((item, index) => {
         // Wrap text to fit within column width with block text formatting
-        const maxWidth = columnWidth - 10; // Leave margin for bullet and spacing
+        const maxWidth = columnWidth - 20; // Leave margin for bullet and spacing
         const lines = pdf.splitTextToSize(`- ${item}`, maxWidth);
 
         lines.forEach((line, lineIndex) => {
           pdf.setTextColor(...DAILY_CONFIG.colors.black);
           pdf.text(line, actionHeaderX, currentY);
-          currentY += 5; // Compact line spacing scaled to dashboard
+          currentY += 8; // Compact line spacing scaled to dashboard
         });
-        currentY += 1; // Minimal gap between bullet points
+        currentY += 2; // Minimal gap between bullet points
       });
     }
 
