@@ -186,42 +186,48 @@ function drawDashboardHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEve
   pdf.setFillColor(255, 255, 255); // White background
   pdf.rect(margin, legendY, pageWidth - (margin * 2), legendHeight, 'F');
   
-  // Legend items positioned horizontally with proper spacing and proportional sizing
+  // Legend items positioned horizontally with proper centering and proportional sizing
   pdf.setFontSize(4);
   pdf.setFont('helvetica', 'normal');
   
   const legendItemSpacing = (pageWidth - (margin * 2)) / 3;
-  const legendItemY = legendY + 8;
-  const iconSize = 10;
-  const iconHeight = 5;
+  const legendItemY = legendY + (legendHeight / 2) - 3; // Vertically centered
+  const iconSize = 8;
+  const iconHeight = 4;
   
-  // SimplePractice - left position
+  // Calculate horizontal centering for each legend item
+  const centerOffset = legendItemSpacing / 2;
+  
+  // SimplePractice - left position, centered
+  const sp1X = margin + centerOffset - 25;
   pdf.setFillColor(...DAILY_CONFIG.colors.white);
   pdf.setDrawColor(...DAILY_CONFIG.colors.simplePracticeBlue);
   pdf.setLineWidth(0.5);
-  pdf.rect(margin + 10, legendItemY, iconSize, iconHeight, 'FD');
+  pdf.rect(sp1X, legendItemY, iconSize, iconHeight, 'FD');
   pdf.setFillColor(...DAILY_CONFIG.colors.simplePracticeBlue);
-  pdf.rect(margin + 10, legendItemY, 2, iconHeight, 'F');
+  pdf.rect(sp1X, legendItemY, 2, iconHeight, 'F');
   pdf.setTextColor(...DAILY_CONFIG.colors.black);
-  pdf.text('SimplePractice', margin + 22, legendItemY + 3);
+  pdf.text('SimplePractice', sp1X + 10, legendItemY + 3);
   
-  // Google Calendar - center position
+  // Google Calendar - center position, centered
+  const gc1X = margin + centerOffset + legendItemSpacing - 30;
   pdf.setFillColor(...DAILY_CONFIG.colors.white);
   pdf.setDrawColor(...DAILY_CONFIG.colors.googleGreen);
   pdf.setLineWidth(0.5);
   pdf.setLineDash([1, 1]);
-  pdf.rect(margin + 10 + legendItemSpacing, legendItemY, iconSize, iconHeight, 'FD');
+  pdf.rect(gc1X, legendItemY, iconSize, iconHeight, 'FD');
   pdf.setLineDash([]);
   pdf.setTextColor(...DAILY_CONFIG.colors.black);
-  pdf.text('Google Calendar', margin + 22 + legendItemSpacing, legendItemY + 3);
+  pdf.text('Google Calendar', gc1X + 10, legendItemY + 3);
   
-  // Holidays - right position
+  // Holidays - right position, centered
+  const h1X = margin + centerOffset + legendItemSpacing * 2 - 50;
   pdf.setFillColor(...DAILY_CONFIG.colors.holidayYellow);
   pdf.setDrawColor(...DAILY_CONFIG.colors.holidayOrange);
   pdf.setLineWidth(0.5);
-  pdf.rect(margin + 10 + legendItemSpacing * 2, legendItemY, iconSize, iconHeight, 'FD');
+  pdf.rect(h1X, legendItemY, iconSize, iconHeight, 'FD');
   pdf.setTextColor(...DAILY_CONFIG.colors.black);
-  pdf.text('Holidays in United States', margin + 22 + legendItemSpacing * 2, legendItemY + 3);
+  pdf.text('Holidays in United States', h1X + 10, legendItemY + 3);
 }
 
 
@@ -304,9 +310,9 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     const slotEndY = gridStartY + ((slotIndex + durationSlots) * timeSlotHeight);
     
     // Strictly contain within grid boundaries with conservative margins
-    const topPosition = slotStartY + 3; // Start 3px below the grid line
-    const bottomPosition = slotEndY - 3; // End 3px before the next grid line
-    const exactHeight = Math.max(bottomPosition - topPosition, 10); // Minimum 10px height
+    const topPosition = slotStartY + 4; // Start 4px below the grid line
+    const bottomPosition = slotEndY - 4; // End 4px before the next grid line
+    const exactHeight = Math.max(bottomPosition - topPosition, 8); // Minimum 8px height, strictly contained
     
     console.log(`📅 Event: ${event.title}`);
     console.log(`  ⏰ Start: ${formatMilitaryTime(eventStart)} (${startHour}:${startMinute.toString().padStart(2, '0')})`);
@@ -319,8 +325,8 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     const eventType = getEventTypeInfo(event);
     
     // Draw event background - always white like dashboard, STRICTLY contained within grid boundaries
-    const eventBoxX = margin + timeColumnWidth + 3;
-    const eventBoxWidth = appointmentColumnWidth - 6; // Further reduced width for strict containment
+    const eventBoxX = margin + timeColumnWidth + 4;
+    const eventBoxWidth = appointmentColumnWidth - 8; // Further reduced width for strict containment
     pdf.setFillColor(...DAILY_CONFIG.colors.white);
     pdf.rect(eventBoxX, topPosition, eventBoxWidth, exactHeight, 'F');
     
@@ -348,7 +354,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     }
     
     // Draw event content in 3-column layout optimized for reMarkable Paper Pro
-    const eventX = margin + timeColumnWidth + 6;
+    const eventX = margin + timeColumnWidth + 7;
     const eventY = topPosition + 2;  // Position at the very top of the appointment square
     const columnWidth = (appointmentColumnWidth - 25) / 3;  // Wider columns for better text fitting
     
