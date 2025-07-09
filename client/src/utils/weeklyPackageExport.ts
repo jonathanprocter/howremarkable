@@ -374,35 +374,35 @@ async function createWeeklyOverviewPage(
     }
   });
   
-  // Add navigation footer with navigation buttons (styled text representation)
-  pdf.setFont('times', 'bold');
-  pdf.setFontSize(12);
-  pdf.setTextColor(0, 0, 0);
+  // Add navigation footer with dashboard-style navigation buttons
+  pdf.setFont('times', 'normal');
+  pdf.setFontSize(10);
+  pdf.setTextColor(51, 51, 51);
   
-  // Navigation buttons represented as styled text
+  // Navigation buttons with exact dashboard styling
   const navY = 820;
-  const buttonWidth = 150;
-  const buttonHeight = 30;
+  const buttonWidth = 100;
+  const buttonHeight = 24;
   
-  // Daily page buttons (Mon-Sun)
+  // Daily page buttons (Mon-Sun) - dashboard nav-btn styling
   const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-  const startX = (GRID_CONFIG.pageWidth - (days.length * buttonWidth + (days.length - 1) * 20)) / 2;
+  const startX = (GRID_CONFIG.pageWidth - (days.length * buttonWidth + (days.length - 1) * 15)) / 2;
   
   days.forEach((day, index) => {
-    const buttonX = startX + index * (buttonWidth + 20);
+    const buttonX = startX + index * (buttonWidth + 15);
     
-    // Draw button background
+    // Draw button background - dashboard nav-btn background
     pdf.setFillColor(240, 240, 240);
     pdf.rect(buttonX, navY - 20, buttonWidth, buttonHeight, 'F');
     
-    // Draw button border
-    pdf.setDrawColor(150, 150, 150);
-    pdf.setLineWidth(2);
+    // Draw button border - dashboard nav-btn border
+    pdf.setDrawColor(204, 204, 204);
+    pdf.setLineWidth(1);
     pdf.rect(buttonX, navY - 20, buttonWidth, buttonHeight, 'S');
     
-    // Button text
-    pdf.setTextColor(0, 0, 0);
-    pdf.text(`📅 ${day}`, buttonX + buttonWidth / 2, navY - 5, { align: 'center' });
+    // Button text - clean dashboard styling
+    pdf.setTextColor(51, 51, 51);
+    pdf.text(`${day}`, buttonX + buttonWidth / 2, navY - 8, { align: 'center' });
   });
 }
 

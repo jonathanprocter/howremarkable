@@ -315,14 +315,14 @@ export function drawDailyHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   pdf.rect(margin + 20, navY, buttonWidth + 20, buttonHeight, 'FD');
   pdf.setFontSize(7);
   pdf.setTextColor(...REMARKABLE_DAILY_CONFIG.colors.black);
-  pdf.text('← Weekly Overview', margin + 30, navY + 10);
+  pdf.text('Weekly Overview', margin + 30, navY + 10);
   
   // Previous/Next day buttons
   const rightButtonX = pageWidth - margin - 80;
   pdf.rect(rightButtonX, navY, 30, buttonHeight, 'FD');
   pdf.rect(rightButtonX + 35, navY, 30, buttonHeight, 'FD');
-  pdf.text('◀', rightButtonX + 12, navY + 10);
-  pdf.text('▶', rightButtonX + 47, navY + 10);
+  pdf.text('Prev', rightButtonX + 12, navY + 10);
+  pdf.text('Next', rightButtonX + 47, navY + 10);
   
   // === STATS SECTION ===
   const statsY = margin + REMARKABLE_DAILY_CONFIG.headerHeight;
@@ -463,7 +463,7 @@ export function drawDailyFooter(pdf: jsPDF, selectedDate: Date, pageNumber: numb
   const currentDayName = dayNames[dayOfWeek - 1];
   
   // Left side: Weekly Overview link (bidirectional)
-  pdf.text('← Return to Weekly Overview (Page 1)', margin + 10, footerY + 12);
+  pdf.text('Return to Weekly Overview (Page 1)', margin + 10, footerY + 12);
   
   // Center: Current page info with bidirectional context
   const centerText = `${currentDayName} - Page ${pageNumber} of 8`;

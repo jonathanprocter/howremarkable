@@ -95,38 +95,38 @@ function drawDailyHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]
   });
   pdf.text(dateStr, pageWidth / 2, margin + 50, { align: 'center' });
 
-  // Navigation buttons to match dashboard
-  const buttonHeight = 18;
-  const buttonWidth = 80;
-  const buttonY = margin + 10;
+  // Navigation buttons matching dashboard .nav-btn styling exactly
+  const buttonHeight = 24;
+  const buttonWidth = 120;
+  const buttonY = margin + 8;
   
-  // Back to Weekly button (left side)
-  const backButtonX = margin + 20;
-  pdf.setFillColor(245, 245, 245); // Light gray background
+  // Back to Weekly button (left side) - exact dashboard match
+  const backButtonX = margin + 10;
+  pdf.setFillColor(240, 240, 240); // Dashboard nav-btn background #f0f0f0
   pdf.rect(backButtonX, buttonY, buttonWidth, buttonHeight, 'F');
-  pdf.setDrawColor(128, 128, 128); // Gray border
+  pdf.setDrawColor(204, 204, 204); // Dashboard nav-btn border #ccc
   pdf.setLineWidth(1);
   pdf.rect(backButtonX, buttonY, buttonWidth, buttonHeight, 'S');
   pdf.setFontSize(10);
   pdf.setFont('helvetica', 'normal');
-  pdf.setTextColor(0, 0, 0);
-  pdf.text('Back to week', backButtonX + buttonWidth/2, buttonY + 12, { align: 'center' });
+  pdf.setTextColor(51, 51, 51); // Dashboard nav-btn text color #333
+  pdf.text('Weekly Overview', backButtonX + buttonWidth/2, buttonY + 15, { align: 'center' });
 
-  // Previous day button
-  const prevButtonX = backButtonX + buttonWidth + 10;
-  pdf.setFillColor(245, 245, 245);
-  pdf.rect(prevButtonX, buttonY, 25, buttonHeight, 'F');
-  pdf.setDrawColor(128, 128, 128);
-  pdf.rect(prevButtonX, buttonY, 25, buttonHeight, 'S');
-  pdf.text('<', prevButtonX + 12.5, buttonY + 12, { align: 'center' });
+  // Previous day button - dashboard styled
+  const prevButtonX = backButtonX + buttonWidth + 15;
+  pdf.setFillColor(240, 240, 240);
+  pdf.rect(prevButtonX, buttonY, 80, buttonHeight, 'F');
+  pdf.setDrawColor(204, 204, 204);
+  pdf.rect(prevButtonX, buttonY, 80, buttonHeight, 'S');
+  pdf.text('Previous', prevButtonX + 40, buttonY + 15, { align: 'center' });
 
-  // Next day button
-  const nextButtonX = prevButtonX + 25 + 5;
-  pdf.setFillColor(245, 245, 245);
-  pdf.rect(nextButtonX, buttonY, 25, buttonHeight, 'F');
-  pdf.setDrawColor(128, 128, 128);
-  pdf.rect(nextButtonX, buttonY, 25, buttonHeight, 'S');
-  pdf.text('>', nextButtonX + 12.5, buttonY + 12, { align: 'center' });
+  // Next day button - dashboard styled
+  const nextButtonX = pageWidth - margin - 80;
+  pdf.setFillColor(240, 240, 240);
+  pdf.rect(nextButtonX, buttonY, 80, buttonHeight, 'F');
+  pdf.setDrawColor(204, 204, 204);
+  pdf.rect(nextButtonX, buttonY, 80, buttonHeight, 'S');
+  pdf.text('Next', nextButtonX + 40, buttonY + 15, { align: 'center' });
 
   // Statistics
   const totalEvents = events.length;
