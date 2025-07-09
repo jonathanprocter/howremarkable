@@ -132,6 +132,34 @@ async function createWeeklyOverviewPage(
   const weekStart = weekStartDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
   const weekEnd = weekEndDate.toLocaleDateString('en-US', { day: 'numeric', year: 'numeric' });
   pdf.text(`${weekStart} - ${weekEnd}`, GRID_CONFIG.pageWidth / 2, 50, { align: 'center' });
+
+  // Navigation buttons
+  const buttonHeight = 20;
+  const buttonWidth = 100;
+  
+  // Previous week button
+  const prevButtonX = GRID_CONFIG.margin + 20;
+  const prevButtonY = 8;
+  pdf.setFillColor(245, 245, 245);
+  pdf.rect(prevButtonX, prevButtonY, buttonWidth, buttonHeight, 'F');
+  pdf.setDrawColor(200, 200, 200);
+  pdf.setLineWidth(1);
+  pdf.rect(prevButtonX, prevButtonY, buttonWidth, buttonHeight, 'S');
+  pdf.setFontSize(10);
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('← Previous Week', prevButtonX + buttonWidth/2, prevButtonY + 13, { align: 'center' });
+  
+  // Next week button
+  const nextButtonX = GRID_CONFIG.pageWidth - GRID_CONFIG.margin - 20 - buttonWidth;
+  const nextButtonY = 8;
+  pdf.setFillColor(245, 245, 245);
+  pdf.rect(nextButtonX, nextButtonY, buttonWidth, buttonHeight, 'F');
+  pdf.setDrawColor(200, 200, 200);
+  pdf.setLineWidth(1);
+  pdf.rect(nextButtonX, nextButtonY, buttonWidth, buttonHeight, 'S');
+  pdf.setFontSize(10);
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('Next Week →', nextButtonX + buttonWidth/2, nextButtonY + 13, { align: 'center' });
   
   // === LEGEND ===
   const legendY = GRID_CONFIG.headerHeight;
@@ -381,28 +409,28 @@ async function createWeeklyOverviewPage(
   
   // Navigation buttons with exact dashboard styling
   const navY = 820;
-  const buttonWidth = 100;
-  const buttonHeight = 24;
+  const navButtonWidth = 100;
+  const navButtonHeight = 24;
   
   // Daily page buttons (Mon-Sun) - dashboard nav-btn styling
   const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-  const startX = (GRID_CONFIG.pageWidth - (days.length * buttonWidth + (days.length - 1) * 15)) / 2;
+  const startX = (GRID_CONFIG.pageWidth - (days.length * navButtonWidth + (days.length - 1) * 15)) / 2;
   
   days.forEach((day, index) => {
-    const buttonX = startX + index * (buttonWidth + 15);
+    const buttonX = startX + index * (navButtonWidth + 15);
     
     // Draw button background - dashboard nav-btn background
     pdf.setFillColor(240, 240, 240);
-    pdf.rect(buttonX, navY - 20, buttonWidth, buttonHeight, 'F');
+    pdf.rect(buttonX, navY - 20, navButtonWidth, navButtonHeight, 'F');
     
     // Draw button border - dashboard nav-btn border
     pdf.setDrawColor(204, 204, 204);
     pdf.setLineWidth(1);
-    pdf.rect(buttonX, navY - 20, buttonWidth, buttonHeight, 'S');
+    pdf.rect(buttonX, navY - 20, navButtonWidth, navButtonHeight, 'S');
     
     // Button text - clean dashboard styling
     pdf.setTextColor(51, 51, 51);
-    pdf.text(`${day}`, buttonX + buttonWidth / 2, navY - 8, { align: 'center' });
+    pdf.text(`${day}`, buttonX + navButtonWidth / 2, navY - 8, { align: 'center' });
   });
 }
 

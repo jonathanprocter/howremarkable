@@ -6,11 +6,11 @@ import { CalendarEvent } from '../types/calendar';
 const DAILY_CONFIG = {
   pageWidth: 612,   // 8.5 inches = 612 points
   pageHeight: 792,  // 11 inches = 792 points
-  margin: 20,       // Reduced margin for dashboard matching
-  timeColumnWidth: 75,  // Dashboard matching time column width
-  appointmentColumnWidth: 517,  // Increased appointment column width (612 - 75 - 20 = 517)
-  timeSlotHeight: 16,  // Dashboard matching slot height
-  headerHeight: 80,     // Compact header height for more content space
+  margin: 25,       // Increased margin for better spacing
+  timeColumnWidth: 85,  // Increased time column width for better readability
+  appointmentColumnWidth: 502,  // Adjusted appointment column width (612 - 85 - 25 = 502)
+  timeSlotHeight: 18,  // Increased slot height for better visibility
+  headerHeight: 90,     // Increased header height for navigation buttons
 
   // Dashboard-matching typography
   fonts: {
@@ -98,35 +98,44 @@ function drawDailyHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]
   // Navigation buttons matching dashboard .nav-btn styling exactly
   const buttonHeight = 24;
   const buttonWidth = 120;
-  const buttonY = margin + 8;
   
-  // Back to Weekly button (left side) - exact dashboard match
-  const backButtonX = margin + 10;
-  pdf.setFillColor(240, 240, 240); // Dashboard nav-btn background #f0f0f0
-  pdf.rect(backButtonX, buttonY, buttonWidth, buttonHeight, 'F');
-  pdf.setDrawColor(204, 204, 204); // Dashboard nav-btn border #ccc
+  // Previous day button
+  const prevButtonX = margin + 20;
+  const prevButtonY = margin + 15;
+  pdf.setFillColor(245, 245, 245);
+  pdf.rect(prevButtonX, prevButtonY, buttonWidth, buttonHeight, 'F');
+  pdf.setDrawColor(200, 200, 200);
   pdf.setLineWidth(1);
-  pdf.rect(backButtonX, buttonY, buttonWidth, buttonHeight, 'S');
+  pdf.rect(prevButtonX, prevButtonY, buttonWidth, buttonHeight, 'S');
   pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'normal');
-  pdf.setTextColor(51, 51, 51); // Dashboard nav-btn text color #333
-  pdf.text('Weekly Overview', backButtonX + buttonWidth/2, buttonY + 15, { align: 'center' });
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('← Previous Day', prevButtonX + buttonWidth/2, prevButtonY + 15, { align: 'center' });
+  
+  // Next day button
+  const nextButtonX = pageWidth - margin - 20 - buttonWidth;
+  const nextButtonY = margin + 15;
+  pdf.setFillColor(245, 245, 245);
+  pdf.rect(nextButtonX, nextButtonY, buttonWidth, buttonHeight, 'F');
+  pdf.setDrawColor(200, 200, 200);
+  pdf.setLineWidth(1);
+  pdf.rect(nextButtonX, nextButtonY, buttonWidth, buttonHeight, 'S');
+  pdf.setFontSize(10);
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('Next Day →', nextButtonX + buttonWidth/2, nextButtonY + 15, { align: 'center' });
+  
+  // Back to weekly view button
+  const backButtonX = (pageWidth - buttonWidth) / 2;
+  const backButtonY = margin + 62;
+  pdf.setFillColor(245, 245, 245);
+  pdf.rect(backButtonX, backButtonY, buttonWidth, buttonHeight, 'F');
+  pdf.setDrawColor(200, 200, 200);
+  pdf.setLineWidth(1);
+  pdf.rect(backButtonX, backButtonY, buttonWidth, buttonHeight, 'S');
+  pdf.setFontSize(10);
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('← Back to Weekly', backButtonX + buttonWidth/2, backButtonY + 15, { align: 'center' });
+  
 
-  // Previous day button - dashboard styled
-  const prevButtonX = backButtonX + buttonWidth + 15;
-  pdf.setFillColor(240, 240, 240);
-  pdf.rect(prevButtonX, buttonY, 80, buttonHeight, 'F');
-  pdf.setDrawColor(204, 204, 204);
-  pdf.rect(prevButtonX, buttonY, 80, buttonHeight, 'S');
-  pdf.text('Previous', prevButtonX + 40, buttonY + 15, { align: 'center' });
-
-  // Next day button - dashboard styled
-  const nextButtonX = pageWidth - margin - 80;
-  pdf.setFillColor(240, 240, 240);
-  pdf.rect(nextButtonX, buttonY, 80, buttonHeight, 'F');
-  pdf.setDrawColor(204, 204, 204);
-  pdf.rect(nextButtonX, buttonY, 80, buttonHeight, 'S');
-  pdf.text('Next', nextButtonX + 40, buttonY + 15, { align: 'center' });
 
   // Statistics
   const totalEvents = events.length;

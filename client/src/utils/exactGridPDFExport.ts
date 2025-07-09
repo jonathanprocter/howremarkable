@@ -9,15 +9,15 @@ const GRID_CONFIG = {
   pageWidth: 792,   // 11 inches = 792 points
   pageHeight: 612,  // 8.5 inches = 612 points
 
-  // Exact dashboard margins and spacing
-  margin: 20,  // Tight margins for dashboard match
-  headerHeight: 35,
+  // Improved spacing for better readability
+  margin: 25,  // Increased margin for better spacing
+  headerHeight: 50,  // Increased header height for navigation buttons
   statsHeight: 0, // Remove stats section to maximize grid space
-  legendHeight: 18,
+  legendHeight: 25,  // Increased legend height for better visibility
 
-  // Grid structure - exact dashboard matching
-  timeColumnWidth: 50, // Exact dashboard time column width
-  slotHeight: 12, // Exact dashboard slot height
+  // Grid structure - improved spacing
+  timeColumnWidth: 60, // Increased time column width for better readability
+  slotHeight: 14, // Increased slot height for better appointment visibility
   get totalSlots() {
     return generateTimeSlots().length; // Dynamic slot count based on time range
   },
@@ -80,22 +80,50 @@ export const exportExactGridPDF = async (
     pdf.setFillColor(255, 255, 255);
     pdf.rect(0, 0, GRID_CONFIG.pageWidth, GRID_CONFIG.pageHeight, 'F');
 
-    // HEADER - exact dashboard matching fonts
+    // HEADER - improved spacing and navigation
     pdf.setFont('times', 'bold');
-    pdf.setFontSize(14);  // Exact dashboard title font
+    pdf.setFontSize(16);  // Larger title font for better visibility
     pdf.setTextColor(0, 0, 0);
-    pdf.text('WEEKLY CALENDAR', GRID_CONFIG.pageWidth / 2, centerY + 16, { align: 'center' });
+    pdf.text('WEEKLY CALENDAR', GRID_CONFIG.pageWidth / 2, centerY + 20, { align: 'center' });
 
     // Week info
     pdf.setFont('times', 'normal');
-    pdf.setFontSize(10);  // Exact dashboard week info font
+    pdf.setFontSize(12);  // Larger week info font
     const weekStart = weekStartDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
     const weekEnd = weekEndDate.toLocaleDateString('en-US', { day: 'numeric' });
     const weekNumber = Math.ceil(((weekStartDate.getTime() - new Date(weekStartDate.getFullYear(), 0, 1).getTime()) / 86400000 + 1) / 7);
-    pdf.text(`${weekStart}-${weekEnd} • Week ${weekNumber}`, GRID_CONFIG.pageWidth / 2, centerY + 27, { align: 'center' });
+    pdf.text(`${weekStart}-${weekEnd} • Week ${weekNumber}`, GRID_CONFIG.pageWidth / 2, centerY + 35, { align: 'center' });
 
-    // LEGEND - positioned below header
-    const legendY = centerY + GRID_CONFIG.headerHeight;
+    // Navigation buttons - styled to match dashboard
+    const buttonHeight = 20;
+    const buttonWidth = 100;
+    
+    // Previous week button
+    const prevButtonX = centerX + 50;
+    const prevButtonY = centerY + 8;
+    pdf.setFillColor(245, 245, 245);
+    pdf.rect(prevButtonX, prevButtonY, buttonWidth, buttonHeight, 'F');
+    pdf.setDrawColor(200, 200, 200);
+    pdf.setLineWidth(1);
+    pdf.rect(prevButtonX, prevButtonY, buttonWidth, buttonHeight, 'S');
+    pdf.setFontSize(10);
+    pdf.setTextColor(0, 0, 0);
+    pdf.text('← Previous Week', prevButtonX + buttonWidth/2, prevButtonY + 13, { align: 'center' });
+    
+    // Next week button
+    const nextButtonX = GRID_CONFIG.pageWidth - centerX - 50 - buttonWidth;
+    const nextButtonY = centerY + 8;
+    pdf.setFillColor(245, 245, 245);
+    pdf.rect(nextButtonX, nextButtonY, buttonWidth, buttonHeight, 'F');
+    pdf.setDrawColor(200, 200, 200);
+    pdf.setLineWidth(1);
+    pdf.rect(nextButtonX, nextButtonY, buttonWidth, buttonHeight, 'S');
+    pdf.setFontSize(10);
+    pdf.setTextColor(0, 0, 0);
+    pdf.text('Next Week →', nextButtonX + buttonWidth/2, nextButtonY + 13, { align: 'center' });
+
+    // LEGEND - positioned below header with improved spacing
+    const legendY = centerY + GRID_CONFIG.headerHeight + 5;
     const legendWidth = GRID_CONFIG.totalGridWidth;
     
     pdf.setFillColor(248, 248, 248);
