@@ -240,15 +240,38 @@ export const exportExactGridPDF = async (
       pdf.line(centerX, y, centerX + GRID_CONFIG.totalGridWidth, y);
     });
 
-    // EVENTS - place them exactly like in the calendar with precise positioning
+    // EVENTS - place them exactly like dashboard with NO overlapping using absolute positioning
+    console.log(`📅 Rendering ${weekEvents.length} events for weekly PDF export`);
+    
+    // Group events by day to handle overlaps properly
+    const eventsByDay: { [key: number]: CalendarEvent[] } = {};
     weekEvents.forEach(event => {
       const eventDate = new Date(event.startTime);
-      const eventEndDate = new Date(event.endTime);
-      
-      // Calculate which day of the week this event falls on
       const dayIndex = Math.floor((eventDate.getTime() - weekStartDate.getTime()) / (1000 * 60 * 60 * 24));
-
+      
       if (dayIndex >= 0 && dayIndex < 7) {
+        if (!eventsByDay[dayIndex]) {
+          eventsByDay[dayIndex] = [];
+        }
+        eventsByDay[dayIndex].push(event);
+      }
+    });
+
+    // Render events for each day with proper positioning
+    Object.keys(eventsByDay).forEach(dayIndexStr => {
+      const dayIndex = parseInt(dayIndexStr);
+      const dayEvents = eventsByDay[dayIndex].sort((a, b) => 
+        new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+      );
+      
+      console.log(`📅 Day ${dayIndex}: ${dayEvents.length} events`);
+      
+      // Track used time slots for overlap detection
+      const usedSlots: Set<number> = new Set();
+      
+      dayEvents.forEach((event, eventIndex) => {
+        const eventDate = new Date(event.startTime);
+        const eventEndDate = new Date(event.endTime);
         const eventHour = eventDate.getHours();
         const eventMinute = eventDate.getMinutes();
         const endHour = eventEndDate.getHours();
@@ -256,31 +279,61 @@ export const exportExactGridPDF = async (
 
         // Only show events within our time range (6:00-23:30)
         if (eventHour >= 6 && eventHour <= 23) {
-          // Calculate precise position within the time slot
+          // Calculate precise slot position matching dashboard
           const startMinuteOfDay = (eventHour - 6) * 60 + eventMinute;
           const endMinuteOfDay = (endHour - 6) * 60 + endMinute;
           
           // Convert to slot positions (each slot is 30 minutes)
-          const startSlot = startMinuteOfDay / 30;
-          const endSlot = Math.min(endMinuteOfDay / 30, 35.5); // Cap at 23:30
+          const startSlot = Math.floor(startMinuteOfDay / 30);
+          const endSlot = Math.min(Math.ceil(endMinuteOfDay / 30), 35); // Cap at 23:30
           
-          const eventX = centerX + GRID_CONFIG.timeColumnWidth + (dayIndex * GRID_CONFIG.dayColumnWidth) + 0.5;
-          const eventY = gridStartY + 20 + (startSlot * GRID_CONFIG.slotHeight) + 0.5;
-          const eventWidth = GRID_CONFIG.dayColumnWidth - 1;
-          const eventHeight = Math.max((endSlot - startSlot) * GRID_CONFIG.slotHeight - 1, 6);
+          // Check for overlaps and adjust position
+          let horizontalOffset = 0;
+          const maxOverlaps = 3; // Limit to 3 overlapping events max
+          
+          // Find available horizontal position
+          while (horizontalOffset < maxOverlaps) {
+            let hasOverlap = false;
+            for (let slot = startSlot; slot < endSlot; slot++) {
+              if (usedSlots.has(slot * 10 + horizontalOffset)) {
+                hasOverlap = true;
+                break;
+              }
+            }
+            
+            if (!hasOverlap) {
+              // Mark slots as used
+              for (let slot = startSlot; slot < endSlot; slot++) {
+                usedSlots.add(slot * 10 + horizontalOffset);
+              }
+              break;
+            }
+            
+            horizontalOffset++;
+          }
+          
+          // Calculate event dimensions with overlap handling
+          const baseEventWidth = GRID_CONFIG.dayColumnWidth - 2;
+          const eventWidth = horizontalOffset > 0 ? Math.max(baseEventWidth * 0.6, 40) : baseEventWidth;
+          const eventHeight = Math.max((endSlot - startSlot) * GRID_CONFIG.slotHeight - 1, 8);
+          
+          // Position with horizontal offset for overlapping events
+          const eventX = centerX + GRID_CONFIG.timeColumnWidth + (dayIndex * GRID_CONFIG.dayColumnWidth) + 1 + (horizontalOffset * (eventWidth * 0.3));
+          const eventY = gridStartY + 20 + (startSlot * GRID_CONFIG.slotHeight) + 1;
+          
+          console.log(`  📍 Event ${eventIndex + 1}: "${event.title}" at slot ${startSlot}-${endSlot}, offset ${horizontalOffset}`);
 
-          // Event styling based on type
+          // Event styling based on type - exact dashboard matching
           const isSimplePractice = event.source === 'simplepractice' || event.title.includes('Appointment');
-          const isGoogle = event.source === 'google';
+          const isGoogle = event.source === 'google' && !isSimplePractice;
           const isHoliday = event.title.toLowerCase().includes('holiday') || event.source === 'holiday';
 
-          // White background for ALL appointments
+          // White background for ALL appointments - exact dashboard match
           pdf.setFillColor(255, 255, 255);
           pdf.rect(eventX, eventY, eventWidth, eventHeight, 'F');
 
           if (isSimplePractice) {
             // SimplePractice: Thin cornflower blue border with thick left flag
-            // Cornflower blue color: RGB(100, 149, 237)
             pdf.setDrawColor(100, 149, 237);
             pdf.setLineWidth(0.5);
             pdf.rect(eventX, eventY, eventWidth, eventHeight, 'S');
@@ -291,7 +344,6 @@ export const exportExactGridPDF = async (
             
           } else if (isGoogle) {
             // Google Calendar: Dashed green border around entire event
-            // Green color: RGB(34, 197, 94)
             pdf.setDrawColor(34, 197, 94);
             pdf.setLineWidth(1);
             pdf.setLineDash([3, 2]);
@@ -311,7 +363,7 @@ export const exportExactGridPDF = async (
             pdf.rect(eventX, eventY, eventWidth, eventHeight, 'S');
           }
 
-          // Event text
+          // Event text - exact dashboard matching
           const eventTitle = cleanEventTitle(event.title);
           const startTime = eventDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
           const endTime = eventEndDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -322,25 +374,24 @@ export const exportExactGridPDF = async (
           const textX = isSimplePractice ? eventX + 6 : eventX + 3;
           const maxWidth = eventWidth - (isSimplePractice ? 12 : 6);
           
-          // Truncate long event names to fit properly
+          // Clean and truncate event title
           let displayTitle = eventTitle;
-          const maxChars = Math.floor(maxWidth / 3); // Approximate character limit based on width
+          const maxChars = Math.floor(maxWidth / 3);
           if (displayTitle.length > maxChars) {
             displayTitle = displayTitle.substring(0, maxChars - 3) + '...';
           }
 
           // Event name - exact dashboard matching font
           pdf.setFont('times', 'bold');
-          pdf.setFontSize(5);  // Exact dashboard event name font
+          pdf.setFontSize(5);
           
-          // Use the cleaned title directly
           const cleanTitle = cleanTextForPDF(displayTitle);
           
           // Show title for all events that are tall enough
-          if (eventHeight >= 6) {
+          if (eventHeight >= 8) {
             // Handle text wrapping using proper text width measurement
             const words = cleanTitle.split(' ');
-            const maxLines = Math.floor((eventHeight - 2) / 5);
+            const maxLines = Math.floor((eventHeight - 4) / 5);
             let currentLine = '';
             let lineCount = 0;
             
@@ -368,13 +419,13 @@ export const exportExactGridPDF = async (
           }
 
           // Event time - show for medium to large events
-          if (eventHeight >= 8) {
+          if (eventHeight >= 12) {
             pdf.setFont('times', 'normal');
-            pdf.setFontSize(4);  // Exact dashboard time font
-            pdf.text(`${startTime}-${endTime}`, textX, eventY + eventHeight - 1);
+            pdf.setFontSize(4);
+            pdf.text(`${startTime}-${endTime}`, textX, eventY + eventHeight - 2);
           }
         }
-      }
+      });
     });
 
     // GRID BORDERS - complete border around the entire grid

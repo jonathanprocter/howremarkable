@@ -269,8 +269,10 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
     new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
   );
 
-  // Track used vertical positions to prevent overlaps
-  const usedPositions: { [key: number]: number } = {};
+  // Track used time slots for precise overlap detection like dashboard
+  const usedSlots: Set<number> = new Set();
+  
+  console.log(`📅 Rendering ${sortedEvents.length} events for daily PDF export`);
 
   sortedEvents.forEach((event, index) => {
     console.log(`\n=== Drawing Event ${index + 1}: ${event.title} ===`);
@@ -295,63 +297,81 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
       return;
     }
 
-    // Check for overlapping events and adjust horizontal positioning
-    let horizontalOffset = 0;
-    const timeSlot = Math.floor(slotsFromStart);
-    
-    // Find available horizontal position for overlapping events
-    while (usedPositions[timeSlot + horizontalOffset] !== undefined) {
-      horizontalOffset += 1;
-      if (horizontalOffset > 3) break; // Max 4 overlapping events
-    }
-    
-    // Mark this position as used
+    // Calculate precise slot positioning for overlap detection
+    const startSlot = Math.floor(slotsFromStart);
     const endSlot = Math.ceil((minutesSince6am + durationMinutes) / 30);
-    for (let i = timeSlot; i < endSlot; i++) {
-      usedPositions[i + horizontalOffset] = index;
+    
+    // Find available horizontal position for overlapping events - exact dashboard behavior
+    let horizontalOffset = 0;
+    const maxOverlaps = 3; // Limit to 3 overlapping events
+    
+    // Check for overlaps and find available position
+    while (horizontalOffset < maxOverlaps) {
+      let hasOverlap = false;
+      for (let slot = startSlot; slot < endSlot; slot++) {
+        if (usedSlots.has(slot * 10 + horizontalOffset)) {
+          hasOverlap = true;
+          break;
+        }
+      }
+      
+      if (!hasOverlap) {
+        // Mark slots as used
+        for (let slot = startSlot; slot < endSlot; slot++) {
+          usedSlots.add(slot * 10 + horizontalOffset);
+        }
+        break;
+      }
+      
+      horizontalOffset++;
     }
 
-    // Position with horizontal offset for overlapping events - ensure within page margins
-    const maxOverlaps = 4;
-    const availableWidth = appointmentColumnWidth - 8; // More margin for page containment
-    const eventWidth = horizontalOffset > 0 ? Math.max(120, availableWidth / (horizontalOffset + 1)) : availableWidth;
-    const eventX = margin + timeColumnWidth + 4 + (horizontalOffset * (eventWidth + 2)); // More margin from left
+    // Calculate event dimensions with overlap handling - exact dashboard behavior
+    const baseEventWidth = appointmentColumnWidth - 8;
+    const eventWidth = horizontalOffset > 0 ? Math.max(baseEventWidth * 0.7, 150) : baseEventWidth;
+    const eventX = margin + timeColumnWidth + 4 + (horizontalOffset * (eventWidth * 0.25));
     const eventY = gridStartY + topPosition;
+    
+    console.log(`  📍 Event positioned at slot ${startSlot}-${endSlot}, offset ${horizontalOffset}, dimensions ${eventWidth}x${eventHeight}`);
+
+    // Ensure event stays within page bounds
+    const maxEventX = margin + timeColumnWidth + appointmentColumnWidth - eventWidth - 4;
+    const finalEventX = Math.min(eventX, maxEventX);
 
     // Get event type
     const { isSimplePractice, isGoogle, isHoliday } = getEventTypeInfo(event);
 
     // Draw background - white like dashboard
     pdf.setFillColor(...DAILY_CONFIG.colors.white);
-    pdf.rect(eventX, eventY, eventWidth, eventHeight, 'F');
+    pdf.rect(finalEventX, eventY, eventWidth, eventHeight, 'F');
 
     // Draw borders based on type - match dashboard exactly
     if (isSimplePractice) {
       // Cornflower blue border with thick left flag
       pdf.setDrawColor(...DAILY_CONFIG.colors.simplePracticeBlue);
       pdf.setLineWidth(1);
-      pdf.rect(eventX, eventY, eventWidth, eventHeight);
+      pdf.rect(finalEventX, eventY, eventWidth, eventHeight);
       pdf.setLineWidth(4);
-      pdf.line(eventX, eventY, eventX, eventY + eventHeight);
+      pdf.line(finalEventX, eventY, finalEventX, eventY + eventHeight);
 
       // Thin border around rest
       pdf.setDrawColor(...DAILY_CONFIG.colors.lightGray);
       pdf.setLineWidth(0.5);
-      pdf.rect(eventX, eventY, eventWidth, eventHeight);
+      pdf.rect(finalEventX, eventY, eventWidth, eventHeight);
     } else if (isGoogle) {
       // Dashed green border
       pdf.setDrawColor(...DAILY_CONFIG.colors.googleGreen);
       pdf.setLineWidth(1);
       pdf.setLineDash([3, 2]);
-      pdf.rect(eventX, eventY, eventWidth, eventHeight);
+      pdf.rect(finalEventX, eventY, eventWidth, eventHeight);
       pdf.setLineDash([]);
     } else if (isHoliday) {
       // Yellow background with orange border
       pdf.setFillColor(...DAILY_CONFIG.colors.holidayYellow);
-      pdf.rect(eventX, eventY, eventWidth, eventHeight, 'F');
+      pdf.rect(finalEventX, eventY, eventWidth, eventHeight, 'F');
       pdf.setDrawColor(...DAILY_CONFIG.colors.holidayOrange);
       pdf.setLineWidth(1);
-      pdf.rect(eventX, eventY, eventWidth, eventHeight);
+      pdf.rect(finalEventX, eventY, eventWidth, eventHeight);
     }
 
     // Clean title - remove "Appointment" suffix like dashboard
@@ -371,9 +391,9 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
       const col2Width = Math.min(eventWidth * 0.33, 140);
       const col3Width = eventWidth - col1Width - col2Width;
 
-      const col1X = eventX + 6;
-      const col2X = eventX + col1Width + 8;
-      const col3X = eventX + col1Width + col2Width + 10;
+      const col1X = finalEventX + 6;
+      const col2X = finalEventX + col1Width + 8;
+      const col3X = finalEventX + col1Width + col2Width + 10;
 
       // Column dividers - only draw if we have content in those columns
       pdf.setDrawColor(...DAILY_CONFIG.colors.lightGray);
@@ -463,7 +483,7 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
       pdf.setFontSize(DAILY_CONFIG.fonts.eventTitle.size);
       pdf.setFont('helvetica', DAILY_CONFIG.fonts.eventTitle.weight);
       pdf.setTextColor(...DAILY_CONFIG.colors.black);
-      pdf.text(displayTitle, eventX + padding, currentY);
+      pdf.text(displayTitle, finalEventX + padding, currentY);
       currentY += 14;
 
       // Source - match dashboard
@@ -473,7 +493,7 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
       const sourceText = isSimplePractice ? 'SIMPLEPRACTICE' : 
                         isGoogle ? 'GOOGLE CALENDAR' : 
                         isHoliday ? 'HOLIDAYS IN UNITED STATES' : 'MANUAL';
-      pdf.text(sourceText, eventX + padding, currentY);
+      pdf.text(sourceText, finalEventX + padding, currentY);
       currentY += 14;
 
       // Time - larger and bolder
@@ -482,7 +502,7 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
         pdf.setFont('helvetica', DAILY_CONFIG.fonts.eventTime.weight);
         pdf.setTextColor(...DAILY_CONFIG.colors.black);
         const timeRange = `${eventDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}-${endDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}`;
-        pdf.text(timeRange, eventX + padding, currentY);
+        pdf.text(timeRange, finalEventX + padding, currentY);
       }
     }
 
