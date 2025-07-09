@@ -16,24 +16,34 @@ app.use(express.urlencoded({ extended: false }));
 const PgSession = ConnectPgSimple(session);
 
 // Session configuration with PostgreSQL store
+const sessionStore = new PgSession({
+  conString: process.env.DATABASE_URL!,
+  tableName: 'session',
+  createTableIfMissing: true,
+  pruneSessionInterval: 60 * 15, // Prune expired sessions every 15 minutes
+  ttl: 24 * 60 * 60, // 24 hours session TTL
+  schemaName: 'public' // Explicitly set schema name
+});
+
+// Handle session store errors
+sessionStore.on('error', (err) => {
+  console.error('Session store error:', err);
+});
+
 app.use(session({
-  store: new PgSession({
-    conString: process.env.DATABASE_URL!,
-    tableName: 'session',
-    createTableIfMissing: true,
-    pruneSessionInterval: 60 * 15, // Prune expired sessions every 15 minutes
-    ttl: 24 * 60 * 60 // 24 hours session TTL
-  }),
+  store: sessionStore,
   secret: process.env.SESSION_SECRET || 'remarkable-planner-secret-key-2025',
   resave: false, // Don't save session if unmodified
-  saveUninitialized: false, // Don't save empty sessions
-  rolling: false, // Don't reset expiration on each request - this was causing new session IDs
-  name: 'remarkablePlannerSession', // Use unique session name
+  saveUninitialized: true, // Create sessions for anonymous users to enable consistent session IDs
+  rolling: false, // Don't reset expiration on each request
+  name: 'connect.sid', // Use standard session name for better compatibility
   cookie: {
     secure: false, // Must be false for HTTP in development
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     httpOnly: false, // Allow client-side access
-    sameSite: 'lax' // Use lax for better compatibility
+    sameSite: 'lax', // Use lax for better compatibility
+    path: '/', // Ensure cookie is sent for all paths
+    domain: undefined // Let browser set domain automatically
   }
 }));
 

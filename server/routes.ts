@@ -77,6 +77,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`  - Session ID: ${req.sessionID}`);
       console.log(`  - Has User: ${!!req.user}`);
       console.log(`  - Session Passport: ${!!req.session.passport}`);
+      console.log(`  - Cookie Header: ${req.headers.cookie || 'NONE'}`);
+      
       if (req.session.passport) {
         console.log(`  - Passport User: ${JSON.stringify(req.session.passport.user)}`);
       }
@@ -87,6 +89,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     next();
   });
+
+
 
   // Google OAuth Routes
   app.get("/api/auth/google", (req, res, next) => {
