@@ -15,14 +15,14 @@ const DAILY_CONFIG = {
 
   // Typography optimized for reMarkable Paper Pro e-ink display
   fonts: {
-    title: { size: 14, weight: 'bold' },      // Compact title for narrow screen
-    date: { size: 10, weight: 'normal' },     // Readable date info
-    stats: { size: 8, weight: 'normal' },     // Compact stats
-    timeLabels: { size: 7, weight: 'normal' }, // Small time labels
-    eventTitle: { size: 7, weight: 'bold' },  // Compact but readable events
-    eventSource: { size: 5, weight: 'normal' }, // Minimal source info
-    eventTime: { size: 6, weight: 'bold' },   // Clear time display
-    eventNotes: { size: 5, weight: 'normal' }  // Compact notes
+    title: { size: 12, weight: 'bold' },      // Smaller title for narrow screen
+    date: { size: 8, weight: 'normal' },      // Compact date info
+    stats: { size: 6, weight: 'normal' },     // Very compact stats
+    timeLabels: { size: 5, weight: 'normal' }, // Tiny time labels
+    eventTitle: { size: 5, weight: 'bold' },  // Very compact event titles
+    eventSource: { size: 4, weight: 'normal' }, // Minimal source info
+    eventTime: { size: 5, weight: 'bold' },   // Compact time display
+    eventNotes: { size: 4, weight: 'normal' }  // Very compact notes
   },
 
   // Colors matching dashboard
@@ -225,11 +225,11 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     }
     pdf.rect(margin, y, timeColumnWidth + appointmentColumnWidth, timeSlotHeight, 'F');
     
-    // Time label - match dashboard exactly
-    pdf.setFontSize(isHour ? 10 : 9);
+    // Time label - compact for reMarkable Paper Pro
+    pdf.setFontSize(DAILY_CONFIG.fonts.timeLabels.size);
     pdf.setFont('helvetica', isHour ? 'bold' : 'normal');
     pdf.setTextColor(...DAILY_CONFIG.colors.black);
-    pdf.text(timeSlot, margin + 6, y + 15);
+    pdf.text(timeSlot, margin + 4, y + 12);
     
     // Grid lines - subtle like dashboard
     pdf.setDrawColor(...DAILY_CONFIG.colors.mediumGray);
@@ -325,8 +325,8 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     const columnWidth = (appointmentColumnWidth - 25) / 3;  // Wider columns for better text fitting
     
     // Left column: Event title, calendar source, and time
-    pdf.setFontSize(10);
-    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(DAILY_CONFIG.fonts.eventTitle.size);
+    pdf.setFont('helvetica', DAILY_CONFIG.fonts.eventTitle.weight);
     pdf.setTextColor(...DAILY_CONFIG.colors.black);
     
     // Clean title - minimal processing to preserve patient names
@@ -344,78 +344,78 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
       cleanTitle = 'Untitled Appointment';
     }
     
-    pdf.text(cleanTitle, eventX, eventY);
+    pdf.text(cleanTitle, eventX, eventY + 5);
     
     // Source line
-    pdf.setFontSize(8);
-    pdf.setFont('helvetica', 'normal');
-    pdf.setTextColor(...DAILY_CONFIG.colors.black); // Ensure black text
-    pdf.text(eventType.source, eventX, eventY + 11);
+    pdf.setFontSize(DAILY_CONFIG.fonts.eventSource.size);
+    pdf.setFont('helvetica', DAILY_CONFIG.fonts.eventSource.weight);
+    pdf.setTextColor(...DAILY_CONFIG.colors.black);
+    pdf.text(eventType.source, eventX, eventY + 8);
     
     // Time range - military time format
-    pdf.setFontSize(12);
-    pdf.setFont('helvetica', 'bold');
-    pdf.setTextColor(...DAILY_CONFIG.colors.black); // Ensure black text
+    pdf.setFontSize(DAILY_CONFIG.fonts.eventTime.size);
+    pdf.setFont('helvetica', DAILY_CONFIG.fonts.eventTime.weight);
+    pdf.setTextColor(...DAILY_CONFIG.colors.black);
     const timeRange = `${formatMilitaryTime(eventStart)} - ${formatMilitaryTime(eventEnd)}`;
-    pdf.text(timeRange, eventX, eventY + 22);
+    pdf.text(timeRange, eventX, eventY + 12);
     
     // Center column: Event Notes (if they exist)
     if (event.notes && event.notes.trim()) {
-      pdf.setFontSize(6);
+      pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(...DAILY_CONFIG.colors.black);
       pdf.text('Event Notes', eventX + columnWidth + 2, eventY);
       
-      pdf.setFontSize(7);
+      pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size);
       pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(...DAILY_CONFIG.colors.black); // Ensure black text
+      pdf.setTextColor(...DAILY_CONFIG.colors.black);
       const notes = event.notes.split('\n')
         .filter(note => note.trim().length > 0)
         .map(note => note.trim().replace(/^[•\s-]+/, '').trim())
         .filter(note => note.length > 0 && note !== '•' && note !== '-');
       
-      let currentY = eventY + 12;
+      let currentY = eventY + 8;
       notes.forEach((note, index) => {
         // Wrap text to fit within column width
-        const maxWidth = columnWidth - 15; // Leave margin for bullet and spacing
+        const maxWidth = columnWidth - 10; // Leave margin for bullet and spacing
         const lines = pdf.splitTextToSize(`• ${note}`, maxWidth);
         
         lines.forEach((line, lineIndex) => {
           pdf.setTextColor(...DAILY_CONFIG.colors.black);
-          pdf.text(line, eventX + columnWidth + 5, currentY);
-          currentY += 6; // Compact line spacing for reMarkable Paper Pro
+          pdf.text(line, eventX + columnWidth + 3, currentY);
+          currentY += 3; // Very compact line spacing for reMarkable Paper Pro
         });
-        currentY += 2; // Small gap between bullet points
+        currentY += 1; // Minimal gap between bullet points
       });
     }
     
     // Right column: Action Items (if they exist)
     if (event.actionItems && event.actionItems.trim()) {
-      pdf.setFontSize(6);
+      pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(...DAILY_CONFIG.colors.black);
       pdf.text('Action Items', eventX + columnWidth * 2 + 2, eventY);
       
-      pdf.setFontSize(7);
+      pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size);
       pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(...DAILY_CONFIG.colors.black); // Ensure black text
+      pdf.setTextColor(...DAILY_CONFIG.colors.black);
       const actionItems = event.actionItems.split('\n')
         .filter(item => item.trim().length > 0)
         .map(item => item.trim().replace(/^[•\s-]+/, '').trim())
         .filter(item => item.length > 0 && item !== '•' && item !== '-');
       
-      let currentY = eventY + 12;
+      let currentY = eventY + 8;
       actionItems.forEach((item, index) => {
         // Wrap text to fit within column width
-        const maxWidth = columnWidth - 15; // Leave margin for bullet and spacing
+        const maxWidth = columnWidth - 10; // Leave margin for bullet and spacing
         const lines = pdf.splitTextToSize(`• ${item}`, maxWidth);
         
         lines.forEach((line, lineIndex) => {
           pdf.setTextColor(...DAILY_CONFIG.colors.black);
-          pdf.text(line, eventX + columnWidth * 2 + 5, currentY);
-          currentY += 6; // Compact line spacing for reMarkable Paper Pro
+          pdf.text(line, eventX + columnWidth * 2 + 3, currentY);
+          currentY += 3; // Very compact line spacing for reMarkable Paper Pro
         });
-        currentY += 2; // Small gap between bullet points
+        currentY += 1; // Minimal gap between bullet points
       });
     }
     
