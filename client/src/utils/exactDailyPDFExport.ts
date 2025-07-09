@@ -296,12 +296,16 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     // Calculate exact slot position from 6:00 AM starting point
     const slotIndex = ((startHour - 6) * 2) + (startMinute >= 30 ? 1 : 0);
     const slotStartY = gridStartY + (slotIndex * timeSlotHeight);
-    const topPosition = slotStartY + 1; // Start 1px below the grid line
+    const topPosition = slotStartY + 2; // Start 2px below the grid line
     
     // Calculate height based on EXACT duration to stay within time slot boundaries
     const durationSlots = Math.ceil(durationMinutes / 30);
     const slotEndY = gridStartY + ((slotIndex + durationSlots) * timeSlotHeight);
-    const exactHeight = slotEndY - topPosition - 2; // End 2px before the bottom grid line
+    const maxHeight = slotEndY - topPosition - 3; // End 3px before the bottom grid line
+    
+    // Ensure minimum height for readability but maximum height to stay within boundaries
+    const minHeight = Math.min(12, maxHeight); // Minimum 12px or maxHeight if smaller
+    const exactHeight = Math.max(minHeight, maxHeight);
     
     console.log(`📅 Event: ${event.title}`);
     console.log(`  ⏰ Start: ${formatMilitaryTime(eventStart)} (${startHour}:${startMinute.toString().padStart(2, '0')})`);
@@ -310,19 +314,16 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     console.log(`  📐 Top position: ${topPosition}px (gridStart: ${gridStartY} + slot: ${slotIndex} * height: ${timeSlotHeight})`);
     console.log(`  📏 Height: ${exactHeight}px`);
     
-    // Use exactHeight to ensure appointment boxes stay within grid boundaries
-    const containedHeight = exactHeight;
-    
     // Event styling based on type
     const eventType = getEventTypeInfo(event);
     
-    // Draw event background - always white like dashboard, contained within grid boundaries
-    const eventBoxX = margin + timeColumnWidth + 1;
-    const eventBoxWidth = appointmentColumnWidth - 2;
+    // Draw event background - always white like dashboard, strictly contained within grid boundaries
+    const eventBoxX = margin + timeColumnWidth + 2;
+    const eventBoxWidth = appointmentColumnWidth - 4; // Reduced width for better containment
     pdf.setFillColor(...DAILY_CONFIG.colors.white);
     pdf.rect(eventBoxX, topPosition, eventBoxWidth, exactHeight, 'F');
     
-    // Draw event borders based on type - match dashboard styling EXACTLY, contained within grid boundaries
+    // Draw event borders based on type - match dashboard styling EXACTLY, strictly contained
     if (eventType.isSimplePractice) {
       // SimplePractice: white background with thin cornflower blue border and left flag
       pdf.setDrawColor(...DAILY_CONFIG.colors.simplePracticeBlue);
@@ -346,7 +347,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     }
     
     // Draw event content in 3-column layout optimized for reMarkable Paper Pro
-    const eventX = margin + timeColumnWidth + 4;
+    const eventX = margin + timeColumnWidth + 5;
     const eventY = topPosition + 2;  // Position at the very top of the appointment square
     const columnWidth = (appointmentColumnWidth - 25) / 3;  // Wider columns for better text fitting
     
