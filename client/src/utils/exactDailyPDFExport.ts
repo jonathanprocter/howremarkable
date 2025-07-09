@@ -302,33 +302,33 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     
     // Draw event background - always white like dashboard, aligned exactly with time slots
     pdf.setFillColor(...DAILY_CONFIG.colors.white);
-    pdf.rect(timeColumnWidth + 2, topPosition + 1, appointmentColumnWidth - 4, exactHeight, 'F');
+    pdf.rect(timeColumnWidth + 4, topPosition + 1, appointmentColumnWidth - 6, exactHeight, 'F');
     
     // Draw event borders based on type - match dashboard styling EXACTLY, aligned with time slots
     if (eventType.isSimplePractice) {
       // SimplePractice: white background with thin cornflower blue border and left flag
       pdf.setDrawColor(...DAILY_CONFIG.colors.simplePracticeBlue);
       pdf.setLineWidth(0.5);
-      pdf.rect(timeColumnWidth + 2, topPosition + 1, appointmentColumnWidth - 4, exactHeight, 'D');
+      pdf.rect(timeColumnWidth + 4, topPosition + 1, appointmentColumnWidth - 6, exactHeight, 'D');
       // Thin left flag (2px wide instead of 4px)
       pdf.setFillColor(...DAILY_CONFIG.colors.simplePracticeBlue);
-      pdf.rect(timeColumnWidth + 2, topPosition + 1, 2, exactHeight, 'F');
+      pdf.rect(timeColumnWidth + 4, topPosition + 1, 2, exactHeight, 'F');
     } else if (eventType.isGoogle) {
       // Google Calendar: white background with dashed green border all around
       pdf.setDrawColor(...DAILY_CONFIG.colors.googleGreen);
       pdf.setLineWidth(0.5);
       pdf.setLineDash([3, 3]);
-      pdf.rect(timeColumnWidth + 2, topPosition + 1, appointmentColumnWidth - 4, exactHeight, 'D');
+      pdf.rect(timeColumnWidth + 4, topPosition + 1, appointmentColumnWidth - 6, exactHeight, 'D');
       pdf.setLineDash([]);
     } else {
       // Holiday: orange border around appointment
       pdf.setDrawColor(...DAILY_CONFIG.colors.holidayOrange);
       pdf.setLineWidth(0.5);
-      pdf.rect(timeColumnWidth + 2, topPosition + 1, appointmentColumnWidth - 4, exactHeight, 'D');
+      pdf.rect(timeColumnWidth + 4, topPosition + 1, appointmentColumnWidth - 6, exactHeight, 'D');
     }
     
     // Draw event content in 3-column layout optimized for reMarkable Paper Pro
-    const eventX = timeColumnWidth + 8;
+    const eventX = timeColumnWidth + 10;
     const eventY = topPosition + 3;  // Position at the very top of the appointment square
     const columnWidth = (appointmentColumnWidth - 25) / 3;  // Wider columns for better text fitting
     
