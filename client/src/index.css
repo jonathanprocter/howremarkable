@@ -2,6 +2,215 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Dashboard Header and Footer Styles - Exact Match to Screenshot */
+.dashboard-header {
+  border: 1px solid #e0e0e0;
+  background: #f8f9fa;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.dashboard-header .header-top {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.dashboard-header .appointment-types,
+.dashboard-header .google-calendars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dashboard-header .label {
+  font-weight: 500;
+  font-size: 14px;
+  color: #333;
+}
+
+.dashboard-header .checkbox-group {
+  display: flex;
+  gap: 16px;
+}
+
+.dashboard-header .checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #555;
+}
+
+.dashboard-header .calendar-list {
+  display: flex;
+  gap: 20px;
+}
+
+.dashboard-header .calendar-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #555;
+}
+
+.dashboard-header .calendar-icon {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.dashboard-header .calendar-icon.holidays {
+  background: #f59e0b;
+}
+
+.dashboard-header .calendar-icon.simplepractice {
+  background: #6366f1;
+}
+
+.dashboard-header .calendar-icon.google {
+  background: #10b981;
+}
+
+.dashboard-header .header-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.dashboard-header .weekly-overview-btn {
+  padding: 8px 16px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #f0f0f0;
+  font-size: 13px;
+}
+
+.dashboard-header .date-title {
+  flex: 1;
+  text-align: center;
+}
+
+.dashboard-header .date-title h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: #333;
+}
+
+.dashboard-header .appointment-count {
+  font-size: 12px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.dashboard-header .legend-inline {
+  display: flex;
+  gap: 16px;
+}
+
+.dashboard-header .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #555;
+}
+
+.dashboard-header .legend-symbol {
+  width: 12px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.dashboard-header .legend-symbol.simplepractice {
+  background: #6366f1;
+}
+
+.dashboard-header .legend-symbol.google-calendar {
+  background: #10b981;
+}
+
+.dashboard-header .legend-symbol.personal {
+  background: #f59e0b;
+}
+
+.dashboard-header .stats-bar {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-top: 1px solid #e0e0e0;
+}
+
+.dashboard-header .stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.dashboard-header .stat-number {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.dashboard-header .stat-label {
+  font-size: 12px;
+  color: #666;
+}
+
+/* Dashboard Footer - Exact Match to Screenshot */
+.dashboard-footer {
+  border: 1px solid #e0e0e0;
+  background: #f8f9fa;
+  padding: 16px;
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dashboard-footer .footer-nav {
+  display: flex;
+  gap: 16px;
+}
+
+.dashboard-footer .footer-nav-btn {
+  padding: 8px 16px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #f0f0f0;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dashboard-footer .footer-nav-btn:hover {
+  background: #e0e0e0;
+  border-color: #999;
+}
+
+.dashboard-footer .footer-time {
+  display: flex;
+  align-items: center;
+}
+
+.dashboard-footer .time-display {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+}
+
 /* Prevent viewport overflow */
 html, body {
     overflow-x: hidden;
