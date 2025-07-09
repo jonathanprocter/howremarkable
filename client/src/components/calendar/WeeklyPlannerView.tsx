@@ -25,40 +25,40 @@ export const WeeklyPlannerView = ({
   const weekStartDate = week[0]?.date;
   const weekEndDate = week[6]?.date;
   const weekNumber = weekStartDate ? getWeekNumber(weekStartDate) : 1;
-  
+
   // Calculate statistics ONLY for the current week
   const weekEvents = events.filter(event => {
     const eventDate = new Date(event.startTime);
     const weekStart = new Date(weekStartDate);
     const weekEnd = new Date(weekEndDate);
-    
+
     // Set to start/end of day for proper comparison
     weekStart.setHours(0, 0, 0, 0);
     weekEnd.setHours(23, 59, 59, 999);
-    
+
     return eventDate >= weekStart && eventDate <= weekEnd;
   });
-  
+
   const totalEvents = weekEvents.length;
   const totalHours = weekEvents.reduce((sum, event) => {
     return sum + (new Date(event.endTime).getTime() - new Date(event.startTime).getTime()) / (1000 * 60 * 60);
   }, 0);
-  
+
   const getEventStyle = (event: CalendarEvent) => {
     const eventStart = new Date(event.startTime);
     const eventEnd = new Date(event.endTime);
     const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
-    
+
     // Base appointment styles matching HTML
     let className = 'appointment ';
-    
+
     // Check if it's a SimplePractice appointment
     const isSimplePractice = event.source === 'simplepractice' || 
                            event.notes?.toLowerCase().includes('simple practice') ||
                            event.title?.toLowerCase().includes('simple practice') ||
                            event.description?.toLowerCase().includes('simple practice') ||
                            event.title?.toLowerCase().includes('appointment'); // SimplePractice appointments sync as "X Appointment"
-    
+
     if (isSimplePractice) {
       className += 'simplepractice ';
     } else if (event.source === 'google') {
@@ -66,7 +66,7 @@ export const WeeklyPlannerView = ({
     } else {
       className += 'personal ';
     }
-    
+
     // Duration classes
     if (durationMinutes >= 90) {
       className += 'duration-90';
@@ -75,11 +75,28 @@ export const WeeklyPlannerView = ({
     } else {
       className += 'duration-30';
     }
-    
+
     return className;
   };
 
-  
+  const cleanEventTitle = (title: string) => {
+    // Remove lock symbols and other problematic characters
+    return title
+      .replace(/🔒\s*/g, '') // Remove lock symbol and following space
+      .replace(/[\u{1F500}-\u{1F6FF}]/gu, '') // Remove emoji symbols
+      .replace(/Ø=ÜÅ/g, '') // Remove corrupted symbols
+      .replace(/Ø=Ý/g, '') // Remove corrupted symbols
+      .replace(/!•/g, '') // Remove broken navigation symbols
+      .replace(/!•\s*/g, '') // Remove broken navigation symbols with spaces
+      .replace(/Page \d+ of \d+/g, '') // Remove page numbers
+      .replace(/Back to Weekly Overview/g, '') // Remove navigation text
+      .replace(/Weekly Overview/g, '') // Remove navigation text
+      .replace(/Sunday Tuesday/g, '') // Remove broken day text
+      .replace(/[\u{2022}\u{2023}\u{2024}\u{2025}]/gu, '') // Remove bullet points
+      .replace(/\s+/g, ' ') // Normalize spaces
+      .trim();
+  };
+
 
   const renderTimeSlotEvents = (date: Date, slot: any, slotIndex: number) => {
     const dayEvents = events.filter(event => 
@@ -90,7 +107,7 @@ export const WeeklyPlannerView = ({
       const eventDate = new Date(event.startTime);
       const eventStartMinutes = eventDate.getHours() * 60 + eventDate.getMinutes();
       const slotStartMinutes = slot.hour * 60 + slot.minute;
-      
+
       return eventStartMinutes >= slotStartMinutes && 
              eventStartMinutes < slotStartMinutes + 30;
     });
@@ -100,7 +117,7 @@ export const WeeklyPlannerView = ({
       const eventEnd = new Date(event.endTime);
       const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
       const slots = Math.ceil(durationMinutes / 30);
-      
+
       const startTime = eventStart.toLocaleTimeString('en-US', { 
         hour: '2-digit', 
         minute: '2-digit', 
@@ -208,7 +225,7 @@ export const WeeklyPlannerView = ({
           {week.map((day, index) => {
             const dayName = day.date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
             const dayNum = day.date.getDate();
-            
+
             return (
               <div key={index} className="day-header" onClick={() => onDayClick(day.date)}>
                 <div className="day-name">{dayName}</div>
@@ -220,9 +237,9 @@ export const WeeklyPlannerView = ({
           {/* Time slots grid */}
           {timeSlots.map((slot, slotIndex) => {
             const isHour = slot.minute === 0;
-            
+
             const slotElements = [];
-            
+
             // Time slot label
             slotElements.push(
               <div key={`time-${slot.hour}-${slot.minute}`} className={`time-slot ${isHour ? 'hour' : ''}`}>
@@ -231,7 +248,7 @@ export const WeeklyPlannerView = ({
                 </span>
               </div>
             );
-            
+
             // Calendar cells for each day
             week.forEach((day, dayIndex) => {
               slotElements.push(
@@ -248,9 +265,9 @@ export const WeeklyPlannerView = ({
                       const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
                       const newStartTime = new Date(day.date);
                       newStartTime.setHours(slot.hour, slot.minute, 0, 0);
-                      
+
                       const newEndTime = new Date(newStartTime.getTime() + dragData.duration);
-                      
+
                       onEventMove(dragData.eventId, newStartTime, newEndTime);
                     } catch (error) {
                       console.error('Error handling drop:', error);
@@ -261,7 +278,7 @@ export const WeeklyPlannerView = ({
                 </div>
               );
             });
-            
+
             return slotElements;
           }).flat()}
         </div>
