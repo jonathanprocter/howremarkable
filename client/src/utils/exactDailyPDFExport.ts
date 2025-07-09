@@ -11,7 +11,7 @@ const DAILY_CONFIG = {
   timeColumnWidth: 50,  // Compact time column for narrow screen
   appointmentColumnWidth: 449,  // Remaining width for appointments
   timeSlotHeight: 16,  // Compact slots to fit full timeline in portrait
-  headerHeight: 70,    // Increased header space for better layout
+  headerHeight: 90,    // Increased header space for navigation and better layout
 
   // Typography optimized for reMarkable Paper Pro e-ink display
   fonts: {
@@ -19,9 +19,9 @@ const DAILY_CONFIG = {
     date: { size: 8, weight: 'normal' },      // Compact date info
     stats: { size: 6, weight: 'normal' },     // Very compact stats
     timeLabels: { size: 5, weight: 'normal' }, // Tiny time labels
-    eventTitle: { size: 5, weight: 'bold' },  // Very compact event titles
-    eventSource: { size: 4, weight: 'normal' }, // Minimal source info
-    eventTime: { size: 5, weight: 'bold' },   // Compact time display
+    eventTitle: { size: 12, weight: 'bold' },  // Appointment name size
+    eventSource: { size: 10, weight: 'normal' }, // Calendar source size
+    eventTime: { size: 10, weight: 'bold' },   // Appointment time size
     eventNotes: { size: 4, weight: 'normal' }  // Very compact notes
   },
 
@@ -93,14 +93,14 @@ function getEventTypeInfo(event: CalendarEvent) {
 function drawDashboardHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
   const { margin, pageWidth } = DAILY_CONFIG;
 
-  // Title - clean and professional
-  pdf.setFontSize(14);  // Proper header size for reMarkable Paper Pro
+  // Title - DAILY PLANNER at the top
+  pdf.setFontSize(16);  // Larger title for prominence
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(...DAILY_CONFIG.colors.black);
-  pdf.text('Daily Planner', pageWidth / 2, margin + 12, { align: 'center' });
+  pdf.text('DAILY PLANNER', pageWidth / 2, margin + 15, { align: 'center' });
 
-  // Date - clean formatting
-  pdf.setFontSize(10);  // Proper date font for reMarkable Paper Pro
+  // Date - clean formatting under title
+  pdf.setFontSize(12);  // Proper date font
   pdf.setFont('helvetica', 'normal');
   const dateStr = selectedDate.toLocaleDateString('en-US', { 
     weekday: 'long', 
@@ -108,9 +108,20 @@ function drawDashboardHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEve
     month: 'long', 
     day: 'numeric' 
   });
-  pdf.text(dateStr, pageWidth / 2, margin + 25, { align: 'center' });
+  pdf.text(dateStr, pageWidth / 2, margin + 30, { align: 'center' });
 
-  // Statistics - moved up and left
+  // Navigation buttons - Back to week, <, >
+  pdf.setFontSize(10);
+  pdf.setFont('helvetica', 'normal');
+  
+  // Back to week button (left)
+  pdf.text('Back to week', margin + 30, margin + 50, { align: 'left' });
+  
+  // Navigation arrows (right side)
+  pdf.text('<', pageWidth - margin - 40, margin + 50, { align: 'center' });
+  pdf.text('>', pageWidth - margin - 20, margin + 50, { align: 'center' });
+
+  // Statistics - compact layout below navigation
   const totalEvents = events.length;
   const totalHours = events.reduce((sum, event) => {
     return sum + (new Date(event.endTime).getTime() - new Date(event.startTime).getTime()) / (1000 * 60 * 60);
@@ -118,45 +129,42 @@ function drawDashboardHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEve
   const availableHours = 24 - totalHours;
   const freeTimePercentage = Math.round((availableHours / 24) * 100);
 
-  pdf.setFontSize(DAILY_CONFIG.fonts.stats.size);
-  pdf.setFont('helvetica', DAILY_CONFIG.fonts.stats.weight);
-  
-  const statsY = margin + 35;  // Adjusted positioning for increased header height
-  const statsSpacing = 112;    // Tighter spacing for narrow screen
+  const statsY = margin + 65;  // Adjusted positioning for navigation elements
+  const statsSpacing = 100;    // Tighter spacing for narrow screen
   
   // Statistics with proper sizing for reMarkable Paper Pro
-  pdf.setFontSize(10);
+  pdf.setFontSize(8);
   pdf.setFont('helvetica', 'bold');
   
   // Appointments
-  pdf.text(`${totalEvents}`, margin + 80, statsY, { align: 'center' });
-  pdf.setFontSize(7);
+  pdf.text(`${totalEvents}`, margin + 60, statsY, { align: 'center' });
+  pdf.setFontSize(6);
   pdf.setFont('helvetica', 'normal');
-  pdf.text('Appointments', margin + 80, statsY + 10, { align: 'center' });
+  pdf.text('Appointments', margin + 60, statsY + 8, { align: 'center' });
   
   // Scheduled
-  pdf.setFontSize(10);
+  pdf.setFontSize(8);
   pdf.setFont('helvetica', 'bold');
-  pdf.text(`${totalHours.toFixed(1)}h`, margin + 80 + statsSpacing, statsY, { align: 'center' });
-  pdf.setFontSize(7);
+  pdf.text(`${totalHours.toFixed(1)}h`, margin + 60 + statsSpacing, statsY, { align: 'center' });
+  pdf.setFontSize(6);
   pdf.setFont('helvetica', 'normal');
-  pdf.text('Scheduled', margin + 80 + statsSpacing, statsY + 10, { align: 'center' });
+  pdf.text('Scheduled', margin + 60 + statsSpacing, statsY + 8, { align: 'center' });
   
   // Available
-  pdf.setFontSize(10);
+  pdf.setFontSize(8);
   pdf.setFont('helvetica', 'bold');
-  pdf.text(`${availableHours.toFixed(1)}h`, margin + 80 + statsSpacing * 2, statsY, { align: 'center' });
-  pdf.setFontSize(7);
+  pdf.text(`${availableHours.toFixed(1)}h`, margin + 60 + statsSpacing * 2, statsY, { align: 'center' });
+  pdf.setFontSize(6);
   pdf.setFont('helvetica', 'normal');
-  pdf.text('Available', margin + 80 + statsSpacing * 2, statsY + 10, { align: 'center' });
+  pdf.text('Available', margin + 60 + statsSpacing * 2, statsY + 8, { align: 'center' });
   
   // Free Time
-  pdf.setFontSize(10);
+  pdf.setFontSize(8);
   pdf.setFont('helvetica', 'bold');
-  pdf.text(`${freeTimePercentage}%`, margin + 80 + statsSpacing * 3, statsY, { align: 'center' });
-  pdf.setFontSize(7);
+  pdf.text(`${freeTimePercentage}%`, margin + 60 + statsSpacing * 3, statsY, { align: 'center' });
+  pdf.setFontSize(6);
   pdf.setFont('helvetica', 'normal');
-  pdf.text('Free Time', margin + 80 + statsSpacing * 3, statsY + 10, { align: 'center' });
+  pdf.text('Free Time', margin + 60 + statsSpacing * 3, statsY + 8, { align: 'center' });
 }
 
 function drawDashboardLegend(pdf: jsPDF) {
@@ -225,11 +233,11 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     }
     pdf.rect(margin, y, timeColumnWidth + appointmentColumnWidth, timeSlotHeight, 'F');
     
-    // Time label - compact for reMarkable Paper Pro
-    pdf.setFontSize(DAILY_CONFIG.fonts.timeLabels.size);
+    // Time label - centered both vertically and horizontally
+    pdf.setFontSize(isHour ? DAILY_CONFIG.fonts.timeLabels.size + 1 : DAILY_CONFIG.fonts.timeLabels.size);
     pdf.setFont('helvetica', isHour ? 'bold' : 'normal');
     pdf.setTextColor(...DAILY_CONFIG.colors.black);
-    pdf.text(timeSlot, margin + 4, y + 12);
+    pdf.text(timeSlot, margin + timeColumnWidth / 2, y + timeSlotHeight / 2 + 2, { align: 'center' });
     
     // Grid lines - subtle like dashboard
     pdf.setDrawColor(...DAILY_CONFIG.colors.mediumGray);
@@ -321,7 +329,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     
     // Draw event content in 3-column layout optimized for reMarkable Paper Pro
     const eventX = margin + timeColumnWidth + 8;
-    const eventY = topPosition + 12;
+    const eventY = topPosition + 3;  // Position at the very top of the appointment square
     const columnWidth = (appointmentColumnWidth - 25) / 3;  // Wider columns for better text fitting
     
     // Left column: Event title, calendar source, and time
@@ -344,27 +352,34 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
       cleanTitle = 'Untitled Appointment';
     }
     
-    pdf.text(cleanTitle, eventX, eventY + 5);
+    // Appointment name at the very top
+    pdf.text(cleanTitle, eventX, eventY + 10);
     
-    // Source line
+    // Source line below the name
     pdf.setFontSize(DAILY_CONFIG.fonts.eventSource.size);
     pdf.setFont('helvetica', DAILY_CONFIG.fonts.eventSource.weight);
     pdf.setTextColor(...DAILY_CONFIG.colors.black);
-    pdf.text(eventType.source, eventX, eventY + 8);
+    pdf.text(eventType.source, eventX, eventY + 22);
     
-    // Time range - military time format
+    // Time range below the source
     pdf.setFontSize(DAILY_CONFIG.fonts.eventTime.size);
     pdf.setFont('helvetica', DAILY_CONFIG.fonts.eventTime.weight);
     pdf.setTextColor(...DAILY_CONFIG.colors.black);
     const timeRange = `${formatMilitaryTime(eventStart)} - ${formatMilitaryTime(eventEnd)}`;
-    pdf.text(timeRange, eventX, eventY + 12);
+    pdf.text(timeRange, eventX, eventY + 34);
     
     // Center column: Event Notes (if they exist)
     if (event.notes && event.notes.trim()) {
-      pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size);
+      pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size + 2);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(...DAILY_CONFIG.colors.black);
-      pdf.text('Event Notes', eventX + columnWidth + 2, eventY);
+      const notesHeaderX = eventX + columnWidth + 2;
+      pdf.text('Event Notes', notesHeaderX, eventY + 10);
+      
+      // Draw underline for Event Notes header
+      pdf.setDrawColor(...DAILY_CONFIG.colors.black);
+      pdf.setLineWidth(0.5);
+      pdf.line(notesHeaderX, eventY + 12, notesHeaderX + 50, eventY + 12);
       
       pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size);
       pdf.setFont('helvetica', 'normal');
@@ -374,7 +389,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
         .map(note => note.trim().replace(/^[•\s-]+/, '').trim())
         .filter(note => note.length > 0 && note !== '•' && note !== '-');
       
-      let currentY = eventY + 8;
+      let currentY = eventY + 20;
       notes.forEach((note, index) => {
         // Wrap text to fit within column width
         const maxWidth = columnWidth - 10; // Leave margin for bullet and spacing
@@ -382,19 +397,25 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
         
         lines.forEach((line, lineIndex) => {
           pdf.setTextColor(...DAILY_CONFIG.colors.black);
-          pdf.text(line, eventX + columnWidth + 3, currentY);
-          currentY += 3; // Very compact line spacing for reMarkable Paper Pro
+          pdf.text(line, notesHeaderX, currentY);
+          currentY += 8; // Better line spacing to match screenshot
         });
-        currentY += 1; // Minimal gap between bullet points
+        currentY += 2; // Gap between bullet points
       });
     }
     
     // Right column: Action Items (if they exist)
     if (event.actionItems && event.actionItems.trim()) {
-      pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size);
+      pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size + 2);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(...DAILY_CONFIG.colors.black);
-      pdf.text('Action Items', eventX + columnWidth * 2 + 2, eventY);
+      const actionHeaderX = eventX + columnWidth * 2 + 2;
+      pdf.text('Action Items', actionHeaderX, eventY + 10);
+      
+      // Draw underline for Action Items header
+      pdf.setDrawColor(...DAILY_CONFIG.colors.black);
+      pdf.setLineWidth(0.5);
+      pdf.line(actionHeaderX, eventY + 12, actionHeaderX + 50, eventY + 12);
       
       pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size);
       pdf.setFont('helvetica', 'normal');
@@ -404,7 +425,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
         .map(item => item.trim().replace(/^[•\s-]+/, '').trim())
         .filter(item => item.length > 0 && item !== '•' && item !== '-');
       
-      let currentY = eventY + 8;
+      let currentY = eventY + 20;
       actionItems.forEach((item, index) => {
         // Wrap text to fit within column width
         const maxWidth = columnWidth - 10; // Leave margin for bullet and spacing
@@ -412,10 +433,10 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
         
         lines.forEach((line, lineIndex) => {
           pdf.setTextColor(...DAILY_CONFIG.colors.black);
-          pdf.text(line, eventX + columnWidth * 2 + 3, currentY);
-          currentY += 3; // Very compact line spacing for reMarkable Paper Pro
+          pdf.text(line, actionHeaderX, currentY);
+          currentY += 8; // Better line spacing to match screenshot
         });
-        currentY += 1; // Minimal gap between bullet points
+        currentY += 2; // Gap between bullet points
       });
     }
     
