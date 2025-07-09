@@ -449,7 +449,21 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
       if (event.notes && event.notes.trim()) {
         const notesX = eventX + columnWidth + 2;
         const bulletStartY = eventY + 10; // Start where bullets begin
-        const bulletEndY = eventY + height - 10;
+        
+        // Calculate actual height of notes content
+        const notes = event.notes.split('\n')
+          .filter(note => note.trim().length > 0)
+          .map(note => note.trim().replace(/^[•\s-]+/, '').trim())
+          .filter(note => note.length > 0 && note !== '•' && note !== '-');
+        
+        let notesHeight = 0;
+        notes.forEach(note => {
+          const lines = pdf.splitTextToSize(`- ${note}`, columnWidth - 10);
+          notesHeight += lines.length * 5; // 5pt line spacing
+          notesHeight += 1; // Gap between bullet points
+        });
+        
+        const bulletEndY = bulletStartY + notesHeight - 1;
         pdf.line(notesX - 5, bulletStartY, notesX - 5, bulletEndY);
       }
       
@@ -457,7 +471,21 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
       if (event.actionItems && event.actionItems.trim()) {
         const actionX = eventX + columnWidth * 2 + 2;
         const bulletStartY = eventY + 10; // Start where bullets begin
-        const bulletEndY = eventY + height - 10;
+        
+        // Calculate actual height of action items content
+        const actionItems = event.actionItems.split('\n')
+          .filter(item => item.trim().length > 0)
+          .map(item => item.trim().replace(/^[•\s-]+/, '').trim())
+          .filter(item => item.length > 0 && item !== '•' && item !== '-');
+        
+        let actionHeight = 0;
+        actionItems.forEach(item => {
+          const lines = pdf.splitTextToSize(`- ${item}`, columnWidth - 10);
+          actionHeight += lines.length * 5; // 5pt line spacing
+          actionHeight += 1; // Gap between bullet points
+        });
+        
+        const bulletEndY = bulletStartY + actionHeight - 1;
         pdf.line(actionX - 5, bulletStartY, actionX - 5, bulletEndY);
       }
     }
