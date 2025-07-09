@@ -172,36 +172,165 @@ export const useCalendar = () => {
   };
 
   const addEvent = (event: CalendarEvent) => {
-    setState(prev => ({
-      ...prev,
-      events: [...prev.events, event]
-    }));
+    setState(prev => {
+      const newEvents = [...prev.events, event];
+      
+      // Recalculate current week with new event
+      const startDate = getWeekStartDate(prev.currentDate);
+      const endDate = getWeekEndDate(prev.currentDate);
+      
+      const days: CalendarDay[] = [];
+      for (let i = 0; i < 7; i++) {
+        const currentDate = new Date(startDate);
+        currentDate.setDate(startDate.getDate() + i);
+        
+        days.push({
+          date: currentDate,
+          dayOfWeek: currentDate.toLocaleDateString('en-US', { weekday: 'short' }),
+          dayNumber: currentDate.getDate(),
+          events: newEvents.filter(event => {
+            const eventDate = new Date(event.startTime);
+            return eventDate.toDateString() === currentDate.toDateString();
+          })
+        });
+      }
+
+      return {
+        ...prev,
+        events: newEvents,
+        currentWeek: {
+          weekNumber: Math.ceil((prev.currentDate.getTime() - new Date(prev.currentDate.getFullYear(), 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000)),
+          startDate,
+          endDate,
+          days
+        }
+      };
+    });
   };
 
   const updateEvents = (events: CalendarEvent[]) => {
-    setState(prev => ({
-      ...prev,
-      events: events
-    }));
-    // Update current week with new events
-    console.log('Updating current week with events:', events.length);
-    updateCurrentWeek(state.currentDate, events);
+    setState(prev => {
+      const newState = {
+        ...prev,
+        events: events
+      };
+      
+      // Immediately update current week with new events
+      console.log('Updating current week with events:', events.length);
+      
+      // Recalculate current week with new events
+      const startDate = getWeekStartDate(prev.currentDate);
+      const endDate = getWeekEndDate(prev.currentDate);
+      
+      const days: CalendarDay[] = [];
+      for (let i = 0; i < 7; i++) {
+        const currentDate = new Date(startDate);
+        currentDate.setDate(startDate.getDate() + i);
+        
+        days.push({
+          date: currentDate,
+          dayOfWeek: currentDate.toLocaleDateString('en-US', { weekday: 'short' }),
+          dayNumber: currentDate.getDate(),
+          events: events.filter(event => {
+            const eventDate = new Date(event.startTime);
+            const eventDateStr = eventDate.toDateString();
+            const currentDateStr = currentDate.toDateString();
+            
+            // Debug for Monday July 7th specifically
+            if (eventDateStr === 'Mon Jul 07 2025' && currentDateStr.includes('Jul 07')) {
+              console.log(`✅ MONDAY MATCH: ${event.title} matched with day ${currentDateStr}`);
+            }
+            
+            return eventDateStr === currentDateStr;
+          })
+        });
+      }
+
+      newState.currentWeek = {
+        weekNumber: Math.ceil((prev.currentDate.getTime() - new Date(prev.currentDate.getFullYear(), 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000)),
+        startDate,
+        endDate,
+        days
+      };
+      
+      return newState;
+    });
   };
 
   const updateEvent = (eventId: string, updates: Partial<CalendarEvent>) => {
-    setState(prev => ({
-      ...prev,
-      events: prev.events.map(event => 
+    setState(prev => {
+      const updatedEvents = prev.events.map(event => 
         event.id === eventId ? { ...event, ...updates } : event
-      )
-    }));
+      );
+      
+      // Recalculate current week with updated events
+      const startDate = getWeekStartDate(prev.currentDate);
+      const endDate = getWeekEndDate(prev.currentDate);
+      
+      const days: CalendarDay[] = [];
+      for (let i = 0; i < 7; i++) {
+        const currentDate = new Date(startDate);
+        currentDate.setDate(startDate.getDate() + i);
+        
+        days.push({
+          date: currentDate,
+          dayOfWeek: currentDate.toLocaleDateString('en-US', { weekday: 'short' }),
+          dayNumber: currentDate.getDate(),
+          events: updatedEvents.filter(event => {
+            const eventDate = new Date(event.startTime);
+            return eventDate.toDateString() === currentDate.toDateString();
+          })
+        });
+      }
+
+      return {
+        ...prev,
+        events: updatedEvents,
+        currentWeek: {
+          weekNumber: Math.ceil((prev.currentDate.getTime() - new Date(prev.currentDate.getFullYear(), 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000)),
+          startDate,
+          endDate,
+          days
+        }
+      };
+    });
   };
 
   const deleteEvent = (eventId: string) => {
-    setState(prev => ({
-      ...prev,
-      events: prev.events.filter(event => event.id !== eventId)
-    }));
+    setState(prev => {
+      const filteredEvents = prev.events.filter(event => event.id !== eventId);
+      
+      // Recalculate current week with filtered events
+      const startDate = getWeekStartDate(prev.currentDate);
+      const endDate = getWeekEndDate(prev.currentDate);
+      
+      const days: CalendarDay[] = [];
+      for (let i = 0; i < 7; i++) {
+        const currentDate = new Date(startDate);
+        currentDate.setDate(startDate.getDate() + i);
+        
+        days.push({
+          date: currentDate,
+          dayOfWeek: currentDate.toLocaleDateString('en-US', { weekday: 'short' }),
+          dayNumber: currentDate.getDate(),
+          events: filteredEvents.filter(event => {
+            const eventDate = new Date(event.startTime);
+            return eventDate.toDateString() === currentDate.toDateString();
+          })
+        });
+      }
+
+      return {
+        ...prev,
+        events: filteredEvents,
+        currentWeek: {
+          weekNumber: Math.ceil((prev.currentDate.getTime() - new Date(prev.currentDate.getFullYear(), 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000)),
+          startDate,
+          endDate,
+          days
+        }
+      };
+    });
   };
 
   const updateDailyNote = (date: string, content: string) => {
