@@ -21,11 +21,8 @@ import { exportExactDailyPDF } from '../utils/exactDailyPDFExport';
 
 
 
-// Temporary stub functions for other exports until they're fixed
-const exportWeeklyPackageToPDF = async (...args: any[]): Promise<string> => { 
-  console.log('Weekly package export temporarily disabled'); 
-  return Promise.resolve(''); 
-};
+// Import the weekly package export function
+import { exportWeeklyPackage as exportWeeklyPackageToPDF } from '../utils/weeklyPackageExport';
 const exportWeeklyToPDF = async (...args: any[]): Promise<string> => { 
   console.log('Weekly export temporarily disabled'); 
   return Promise.resolve(''); 
