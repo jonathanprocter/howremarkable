@@ -153,32 +153,12 @@ export const WeeklyPlannerView = ({
 
   return (
     <div className="planner-container">
-      {/* Dashboard Header - Navigation and Title */}
-      <div className="dashboard-header">
-        <div className="header-left">
-          <button className="nav-btn" onClick={() => onDayClick(new Date())}>
-            📅 Today
-          </button>
-          <button className="nav-btn" onClick={() => onDayClick(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))}>
-            ← Previous Week
-          </button>
-        </div>
-        
-        <div className="header-center">
-          <h1>Weekly Planner</h1>
-          <div className="week-info">
-            {weekStartDate?.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}-
-            {weekEndDate?.toLocaleDateString('en-US', { day: 'numeric' })} • Week {weekNumber}
-          </div>
-        </div>
-        
-        <div className="header-right">
-          <button className="nav-btn" onClick={() => onDayClick(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000))}>
-            Next Week →
-          </button>
-          <button className="nav-btn" onClick={() => onDayClick(new Date())}>
-            🔄 Refresh
-          </button>
+      {/* Header - exact match to HTML */}
+      <div className="header">
+        <h1>Weekly Planner</h1>
+        <div className="week-info">
+          {weekStartDate?.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}-
+          {weekEndDate?.toLocaleDateString('en-US', { day: 'numeric' })} • Week {weekNumber}
         </div>
       </div>
 
@@ -275,31 +255,7 @@ export const WeeklyPlannerView = ({
           }).flat()}
         </div>
       </div>
-      
-      {/* Dashboard Footer - Navigation and Time Display */}
-      <div className="dashboard-footer">
-        <div className="footer-nav">
-          <button className="footer-nav-btn" onClick={() => onDayClick(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))}>
-            ← Previous Week
-          </button>
-          <button className="footer-nav-btn" onClick={() => onDayClick(new Date())}>
-            Today
-          </button>
-          <button className="footer-nav-btn" onClick={() => onDayClick(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000))}>
-            Next Week →
-          </button>
-        </div>
-        
-        <div className="footer-time">
-          <div className="time-display">
-            {new Date().toLocaleTimeString('en-US', { 
-              hour: '2-digit', 
-              minute: '2-digit',
-              second: '2-digit'
-            })}
-          </div>
-        </div>
-      </div>
+
     </div>
   );
 };
