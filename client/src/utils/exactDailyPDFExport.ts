@@ -33,6 +33,7 @@ const DAILY_CONFIG = {
     mediumGray: [150, 150, 150],
     veryLightGray: [248, 248, 248],
     white: [255, 255, 255],
+    bottomHourColor: [255, 255, 240], // #FFFFF0 - light cream for bottom-of-hour rows
     simplePracticeBlue: [100, 149, 237],
     googleGreen: [52, 168, 83],
     holidayOrange: [255, 152, 0],
@@ -265,7 +266,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     if (isHour) {
       pdf.setFillColor(...DAILY_CONFIG.colors.lightGray);  // Gray for top of hour (hour marks)
     } else {
-      pdf.setFillColor(...DAILY_CONFIG.colors.white);  // White for bottom of hour (30-minute marks)
+      pdf.setFillColor(...DAILY_CONFIG.colors.bottomHourColor);  // #FFFFF0 for bottom of hour (30-minute marks)
     }
     pdf.rect(margin, y, gridWidth, timeSlotHeight, 'F');
     
@@ -474,7 +475,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
       // Draw vertical line only in the bullet area for notes
       if (event.notes && event.notes.trim()) {
         const notesX = eventX + columnWidth; // Align with header position
-        const bulletStartY = eventY + 10; // Start where bullets begin
+        const bulletStartY = eventY + 8; // Start slightly above where bullets begin
         
         // Calculate actual height of notes content
         const notes = event.notes.split('\n')
@@ -496,7 +497,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
       // Draw vertical line only in the bullet area for action items
       if (event.actionItems && event.actionItems.trim()) {
         const actionX = eventX + columnWidth * 2; // Align with header position
-        const bulletStartY = eventY + 10; // Start where bullets begin
+        const bulletStartY = eventY + 8; // Start slightly above where bullets begin
         
         // Calculate actual height of action items content
         const actionItems = event.actionItems.split('\n')
