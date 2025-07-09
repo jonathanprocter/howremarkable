@@ -186,34 +186,40 @@ function drawDashboardHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEve
   pdf.setFillColor(255, 255, 255); // White background
   pdf.rect(margin, legendY, pageWidth - (margin * 2), legendHeight, 'F');
   
-  // Legend items positioned horizontally
+  // Legend items positioned horizontally with proper spacing
   pdf.setFontSize(6);
   pdf.setFont('helvetica', 'normal');
   
   const legendItemSpacing = (pageWidth - (margin * 2)) / 3;
-  const legendItemY = legendY + 10;
+  const legendItemY = legendY + 8;
   
   // SimplePractice - left position
   pdf.setFillColor(...DAILY_CONFIG.colors.white);
   pdf.setDrawColor(...DAILY_CONFIG.colors.simplePracticeBlue);
-  pdf.rect(margin + 10, legendItemY, 8, 4, 'FD');
+  pdf.setLineWidth(0.5);
+  pdf.rect(margin + 10, legendItemY, 12, 6, 'FD');
   pdf.setFillColor(...DAILY_CONFIG.colors.simplePracticeBlue);
-  pdf.rect(margin + 10, legendItemY, 2, 4, 'F');
-  pdf.text('SimplePractice', margin + 22, legendItemY + 3);
+  pdf.rect(margin + 10, legendItemY, 2, 6, 'F');
+  pdf.setTextColor(...DAILY_CONFIG.colors.black);
+  pdf.text('SimplePractice', margin + 26, legendItemY + 4);
   
   // Google Calendar - center position
   pdf.setFillColor(...DAILY_CONFIG.colors.white);
   pdf.setDrawColor(...DAILY_CONFIG.colors.googleGreen);
+  pdf.setLineWidth(0.5);
   pdf.setLineDash([1, 1]);
-  pdf.rect(margin + 10 + legendItemSpacing, legendItemY, 8, 4, 'FD');
+  pdf.rect(margin + 10 + legendItemSpacing, legendItemY, 12, 6, 'FD');
   pdf.setLineDash([]);
-  pdf.text('Google Calendar', margin + 22 + legendItemSpacing, legendItemY + 3);
+  pdf.setTextColor(...DAILY_CONFIG.colors.black);
+  pdf.text('Google Calendar', margin + 26 + legendItemSpacing, legendItemY + 4);
   
   // Holidays - right position
   pdf.setFillColor(...DAILY_CONFIG.colors.holidayYellow);
   pdf.setDrawColor(...DAILY_CONFIG.colors.holidayOrange);
-  pdf.rect(margin + 10 + legendItemSpacing * 2, legendItemY, 8, 4, 'FD');
-  pdf.text('Holidays in United States', margin + 22 + legendItemSpacing * 2, legendItemY + 3);
+  pdf.setLineWidth(0.5);
+  pdf.rect(margin + 10 + legendItemSpacing * 2, legendItemY, 12, 6, 'FD');
+  pdf.setTextColor(...DAILY_CONFIG.colors.black);
+  pdf.text('Holidays in United States', margin + 26 + legendItemSpacing * 2, legendItemY + 4);
 }
 
 
@@ -291,9 +297,9 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     const slotIndex = ((startHour - 6) * 2) + (startMinute >= 30 ? 1 : 0);
     const topPosition = gridStartY + (slotIndex * timeSlotHeight);
     
-    // Calculate height based on EXACT duration to fill the time slots completely
+    // Calculate height based on EXACT duration to stay within time slot boundaries
     const durationSlots = Math.ceil(durationMinutes / 30);
-    const exactHeight = durationSlots * timeSlotHeight - 2; // Minimal gap for visual separation
+    const exactHeight = durationSlots * timeSlotHeight - 4; // Leave space to stay within grid lines
     
     console.log(`📅 Event: ${event.title}`);
     console.log(`  ⏰ Start: ${formatMilitaryTime(eventStart)} (${startHour}:${startMinute.toString().padStart(2, '0')})`);
@@ -324,34 +330,34 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     
     // Draw event background - always white like dashboard, aligned exactly with time slots
     pdf.setFillColor(...DAILY_CONFIG.colors.white);
-    pdf.rect(margin + timeColumnWidth + 4, topPosition + 1, appointmentColumnWidth - 6, exactHeight, 'F');
+    pdf.rect(margin + timeColumnWidth + 2, topPosition + 2, appointmentColumnWidth - 4, exactHeight, 'F');
     
     // Draw event borders based on type - match dashboard styling EXACTLY, aligned with time slots
     if (eventType.isSimplePractice) {
       // SimplePractice: white background with thin cornflower blue border and left flag
       pdf.setDrawColor(...DAILY_CONFIG.colors.simplePracticeBlue);
       pdf.setLineWidth(0.5);
-      pdf.rect(margin + timeColumnWidth + 4, topPosition + 1, appointmentColumnWidth - 6, exactHeight, 'D');
+      pdf.rect(margin + timeColumnWidth + 2, topPosition + 2, appointmentColumnWidth - 4, exactHeight, 'D');
       // Thin left flag (2px wide instead of 4px)
       pdf.setFillColor(...DAILY_CONFIG.colors.simplePracticeBlue);
-      pdf.rect(margin + timeColumnWidth + 4, topPosition + 1, 2, exactHeight, 'F');
+      pdf.rect(margin + timeColumnWidth + 2, topPosition + 2, 2, exactHeight, 'F');
     } else if (eventType.isGoogle) {
       // Google Calendar: white background with dashed green border all around
       pdf.setDrawColor(...DAILY_CONFIG.colors.googleGreen);
       pdf.setLineWidth(0.5);
       pdf.setLineDash([3, 3]);
-      pdf.rect(margin + timeColumnWidth + 4, topPosition + 1, appointmentColumnWidth - 6, exactHeight, 'D');
+      pdf.rect(margin + timeColumnWidth + 2, topPosition + 2, appointmentColumnWidth - 4, exactHeight, 'D');
       pdf.setLineDash([]);
     } else {
       // Holiday: orange border around appointment
       pdf.setDrawColor(...DAILY_CONFIG.colors.holidayOrange);
       pdf.setLineWidth(0.5);
-      pdf.rect(margin + timeColumnWidth + 4, topPosition + 1, appointmentColumnWidth - 6, exactHeight, 'D');
+      pdf.rect(margin + timeColumnWidth + 2, topPosition + 2, appointmentColumnWidth - 4, exactHeight, 'D');
     }
     
     // Draw event content in 3-column layout optimized for reMarkable Paper Pro
-    const eventX = margin + timeColumnWidth + 10;
-    const eventY = topPosition + 3;  // Position at the very top of the appointment square
+    const eventX = margin + timeColumnWidth + 8;
+    const eventY = topPosition + 5;  // Position at the very top of the appointment square
     const columnWidth = (appointmentColumnWidth - 25) / 3;  // Wider columns for better text fitting
     
     // Left column: Event title, calendar source, and time
@@ -375,20 +381,20 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     }
     
     // Appointment name at the very top
-    pdf.text(cleanTitle, eventX, eventY + 8);
+    pdf.text(cleanTitle, eventX, eventY + 6);
     
     // Source line below the name
     pdf.setFontSize(DAILY_CONFIG.fonts.eventSource.size);
     pdf.setFont('helvetica', DAILY_CONFIG.fonts.eventSource.weight);
     pdf.setTextColor(...DAILY_CONFIG.colors.black);
-    pdf.text(eventType.source, eventX, eventY + 15);
+    pdf.text(eventType.source, eventX, eventY + 11);
     
     // Time range below the source
     pdf.setFontSize(DAILY_CONFIG.fonts.eventTime.size);
     pdf.setFont('helvetica', DAILY_CONFIG.fonts.eventTime.weight);
     pdf.setTextColor(...DAILY_CONFIG.colors.black);
     const timeRange = `${formatMilitaryTime(eventStart)} - ${formatMilitaryTime(eventEnd)}`;
-    pdf.text(timeRange, eventX, eventY + 22);
+    pdf.text(timeRange, eventX, eventY + 16);
     
     // Center column: Event Notes (if they exist)
     if (event.notes && event.notes.trim()) {
