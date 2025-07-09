@@ -393,7 +393,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
       notes.forEach((note, index) => {
         // Wrap text to fit within column width with block text formatting
         const maxWidth = columnWidth - 10; // Leave margin for bullet and spacing
-        const lines = pdf.splitTextToSize(`| ${note}`, maxWidth);
+        const lines = pdf.splitTextToSize(`- ${note}`, maxWidth);
         
         lines.forEach((line, lineIndex) => {
           pdf.setTextColor(...DAILY_CONFIG.colors.black);
@@ -429,7 +429,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
       actionItems.forEach((item, index) => {
         // Wrap text to fit within column width with block text formatting
         const maxWidth = columnWidth - 10; // Leave margin for bullet and spacing
-        const lines = pdf.splitTextToSize(`| ${item}`, maxWidth);
+        const lines = pdf.splitTextToSize(`- ${item}`, maxWidth);
         
         lines.forEach((line, lineIndex) => {
           pdf.setTextColor(...DAILY_CONFIG.colors.black);
@@ -440,23 +440,25 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
       });
     }
     
-    // Draw column dividers for 3-column layout only below Event Notes and Action Items
+    // Draw vertical lines only where the bullets are located
     if ((event.notes && event.notes.trim()) || (event.actionItems && event.actionItems.trim())) {
-      pdf.setDrawColor(...DAILY_CONFIG.colors.lightGray);
-      pdf.setLineWidth(0.3);
+      pdf.setDrawColor(100, 100, 100); // Dark gray for visibility
+      pdf.setLineWidth(0.5);
       
-      // Only draw vertical lines below the headers where bullets are located
-      const dividerStartY = eventY + 8; // Start below the headers
-      const dividerEndY = eventY + height - 10;
-      
-      // Vertical line between left and center columns (only if notes exist)
+      // Draw vertical line only in the bullet area for notes
       if (event.notes && event.notes.trim()) {
-        pdf.line(eventX + columnWidth - 8, dividerStartY, eventX + columnWidth - 8, dividerEndY);
+        const notesX = eventX + columnWidth + 2;
+        const bulletStartY = eventY + 10; // Start where bullets begin
+        const bulletEndY = eventY + height - 10;
+        pdf.line(notesX - 5, bulletStartY, notesX - 5, bulletEndY);
       }
       
-      // Vertical line between center and right columns (only if action items exist)
+      // Draw vertical line only in the bullet area for action items
       if (event.actionItems && event.actionItems.trim()) {
-        pdf.line(eventX + columnWidth * 2 - 8, dividerStartY, eventX + columnWidth * 2 - 8, dividerEndY);
+        const actionX = eventX + columnWidth * 2 + 2;
+        const bulletStartY = eventY + 10; // Start where bullets begin
+        const bulletEndY = eventY + height - 10;
+        pdf.line(actionX - 5, bulletStartY, actionX - 5, bulletEndY);
       }
     }
   });
