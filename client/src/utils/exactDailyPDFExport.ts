@@ -11,7 +11,7 @@ const DAILY_CONFIG = {
   timeColumnWidth: 50,  // Compact time column for narrow screen
   appointmentColumnWidth: 449,  // Remaining width for appointments
   timeSlotHeight: 16,  // Compact slots to fit full timeline in portrait
-  headerHeight: 90,    // Increased header space for navigation and better layout
+  headerHeight: 110,    // Increased header space for navigation and better layout
 
   // Typography optimized for reMarkable Paper Pro e-ink display
   fonts: {
@@ -19,9 +19,9 @@ const DAILY_CONFIG = {
     date: { size: 8, weight: 'normal' },      // Compact date info
     stats: { size: 6, weight: 'normal' },     // Very compact stats
     timeLabels: { size: 5, weight: 'normal' }, // Tiny time labels
-    eventTitle: { size: 12, weight: 'bold' },  // Appointment name size
-    eventSource: { size: 10, weight: 'normal' }, // Calendar source size
-    eventTime: { size: 10, weight: 'bold' },   // Appointment time size
+    eventTitle: { size: 7, weight: 'bold' },  // Appointment name size - scaled to dashboard proportions
+    eventSource: { size: 6, weight: 'normal' }, // Calendar source size - scaled to dashboard proportions
+    eventTime: { size: 6, weight: 'bold' },   // Appointment time size - scaled to dashboard proportions
     eventNotes: { size: 4, weight: 'normal' }  // Very compact notes
   },
 
@@ -353,24 +353,24 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     }
     
     // Appointment name at the very top
-    pdf.text(cleanTitle, eventX, eventY + 10);
+    pdf.text(cleanTitle, eventX, eventY + 8);
     
     // Source line below the name
     pdf.setFontSize(DAILY_CONFIG.fonts.eventSource.size);
     pdf.setFont('helvetica', DAILY_CONFIG.fonts.eventSource.weight);
     pdf.setTextColor(...DAILY_CONFIG.colors.black);
-    pdf.text(eventType.source, eventX, eventY + 22);
+    pdf.text(eventType.source, eventX, eventY + 15);
     
     // Time range below the source
     pdf.setFontSize(DAILY_CONFIG.fonts.eventTime.size);
     pdf.setFont('helvetica', DAILY_CONFIG.fonts.eventTime.weight);
     pdf.setTextColor(...DAILY_CONFIG.colors.black);
     const timeRange = `${formatMilitaryTime(eventStart)} - ${formatMilitaryTime(eventEnd)}`;
-    pdf.text(timeRange, eventX, eventY + 34);
+    pdf.text(timeRange, eventX, eventY + 22);
     
     // Center column: Event Notes (if they exist)
     if (event.notes && event.notes.trim()) {
-      pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size + 2);
+      pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size + 1);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(...DAILY_CONFIG.colors.black);
       const notesHeaderX = eventX + columnWidth + 2;
@@ -378,8 +378,8 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
       
       // Draw underline for Event Notes header
       pdf.setDrawColor(...DAILY_CONFIG.colors.black);
-      pdf.setLineWidth(0.5);
-      pdf.line(notesHeaderX, eventY + 12, notesHeaderX + 50, eventY + 12);
+      pdf.setLineWidth(0.3);
+      pdf.line(notesHeaderX, eventY + 11, notesHeaderX + 30, eventY + 11);
       
       pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size);
       pdf.setFont('helvetica', 'normal');
@@ -389,7 +389,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
         .map(note => note.trim().replace(/^[•\s-]+/, '').trim())
         .filter(note => note.length > 0 && note !== '•' && note !== '-');
       
-      let currentY = eventY + 20;
+      let currentY = eventY + 16;
       notes.forEach((note, index) => {
         // Wrap text to fit within column width
         const maxWidth = columnWidth - 10; // Leave margin for bullet and spacing
@@ -398,24 +398,24 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
         lines.forEach((line, lineIndex) => {
           pdf.setTextColor(...DAILY_CONFIG.colors.black);
           pdf.text(line, notesHeaderX, currentY);
-          currentY += 8; // Better line spacing to match screenshot
+          currentY += 5; // Compact line spacing scaled to dashboard
         });
-        currentY += 2; // Gap between bullet points
+        currentY += 1; // Minimal gap between bullet points
       });
     }
     
     // Right column: Action Items (if they exist)
     if (event.actionItems && event.actionItems.trim()) {
-      pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size + 2);
+      pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size + 1);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(...DAILY_CONFIG.colors.black);
       const actionHeaderX = eventX + columnWidth * 2 + 2;
-      pdf.text('Action Items', actionHeaderX, eventY + 10);
+      pdf.text('Action Items', actionHeaderX, eventY + 8);
       
       // Draw underline for Action Items header
       pdf.setDrawColor(...DAILY_CONFIG.colors.black);
-      pdf.setLineWidth(0.5);
-      pdf.line(actionHeaderX, eventY + 12, actionHeaderX + 50, eventY + 12);
+      pdf.setLineWidth(0.3);
+      pdf.line(actionHeaderX, eventY + 9, actionHeaderX + 30, eventY + 9);
       
       pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size);
       pdf.setFont('helvetica', 'normal');
@@ -425,7 +425,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
         .map(item => item.trim().replace(/^[•\s-]+/, '').trim())
         .filter(item => item.length > 0 && item !== '•' && item !== '-');
       
-      let currentY = eventY + 20;
+      let currentY = eventY + 14;
       actionItems.forEach((item, index) => {
         // Wrap text to fit within column width
         const maxWidth = columnWidth - 10; // Leave margin for bullet and spacing
@@ -434,9 +434,9 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
         lines.forEach((line, lineIndex) => {
           pdf.setTextColor(...DAILY_CONFIG.colors.black);
           pdf.text(line, actionHeaderX, currentY);
-          currentY += 8; // Better line spacing to match screenshot
+          currentY += 5; // Compact line spacing scaled to dashboard
         });
-        currentY += 2; // Gap between bullet points
+        currentY += 1; // Minimal gap between bullet points
       });
     }
     
