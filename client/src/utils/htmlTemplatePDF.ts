@@ -224,8 +224,9 @@ export const exportHTMLTemplatePDF = async (
       });
     });
     
-    drawDailyHeader(pdf, weekStartDate, events);
+    drawDailyHeader(pdf, weekStartDate, events, 1, 1);
     drawDailyGrid(pdf, weekStartDate, events);
+    drawDailyFooter(pdf, weekStartDate, 1, 1);
     
     // Save the PDF with daily filename
     const filename = `daily-planner-${weekStartDate.getFullYear()}-${String(weekStartDate.getMonth() + 1).padStart(2, '0')}-${String(weekStartDate.getDate()).padStart(2, '0')}.pdf`;
@@ -257,7 +258,7 @@ export const exportHTMLTemplatePDF = async (
   }
 };
 
-function drawDailyHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]): void {
+export function drawDailyHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[], pageNumber: number = 1, dayOfWeek: number = 1): void {
   const { margin, pageWidth, pageHeight } = REMARKABLE_DAILY_CONFIG;
   
   // Page border - full page
@@ -290,8 +291,15 @@ function drawDailyHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]
   });
   pdf.text(dateText, pageWidth / 2, margin + 35, { align: 'center' });
   
+  // Navigation info matching daily console format
+  pdf.setFontSize(9);
+  pdf.setFont('helvetica', 'normal');
+  const weekNumber = getWeekNumber(selectedDate);
+  const navText = `Week ${weekNumber} • Day ${dayOfWeek} of 7 • Page ${pageNumber} of 8`;
+  pdf.text(navText, pageWidth / 2, margin + 50, { align: 'center' });
+  
   // Navigation buttons (visual representation)
-  const navY = margin + 45;
+  const navY = margin + 60;
   const buttonWidth = 60;
   const buttonHeight = 16;
   
@@ -302,7 +310,7 @@ function drawDailyHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]
   pdf.rect(margin + 20, navY, buttonWidth + 20, buttonHeight, 'FD');
   pdf.setFontSize(7);
   pdf.setTextColor(...REMARKABLE_DAILY_CONFIG.colors.black);
-  pdf.text('← Back to Week', margin + 30, navY + 10);
+  pdf.text('← Weekly Overview', margin + 30, navY + 10);
   
   // Previous/Next day buttons
   const rightButtonX = pageWidth - margin - 80;
@@ -422,6 +430,45 @@ function drawDailyHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]
     pdf.setTextColor(...REMARKABLE_DAILY_CONFIG.colors.black);
     pdf.text(item.label, x + symbolSize + 6, symbolY + 8);
   });
+}
+
+export function drawDailyFooter(pdf: jsPDF, selectedDate: Date, pageNumber: number = 1, dayOfWeek: number = 1): void {
+  const { margin, pageWidth, pageHeight } = REMARKABLE_DAILY_CONFIG;
+  
+  // Footer area
+  const footerY = pageHeight - margin - 40;
+  const footerHeight = 30;
+  
+  // Footer background
+  pdf.setFillColor(...REMARKABLE_DAILY_CONFIG.colors.lightGray);
+  pdf.rect(margin, footerY, pageWidth - (margin * 2), footerHeight, 'F');
+  
+  // Footer border
+  pdf.setLineWidth(1);
+  pdf.setDrawColor(...REMARKABLE_DAILY_CONFIG.colors.mediumGray);
+  pdf.rect(margin, footerY, pageWidth - (margin * 2), footerHeight);
+  
+  // Footer navigation text
+  pdf.setFontSize(8);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(...REMARKABLE_DAILY_CONFIG.colors.black);
+  
+  // Get day names for navigation
+  const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const currentDayName = dayNames[dayOfWeek - 1];
+  const prevDayName = dayOfWeek > 1 ? dayNames[dayOfWeek - 2] : 'Sunday';
+  const nextDayName = dayOfWeek < 7 ? dayNames[dayOfWeek] : 'Monday';
+  
+  // Left side: Weekly Overview link
+  pdf.text('← Weekly Overview', margin + 10, footerY + 15);
+  
+  // Center: Current page info
+  const centerText = `${currentDayName} (Page ${pageNumber} of 8)`;
+  pdf.text(centerText, pageWidth / 2, footerY + 15, { align: 'center' });
+  
+  // Right side: Previous/Next day navigation
+  const rightText = `← ${prevDayName} | ${nextDayName} →`;
+  pdf.text(rightText, pageWidth - margin - 10, footerY + 15, { align: 'right' });
 }
 
 function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date, events: CalendarEvent[]): void {
@@ -566,7 +613,7 @@ function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date, events: 
 
 // Remove these functions as they're now integrated into drawHeader
 
-function drawDailyGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]): void {
+export function drawDailyGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]): void {
   const { margin, pageWidth, timeColumnWidth, timeSlotHeight } = REMARKABLE_DAILY_CONFIG;
   const gridY = REMARKABLE_DAILY_CONFIG.gridStartY;
   const dayColumnWidth = REMARKABLE_DAILY_CONFIG.dayColumnWidth;
