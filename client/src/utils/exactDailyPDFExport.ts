@@ -93,78 +93,82 @@ function getEventTypeInfo(event: CalendarEvent) {
 function drawDashboardHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
   const { margin, pageWidth } = DAILY_CONFIG;
 
-  // Title - DAILY PLANNER at the top
+  // Title - WEEKLY PLANNER at the top
   pdf.setFontSize(16);  // Larger title for prominence
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(...DAILY_CONFIG.colors.black);
-  pdf.text('DAILY PLANNER', pageWidth / 2, margin + 15, { align: 'center' });
+  pdf.text('WEEKLY PLANNER', pageWidth / 2, margin + 15, { align: 'center' });
 
-  // Date - clean formatting under title
+  // Date range and week number
   pdf.setFontSize(12);  // Proper date font
   pdf.setFont('helvetica', 'normal');
-  const dateStr = selectedDate.toLocaleDateString('en-US', { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
+  
+  // Calculate week start (Monday) and end (Sunday) based on selected date
+  const weekStart = new Date(selectedDate);
+  const dayOfWeek = weekStart.getDay();
+  const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Sunday is 0, Monday is 1
+  weekStart.setDate(weekStart.getDate() - daysFromMonday);
+  
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+  
+  // Calculate week number (ISO week)
+  const startOfYear = new Date(selectedDate.getFullYear(), 0, 1);
+  const daysSinceStart = Math.floor((weekStart.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
+  const weekNumber = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
+  
+  const dateRange = `July ${weekStart.getDate()}-${weekEnd.getDate()} • Week ${weekNumber}`;
+  pdf.text(dateRange, pageWidth / 2, margin + 30, { align: 'center' });
+
+  // Statistics table matching the screenshot format
+  const dayEvents = events.filter(event => {
+    const eventDate = new Date(event.startTime);
+    return eventDate.toDateString() === selectedDate.toDateString();
   });
-  pdf.text(dateStr, pageWidth / 2, margin + 30, { align: 'center' });
-
-  // Navigation buttons - Back to week, <, >
-  pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'normal');
   
-  // Back to week button (left)
-  pdf.text('Back to week', margin + 30, margin + 50, { align: 'left' });
-  
-  // Navigation arrows (right side)
-  pdf.text('<', pageWidth - margin - 40, margin + 50, { align: 'center' });
-  pdf.text('>', pageWidth - margin - 20, margin + 50, { align: 'center' });
-
-  // Statistics - compact layout below navigation
-  const totalEvents = events.length;
-  const totalHours = events.reduce((sum, event) => {
-    return sum + (new Date(event.endTime).getTime() - new Date(event.startTime).getTime()) / (1000 * 60 * 60);
+  const totalAppointments = dayEvents.length;
+  const scheduledMinutes = dayEvents.reduce((total, event) => {
+    return total + (event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60);
   }, 0);
-  const availableHours = 24 - totalHours;
-  const freeTimePercentage = Math.round((availableHours / 24) * 100);
-
-  const statsY = margin + 65;  // Adjusted positioning for navigation elements
-  const statsSpacing = 100;    // Tighter spacing for narrow screen
+  const scheduledHours = Math.round(scheduledMinutes / 60 * 10) / 10;
+  const dailyAverage = scheduledHours; // For daily view, this is the same as scheduled time
+  const availableTime = Math.max(0, 12 - scheduledHours); // Assuming 12-hour workday
   
-  // Statistics with proper sizing for reMarkable Paper Pro
-  pdf.setFontSize(8);
+  // Statistics table
+  const tableY = margin + 45;
+  const tableHeight = 25;
+  const colWidth = (pageWidth - 4) / 4;
+  
+  // Table background
+  pdf.setFillColor(245, 245, 245); // Light gray background
+  pdf.rect(2, tableY, pageWidth - 4, tableHeight, 'F');
+  
+  // Table border
+  pdf.setDrawColor(0, 0, 0);
+  pdf.setLineWidth(0.5);
+  pdf.rect(2, tableY, pageWidth - 4, tableHeight, 'D');
+  
+  // Vertical dividers
+  for (let i = 1; i < 4; i++) {
+    pdf.line(2 + (colWidth * i), tableY, 2 + (colWidth * i), tableY + tableHeight);
+  }
+  
+  // Values (top row)
   pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(12);
+  pdf.setTextColor(...DAILY_CONFIG.colors.black);
+  pdf.text(`${totalAppointments}`, 2 + colWidth * 0.5, tableY + 8, { align: 'center' });
+  pdf.text(`${scheduledHours}h`, 2 + colWidth * 1.5, tableY + 8, { align: 'center' });
+  pdf.text(`${dailyAverage}h`, 2 + colWidth * 2.5, tableY + 8, { align: 'center' });
+  pdf.text(`${availableTime}h`, 2 + colWidth * 3.5, tableY + 8, { align: 'center' });
   
-  // Appointments
-  pdf.text(`${totalEvents}`, margin + 60, statsY, { align: 'center' });
-  pdf.setFontSize(6);
+  // Labels (bottom row)
   pdf.setFont('helvetica', 'normal');
-  pdf.text('Appointments', margin + 60, statsY + 8, { align: 'center' });
-  
-  // Scheduled
   pdf.setFontSize(8);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text(`${totalHours.toFixed(1)}h`, margin + 60 + statsSpacing, statsY, { align: 'center' });
-  pdf.setFontSize(6);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text('Scheduled', margin + 60 + statsSpacing, statsY + 8, { align: 'center' });
-  
-  // Available
-  pdf.setFontSize(8);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text(`${availableHours.toFixed(1)}h`, margin + 60 + statsSpacing * 2, statsY, { align: 'center' });
-  pdf.setFontSize(6);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text('Available', margin + 60 + statsSpacing * 2, statsY + 8, { align: 'center' });
-  
-  // Free Time
-  pdf.setFontSize(8);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text(`${freeTimePercentage}%`, margin + 60 + statsSpacing * 3, statsY, { align: 'center' });
-  pdf.setFontSize(6);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text('Free Time', margin + 60 + statsSpacing * 3, statsY + 8, { align: 'center' });
+  pdf.text('Total Appointments', 2 + colWidth * 0.5, tableY + 18, { align: 'center' });
+  pdf.text('Scheduled Time', 2 + colWidth * 1.5, tableY + 18, { align: 'center' });
+  pdf.text('Daily Average', 2 + colWidth * 2.5, tableY + 18, { align: 'center' });
+  pdf.text('Available Time', 2 + colWidth * 3.5, tableY + 18, { align: 'center' });
 }
 
 function drawDashboardLegend(pdf: jsPDF) {
