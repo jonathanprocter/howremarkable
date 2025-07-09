@@ -33,7 +33,7 @@ const DAILY_CONFIG = {
     mediumGray: [150, 150, 150],
     veryLightGray: [248, 248, 248],
     white: [255, 255, 255],
-    bottomHourColor: [255, 255, 240], // #FFFFF0 - light cream for bottom-of-hour rows
+    bottomHourColor: [250, 249, 246], // #FAF9F6 - light cream for bottom-of-hour rows
     topHourColor: [249, 246, 238], // #F9F6EE - light beige for top-of-hour rows
     simplePracticeBlue: [100, 149, 237],
     googleGreen: [52, 168, 83],
@@ -327,8 +327,8 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     const eventType = getEventTypeInfo(event);
     
     // Draw event background - always white like dashboard, STRICTLY contained within grid boundaries
-    const eventBoxX = margin + timeColumnWidth + 6; // Start further from time column
-    const eventBoxWidth = appointmentColumnWidth - 12; // Much smaller width to ensure strict containment
+    const eventBoxX = margin + timeColumnWidth + 8; // Start even further from time column
+    const eventBoxWidth = appointmentColumnWidth - 16; // Much smaller width to ensure strict containment
     pdf.setFillColor(...DAILY_CONFIG.colors.white);
     pdf.rect(eventBoxX, topPosition, eventBoxWidth, exactHeight, 'F');
     
@@ -356,9 +356,9 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     }
     
     // Draw event content in 3-column layout optimized for reMarkable Paper Pro
-    const eventX = margin + timeColumnWidth + 9; // Align with reduced event box
+    const eventX = margin + timeColumnWidth + 11; // Align with further reduced event box
     const eventY = topPosition + 2;  // Position at the very top of the appointment square
-    const columnWidth = (appointmentColumnWidth - 30) / 3;  // Reduced column width to match contained appointment box
+    const columnWidth = (appointmentColumnWidth - 35) / 3;  // Further reduced column width to match contained appointment box
     
     // Left column: Event title, calendar source, and time
     pdf.setFontSize(DAILY_CONFIG.fonts.eventTitle.size);
