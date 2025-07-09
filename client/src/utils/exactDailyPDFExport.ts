@@ -93,14 +93,14 @@ function getEventTypeInfo(event: CalendarEvent) {
 function drawDashboardHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
   const { margin, pageWidth } = DAILY_CONFIG;
 
-  // Title - WEEKLY PLANNER at the top
-  pdf.setFontSize(16);  // Larger title for prominence
+  // Title - WEEKLY PLANNER at the top - proportional to grid
+  pdf.setFontSize(10);  // Smaller title to match grid proportions
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(...DAILY_CONFIG.colors.black);
   pdf.text('WEEKLY PLANNER', pageWidth / 2, margin + 15, { align: 'center' });
 
-  // Date range and week number
-  pdf.setFontSize(12);  // Proper date font
+  // Date range and week number - proportional to grid
+  pdf.setFontSize(8);  // Smaller date font to match grid proportions
   pdf.setFont('helvetica', 'normal');
   
   // Calculate week start (Monday) and end (Sunday) based on selected date
@@ -134,9 +134,9 @@ function drawDashboardHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEve
   const dailyAverage = scheduledHours; // For daily view, this is the same as scheduled time
   const availableTime = Math.max(0, 12 - scheduledHours); // Assuming 12-hour workday
   
-  // Statistics table positioned below the legend
-  const tableY = margin + 67;
-  const tableHeight = 25;
+  // Statistics table positioned below the legend - proportional to grid
+  const tableY = margin + 65;
+  const tableHeight = 20;  // Reduced height to match grid proportions
   const colWidth = (pageWidth - 4) / 4;
   
   // Table background
@@ -153,22 +153,22 @@ function drawDashboardHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEve
     pdf.line(2 + (colWidth * i), tableY, 2 + (colWidth * i), tableY + tableHeight);
   }
   
-  // Values (top row)
+  // Values (top row) - adjusted to match grid proportions
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(12);
+  pdf.setFontSize(8);  // Smaller font to match grid proportions
   pdf.setTextColor(...DAILY_CONFIG.colors.black);
-  pdf.text(`${totalAppointments}`, 2 + colWidth * 0.5, tableY + 8, { align: 'center' });
-  pdf.text(`${scheduledHours}h`, 2 + colWidth * 1.5, tableY + 8, { align: 'center' });
-  pdf.text(`${dailyAverage}h`, 2 + colWidth * 2.5, tableY + 8, { align: 'center' });
-  pdf.text(`${availableTime}h`, 2 + colWidth * 3.5, tableY + 8, { align: 'center' });
+  pdf.text(`${totalAppointments}`, 2 + colWidth * 0.5, tableY + 6, { align: 'center' });
+  pdf.text(`${scheduledHours}h`, 2 + colWidth * 1.5, tableY + 6, { align: 'center' });
+  pdf.text(`${dailyAverage}h`, 2 + colWidth * 2.5, tableY + 6, { align: 'center' });
+  pdf.text(`${availableTime}h`, 2 + colWidth * 3.5, tableY + 6, { align: 'center' });
   
-  // Labels (bottom row)
+  // Labels (bottom row) - adjusted to match grid proportions
   pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(8);
-  pdf.text('Total Appointments', 2 + colWidth * 0.5, tableY + 18, { align: 'center' });
-  pdf.text('Scheduled Time', 2 + colWidth * 1.5, tableY + 18, { align: 'center' });
-  pdf.text('Daily Average', 2 + colWidth * 2.5, tableY + 18, { align: 'center' });
-  pdf.text('Available Time', 2 + colWidth * 3.5, tableY + 18, { align: 'center' });
+  pdf.setFontSize(6);  // Smaller font to match grid proportions
+  pdf.text('Total Appointments', 2 + colWidth * 0.5, tableY + 15, { align: 'center' });
+  pdf.text('Scheduled Time', 2 + colWidth * 1.5, tableY + 15, { align: 'center' });
+  pdf.text('Daily Average', 2 + colWidth * 2.5, tableY + 15, { align: 'center' });
+  pdf.text('Available Time', 2 + colWidth * 3.5, tableY + 15, { align: 'center' });
 }
 
 function drawDashboardLegend(pdf: jsPDF) {
