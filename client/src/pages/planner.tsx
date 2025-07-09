@@ -72,65 +72,104 @@ export default function Planner() {
   // Load events from database on component mount
   useEffect(() => {
     const loadDatabaseEvents = async () => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       try {
-        const response = await fetch('/api/events/1'); // TODO: Use actual user ID
-        if (response.ok) {
-          const dbEvents = await response.json();
-          const convertedEvents: CalendarEvent[] = dbEvents.map((event: any) => {
-            // Database times are already in correct timezone, just parse them directly
-            const startTime = new Date(event.startTime);
-            const endTime = new Date(event.endTime);
-
-            return {
-              id: event.id,
-              title: event.title,
-              description: event.description || '',
-              startTime,
-              endTime,
-              source: event.source || 'manual',
-              sourceId: event.sourceId,
-              color: event.color || '#999',
-              notes: event.notes || '',
-              actionItems: event.actionItems || '',
-              calendarId: event.calendarId
-            };
-          });
-
-          updateEvents(convertedEvents);
-
-          // Auto-select calendars from database events
-          const googleEvents = convertedEvents.filter(event => event.source === 'google' && event.calendarId);
-          const calendarIds = Array.from(new Set(googleEvents.map(event => event.calendarId))).filter(id => id) as string[];
-
-          if (calendarIds.length > 0) {
-            setSelectedCalendars(new Set(calendarIds));
-
-            // Create calendar objects for the legend
-            const calendarsForLegend = calendarIds.map(calendarId => {
-              if (calendarId === 'en.usa#holiday@group.v.calendar.google.com') {
-                return { id: calendarId, name: 'Holidays in United States', color: '#4285F4' };
-              } else if (calendarId === 'jonathan.procter@gmail.com') {
-                return { id: calendarId, name: 'Google', color: '#34A853' };
-              } else if (calendarId === '79dfcb90ce59b1b0345b24f5c8d342bd308eac9521d063a684a8bbd377f2b822@group.calendar.google.com') {
-                return { id: calendarId, name: 'Simple Practice', color: '#EA4335' };
-              } else if (calendarId === 'c2ffec13aa77af8e71cac14a327928e34da57bddaadf18c4e0f669827e1454ff@group.calendar.google.com') {
-                return { id: calendarId, name: 'TrevorAI', color: '#FBBC04' };
-              } else {
-                return { id: calendarId, name: 'Unknown Calendar', color: '#9AA0A6' };
-              }
-            });
-            setGoogleCalendars(calendarsForLegend);
-          }
-        } else {
-          console.warn('Failed to load events from database - response not ok:', response.status);
-        }
-      } catch (error) {
-        console.error('Failed to load events from database:', error);
-        toast({
-          title: "Error Loading Events",
-          description: "Could not load calendar events. Please refresh the page.",
-          variant: "destructive"
+        const response = await fetch('/api/events/1', { // TODO: Use actual user ID
+          signal: controller.signal,
+          headers: {
+            'Content-Type': 'application/json',
+          },
         });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const dbEvents = await response.json();
+        
+        if (!Array.isArray(dbEvents)) {
+          throw new Error('Invalid response format: expected array of events');
+        }
+
+        const convertedEvents: CalendarEvent[] = dbEvents.map((event: any) => {
+          // Validate required fields
+          if (!event.id || !event.title || !event.startTime || !event.endTime) {
+            throw new Error(`Invalid event data: missing required fields for event ${event.id}`);
+          }
+
+          // Database times are already in correct timezone, just parse them directly
+          const startTime = new Date(event.startTime);
+          const endTime = new Date(event.endTime);
+
+          // Validate dates
+          if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+            throw new Error(`Invalid date format for event ${event.id}`);
+          }
+
+          return {
+            id: event.id,
+            title: event.title,
+            description: event.description || '',
+            startTime,
+            endTime,
+            source: event.source || 'manual',
+            sourceId: event.sourceId,
+            color: event.color || '#999',
+            notes: event.notes || '',
+            actionItems: event.actionItems || '',
+            calendarId: event.calendarId
+          };
+        });
+
+        updateEvents(convertedEvents);
+
+        // Auto-select calendars from database events
+        const googleEvents = convertedEvents.filter(event => event.source === 'google' && event.calendarId);
+        const calendarIds = Array.from(new Set(googleEvents.map(event => event.calendarId))).filter(id => id) as string[];
+
+        if (calendarIds.length > 0) {
+          setSelectedCalendars(new Set(calendarIds));
+
+          // Create calendar objects for the legend
+          const calendarsForLegend = calendarIds.map(calendarId => {
+            if (calendarId === 'en.usa#holiday@group.v.calendar.google.com') {
+              return { id: calendarId, name: 'Holidays in United States', color: '#4285F4' };
+            } else if (calendarId === 'jonathan.procter@gmail.com') {
+              return { id: calendarId, name: 'Google', color: '#34A853' };
+            } else if (calendarId === '79dfcb90ce59b1b0345b24f5c8d342bd308eac9521d063a684a8bbd377f2b822@group.calendar.google.com') {
+              return { id: calendarId, name: 'Simple Practice', color: '#EA4335' };
+            } else if (calendarId === 'c2ffec13aa77af8e71cac14a327928e34da57bddaadf18c4e0f669827e1454ff@group.calendar.google.com') {
+              return { id: calendarId, name: 'TrevorAI', color: '#FBBC04' };
+            } else {
+              return { id: calendarId, name: 'Unknown Calendar', color: '#9AA0A6' };
+            }
+          });
+          setGoogleCalendars(calendarsForLegend);
+        }
+
+        console.log(`Successfully loaded ${convertedEvents.length} events from database`);
+      } catch (error) {
+        clearTimeout(timeoutId);
+        
+        if (error.name === 'AbortError') {
+          console.error('Database event loading timed out');
+          toast({
+            title: "Loading Timeout",
+            description: "Event loading took too long. Please check your connection and try again.",
+            variant: "destructive"
+          });
+        } else {
+          console.error('Failed to load events from database:', error);
+          toast({
+            title: "Error Loading Events",
+            description: error instanceof Error ? error.message : "Could not load calendar events. Please refresh the page.",
+            variant: "destructive"
+          });
+        }
       }
     };
 

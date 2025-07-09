@@ -583,7 +583,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/events/:userId", async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
-      if (isNaN(userId)) {
+      
+      // Validate user ID
+      if (isNaN(userId) || userId <= 0) {
         return res.status(400).json({ error: "Invalid user ID" });
       }
       
@@ -614,31 +616,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const events = await storage.getEvents(userId);
       
-      // Map database events to the expected format
-      const eventsFormatted = events.map(e => ({
-        id: e.sourceId || e.id.toString(),
-        title: e.title,
-        description: e.description,
-        startTime: e.startTime,
-        endTime: e.endTime,
-        source: e.source,
-        sourceId: e.sourceId,
-        color: e.color,
-        notes: e.notes,
-        actionItems: e.actionItems,
-        calendarId: e.source === 'google' ? e.calendarId : undefined
-      }));
+      // Validate events response
+      if (!Array.isArray(events)) {
+        throw new Error('Invalid events response from storage');
+      }
+      
+      // Map database events to the expected format with validation
+      const eventsFormatted = events.map(e => {
+        if (!e || typeof e !== 'object') {
+          throw new Error('Invalid event object in storage response');
+        }
+        
+        return {
+          id: e.sourceId || e.id.toString(),
+          title: e.title || 'Untitled Event',
+          description: e.description || '',
+          startTime: e.startTime,
+          endTime: e.endTime,
+          source: e.source || 'manual',
+          sourceId: e.sourceId || null,
+          color: e.color || '#999',
+          notes: e.notes || '',
+          actionItems: e.actionItems || '',
+          calendarId: e.source === 'google' ? e.calendarId : undefined
+        };
+      });
       
       res.json(eventsFormatted);
     } catch (error) {
       console.error('Database error in /api/events/:userId:', error);
-      res.status(500).json({ error: "Failed to fetch events", details: error instanceof Error ? error.message : 'Unknown error' });
+      if (!res.headersSent) {
+        res.status(500).json({ 
+          error: "Failed to fetch events", 
+          details: error instanceof Error ? error.message : 'Unknown error' 
+        });
+      }
     }
   });
 
   app.post("/api/events", async (req, res) => {
     try {
       const eventData = req.body;
+      
+      // Validate required fields
+      if (!eventData || typeof eventData !== 'object') {
+        return res.status(400).json({ error: "Invalid request body" });
+      }
+      
+      if (!eventData.title || !eventData.startTime || !eventData.endTime) {
+        return res.status(400).json({ error: "Missing required fields: title, startTime, endTime" });
+      }
       
       // Convert string dates to Date objects if needed
       if (typeof eventData.startTime === 'string') {
@@ -648,13 +675,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         eventData.endTime = new Date(eventData.endTime);
       }
       
+      // Validate dates
+      if (isNaN(eventData.startTime.getTime()) || isNaN(eventData.endTime.getTime())) {
+        return res.status(400).json({ error: "Invalid date format" });
+      }
+      
+      if (eventData.startTime >= eventData.endTime) {
+        return res.status(400).json({ error: "Start time must be before end time" });
+      }
+      
       const validatedData = insertEventSchema.parse(eventData);
       const event = await storage.createEvent(validatedData);
+      
+      if (!event) {
+        throw new Error('Failed to create event in database');
+      }
+      
       res.json(event);
     } catch (error) {
       console.error('Create event error:', error);
       if (!res.headersSent) {
-        res.status(400).json({ error: "Invalid event data", details: error instanceof Error ? error.message : 'Unknown error' });
+        res.status(400).json({ 
+          error: "Invalid event data", 
+          details: error instanceof Error ? error.message : 'Unknown error' 
+        });
       }
     }
   });
@@ -663,12 +707,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const eventId = parseInt(req.params.id);
       const updates = req.body;
+      
+      // Validate event ID
+      if (isNaN(eventId) || eventId <= 0) {
+        return res.status(400).json({ error: "Invalid event ID" });
+      }
+      
+      // Validate updates object
+      if (!updates || typeof updates !== 'object') {
+        return res.status(400).json({ error: "Invalid update data" });
+      }
+      
+      // Validate dates if provided
+      if (updates.startTime) {
+        if (typeof updates.startTime === 'string') {
+          updates.startTime = new Date(updates.startTime);
+        }
+        if (isNaN(updates.startTime.getTime())) {
+          return res.status(400).json({ error: "Invalid startTime format" });
+        }
+      }
+      
+      if (updates.endTime) {
+        if (typeof updates.endTime === 'string') {
+          updates.endTime = new Date(updates.endTime);
+        }
+        if (isNaN(updates.endTime.getTime())) {
+          return res.status(400).json({ error: "Invalid endTime format" });
+        }
+      }
+      
+      // Validate date relationship if both are provided
+      if (updates.startTime && updates.endTime && updates.startTime >= updates.endTime) {
+        return res.status(400).json({ error: "Start time must be before end time" });
+      }
+      
       const event = await storage.updateEvent(eventId, updates);
+      
+      if (!event) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+      
       res.json(event);
     } catch (error) {
       console.error('Update event error:', error);
       if (!res.headersSent) {
-        res.status(400).json({ error: "Failed to update event", details: error instanceof Error ? error.message : 'Unknown error' });
+        res.status(400).json({ 
+          error: "Failed to update event", 
+          details: error instanceof Error ? error.message : 'Unknown error' 
+        });
       }
     }
   });

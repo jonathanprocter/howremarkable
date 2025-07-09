@@ -20,13 +20,15 @@ app.use(session({
   store: new PgSession({
     conString: process.env.DATABASE_URL!,
     tableName: 'session',
-    createTableIfMissing: true
+    createTableIfMissing: true,
+    pruneSessionInterval: 60 * 15, // Prune expired sessions every 15 minutes
+    ttl: 24 * 60 * 60 // 24 hours session TTL
   }),
   secret: process.env.SESSION_SECRET || 'remarkable-planner-secret-key-2025',
   resave: false, // Don't save session if unmodified
   saveUninitialized: false, // Don't save empty sessions
-  rolling: true, // Reset expiration on each request
-  name: 'session', // Use custom session name
+  rolling: false, // Don't reset expiration on each request - this was causing new session IDs
+  name: 'remarkablePlannerSession', // Use unique session name
   cookie: {
     secure: false, // Must be false for HTTP in development
     maxAge: 24 * 60 * 60 * 1000, // 24 hours

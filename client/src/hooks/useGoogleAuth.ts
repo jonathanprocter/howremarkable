@@ -20,12 +20,30 @@ export const useGoogleAuth = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const checkAuthStatus = async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+
     try {
-      const response = await fetch('/api/auth/status');
+      const response = await fetch('/api/auth/status', {
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
+
       const data = await response.json();
+      
+      // Validate response structure
+      if (typeof data.authenticated !== 'boolean') {
+        throw new Error('Invalid auth response format');
+      }
+
       setAuthStatus(data);
       
       // Save authentication timestamp for session persistence
@@ -33,7 +51,14 @@ export const useGoogleAuth = () => {
         localStorage.setItem('google_auth_recent', Date.now().toString());
       }
     } catch (error) {
-      console.error('Auth status check failed:', error);
+      clearTimeout(timeoutId);
+      
+      if (error.name === 'AbortError') {
+        console.error('Auth status check timed out');
+      } else {
+        console.error('Auth status check failed:', error);
+      }
+      
       setAuthStatus({ authenticated: false, user: null });
     } finally {
       setIsLoading(false);
@@ -76,22 +101,46 @@ export const useGoogleAuth = () => {
   };
 
   const fetchCalendarEvents = async (timeMin?: string, timeMax?: string) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout for calendar API
+
     try {
       const params = new URLSearchParams();
       if (timeMin) params.append('timeMin', timeMin);
       if (timeMax) params.append('timeMax', timeMax);
 
-      const response = await fetch(`/api/calendar/events?${params}`);
+      const response = await fetch(`/api/calendar/events?${params}`, {
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      clearTimeout(timeoutId);
       
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Failed to fetch calendar events: ${response.status} ${errorText}`);
       }
 
-      return response.json();
+      const data = await response.json();
+      
+      // Validate response structure
+      if (!data.events || !Array.isArray(data.events)) {
+        throw new Error('Invalid calendar response format');
+      }
+
+      return data;
     } catch (error) {
-      console.error('Calendar fetch failed:', error);
-      throw error;
+      clearTimeout(timeoutId);
+      
+      if (error.name === 'AbortError') {
+        console.error('Calendar fetch timed out');
+        throw new Error('Calendar fetch timed out. Please try again.');
+      } else {
+        console.error('Calendar fetch failed:', error);
+        throw error;
+      }
     }
   };
 
