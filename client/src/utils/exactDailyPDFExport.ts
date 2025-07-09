@@ -11,7 +11,7 @@ const DAILY_CONFIG = {
   timeColumnWidth: 50,  // Compact time column for narrow screen
   appointmentColumnWidth: 449,  // Remaining width for appointments
   timeSlotHeight: 16,  // Compact slots to fit full timeline in portrait
-  headerHeight: 98,     // Optimized header space for navigation (moved up ~1 more row)
+  headerHeight: 108,     // Increased header space for legend + statistics table
 
   // Typography optimized for reMarkable Paper Pro e-ink display
   fonts: {
@@ -134,8 +134,8 @@ function drawDashboardHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEve
   const dailyAverage = scheduledHours; // For daily view, this is the same as scheduled time
   const availableTime = Math.max(0, 12 - scheduledHours); // Assuming 12-hour workday
   
-  // Statistics table
-  const tableY = margin + 45;
+  // Statistics table positioned below the legend
+  const tableY = margin + 50;
   const tableHeight = 25;
   const colWidth = (pageWidth - 4) / 4;
   
@@ -173,32 +173,35 @@ function drawDashboardHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEve
 
 function drawDashboardLegend(pdf: jsPDF) {
   const { margin, pageWidth } = DAILY_CONFIG;
-  const legendY = margin + 35;  // Compact positioning for reMarkable Paper Pro
+  const legendY = margin + 38;  // Positioned between date and statistics table
   
-  pdf.setFontSize(9);  // Proper legend font size
+  pdf.setFontSize(8);  // Smaller font for compact layout
   pdf.setFont('helvetica', 'normal');
   
-  // SimplePractice - compact positioning for reMarkable Paper Pro
+  // Legend items positioned horizontally across the page
+  const legendSpacing = (pageWidth - 40) / 3;  // Divide space equally for three items
+  
+  // SimplePractice - left position
   pdf.setFillColor(...DAILY_CONFIG.colors.white);
   pdf.setDrawColor(...DAILY_CONFIG.colors.simplePracticeBlue);
-  pdf.rect(margin + 20, legendY, 12, 7, 'FD');
+  pdf.rect(margin + 20, legendY, 10, 6, 'FD');
   pdf.setFillColor(...DAILY_CONFIG.colors.simplePracticeBlue);
-  pdf.rect(margin + 20, legendY, 3, 7, 'F');
-  pdf.text('SimplePractice', margin + 38, legendY + 5);
+  pdf.rect(margin + 20, legendY, 2, 6, 'F');
+  pdf.text('SimplePractice', margin + 35, legendY + 4);
   
-  // Google Calendar - compact positioning
+  // Google Calendar - center position
   pdf.setFillColor(...DAILY_CONFIG.colors.white);
   pdf.setDrawColor(...DAILY_CONFIG.colors.googleGreen);
-  pdf.setLineDash([2, 2]);
-  pdf.rect(margin + 140, legendY, 12, 7, 'FD');
+  pdf.setLineDash([1, 1]);
+  pdf.rect(margin + 20 + legendSpacing, legendY, 10, 6, 'FD');
   pdf.setLineDash([]);
-  pdf.text('Google Calendar', margin + 158, legendY + 5);
+  pdf.text('Google Calendar', margin + 35 + legendSpacing, legendY + 4);
   
-  // Holidays - compact positioning for reMarkable Paper Pro
+  // Holidays - right position
   pdf.setFillColor(...DAILY_CONFIG.colors.holidayYellow);
   pdf.setDrawColor(...DAILY_CONFIG.colors.holidayOrange);
-  pdf.rect(margin + 280, legendY, 12, 7, 'FD');
-  pdf.text('Holidays', margin + 298, legendY + 5);
+  pdf.rect(margin + 20 + legendSpacing * 2, legendY, 10, 6, 'FD');
+  pdf.text('Holidays', margin + 35 + legendSpacing * 2, legendY + 4);
 }
 
 function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
