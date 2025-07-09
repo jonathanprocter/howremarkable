@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import { CalendarEvent } from '../types/calendar';
 import { cleanEventTitle, cleanTextForPDF } from './titleCleaner';
+import { generateTimeSlots } from './timeSlots';
 
 // A3 Landscape configuration optimized for professional weekly calendar layout
 const GRID_CONFIG = {
@@ -17,7 +18,9 @@ const GRID_CONFIG = {
   // Grid structure - optimized for readability and full timeline
   timeColumnWidth: 95, // Proper time column width
   slotHeight: 20, // Larger slots for better readability
-  totalSlots: 36, // 6:00 to 23:30
+  get totalSlots() {
+    return generateTimeSlots().length; // Dynamic slot count based on time range
+  },
 
   get contentWidth() {
     return this.pageWidth - (2 * this.margin);
@@ -191,19 +194,11 @@ export const exportExactGridPDF = async (
       }
     });
 
-    // TIME SLOTS AND GRID - exactly 36 slots from 6:00 to 23:30
-    const timeSlots = [];
-    for (let hour = 6; hour <= 23; hour++) {
-      for (let minute = 0; minute < 60; minute += 30) {
-        timeSlots.push({
-          time: `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`,
-          hour,
-          minute,
-          isHour: minute === 0
-        });
-        if (hour === 23 && minute === 30) break;
-      }
-    }
+    // TIME SLOTS AND GRID - use the proper generateTimeSlots function
+    const timeSlots = generateTimeSlots().map(slot => ({
+      ...slot,
+      isHour: slot.minute === 0
+    }));
 
     console.log(`Generated ${timeSlots.length} time slots from ${timeSlots[0]?.time} to ${timeSlots[timeSlots.length - 1]?.time}`);
 

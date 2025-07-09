@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import { CalendarEvent } from '../types/calendar';
 import { getWeekNumber } from './dateUtils';
+import { generateTimeSlots } from './timeSlots';
 
 // Helper function to format time
 function formatTime(date: Date): string {
@@ -622,19 +623,11 @@ export function drawDailyGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEv
   const gridY = REMARKABLE_DAILY_CONFIG.gridStartY;
   const dayColumnWidth = REMARKABLE_DAILY_CONFIG.dayColumnWidth;
   
-  // Time slots (6:00 to 23:30 in 30-minute increments)
-  const timeSlots = [];
-  for (let hour = 6; hour <= 23; hour++) {
-    for (let minute = 0; minute < 60; minute += 30) {
-      timeSlots.push({
-        time: `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`,
-        hour,
-        minute,
-        isHour: minute === 0
-      });
-      if (hour === 23 && minute === 30) break;
-    }
-  }
+  // Use the same generateTimeSlots function as the dashboard
+  const timeSlots = generateTimeSlots().map(slot => ({
+    ...slot,
+    isHour: slot.minute === 0
+  }));
   
   const totalGridHeight = timeSlots.length * timeSlotHeight;
   const headerHeight = 25;
