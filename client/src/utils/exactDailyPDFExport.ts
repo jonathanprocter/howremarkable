@@ -295,11 +295,11 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     
     // Calculate exact slot position from 6:00 AM starting point
     const slotIndex = ((startHour - 6) * 2) + (startMinute >= 30 ? 1 : 0);
-    const topPosition = gridStartY + (slotIndex * timeSlotHeight) + 1; // Add 1px padding from top line
+    const topPosition = gridStartY + (slotIndex * timeSlotHeight) + 2; // Add 2px padding from top line
     
     // Calculate height based on EXACT duration to stay within time slot boundaries
     const durationSlots = Math.ceil(durationMinutes / 30);
-    const exactHeight = durationSlots * timeSlotHeight - 3; // Leave space to stay within grid lines
+    const exactHeight = durationSlots * timeSlotHeight - 4; // Leave 4px space to stay within grid lines
     
     console.log(`📅 Event: ${event.title}`);
     console.log(`  ⏰ Start: ${formatMilitaryTime(eventStart)} (${startHour}:${startMinute.toString().padStart(2, '0')})`);
@@ -308,56 +308,42 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     console.log(`  📐 Top position: ${topPosition}px (gridStart: ${gridStartY} + slot: ${slotIndex} * height: ${timeSlotHeight})`);
     console.log(`  📏 Height: ${exactHeight}px`);
     
-    // Minimum height for text visibility
-    const minHeight = 45;
-    
-    // Calculate additional height needed for wrapped text with better spacing
-    let maxContentLines = 3; // base: title, source, time
-    if (event.notes && event.notes.trim()) {
-      const noteLines = event.notes.split('\n').filter(n => n.trim()).length;
-      maxContentLines = Math.max(maxContentLines, noteLines + 2); // +2 for header and spacing
-    }
-    if (event.actionItems && event.actionItems.trim()) {
-      const actionLines = event.actionItems.split('\n').filter(a => a.trim()).length;
-      maxContentLines = Math.max(maxContentLines, actionLines + 2); // +2 for header and spacing
-    }
-    
-    const contentHeight = maxContentLines * 10 + 30;
-    const height = Math.max(exactHeight, minHeight, contentHeight);
+    // Use exactHeight to ensure appointment boxes stay within grid boundaries
+    const containedHeight = exactHeight;
     
     // Event styling based on type
     const eventType = getEventTypeInfo(event);
     
     // Draw event background - always white like dashboard, contained within grid boundaries
     pdf.setFillColor(...DAILY_CONFIG.colors.white);
-    pdf.rect(margin + timeColumnWidth + 1, topPosition, appointmentColumnWidth - 2, exactHeight, 'F');
+    pdf.rect(margin + timeColumnWidth + 2, topPosition, appointmentColumnWidth - 4, containedHeight, 'F');
     
     // Draw event borders based on type - match dashboard styling EXACTLY, contained within grid boundaries
     if (eventType.isSimplePractice) {
       // SimplePractice: white background with thin cornflower blue border and left flag
       pdf.setDrawColor(...DAILY_CONFIG.colors.simplePracticeBlue);
       pdf.setLineWidth(0.5);
-      pdf.rect(margin + timeColumnWidth + 1, topPosition, appointmentColumnWidth - 2, exactHeight, 'D');
+      pdf.rect(margin + timeColumnWidth + 2, topPosition, appointmentColumnWidth - 4, containedHeight, 'D');
       // Thin left flag (2px wide instead of 4px)
       pdf.setFillColor(...DAILY_CONFIG.colors.simplePracticeBlue);
-      pdf.rect(margin + timeColumnWidth + 1, topPosition, 2, exactHeight, 'F');
+      pdf.rect(margin + timeColumnWidth + 2, topPosition, 2, containedHeight, 'F');
     } else if (eventType.isGoogle) {
       // Google Calendar: white background with dashed green border all around
       pdf.setDrawColor(...DAILY_CONFIG.colors.googleGreen);
       pdf.setLineWidth(0.5);
       pdf.setLineDash([3, 3]);
-      pdf.rect(margin + timeColumnWidth + 1, topPosition, appointmentColumnWidth - 2, exactHeight, 'D');
+      pdf.rect(margin + timeColumnWidth + 2, topPosition, appointmentColumnWidth - 4, containedHeight, 'D');
       pdf.setLineDash([]);
     } else {
       // Holiday: orange border around appointment
       pdf.setDrawColor(...DAILY_CONFIG.colors.holidayOrange);
       pdf.setLineWidth(0.5);
-      pdf.rect(margin + timeColumnWidth + 1, topPosition, appointmentColumnWidth - 2, exactHeight, 'D');
+      pdf.rect(margin + timeColumnWidth + 2, topPosition, appointmentColumnWidth - 4, containedHeight, 'D');
     }
     
     // Draw event content in 3-column layout optimized for reMarkable Paper Pro
-    const eventX = margin + timeColumnWidth + 4;
-    const eventY = topPosition + 3;  // Position at the very top of the appointment square
+    const eventX = margin + timeColumnWidth + 5;
+    const eventY = topPosition + 2;  // Position at the very top of the appointment square
     const columnWidth = (appointmentColumnWidth - 25) / 3;  // Wider columns for better text fitting
     
     // Left column: Event title, calendar source, and time
