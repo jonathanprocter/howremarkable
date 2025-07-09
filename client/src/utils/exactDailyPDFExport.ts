@@ -63,20 +63,15 @@ function getEventTypeInfo(event: CalendarEvent) {
   const isHoliday = event.title.toLowerCase().includes('holiday') ||
                    event.calendarId === 'en.usa#holiday@group.v.calendar.google.com';
 
-  // Check for "Dan re: Supervision" - this is the only Google Calendar appointment
-  const isDanSupervision = event.title === 'Dan re: Supervision';
+  // Check for SimplePractice events - these have "Appointment" in the title
+  const isSimplePractice = !isHoliday && event.title.includes('Appointment');
 
-  // All other appointments (except holidays and Dan's supervision) are SimplePractice
-  // This includes appointments like "Nancy Grossman Appointment", "Sherrifa Hoosein Appointment", etc.
-  const isSimplePractice = !isHoliday && !isDanSupervision && 
-                           (event.title.includes('Appointment') || 
-                            event.title.includes('Sherrifa Hoosein'));
-
-  // Only Dan's supervision is Google Calendar
-  const isGoogle = isDanSupervision;
+  // Google Calendar events are those with source 'google' that are not holidays or SimplePractice
+  const isGoogle = event.source === 'google' && !isHoliday && !isSimplePractice;
 
   console.log(`Event type detection for "${event.title}":`, {
     source: event.source,
+    calendarId: event.calendarId,
     isSimplePractice,
     isGoogle,
     isHoliday
