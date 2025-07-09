@@ -2,15 +2,15 @@
 import jsPDF from 'jspdf';
 import { CalendarEvent } from '../types/calendar';
 
-// Configuration that matches the dashboard daily view exactly (8.5x11 inches)
+// Configuration for larger daily view portrait (8.5x11 inches - bigger to match portrait view)
 const DAILY_CONFIG = {
   pageWidth: 612,   // 8.5 inches = 612 points
   pageHeight: 792,  // 11 inches = 792 points
-  margin: 40,       // Standard margin for readability
-  timeColumnWidth: 80,  // Time column width matching dashboard
-  appointmentColumnWidth: 492,  // Remaining width for appointments (612 - 80 - 40 = 492)
-  timeSlotHeight: 20,  // 60px slots scaled to PDF points
-  headerHeight: 120,     // Header space for title, date, and navigation
+  margin: 30,       // Reduced margin for more space
+  timeColumnWidth: 90,  // Slightly wider time column for better readability
+  appointmentColumnWidth: 492,  // Remaining width for appointments (612 - 90 - 30 = 492)
+  timeSlotHeight: 22,  // Bigger slots to match portrait view better
+  headerHeight: 100,     // Reduced header to make room for bigger content
 
   // Typography - proportional to time grid size
   fonts: {

@@ -3,21 +3,21 @@ import { CalendarEvent } from '../types/calendar';
 import { cleanEventTitle, cleanTextForPDF } from './titleCleaner';
 import { generateTimeSlots } from './timeSlots';
 
-// A3 Landscape configuration optimized for professional weekly calendar layout
+// Smaller landscape configuration for weekly calendar (8.5x11 landscape, shrunk back down)
 const GRID_CONFIG = {
-  // Page setup - A3 landscape dimensions (1190x842 points)
-  pageWidth: 1190,
-  pageHeight: 900,
+  // Page setup - 8.5x11 landscape dimensions (smaller format)
+  pageWidth: 792,   // 11 inches = 792 points
+  pageHeight: 612,  // 8.5 inches = 612 points
 
-  // Optimized margins for professional layout
-  margin: 20,
-  headerHeight: 60,
+  // Compact margins for smaller format
+  margin: 15,
+  headerHeight: 45,
   statsHeight: 0, // Remove stats section to maximize grid space
-  legendHeight: 35,
+  legendHeight: 25,
 
-  // Grid structure - optimized for readability and full timeline
-  timeColumnWidth: 95, // Proper time column width
-  slotHeight: 20, // Larger slots for better readability
+  // Grid structure - smaller boxes and times to fit
+  timeColumnWidth: 60, // Narrower time column for compact layout
+  slotHeight: 12, // Smaller slots to fit in shrunk format
   get totalSlots() {
     return generateTimeSlots().length; // Dynamic slot count based on time range
   },
@@ -65,7 +65,7 @@ export const exportExactGridPDF = async (
       return eventDate >= weekStartDate && eventDate <= weekEndDate;
     });
 
-    // Create PDF with 8.5 x 11 inch landscape dimensions
+    // Create PDF with 8.5 x 11 inch landscape dimensions (smaller format)
     const pdf = new jsPDF({
       orientation: 'landscape',
       unit: 'pt',
@@ -80,19 +80,19 @@ export const exportExactGridPDF = async (
     pdf.setFillColor(255, 255, 255);
     pdf.rect(0, 0, GRID_CONFIG.pageWidth, GRID_CONFIG.pageHeight, 'F');
 
-    // HEADER - positioned for full width layout
+    // HEADER - smaller fonts for compact layout
     pdf.setFont('times', 'bold');
-    pdf.setFontSize(24);
+    pdf.setFontSize(18);  // Smaller title font
     pdf.setTextColor(0, 0, 0);
-    pdf.text('WEEKLY PLANNER', GRID_CONFIG.pageWidth / 2, centerY + 25, { align: 'center' });
+    pdf.text('WEEKLY PLANNER', GRID_CONFIG.pageWidth / 2, centerY + 18, { align: 'center' });
 
     // Week info
     pdf.setFont('times', 'bold');
-    pdf.setFontSize(16);
+    pdf.setFontSize(12);  // Smaller week info font
     const weekStart = weekStartDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
     const weekEnd = weekEndDate.toLocaleDateString('en-US', { day: 'numeric' });
     const weekNumber = Math.ceil(((weekStartDate.getTime() - new Date(weekStartDate.getFullYear(), 0, 1).getTime()) / 86400000 + 1) / 7);
-    pdf.text(`${weekStart}-${weekEnd} • Week ${weekNumber}`, GRID_CONFIG.pageWidth / 2, centerY + 45, { align: 'center' });
+    pdf.text(`${weekStart}-${weekEnd} • Week ${weekNumber}`, GRID_CONFIG.pageWidth / 2, centerY + 32, { align: 'center' });
 
     // LEGEND - positioned below header
     const legendY = centerY + GRID_CONFIG.headerHeight;
@@ -105,10 +105,10 @@ export const exportExactGridPDF = async (
     pdf.rect(centerX, legendY, legendWidth, GRID_CONFIG.legendHeight, 'S');
 
     pdf.setFont('times', 'normal');
-    pdf.setFontSize(12);
+    pdf.setFontSize(9);  // Smaller legend font
 
-    // Legend items - centered horizontally
-    const legendItemSpacing = 220;
+    // Legend items - centered horizontally with smaller spacing
+    const legendItemSpacing = 160;  // Reduced spacing for compact layout
     const totalLegendWidth = 3 * legendItemSpacing;
     const legendStartX = centerX + (legendWidth - totalLegendWidth) / 2;
 
@@ -116,36 +116,36 @@ export const exportExactGridPDF = async (
 
     // SimplePractice - white background with cornflower blue border and thick left flag
     pdf.setFillColor(255, 255, 255);
-    pdf.rect(legendX, legendY + 12, 18, 12, 'F');
+    pdf.rect(legendX, legendY + 8, 12, 8, 'F');  // Smaller legend boxes
     pdf.setDrawColor(100, 149, 237);
     pdf.setLineWidth(1);
-    pdf.rect(legendX, legendY + 12, 18, 12, 'S');
-    pdf.setLineWidth(4);
-    pdf.line(legendX, legendY + 12, legendX, legendY + 24);
+    pdf.rect(legendX, legendY + 8, 12, 8, 'S');
+    pdf.setLineWidth(3);  // Thinner left flag
+    pdf.line(legendX, legendY + 8, legendX, legendY + 16);
     pdf.setTextColor(0, 0, 0);
-    pdf.text('SimplePractice', legendX + 24, legendY + 20);
+    pdf.text('SimplePractice', legendX + 16, legendY + 14);
 
     legendX += legendItemSpacing;
 
     // Google Calendar - white background with dashed green border
     pdf.setFillColor(255, 255, 255);
-    pdf.rect(legendX, legendY + 12, 18, 12, 'F');
+    pdf.rect(legendX, legendY + 8, 12, 8, 'F');  // Smaller legend boxes
     pdf.setDrawColor(34, 197, 94);
     pdf.setLineWidth(1);
     pdf.setLineDash([3, 2]);
-    pdf.rect(legendX, legendY + 12, 18, 12, 'S');
+    pdf.rect(legendX, legendY + 8, 12, 8, 'S');
     pdf.setLineDash([]);
-    pdf.text('Google Calendar', legendX + 24, legendY + 20);
+    pdf.text('Google Calendar', legendX + 16, legendY + 14);
 
     legendX += legendItemSpacing;
 
     // Holidays - filled yellow square
     pdf.setFillColor(255, 255, 0);
-    pdf.rect(legendX, legendY + 12, 18, 12, 'F');
+    pdf.rect(legendX, legendY + 8, 12, 8, 'F');  // Smaller legend boxes
     pdf.setDrawColor(245, 158, 11);
     pdf.setLineWidth(1);
-    pdf.rect(legendX, legendY + 12, 18, 12, 'S');
-    pdf.text('Holidays in United States', legendX + 24, legendY + 20);
+    pdf.rect(legendX, legendY + 8, 12, 8, 'S');
+    pdf.text('Holidays in United States', legendX + 16, legendY + 14);
 
     // GRID STRUCTURE - full width utilization
     const gridStartY = GRID_CONFIG.gridStartY;
@@ -160,7 +160,7 @@ export const exportExactGridPDF = async (
     pdf.setFillColor(255, 255, 255);
     pdf.rect(centerX, gridStartY, GRID_CONFIG.timeColumnWidth, 40, 'F');
     pdf.setFont('times', 'bold');
-    pdf.setFontSize(14);
+    pdf.setFontSize(10);  // Smaller time header font
     pdf.setTextColor(0, 0, 0);
     pdf.text('TIME', centerX + GRID_CONFIG.timeColumnWidth/2, gridStartY + 25, { align: 'center' });
 
@@ -177,12 +177,12 @@ export const exportExactGridPDF = async (
 
       // Day name
       pdf.setFont('times', 'bold');
-      pdf.setFontSize(12);
+      pdf.setFontSize(9);  // Smaller day name font
       pdf.setTextColor(0, 0, 0);
       pdf.text(dayName, dayX + GRID_CONFIG.dayColumnWidth/2, gridStartY + 15, { align: 'center' });
 
       // Day number
-      pdf.setFontSize(16);
+      pdf.setFontSize(12);  // Smaller day number font
       pdf.setTextColor(0, 0, 0);
       pdf.text(dayDate.getDate().toString(), dayX + GRID_CONFIG.dayColumnWidth/2, gridStartY + 30, { align: 'center' });
 
@@ -209,11 +209,11 @@ export const exportExactGridPDF = async (
       pdf.setFillColor(slot.isHour ? 235 : 250, slot.isHour ? 235 : 250, slot.isHour ? 235 : 250);
       pdf.rect(centerX, y, GRID_CONFIG.timeColumnWidth, GRID_CONFIG.slotHeight, 'F');
 
-      // Time label
+      // Time label - smaller fonts for compact layout
       pdf.setFont('times', slot.isHour ? 'bold' : 'normal');
-      pdf.setFontSize(slot.isHour ? 11 : 9);
+      pdf.setFontSize(slot.isHour ? 7 : 6);  // Much smaller time fonts
       pdf.setTextColor(0, 0, 0);
-      pdf.text(slot.time, centerX + GRID_CONFIG.timeColumnWidth/2, y + GRID_CONFIG.slotHeight/2 + 3, { align: 'center' });
+      pdf.text(slot.time, centerX + GRID_CONFIG.timeColumnWidth/2, y + GRID_CONFIG.slotHeight/2 + 2, { align: 'center' });
 
       // Day cells
       for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
@@ -329,9 +329,9 @@ export const exportExactGridPDF = async (
             displayTitle = displayTitle.substring(0, maxChars - 3) + '...';
           }
 
-          // Event name - improved readability with fixed character spacing
+          // Event name - smaller font for compact layout
           pdf.setFont('times', 'bold');
-          pdf.setFontSize(9);
+          pdf.setFontSize(6);
           
           // Use the cleaned title directly
           const cleanTitle = cleanTextForPDF(displayTitle);
@@ -368,10 +368,10 @@ export const exportExactGridPDF = async (
           }
 
           // Event time - show for medium to large events
-          if (eventHeight >= 20) {
+          if (eventHeight >= 16) {
             pdf.setFont('times', 'normal');
-            pdf.setFontSize(8);
-            pdf.text(`${startTime}-${endTime}`, textX, eventY + eventHeight - 5);
+            pdf.setFontSize(5);  // Smaller time font
+            pdf.text(`${startTime}-${endTime}`, textX, eventY + eventHeight - 3);
           }
         }
       }
