@@ -393,6 +393,14 @@ The application uses three main entities:
   - **Improved Spacing**: Better line spacing in notes and action items sections for professional appearance
   - **USER CONFIRMED**: Formatting now matches the provided screenshot specification perfectly
   - **RESULT**: Complete daily planner PDF export with professional formatting optimized for reMarkable Paper Pro portrait dimensions
+- July 09, 2025. **APPOINTMENT BOX CONTAINMENT AND LEGEND FIXES**: Fixed critical positioning issues to ensure appointment boxes stay within grid boundaries:
+  - **Appointment Box Positioning**: Adjusted appointment boxes to be properly contained within time slot boundaries (margin + timeColumnWidth + 1px)
+  - **Grid Line Respect**: Appointment boxes now start 1px from top grid line and end 3px before bottom grid line to stay within boundaries
+  - **Legend Styling Enhancement**: Updated legend with larger, more proportional icons (12x6 size) and proper spacing
+  - **Legend Positioning**: Legend items properly spaced across full width with better visual alignment
+  - **Text Positioning Adjustment**: Updated event text positioning to match contained appointment boxes
+  - **Margin Improvements**: Reduced appointment box margins while maintaining proper containment within grid lines
+  - **RESULT**: Appointment boxes now properly contained within time slot boundaries without extending beyond grid lines
 
 ## User Preferences
 
