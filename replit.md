@@ -467,15 +467,15 @@ The application uses three main entities:
   - **Accessibility**: Added proper ARIA labels, tabindex, and keyboard navigation support
   - **Professional Styling**: Implemented gray backgrounds, borders, hover effects, and smooth transitions matching user specifications exactly
   - **RESULT**: Complete navigation system overhaul with professional styled buttons, bidirectional linking, and enhanced user experience
-- July 09, 2025. **DAILY PDF EXPORT SCREEN SIZE OPTIMIZATION**: Updated daily PDF export dimensions to match screen size and dashboard proportions:
-  - **Larger PDF Dimensions**: Increased from 8.5x11 inches to 1200x1600 points for better screen size matching
-  - **Proportional Font Scaling**: Scaled up all fonts to match larger format - title (32pt), event titles (18pt), time display (32pt)
-  - **Enhanced Layout Spacing**: Increased margins (60px), time column width (160px), and time slot height (40px) for better readability
-  - **Improved Event Heights**: Increased minimum event height from 60px to 80px with better spacing for 3-column layout
-  - **Enhanced Typography**: Larger fonts for notes/action items headers (14pt) and content (14pt) for better visibility
-  - **Better Column Layout**: Improved 3-column positioning with wider columns (280px) and better spacing
-  - **Consistent Styling**: Both dailyPDFExport.ts and exactDailyPDFExport.ts updated with matching larger dimensions
-  - **RESULT**: PDF exports now better match dashboard screen size with proportional fonts and improved readability
+- July 09, 2025. **DAILY PDF EXPORT DIMENSION OPTIMIZATION**: Updated daily PDF export to maintain 8.5x11 inch format with proportional fonts:
+  - **Reverted PDF Dimensions**: Restored to 8.5x11 inches (612x792 points) as originally requested
+  - **Proportional Font Scaling**: Fonts scaled proportionally to time grid size - title (20pt), event titles (12pt), time display (24pt)
+  - **Optimized Layout Spacing**: Adjusted margins (40px), time column width (80px), and time slot height (20px) for proper proportions
+  - **Improved Event Heights**: Minimum event height 60px for dailyPDFExport.ts and 16px for exactDailyPDFExport.ts
+  - **Enhanced Typography**: Fonts proportional to grid - notes/action items headers (10pt) and content (10pt)
+  - **Better Column Layout**: 3-column positioning with appropriate column widths for 8.5x11 format
+  - **Consistent Styling**: Both dailyPDFExport.ts and exactDailyPDFExport.ts updated with matching standard dimensions
+  - **RESULT**: PDF exports now maintain exact 8.5x11 inch format with fonts proportional to time grid and PDF export size
 
 ## User Preferences
 

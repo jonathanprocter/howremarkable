@@ -2,28 +2,28 @@
 import jsPDF from 'jspdf';
 import { CalendarEvent } from '../types/calendar';
 
-// Configuration that matches the dashboard screen size and proportions
+// Configuration that matches the dashboard daily view exactly (8.5x11 inches)
 const DAILY_CONFIG = {
-  pageWidth: 1200,   // Larger width to match screen dimensions
-  pageHeight: 1600,  // Larger height for better readability
-  margin: 60,        // Increased margin for better proportions
-  timeColumnWidth: 160,  // Wider time column to match dashboard proportions
-  appointmentColumnWidth: 980,  // Remaining width for appointments (1200 - 160 - 60 = 980)
-  timeSlotHeight: 40,  // Larger time slots to match dashboard 60px scaled up
-  headerHeight: 180,     // Larger header space for better proportions
+  pageWidth: 612,   // 8.5 inches = 612 points
+  pageHeight: 792,  // 11 inches = 792 points
+  margin: 40,       // Standard margin for readability
+  timeColumnWidth: 80,  // Time column width matching dashboard
+  appointmentColumnWidth: 492,  // Remaining width for appointments (612 - 80 - 40 = 492)
+  timeSlotHeight: 20,  // 60px slots scaled to PDF points
+  headerHeight: 120,     // Header space for title, date, and navigation
 
-  // Typography - scaled up to match larger PDF dimensions and dashboard proportions
+  // Typography - proportional to time grid size
   fonts: {
-    title: { size: 32, weight: 'bold' },      // Large title for "DAILY PLANNER"
-    date: { size: 24, weight: 'normal' },     // Date display
-    stats: { size: 18, weight: 'normal' },    // Statistics display
-    timeLabels: { size: 16, weight: 'normal' }, // Time labels (6:00, 6:30, etc.)
-    eventTitle: { size: 18, weight: 'bold' },  // Appointment title font
-    eventSource: { size: 14, weight: 'normal' }, // Calendar source font
-    eventTime: { size: 32, weight: 'bold' },   // Large time display matching dashboard
-    eventNotes: { size: 14, weight: 'normal' },  // Notes section
-    notesHeader: { size: 14, weight: 'bold' },   // "Event Notes" header
-    actionsHeader: { size: 14, weight: 'bold' }  // "Action Items" header
+    title: { size: 20, weight: 'bold' },      // Large title for "DAILY PLANNER"
+    date: { size: 16, weight: 'normal' },     // Date display
+    stats: { size: 12, weight: 'normal' },    // Statistics display
+    timeLabels: { size: 10, weight: 'normal' }, // Time labels (6:00, 6:30, etc.)
+    eventTitle: { size: 12, weight: 'bold' },  // Appointment title font
+    eventSource: { size: 10, weight: 'normal' }, // Calendar source font
+    eventTime: { size: 24, weight: 'bold' },   // Large time display matching dashboard
+    eventNotes: { size: 10, weight: 'normal' },  // Notes section
+    notesHeader: { size: 10, weight: 'bold' },   // "Event Notes" header
+    actionsHeader: { size: 10, weight: 'bold' }  // "Action Items" header
   },
 
   // Colors - match dashboard daily view exactly
@@ -253,7 +253,7 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
 
     // Calculate duration
     const durationMinutes = (endDate.getTime() - eventDate.getTime()) / (1000 * 60);
-    const eventHeight = Math.max(80, (durationMinutes / 30) * timeSlotHeight - 8); // Increased minimum height for larger format
+    const eventHeight = Math.max(60, (durationMinutes / 30) * timeSlotHeight - 4); // Minimum height for text display
 
     // Skip if outside range (6:00 to 23:30)
     if (minutesSince6am < 0 || minutesSince6am > (17.5 * 60)) {
@@ -331,15 +331,15 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
     const hasActionItems = !!(event.actionItems && event.actionItems.trim());
     const needsExpandedLayout = hasNotes || hasActionItems;
 
-    if (needsExpandedLayout && eventHeight >= 120) {
+    if (needsExpandedLayout && eventHeight >= 70) {
       // 3-column layout for events with notes/action items (only if enough height)
-      const col1Width = Math.min(eventWidth * 0.33, 280);
-      const col2Width = Math.min(eventWidth * 0.33, 280);
+      const col1Width = Math.min(eventWidth * 0.33, 140);
+      const col2Width = Math.min(eventWidth * 0.33, 140);
       const col3Width = eventWidth - col1Width - col2Width;
 
-      const col1X = eventX + 12;
-      const col2X = eventX + col1Width + 16;
-      const col3X = eventX + col1Width + col2Width + 20;
+      const col1X = eventX + 6;
+      const col2X = eventX + col1Width + 8;
+      const col3X = eventX + col1Width + col2Width + 10;
 
       // Column dividers - only draw if we have content in those columns
       pdf.setDrawColor(...DAILY_CONFIG.colors.lightGray);
@@ -352,14 +352,14 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
       }
 
       // Column 1: Event info
-      let currentY = eventY + 24;
+      let currentY = eventY + 14;
 
       // Title - larger and bolder
       pdf.setFontSize(DAILY_CONFIG.fonts.eventTitle.size);
       pdf.setFont('helvetica', DAILY_CONFIG.fonts.eventTitle.weight);
       pdf.setTextColor(...DAILY_CONFIG.colors.black);
       pdf.text(displayTitle, col1X, currentY);
-      currentY += 24;
+      currentY += 14;
 
       // Source - match dashboard text
       pdf.setFontSize(DAILY_CONFIG.fonts.eventSource.size);
@@ -369,7 +369,7 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
                         isGoogle ? 'GOOGLE CALENDAR' : 
                         isHoliday ? 'HOLIDAYS IN UNITED STATES' : 'MANUAL';
       pdf.text(sourceText, col1X, currentY);
-      currentY += 24;
+      currentY += 14;
 
       // Time - larger and bolder like dashboard
       pdf.setFontSize(DAILY_CONFIG.fonts.eventTime.size);
@@ -380,57 +380,57 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
 
       // Column 2: Event Notes
       if (hasNotes) {
-        let notesY = eventY + 24;
+        let notesY = eventY + 14;
         pdf.setFontSize(DAILY_CONFIG.fonts.notesHeader.size);
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(...DAILY_CONFIG.colors.black);
         pdf.text('Event Notes', col2X, notesY);
-        notesY += 26;
+        notesY += 16;
 
         pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size);
         pdf.setFont('helvetica', 'normal');
         const noteLines = event.notes!.split('\n').filter(line => line.trim());
         noteLines.forEach(line => {
           const cleanLine = line.trim().replace(/^[•\s-]+/, '').trim();
-          if (cleanLine && notesY + 16 <= eventY + eventHeight - 8) {
+          if (cleanLine && notesY + 10 <= eventY + eventHeight - 5) {
             pdf.text(cleanLine, col2X, notesY);
-            notesY += 18;
+            notesY += 11;
           }
         });
       }
 
       // Column 3: Action Items
       if (hasActionItems) {
-        let actionY = eventY + 24;
+        let actionY = eventY + 14;
         pdf.setFontSize(DAILY_CONFIG.fonts.actionsHeader.size);
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(...DAILY_CONFIG.colors.black);
         pdf.text('Action Items', col3X, actionY);
-        actionY += 26;
+        actionY += 16;
 
         pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size);
         pdf.setFont('helvetica', 'normal');
         const actionLines = event.actionItems!.split('\n').filter(line => line.trim());
         actionLines.forEach(line => {
           const cleanLine = line.trim().replace(/^[•\s-]+/, '').trim();
-          if (cleanLine && actionY + 16 <= eventY + eventHeight - 8) {
+          if (cleanLine && actionY + 10 <= eventY + eventHeight - 5) {
             pdf.text(cleanLine, col3X, actionY);
-            actionY += 18;
+            actionY += 11;
           }
         });
       }
 
     } else {
       // Simple single-column layout like dashboard
-      let currentY = eventY + 24;
-      const padding = 16;
+      let currentY = eventY + 14;
+      const padding = 8;
 
       // Title - larger and bolder
       pdf.setFontSize(DAILY_CONFIG.fonts.eventTitle.size);
       pdf.setFont('helvetica', DAILY_CONFIG.fonts.eventTitle.weight);
       pdf.setTextColor(...DAILY_CONFIG.colors.black);
       pdf.text(displayTitle, eventX + padding, currentY);
-      currentY += 24;
+      currentY += 14;
 
       // Source - match dashboard
       pdf.setFontSize(DAILY_CONFIG.fonts.eventSource.size);
@@ -440,10 +440,10 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
                         isGoogle ? 'GOOGLE CALENDAR' : 
                         isHoliday ? 'HOLIDAYS IN UNITED STATES' : 'MANUAL';
       pdf.text(sourceText, eventX + padding, currentY);
-      currentY += 24;
+      currentY += 14;
 
       // Time - larger and bolder
-      if (currentY + 20 <= eventY + eventHeight - 8) {
+      if (currentY + 12 <= eventY + eventHeight - 5) {
         pdf.setFontSize(DAILY_CONFIG.fonts.eventTime.size);
         pdf.setFont('helvetica', DAILY_CONFIG.fonts.eventTime.weight);
         pdf.setTextColor(...DAILY_CONFIG.colors.black);
