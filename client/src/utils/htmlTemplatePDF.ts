@@ -58,24 +58,24 @@ function getEventTypeInfo(event: CalendarEvent): EventTypeInfo {
   };
 }
 
-// reMarkable Paper Pro specific configuration for daily view - reMarkable dimensions
+// reMarkable Paper Pro specific configuration for daily view - reMarkable dimensions (1.2x scaled)
 const REMARKABLE_DAILY_CONFIG = {
-  // reMarkable Pro portrait dimensions (closer to actual device)
-  pageWidth: 507,   // reMarkable Pro active area width
-  pageHeight: 677,  // reMarkable Pro active area height
-  margin: 20,       // Clean margins for reMarkable
+  // reMarkable Pro portrait dimensions scaled 1.2x for better screen fit
+  pageWidth: 608,   // 507 * 1.2 = 608.4
+  pageHeight: 812,  // 677 * 1.2 = 812.4
+  margin: 24,       // 20 * 1.2 = 24
   
-  // Header configuration - optimized for reMarkable
-  headerHeight: 70,  // Proportional header for reMarkable
-  statsHeight: 35,   // Proportional stats section
-  legendHeight: 25,  // Proportional legend
+  // Header configuration - scaled 1.2x for better visibility
+  headerHeight: 84,  // 70 * 1.2 = 84
+  statsHeight: 42,   // 35 * 1.2 = 42
+  legendHeight: 30,  // 25 * 1.2 = 30
   
   get totalHeaderHeight() {
     return this.headerHeight + this.statsHeight + this.legendHeight;
   },
   
-  // Grid configuration - optimized for reMarkable with 36 time slots (6:00-23:30)
-  timeColumnWidth: 75,  // Proportional for reMarkable
+  // Grid configuration - optimized for reMarkable with 36 time slots (6:00-23:30) - scaled 1.2x
+  timeColumnWidth: 90,  // 75 * 1.2 = 90
   
   get timeSlotHeight() {
     // Calculate slot height to fit 36 slots in available space
@@ -91,15 +91,15 @@ const REMARKABLE_DAILY_CONFIG = {
     return this.pageWidth - (this.margin * 2) - this.timeColumnWidth;
   },
   
-  // Typography - optimized for reMarkable readability
+  // Typography - optimized for reMarkable readability - scaled 1.2x
   fonts: {
-    title: 14,         // Proportional title for reMarkable
-    subtitle: 12,      // Proportional subtitle
-    stats: 10,         // Readable stats
-    timeSlot: 8,       // Clear time labels
-    eventTitle: 10,    // Clear event titles
-    eventSource: 8,    // Clear source labels
-    eventTime: 9       // Clear time display
+    title: 17,         // 14 * 1.2 = 16.8 ≈ 17
+    subtitle: 14,      // 12 * 1.2 = 14.4 ≈ 14
+    stats: 12,         // 10 * 1.2 = 12
+    timeSlot: 10,      // 8 * 1.2 = 9.6 ≈ 10
+    eventTitle: 12,    // 10 * 1.2 = 12
+    eventSource: 10,   // 8 * 1.2 = 9.6 ≈ 10
+    eventTime: 11      // 9 * 1.2 = 10.8 ≈ 11
   },
   
   colors: {
