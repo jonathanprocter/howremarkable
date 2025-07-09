@@ -62,12 +62,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   passport.serializeUser((user: any, done) => {
     console.log("✅ Serializing user:", { id: user.id, email: user.email });
-    done(null, user);
+    done(null, user); // Store entire user object in session
   });
 
   passport.deserializeUser((user: any, done) => {
     console.log("✅ Deserializing user:", { id: user.id, email: user.email });
-    done(null, user);
+    done(null, user); // Return entire user object from session
   });
 
   // Session debugging middleware
@@ -79,6 +79,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`  - Session Passport: ${!!req.session.passport}`);
       if (req.session.passport) {
         console.log(`  - Passport User: ${JSON.stringify(req.session.passport.user)}`);
+      }
+      if (req.user) {
+        console.log(`  - User ID: ${req.user.id}`);
+        console.log(`  - User Email: ${req.user.email}`);
       }
     }
     next();
@@ -129,12 +133,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Session after login:", req.sessionID);
         console.log("User object in session:", !!req.user);
         
-        // Force session save before redirect
+        // Force session save before redirect with additional verification
         req.session.save((saveErr) => {
           if (saveErr) {
             console.error("Session save error:", saveErr);
           } else {
             console.log("Session saved successfully");
+            console.log("Session user after save:", !!req.user);
+            console.log("Session passport after save:", !!req.session.passport);
           }
           res.redirect("/?connected=true");
         });
