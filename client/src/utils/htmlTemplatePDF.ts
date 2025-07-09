@@ -111,23 +111,23 @@ const REMARKABLE_DAILY_CONFIG = {
 
 // HTML Template Configuration - Professional calendar layout
 const HTML_TEMPLATE_CONFIG = {
-  // Page dimensions - A3 landscape for professional presentation
-  pageWidth: 1190,
-  pageHeight: 842,
+  // Page dimensions - reMarkable Paper Pro landscape (239mm × 179mm)
+  pageWidth: 677,   // 239mm in points (239 * 72 / 25.4)
+  pageHeight: 507,  // 179mm in points (179 * 72 / 25.4)
   
-  // Layout structure - cohesive design with proper flow
-  margin: 15,
-  headerHeight: 60,
-  statsHeight: 45,
-  legendHeight: 25,
+  // Layout structure - optimized for reMarkable Pro landscape
+  margin: 12,
+  headerHeight: 45,
+  statsHeight: 35,
+  legendHeight: 20,
   
   // Total header section height
   get totalHeaderHeight() {
     return this.headerHeight + this.statsHeight + this.legendHeight;
   },
   
-  // Grid configuration - optimized for better text containment
-  timeColumnWidth: 95,
+  // Grid configuration - optimized for reMarkable Pro landscape
+  timeColumnWidth: 70,
   get gridStartY() {
     return this.margin + this.totalHeaderHeight; // No gap for cohesive flow
   },
@@ -187,7 +187,7 @@ export const exportHTMLTemplatePDF = async (
       format: [REMARKABLE_DAILY_CONFIG.pageWidth, REMARKABLE_DAILY_CONFIG.pageHeight]
     });
   } else {
-    // Weekly view uses landscape
+    // Weekly view uses reMarkable Paper Pro landscape
     pdf = new jsPDF({
       orientation: 'landscape',
       unit: 'pt',
@@ -485,14 +485,14 @@ function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date, events: 
   pdf.rect(margin, margin, HTML_TEMPLATE_CONFIG.pageWidth - (margin * 2), totalHeaderHeight, 'F');
   
   // === TITLE SECTION ===
-  // Main title - H1 style
-  pdf.setFontSize(26);
+  // Main title - optimized for reMarkable Pro
+  pdf.setFontSize(20);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(...HTML_TEMPLATE_CONFIG.colors.black);
-  pdf.text('WEEKLY PLANNER', HTML_TEMPLATE_CONFIG.pageWidth / 2, margin + 28, { align: 'center' });
+  pdf.text('WEEKLY PLANNER', HTML_TEMPLATE_CONFIG.pageWidth / 2, margin + 22, { align: 'center' });
   
   // Week info - properly positioned
-  pdf.setFontSize(13);
+  pdf.setFontSize(11);
   pdf.setFont('helvetica', 'normal');
   const weekNumber = getWeekNumber(weekStartDate);
   const weekText = `${weekStartDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEndDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • Week ${weekNumber}`;
@@ -540,13 +540,13 @@ function drawHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date, events: 
     }
     
     // Stat value
-    pdf.setFontSize(18);
+    pdf.setFontSize(14);
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(...HTML_TEMPLATE_CONFIG.colors.black);
-    pdf.text(stat.value, x + cardWidth / 2, statsY + 18, { align: 'center' });
+    pdf.text(stat.value, x + cardWidth / 2, statsY + 14, { align: 'center' });
     
     // Stat label
-    pdf.setFontSize(9);
+    pdf.setFontSize(8);
     pdf.setFont('helvetica', 'normal');
     pdf.text(stat.label, x + cardWidth / 2, statsY + 32, { align: 'center' });
   });
