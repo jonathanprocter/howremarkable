@@ -1,5 +1,6 @@
 import { generateTimeSlots, getEventDurationInSlots, isEventInTimeSlot } from '../../utils/timeSlots';
 import { formatDateShort } from '../../utils/dateUtils';
+import { cleanEventTitle } from '../../utils/textCleaner';
 import { CalendarEvent, CalendarDay } from '../../types/calendar';
 import { cn } from '@/lib/utils';
 
@@ -134,15 +135,7 @@ export const WeeklyCalendarGrid = ({
     }
   };
 
-  const cleanEventTitle = (title: string) => {
-    // Remove lock symbols and other problematic characters
-    return title
-      .replace(/🔒\s*/g, '') // Remove lock symbol and following space
-      .replace(/[\u{1F500}-\u{1F6FF}]/gu, '') // Remove emoji symbols
-      .replace(/Ø=ÜÅ/g, '') // Remove corrupted symbols
-      .replace(/\s+/g, ' ') // Normalize spaces
-      .trim();
-  };
+  
 
   return (
     <div className="grid grid-cols-8 border border-gray-300 rounded-lg overflow-hidden">

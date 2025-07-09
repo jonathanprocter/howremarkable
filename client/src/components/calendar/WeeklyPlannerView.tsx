@@ -1,5 +1,6 @@
 import React from 'react';
 import { generateTimeSlots } from '../../utils/timeSlots';
+import { cleanEventTitle } from '../../utils/textCleaner';
 import { CalendarEvent, CalendarDay } from '../../types/calendar';
 import { getWeekNumber } from '../../utils/dateUtils';
 
@@ -78,15 +79,7 @@ export const WeeklyPlannerView = ({
     return className;
   };
 
-  const cleanEventTitle = (title: string) => {
-    // Remove lock symbols and other problematic characters
-    return title
-      .replace(/🔒\s*/g, '') // Remove lock symbol and following space
-      .replace(/[\u{1F500}-\u{1F6FF}]/gu, '') // Remove emoji symbols
-      .replace(/Ø=ÜÅ/g, '') // Remove corrupted symbols
-      .replace(/\s+/g, ' ') // Normalize spaces
-      .trim();
-  };
+  
 
   const renderTimeSlotEvents = (date: Date, slot: any, slotIndex: number) => {
     const dayEvents = events.filter(event => 
