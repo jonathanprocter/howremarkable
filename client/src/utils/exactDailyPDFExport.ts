@@ -401,13 +401,13 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
       pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size + 1);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(...DAILY_CONFIG.colors.black);
-      const notesHeaderX = eventX + columnWidth; // Align with vertical divider
-      pdf.text('Event Notes', notesHeaderX, eventY + 4);
+      const notesHeaderX = eventX + columnWidth; // Position directly over vertical line
+      pdf.text('Event Notes', notesHeaderX, eventY + 2); // Move up to align with vertical line
       
       // Draw underline for Event Notes header
       pdf.setDrawColor(...DAILY_CONFIG.colors.black);
       pdf.setLineWidth(0.3);
-      pdf.line(notesHeaderX, eventY + 5, notesHeaderX + 30, eventY + 5);
+      pdf.line(notesHeaderX, eventY + 3, notesHeaderX + 30, eventY + 3);
       
       pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size);
       pdf.setFont('helvetica', 'normal');
@@ -437,13 +437,13 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
       pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size + 1);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(...DAILY_CONFIG.colors.black);
-      const actionHeaderX = eventX + columnWidth * 2; // Align with vertical divider
-      pdf.text('Action Items', actionHeaderX, eventY + 4);
+      const actionHeaderX = eventX + columnWidth * 2; // Position directly over vertical line
+      pdf.text('Action Items', actionHeaderX, eventY + 2); // Move up to align with vertical line
       
       // Draw underline for Action Items header
       pdf.setDrawColor(...DAILY_CONFIG.colors.black);
       pdf.setLineWidth(0.3);
-      pdf.line(actionHeaderX, eventY + 5, actionHeaderX + 30, eventY + 5);
+      pdf.line(actionHeaderX, eventY + 3, actionHeaderX + 30, eventY + 3);
       
       pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size);
       pdf.setFont('helvetica', 'normal');
@@ -476,7 +476,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
       // Draw vertical line only in the bullet area for notes
       if (event.notes && event.notes.trim()) {
         const notesX = eventX + columnWidth; // Align with header position
-        const bulletStartY = eventY + 8; // Start slightly above where bullets begin
+        const bulletStartY = eventY + 6; // Start higher to align with headers
         
         // Calculate actual height of notes content
         const notes = event.notes.split('\n')
@@ -498,7 +498,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
       // Draw vertical line only in the bullet area for action items
       if (event.actionItems && event.actionItems.trim()) {
         const actionX = eventX + columnWidth * 2; // Align with header position
-        const bulletStartY = eventY + 8; // Start slightly above where bullets begin
+        const bulletStartY = eventY + 6; // Start higher to align with headers
         
         // Calculate actual height of action items content
         const actionItems = event.actionItems.split('\n')
