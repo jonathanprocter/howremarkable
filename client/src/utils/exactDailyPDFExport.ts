@@ -198,8 +198,8 @@ function drawDashboardLegend(pdf: jsPDF) {
 }
 
 function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
-  const { margin, timeColumnWidth, appointmentColumnWidth, timeSlotHeight } = DAILY_CONFIG;
-  const gridStartY = margin + 45;  // Compact grid start for reMarkable Paper Pro
+  const { margin, timeColumnWidth, appointmentColumnWidth, timeSlotHeight, headerHeight } = DAILY_CONFIG;
+  const gridStartY = headerHeight;  // Grid starts after header space
   const totalGridHeight = timeSlotHeight * TIME_SLOTS.length;  // Full timeline to 23:30 (36 slots * 16px = 576px)
   
   // Filter events for the selected date
