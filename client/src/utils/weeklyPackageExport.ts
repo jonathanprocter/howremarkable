@@ -29,11 +29,11 @@ export const exportWeeklyPackage = async (
 
     console.log('Week events:', weekEvents.length);
 
-    // Create master PDF document - start with A3 landscape for weekly overview
+    // Create master PDF document - start with reMarkable Paper Pro landscape for weekly overview
     const masterPDF = new jsPDF({
       orientation: 'landscape',
       unit: 'pt',
-      format: [1190, 842] // A3 landscape
+      format: [1872, 1404] // reMarkable Paper Pro landscape
     });
 
     // PAGE 1: Weekly Overview - Use existing weekly grid export functionality
@@ -52,8 +52,8 @@ export const exportWeeklyPackage = async (
       
       console.log(`📄 Creating ${dayName} Page (Page ${pageNumber}) - ${currentDate.toDateString()}`);
       
-      // Add new page for each day - switch to portrait for daily pages
-      masterPDF.addPage([595, 842], 'portrait');
+      // Add new page for each day - switch to reMarkable Paper Pro portrait for daily pages
+      masterPDF.addPage([1404, 1872], 'portrait');
       
       // Filter events for this specific day
       const dayEvents = events.filter(event => {
@@ -98,15 +98,15 @@ async function createWeeklyOverviewPage(
   weekEndDate: Date,
   events: CalendarEvent[]
 ): Promise<void> {
-  // Configuration for A3 landscape weekly grid - using exact working configuration
+  // Configuration for reMarkable Paper Pro landscape (1872x1404)
   const GRID_CONFIG = {
-    pageWidth: 1190,
-    pageHeight: 842,
-    margin: 20,
-    headerHeight: 80,
-    legendHeight: 30,
-    timeColumnWidth: 95,
-    timeSlotHeight: 20,
+    pageWidth: 1872,   // reMarkable Paper Pro landscape width
+    pageHeight: 1404,  // reMarkable Paper Pro landscape height
+    margin: 30,
+    headerHeight: 100,
+    legendHeight: 40,
+    timeColumnWidth: 120,
+    timeSlotHeight: 30,  // Increased for better readability
     startHour: 6,
     endHour: 23,
     totalTimeSlots: 36 // 6:00 to 23:30
@@ -329,8 +329,8 @@ async function createWeeklyOverviewPage(
     if (displayTitle.includes('Appointment')) {
       displayTitle = displayTitle.replace(' Appointment', '');
     }
-    // Fix lock symbol encoding issues
-    displayTitle = displayTitle.replace(/[🔒Ø=Ý]/g, '🔒');
+    // Remove lock symbol from Nico Luppino and fix encoding issues
+    displayTitle = displayTitle.replace(/[🔒Ø=Ý]/g, '').replace(/^[\s]*/, ''); // Remove all lock symbols and leading spaces
     
     // Split text into lines to fit in event box
     const maxWidth = eventWidth - 8;
@@ -369,30 +369,30 @@ async function createDailyPageContent(
 ): Promise<void> {
   // Import the daily export configuration
   const REMARKABLE_DAILY_CONFIG = {
-    // reMarkable Paper Pro Portrait dimensions (active display area)
-    pageWidth: 507,  // 179mm in points  
-    pageHeight: 677, // 239mm in points
+    // reMarkable Paper Pro Portrait dimensions (1404x1872)
+    pageWidth: 1404,  // reMarkable Paper Pro portrait width
+    pageHeight: 1872, // reMarkable Paper Pro portrait height
     
     // Header configuration
-    headerHeight: 90,
+    headerHeight: 140,
     
     // Time grid configuration  
-    timeColumnWidth: 60,
-    appointmentColumnWidth: 447, // pageWidth - timeColumnWidth
-    timeSlotHeight: 16,
-    totalTimeSlots: 36, // 6:00 to 23:30 (35 slots of 30 minutes each)
+    timeColumnWidth: 120,
+    appointmentColumnWidth: 1284, // pageWidth - timeColumnWidth
+    timeSlotHeight: 40,  // Increased for better readability
+    totalTimeSlots: 36, // 6:00 to 23:30
     
-    // Typography for reMarkable Paper Pro (229 PPI)
+    // Typography for reMarkable Paper Pro (226 DPI)
     fonts: {
-      title: 14,
-      date: 10,
-      statistics: { value: 10, label: 7 },
-      timeLabel: { hour: 6, halfHour: 5 },
-      eventTitle: 12,
-      eventSource: 10,
-      eventTime: 10,
-      eventNotes: 4,
-      eventActionItems: 4
+      title: 28,  // Larger for bigger screen
+      date: 20,
+      statistics: { value: 16, label: 12 },
+      timeLabel: { hour: 12, halfHour: 10 },
+      eventTitle: 18,
+      eventSource: 14,
+      eventTime: 16,
+      eventNotes: 10,
+      eventActionItems: 10
     },
     
     // Colors optimized for e-ink
@@ -571,8 +571,9 @@ async function createDailyPageContent(
       pdf.setFontSize(REMARKABLE_DAILY_CONFIG.fonts.eventTitle);
       pdf.setTextColor(0, 0, 0);
       
-      // Clean title
-      const cleanTitle = event.title.replace(/ Appointment$/, '');
+      // Clean title - remove lock symbol and "Appointment" suffix
+      let cleanTitle = event.title.replace(/ Appointment$/, '');
+      cleanTitle = cleanTitle.replace(/[🔒Ø=Ý]/g, '').replace(/^[\s]*/, ''); // Remove lock symbols and leading spaces
       pdf.text(cleanTitle, eventX + 5, eventY + 12);
       
       // Event source

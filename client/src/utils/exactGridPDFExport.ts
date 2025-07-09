@@ -339,8 +339,9 @@ export const exportExactGridPDF = async (
           
           // CLEAN EVENT TITLE (Fix text formatting issues)
           let cleanTitle = displayTitle
+            .replace(/[🔒Ø=Ý]/g, '') // Remove lock symbols and encoding issues
             .replace(/\s+/g, ' ')  // Remove extra spaces
-            .replace(/[^\w\s\-\.,:;!?'"()]/g, '') // Remove problematic characters
+            .replace(/^[\s]*/, '') // Remove leading spaces
             .trim();
           
           // Show title for all events that are tall enough
