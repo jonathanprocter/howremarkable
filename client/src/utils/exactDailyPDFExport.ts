@@ -11,7 +11,7 @@ const DAILY_CONFIG = {
   timeColumnWidth: 50,  // Compact time column for narrow screen
   appointmentColumnWidth: 449,  // Remaining width for appointments
   timeSlotHeight: 16,  // Compact slots to fit full timeline in portrait
-  headerHeight: 226,    // Maximum header space for navigation and better layout (moved down ~6 rows)
+  headerHeight: 114,    // Optimized header space for navigation (moved up ~7 rows)
 
   // Typography optimized for reMarkable Paper Pro e-ink display
   fonts: {
