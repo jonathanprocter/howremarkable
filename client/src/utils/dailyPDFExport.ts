@@ -95,6 +95,39 @@ function drawDailyHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]
   });
   pdf.text(dateStr, pageWidth / 2, margin + 50, { align: 'center' });
 
+  // Navigation buttons to match dashboard
+  const buttonHeight = 18;
+  const buttonWidth = 80;
+  const buttonY = margin + 10;
+  
+  // Back to Weekly button (left side)
+  const backButtonX = margin + 20;
+  pdf.setFillColor(245, 245, 245); // Light gray background
+  pdf.rect(backButtonX, buttonY, buttonWidth, buttonHeight, 'F');
+  pdf.setDrawColor(128, 128, 128); // Gray border
+  pdf.setLineWidth(1);
+  pdf.rect(backButtonX, buttonY, buttonWidth, buttonHeight, 'S');
+  pdf.setFontSize(10);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('Back to week', backButtonX + buttonWidth/2, buttonY + 12, { align: 'center' });
+
+  // Previous day button
+  const prevButtonX = backButtonX + buttonWidth + 10;
+  pdf.setFillColor(245, 245, 245);
+  pdf.rect(prevButtonX, buttonY, 25, buttonHeight, 'F');
+  pdf.setDrawColor(128, 128, 128);
+  pdf.rect(prevButtonX, buttonY, 25, buttonHeight, 'S');
+  pdf.text('<', prevButtonX + 12.5, buttonY + 12, { align: 'center' });
+
+  // Next day button
+  const nextButtonX = prevButtonX + 25 + 5;
+  pdf.setFillColor(245, 245, 245);
+  pdf.rect(nextButtonX, buttonY, 25, buttonHeight, 'F');
+  pdf.setDrawColor(128, 128, 128);
+  pdf.rect(nextButtonX, buttonY, 25, buttonHeight, 'S');
+  pdf.text('>', nextButtonX + 12.5, buttonY + 12, { align: 'center' });
+
   // Statistics
   const totalEvents = events.length;
   const totalHours = events.reduce((sum, event) => {
@@ -277,11 +310,11 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
       usedPositions[i + horizontalOffset] = index;
     }
 
-    // Position with horizontal offset for overlapping events
+    // Position with horizontal offset for overlapping events - ensure within page margins
     const maxOverlaps = 4;
-    const availableWidth = appointmentColumnWidth - 4;
+    const availableWidth = appointmentColumnWidth - 8; // More margin for page containment
     const eventWidth = horizontalOffset > 0 ? Math.max(120, availableWidth / (horizontalOffset + 1)) : availableWidth;
-    const eventX = margin + timeColumnWidth + 2 + (horizontalOffset * (eventWidth + 2));
+    const eventX = margin + timeColumnWidth + 4 + (horizontalOffset * (eventWidth + 2)); // More margin from left
     const eventY = gridStartY + topPosition;
 
     // Get event type

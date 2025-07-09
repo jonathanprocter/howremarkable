@@ -9,15 +9,15 @@ const GRID_CONFIG = {
   pageWidth: 792,   // 11 inches = 792 points
   pageHeight: 612,  // 8.5 inches = 612 points
 
-  // Compact margins for smaller format
-  margin: 15,
-  headerHeight: 45,
+  // Tighter margins to fit within paper margins
+  margin: 36,  // Standard 0.5 inch margins (36 points)
+  headerHeight: 35,
   statsHeight: 0, // Remove stats section to maximize grid space
-  legendHeight: 25,
+  legendHeight: 20,
 
-  // Grid structure - smaller boxes and times to fit
-  timeColumnWidth: 60, // Narrower time column for compact layout
-  slotHeight: 12, // Smaller slots to fit in shrunk format
+  // Grid structure - much smaller to fit within margins
+  timeColumnWidth: 45, // Very narrow time column
+  slotHeight: 10, // Much smaller slots to fit everything
   get totalSlots() {
     return generateTimeSlots().length; // Dynamic slot count based on time range
   },
@@ -80,19 +80,19 @@ export const exportExactGridPDF = async (
     pdf.setFillColor(255, 255, 255);
     pdf.rect(0, 0, GRID_CONFIG.pageWidth, GRID_CONFIG.pageHeight, 'F');
 
-    // HEADER - smaller fonts for compact layout
+    // HEADER - very compact fonts
     pdf.setFont('times', 'bold');
-    pdf.setFontSize(18);  // Smaller title font
+    pdf.setFontSize(14);  // Much smaller title font
     pdf.setTextColor(0, 0, 0);
-    pdf.text('WEEKLY PLANNER', GRID_CONFIG.pageWidth / 2, centerY + 18, { align: 'center' });
+    pdf.text('WEEKLY PLANNER', GRID_CONFIG.pageWidth / 2, centerY + 15, { align: 'center' });
 
     // Week info
     pdf.setFont('times', 'bold');
-    pdf.setFontSize(12);  // Smaller week info font
+    pdf.setFontSize(10);  // Much smaller week info font
     const weekStart = weekStartDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
     const weekEnd = weekEndDate.toLocaleDateString('en-US', { day: 'numeric' });
     const weekNumber = Math.ceil(((weekStartDate.getTime() - new Date(weekStartDate.getFullYear(), 0, 1).getTime()) / 86400000 + 1) / 7);
-    pdf.text(`${weekStart}-${weekEnd} • Week ${weekNumber}`, GRID_CONFIG.pageWidth / 2, centerY + 32, { align: 'center' });
+    pdf.text(`${weekStart}-${weekEnd} • Week ${weekNumber}`, GRID_CONFIG.pageWidth / 2, centerY + 27, { align: 'center' });
 
     // LEGEND - positioned below header
     const legendY = centerY + GRID_CONFIG.headerHeight;
@@ -105,10 +105,10 @@ export const exportExactGridPDF = async (
     pdf.rect(centerX, legendY, legendWidth, GRID_CONFIG.legendHeight, 'S');
 
     pdf.setFont('times', 'normal');
-    pdf.setFontSize(9);  // Smaller legend font
+    pdf.setFontSize(7);  // Much smaller legend font
 
-    // Legend items - centered horizontally with smaller spacing
-    const legendItemSpacing = 160;  // Reduced spacing for compact layout
+    // Legend items - tighter spacing for margins
+    const legendItemSpacing = 120;  // Much tighter spacing
     const totalLegendWidth = 3 * legendItemSpacing;
     const legendStartX = centerX + (legendWidth - totalLegendWidth) / 2;
 
@@ -116,36 +116,36 @@ export const exportExactGridPDF = async (
 
     // SimplePractice - white background with cornflower blue border and thick left flag
     pdf.setFillColor(255, 255, 255);
-    pdf.rect(legendX, legendY + 8, 12, 8, 'F');  // Smaller legend boxes
+    pdf.rect(legendX, legendY + 6, 8, 6, 'F');  // Much smaller legend boxes
     pdf.setDrawColor(100, 149, 237);
     pdf.setLineWidth(1);
-    pdf.rect(legendX, legendY + 8, 12, 8, 'S');
-    pdf.setLineWidth(3);  // Thinner left flag
-    pdf.line(legendX, legendY + 8, legendX, legendY + 16);
+    pdf.rect(legendX, legendY + 6, 8, 6, 'S');
+    pdf.setLineWidth(2);  // Thinner left flag
+    pdf.line(legendX, legendY + 6, legendX, legendY + 12);
     pdf.setTextColor(0, 0, 0);
-    pdf.text('SimplePractice', legendX + 16, legendY + 14);
+    pdf.text('SimplePractice', legendX + 12, legendY + 10);
 
     legendX += legendItemSpacing;
 
     // Google Calendar - white background with dashed green border
     pdf.setFillColor(255, 255, 255);
-    pdf.rect(legendX, legendY + 8, 12, 8, 'F');  // Smaller legend boxes
+    pdf.rect(legendX, legendY + 6, 8, 6, 'F');  // Much smaller legend boxes
     pdf.setDrawColor(34, 197, 94);
     pdf.setLineWidth(1);
-    pdf.setLineDash([3, 2]);
-    pdf.rect(legendX, legendY + 8, 12, 8, 'S');
+    pdf.setLineDash([2, 1]);
+    pdf.rect(legendX, legendY + 6, 8, 6, 'S');
     pdf.setLineDash([]);
-    pdf.text('Google Calendar', legendX + 16, legendY + 14);
+    pdf.text('Google Calendar', legendX + 12, legendY + 10);
 
     legendX += legendItemSpacing;
 
     // Holidays - filled yellow square
     pdf.setFillColor(255, 255, 0);
-    pdf.rect(legendX, legendY + 8, 12, 8, 'F');  // Smaller legend boxes
+    pdf.rect(legendX, legendY + 6, 8, 6, 'F');  // Much smaller legend boxes
     pdf.setDrawColor(245, 158, 11);
     pdf.setLineWidth(1);
-    pdf.rect(legendX, legendY + 8, 12, 8, 'S');
-    pdf.text('Holidays in United States', legendX + 16, legendY + 14);
+    pdf.rect(legendX, legendY + 6, 8, 6, 'S');
+    pdf.text('Holidays', legendX + 12, legendY + 10);
 
     // GRID STRUCTURE - full width utilization
     const gridStartY = GRID_CONFIG.gridStartY;
@@ -153,16 +153,16 @@ export const exportExactGridPDF = async (
     // Grid border - full width
     pdf.setLineWidth(2);
     pdf.setDrawColor(0, 0, 0);
-    pdf.rect(centerX, gridStartY, GRID_CONFIG.totalGridWidth, 40 + GRID_CONFIG.gridHeight);
+    pdf.rect(centerX, gridStartY, GRID_CONFIG.totalGridWidth, 30 + GRID_CONFIG.gridHeight);
 
     // HEADERS
     // Time header
     pdf.setFillColor(255, 255, 255);
-    pdf.rect(centerX, gridStartY, GRID_CONFIG.timeColumnWidth, 40, 'F');
+    pdf.rect(centerX, gridStartY, GRID_CONFIG.timeColumnWidth, 30, 'F');
     pdf.setFont('times', 'bold');
-    pdf.setFontSize(10);  // Smaller time header font
+    pdf.setFontSize(7);  // Much smaller time header font
     pdf.setTextColor(0, 0, 0);
-    pdf.text('TIME', centerX + GRID_CONFIG.timeColumnWidth/2, gridStartY + 25, { align: 'center' });
+    pdf.text('TIME', centerX + GRID_CONFIG.timeColumnWidth/2, gridStartY + 18, { align: 'center' });
 
     // Day headers
     const dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -173,24 +173,24 @@ export const exportExactGridPDF = async (
 
       // Day header background
       pdf.setFillColor(255, 255, 255);
-      pdf.rect(dayX, gridStartY, GRID_CONFIG.dayColumnWidth, 40, 'F');
+      pdf.rect(dayX, gridStartY, GRID_CONFIG.dayColumnWidth, 30, 'F');
 
       // Day name
       pdf.setFont('times', 'bold');
-      pdf.setFontSize(9);  // Smaller day name font
+      pdf.setFontSize(6);  // Much smaller day name font
       pdf.setTextColor(0, 0, 0);
-      pdf.text(dayName, dayX + GRID_CONFIG.dayColumnWidth/2, gridStartY + 15, { align: 'center' });
+      pdf.text(dayName, dayX + GRID_CONFIG.dayColumnWidth/2, gridStartY + 12, { align: 'center' });
 
       // Day number
-      pdf.setFontSize(12);  // Smaller day number font
+      pdf.setFontSize(8);  // Much smaller day number font
       pdf.setTextColor(0, 0, 0);
-      pdf.text(dayDate.getDate().toString(), dayX + GRID_CONFIG.dayColumnWidth/2, gridStartY + 30, { align: 'center' });
+      pdf.text(dayDate.getDate().toString(), dayX + GRID_CONFIG.dayColumnWidth/2, gridStartY + 22, { align: 'center' });
 
       // Vertical border between days
       if (index < 6) {
         pdf.setLineWidth(2);
         pdf.setDrawColor(0, 0, 0);
-        pdf.line(dayX + GRID_CONFIG.dayColumnWidth, gridStartY, dayX + GRID_CONFIG.dayColumnWidth, gridStartY + 40 + GRID_CONFIG.gridHeight);
+        pdf.line(dayX + GRID_CONFIG.dayColumnWidth, gridStartY, dayX + GRID_CONFIG.dayColumnWidth, gridStartY + 30 + GRID_CONFIG.gridHeight);
       }
     });
 
@@ -203,17 +203,17 @@ export const exportExactGridPDF = async (
     console.log(`Generated ${timeSlots.length} time slots from ${timeSlots[0]?.time} to ${timeSlots[timeSlots.length - 1]?.time}`);
 
     timeSlots.forEach((slot, index) => {
-      const y = gridStartY + 40 + (index * GRID_CONFIG.slotHeight);
+      const y = gridStartY + 30 + (index * GRID_CONFIG.slotHeight);
 
       // Time slot background
       pdf.setFillColor(slot.isHour ? 235 : 250, slot.isHour ? 235 : 250, slot.isHour ? 235 : 250);
       pdf.rect(centerX, y, GRID_CONFIG.timeColumnWidth, GRID_CONFIG.slotHeight, 'F');
 
-      // Time label - smaller fonts for compact layout
+      // Time label - very small fonts for tight margins
       pdf.setFont('times', slot.isHour ? 'bold' : 'normal');
-      pdf.setFontSize(slot.isHour ? 7 : 6);  // Much smaller time fonts
+      pdf.setFontSize(slot.isHour ? 5 : 4);  // Very small time fonts
       pdf.setTextColor(0, 0, 0);
-      pdf.text(slot.time, centerX + GRID_CONFIG.timeColumnWidth/2, y + GRID_CONFIG.slotHeight/2 + 2, { align: 'center' });
+      pdf.text(slot.time, centerX + GRID_CONFIG.timeColumnWidth/2, y + GRID_CONFIG.slotHeight/2 + 1, { align: 'center' });
 
       // Day cells
       for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
@@ -265,9 +265,9 @@ export const exportExactGridPDF = async (
           const endSlot = Math.min(endMinuteOfDay / 30, 35.5); // Cap at 23:30
           
           const eventX = centerX + GRID_CONFIG.timeColumnWidth + (dayIndex * GRID_CONFIG.dayColumnWidth) + 1;
-          const eventY = gridStartY + 40 + (startSlot * GRID_CONFIG.slotHeight) + 0.5;
+          const eventY = gridStartY + 30 + (startSlot * GRID_CONFIG.slotHeight) + 0.5;
           const eventWidth = GRID_CONFIG.dayColumnWidth - 2;
-          const eventHeight = Math.max((endSlot - startSlot) * GRID_CONFIG.slotHeight - 1, 8);
+          const eventHeight = Math.max((endSlot - startSlot) * GRID_CONFIG.slotHeight - 1, 6);
 
           // Event styling based on type
           const isSimplePractice = event.source === 'simplepractice' || event.title.includes('Appointment');
@@ -329,9 +329,9 @@ export const exportExactGridPDF = async (
             displayTitle = displayTitle.substring(0, maxChars - 3) + '...';
           }
 
-          // Event name - smaller font for compact layout
+          // Event name - very small font for tight margins
           pdf.setFont('times', 'bold');
-          pdf.setFontSize(6);
+          pdf.setFontSize(4);
           
           // Use the cleaned title directly
           const cleanTitle = cleanTextForPDF(displayTitle);
@@ -368,22 +368,22 @@ export const exportExactGridPDF = async (
           }
 
           // Event time - show for medium to large events
-          if (eventHeight >= 16) {
+          if (eventHeight >= 12) {
             pdf.setFont('times', 'normal');
-            pdf.setFontSize(5);  // Smaller time font
-            pdf.text(`${startTime}-${endTime}`, textX, eventY + eventHeight - 3);
+            pdf.setFontSize(3);  // Very small time font
+            pdf.text(`${startTime}-${endTime}`, textX, eventY + eventHeight - 2);
           }
         }
       }
     });
 
     // GRID BORDERS - complete border around the entire grid
-    const gridEndY = gridStartY + 40 + GRID_CONFIG.gridHeight;
+    const gridEndY = gridStartY + 30 + GRID_CONFIG.gridHeight;
     pdf.setLineWidth(2);
     pdf.setDrawColor(0, 0, 0);
 
     // Complete grid outline
-    pdf.rect(centerX, gridStartY, GRID_CONFIG.totalGridWidth, 40 + GRID_CONFIG.gridHeight, 'S');
+    pdf.rect(centerX, gridStartY, GRID_CONFIG.totalGridWidth, 30 + GRID_CONFIG.gridHeight, 'S');
 
     // Vertical border between time column and days
     pdf.setLineWidth(2);

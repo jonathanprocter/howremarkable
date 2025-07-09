@@ -102,6 +102,39 @@ function drawDashboardHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEve
   pdf.rect(margin, headerBoxY, pageWidth - (margin * 2), titleSectionHeight, 'F');
   pdf.line(margin, headerBoxY + titleSectionHeight, pageWidth - margin, headerBoxY + titleSectionHeight);
 
+  // Navigation buttons to match dashboard - positioned at the top
+  const buttonHeight = 12;
+  const buttonWidth = 60;
+  const buttonY = headerBoxY + 3;
+  
+  // Back to Weekly button (left side)
+  const backButtonX = margin + 10;
+  pdf.setFillColor(245, 245, 245); // Light gray background
+  pdf.rect(backButtonX, buttonY, buttonWidth, buttonHeight, 'F');
+  pdf.setDrawColor(128, 128, 128); // Gray border
+  pdf.setLineWidth(0.5);
+  pdf.rect(backButtonX, buttonY, buttonWidth, buttonHeight, 'S');
+  pdf.setFontSize(7);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('Back to week', backButtonX + buttonWidth/2, buttonY + 8, { align: 'center' });
+
+  // Previous day button
+  const prevButtonX = backButtonX + buttonWidth + 5;
+  pdf.setFillColor(245, 245, 245);
+  pdf.rect(prevButtonX, buttonY, 18, buttonHeight, 'F');
+  pdf.setDrawColor(128, 128, 128);
+  pdf.rect(prevButtonX, buttonY, 18, buttonHeight, 'S');
+  pdf.text('<', prevButtonX + 9, buttonY + 8, { align: 'center' });
+
+  // Next day button
+  const nextButtonX = prevButtonX + 18 + 3;
+  pdf.setFillColor(245, 245, 245);
+  pdf.rect(nextButtonX, buttonY, 18, buttonHeight, 'F');
+  pdf.setDrawColor(128, 128, 128);
+  pdf.rect(nextButtonX, buttonY, 18, buttonHeight, 'S');
+  pdf.text('>', nextButtonX + 9, buttonY + 8, { align: 'center' });
+
   // Title - DAILY PLANNER at the top
   pdf.setFontSize(14);
   pdf.setFont('helvetica', 'bold');
