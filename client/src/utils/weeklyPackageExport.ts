@@ -330,7 +330,7 @@ async function createWeeklyOverviewPage(
       displayTitle = displayTitle.replace(' Appointment', '');
     }
     // Remove lock symbol from Nico Luppino and fix encoding issues
-    displayTitle = displayTitle.replace(/[🔒Ø=Ý]/g, '').replace(/^[\s]*/, ''); // Remove all lock symbols and leading spaces
+    displayTitle = displayTitle.replace(/[🔒Ø=ÝÅ]/g, '').replace(/^[\s]*/, ''); // Remove all lock symbols and leading spaces
     
     // Split text into lines to fit in event box
     const maxWidth = eventWidth - 8;

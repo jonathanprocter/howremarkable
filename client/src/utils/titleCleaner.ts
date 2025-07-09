@@ -4,13 +4,15 @@ export const cleanEventTitle = (title: string): string => {
   
   let cleanTitle = title;
   
-  // Remove lock symbols in all possible formats
+  // Remove lock symbols and corrupted characters in all possible formats
   cleanTitle = cleanTitle.replace(/🔒\s*/g, ''); // Standard emoji
   cleanTitle = cleanTitle.replace(/[\uD83D\uDD12]/g, ''); // Unicode representation
   cleanTitle = cleanTitle.replace(/\uD83D\uDD12/g, ''); // Another Unicode format
   cleanTitle = cleanTitle.replace(/Ø=Ý/g, ''); // Corrupted encoding representation
+  cleanTitle = cleanTitle.replace(/Ø=ÜÅ/g, ''); // New corrupted symbols
   cleanTitle = cleanTitle.replace(/[🔒]/g, ''); // Another format
   cleanTitle = cleanTitle.replace(/\u{1F512}/gu, ''); // Unicode escape sequence
+  cleanTitle = cleanTitle.replace(/[!•]/g, ''); // Remove navigation symbols
   
   // Remove "Appointment" suffix
   cleanTitle = cleanTitle.replace(/\s*Appointment\s*$/i, '');
@@ -34,8 +36,10 @@ export const cleanTextForPDF = (text: string): string => {
     .replace(/🔒\s*/g, '') // Remove lock symbols
     .replace(/[\uD83D\uDD12]/g, '') // Unicode lock symbols
     .replace(/Ø=Ý/g, '') // Corrupted encoding
+    .replace(/Ø=ÜÅ/g, '') // New corrupted symbols
     .replace(/[🔒]/g, '') // Standard lock emoji
     .replace(/\u{1F512}/gu, '') // Unicode escape
+    .replace(/[!•]/g, '') // Remove navigation symbols
     .replace(/\s+/g, ' ') // Normalize whitespace
     .trim();
 };

@@ -39,6 +39,7 @@ const generateFilename = (type: string, date: Date): string => {
 };
 import { getWeekNumber } from '../utils/dateUtils';
 import { initializeRemarkableOptimizations } from '../utils/remarkableDisplayOptimizer';
+import { emergencyNavigationFix } from '../utils/navigationFixer';
 
 export default function Planner() {
   const {
@@ -64,9 +65,10 @@ export default function Planner() {
   const [googleCalendars, setGoogleCalendars] = useState<any[]>([]);
   const [selectedCalendars, setSelectedCalendars] = useState<Set<string>>(new Set(['0np7sib5u30o7oc297j5pb259g'])); // Default to SimplePractice calendar selected
 
-  // Initialize reMarkable Pro optimizations on component mount
+  // Initialize reMarkable Pro optimizations and emergency navigation fix on component mount
   useEffect(() => {
     initializeRemarkableOptimizations();
+    emergencyNavigationFix();
   }, []);
 
   // Load events from database on component mount
