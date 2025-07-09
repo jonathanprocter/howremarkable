@@ -99,15 +99,15 @@ async function createWeeklyOverviewPage(
   weekEndDate: Date,
   events: CalendarEvent[]
 ): Promise<void> {
-  // Configuration for reMarkable Paper Pro landscape (1872x1404)
+  // Enhanced configuration for 8.5x11 landscape weekly overview - dashboard matching
   const GRID_CONFIG = {
-    pageWidth: 1872,   // reMarkable Paper Pro landscape width
-    pageHeight: 1404,  // reMarkable Paper Pro landscape height
+    pageWidth: 792,   // 11 inches = 792 points (8.5x11 landscape)
+    pageHeight: 612,  // 8.5 inches = 612 points  
     margin: 30,
-    headerHeight: 100,
-    legendHeight: 40,
-    timeColumnWidth: 120,
-    timeSlotHeight: 30,  // Increased for better readability
+    headerHeight: 60,
+    legendHeight: 30,
+    timeColumnWidth: 75,
+    timeSlotHeight: 12,  // Optimized for better content density
     startHour: 6,
     endHour: 23,
     totalTimeSlots: 36 // 6:00 to 23:30
@@ -123,15 +123,15 @@ async function createWeeklyOverviewPage(
   
   // === HEADER ===
   pdf.setFont('times', 'bold');
-  pdf.setFontSize(24);
+  pdf.setFontSize(20);
   pdf.setTextColor(0, 0, 0);
-  pdf.text('WEEKLY CALENDAR', GRID_CONFIG.pageWidth / 2, 35, { align: 'center' });
+  pdf.text('WEEKLY CALENDAR', GRID_CONFIG.pageWidth / 2, 30, { align: 'center' });
   
   // Week date range
-  pdf.setFontSize(16);
+  pdf.setFontSize(14);
   const weekStart = weekStartDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
   const weekEnd = weekEndDate.toLocaleDateString('en-US', { day: 'numeric', year: 'numeric' });
-  pdf.text(`${weekStart} - ${weekEnd}`, GRID_CONFIG.pageWidth / 2, 60, { align: 'center' });
+  pdf.text(`${weekStart} - ${weekEnd}`, GRID_CONFIG.pageWidth / 2, 50, { align: 'center' });
   
   // === LEGEND ===
   const legendY = GRID_CONFIG.headerHeight;
@@ -143,8 +143,8 @@ async function createWeeklyOverviewPage(
   
   // Legend items
   pdf.setFont('times', 'normal');
-  pdf.setFontSize(12);
-  let legendX = gridStartX + 100;
+  pdf.setFontSize(10);
+  let legendX = gridStartX + 80;
   
   // SimplePractice
   pdf.setFillColor(255, 255, 255);

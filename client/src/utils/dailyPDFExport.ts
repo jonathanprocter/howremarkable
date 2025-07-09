@@ -2,28 +2,28 @@
 import jsPDF from 'jspdf';
 import { CalendarEvent } from '../types/calendar';
 
-// Configuration for larger daily view portrait (8.5x11 inches - bigger to match portrait view)
+// Enhanced configuration for daily view portrait - dashboard matching quality
 const DAILY_CONFIG = {
   pageWidth: 612,   // 8.5 inches = 612 points
   pageHeight: 792,  // 11 inches = 792 points
-  margin: 30,       // Reduced margin for more space
-  timeColumnWidth: 90,  // Slightly wider time column for better readability
-  appointmentColumnWidth: 492,  // Remaining width for appointments (612 - 90 - 30 = 492)
-  timeSlotHeight: 22,  // Bigger slots to match portrait view better
-  headerHeight: 100,     // Reduced header to make room for bigger content
+  margin: 25,       // Optimized margin for better space utilization
+  timeColumnWidth: 85,  // Optimized time column width for readability
+  appointmentColumnWidth: 502,  // Increased appointment column width (612 - 85 - 25 = 502)
+  timeSlotHeight: 18,  // Optimized slot height for better event display
+  headerHeight: 90,     // Balanced header height for navigation and title
 
-  // Typography - proportional to time grid size
+  // Enhanced typography - optimized for readability and dashboard matching
   fonts: {
-    title: { size: 20, weight: 'bold' },      // Large title for "DAILY PLANNER"
-    date: { size: 16, weight: 'normal' },     // Date display
-    stats: { size: 12, weight: 'normal' },    // Statistics display
-    timeLabels: { size: 10, weight: 'normal' }, // Time labels (6:00, 6:30, etc.)
-    eventTitle: { size: 12, weight: 'bold' },  // Appointment title font
-    eventSource: { size: 10, weight: 'normal' }, // Calendar source font
-    eventTime: { size: 24, weight: 'bold' },   // Large time display matching dashboard
-    eventNotes: { size: 10, weight: 'normal' },  // Notes section
-    notesHeader: { size: 10, weight: 'bold' },   // "Event Notes" header
-    actionsHeader: { size: 10, weight: 'bold' }  // "Action Items" header
+    title: { size: 22, weight: 'bold' },      // Enhanced title for "DAILY PLANNER"
+    date: { size: 14, weight: 'normal' },     // Optimized date display
+    stats: { size: 11, weight: 'normal' },    // Enhanced statistics display
+    timeLabels: { size: 9, weight: 'normal' }, // Optimized time labels (6:00, 6:30, etc.)
+    eventTitle: { size: 11, weight: 'bold' },  // Enhanced appointment title font
+    eventSource: { size: 9, weight: 'normal' }, // Enhanced calendar source font
+    eventTime: { size: 18, weight: 'bold' },   // Enhanced time display matching dashboard proportions
+    eventNotes: { size: 9, weight: 'normal' },  // Enhanced notes section
+    notesHeader: { size: 9, weight: 'bold' },   // Enhanced "Event Notes" header
+    actionsHeader: { size: 9, weight: 'bold' }  // Enhanced "Action Items" header
   },
 
   // Colors - match dashboard daily view exactly
