@@ -407,22 +407,43 @@ export default function Planner() {
           }
 
         case 'Weekly Package':
-          // Export weekly view as PDF using the working export function
+          // Export comprehensive weekly package with all daily pages
           try {
-            await exportExactGridPDF(
+            // Import the weekly package export function
+            const { exportWeeklyPackage } = await import('../utils/weeklyPackageExport');
+            
+            console.log('=== WEEKLY PACKAGE EXPORT START ===');
+            console.log('Week start:', state.currentWeek.startDate.toDateString());
+            console.log('Week end:', state.currentWeek.endDate.toDateString());
+            console.log('Total events:', currentEvents.length);
+            
+            // Filter events for the current week
+            const weekEvents = currentEvents.filter(event => {
+              const eventDate = new Date(event.startTime);
+              return eventDate >= state.currentWeek.startDate && eventDate <= state.currentWeek.endDate;
+            });
+            
+            console.log('Week events:', weekEvents.length);
+            
+            await exportWeeklyPackage(
               state.currentWeek.startDate,
               state.currentWeek.endDate,
               currentEvents
             );
 
             toast({
-              title: "Export Successful",
-              description: "Weekly calendar PDF downloaded successfully!"
+              title: "Weekly Package Export Successful",
+              description: `Complete weekly package with 8 pages downloaded! (1 weekly overview + 7 daily pages)`
             });
             return;
           } catch (weeklyError) {
-            console.error('Weekly PDF export error:', weeklyError);
-            throw weeklyError;
+            console.error('Weekly package export error:', weeklyError);
+            toast({
+              title: "Export Failed",
+              description: `Weekly package export failed: ${weeklyError.message}`,
+              variant: "destructive"
+            });
+            return;
           }
           break;
 
