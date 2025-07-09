@@ -462,38 +462,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
   });
 }
 
-// Draw continuous vertical lines connecting all events with notes/actions
-function drawContinuousVerticalLines(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
-  const { margin, timeColumnWidth, appointmentColumnWidth } = DAILY_CONFIG;
-  const timeGridY = DAILY_CONFIG.headerHeight;
-  
-  // Filter events for selected date that have notes or action items
-  const dayEvents = events.filter(event => {
-    const eventDate = new Date(event.startTime);
-    const hasNotesOrActions = (event.notes && event.notes.trim()) || (event.actionItems && event.actionItems.trim());
-    return eventDate.toDateString() === selectedDate.toDateString() && hasNotesOrActions;
-  });
 
-  if (dayEvents.length === 0) return;
-
-  const eventX = margin + timeColumnWidth + 8;
-  const columnWidth = (appointmentColumnWidth - 25) / 3;
-  
-  // Draw continuous vertical lines for the full timeline
-  const lineStartY = timeGridY + 20;
-  const lineEndY = timeGridY + (36 * DAILY_CONFIG.timeSlotHeight); // Full timeline to 23:30
-
-  pdf.setDrawColor(100, 100, 100); // Dark gray for visibility
-  pdf.setLineWidth(1);
-  
-  // Notes column vertical line
-  const notesLineX = eventX + columnWidth - 8;
-  pdf.line(notesLineX, lineStartY, notesLineX, lineEndY);
-  
-  // Action items column vertical line  
-  const actionLineX = eventX + columnWidth * 2 - 8;
-  pdf.line(actionLineX, lineStartY, actionLineX, lineEndY);
-}
 
 export const exportExactDailyPDF = async (
   selectedDate: Date,
@@ -535,9 +504,6 @@ export const exportExactDailyPDF = async (
     
     console.log('Drawing grid...');
     drawDashboardGrid(pdf, selectedDate, events);
-    
-    console.log('Drawing continuous vertical lines...');
-    drawContinuousVerticalLines(pdf, selectedDate, dayEvents);
 
     // Save PDF
     const fileName = `daily-planner-${selectedDate.toISOString().split('T')[0]}.pdf`;
