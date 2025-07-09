@@ -508,6 +508,24 @@ The application uses three main entities:
     - Improved time slot configuration with 12px height for better density
     - Optimized legend positioning and typography for professional appearance
   - **RESULT**: All PDF exports now provide enhanced readability, better dashboard matching, and professional presentation quality
+- July 09, 2025. **COMPREHENSIVE DASHBOARD MATCHING IMPROVEMENTS**: Implemented exact dashboard replication across all PDF export functions:
+  - **Weekly Landscape Export (exactGridPDFExport.ts)**: Complete dashboard matching overhaul
+    - Reduced page margins to 25px and header height to 40px for maximum content space
+    - Optimized time column width to 55px and slot height to 13px for dashboard proportions
+    - Updated typography to dashboard-matching fonts (16pt title, 12pt week info, 9pt legend)
+    - Refined legend with smaller boxes (10x6) and compact spacing (120px) for exact match
+    - Enhanced header height to 25px and improved day name/number font sizing (8pt/10pt)
+    - Reduced grid line thickness to 1px and simplified borders for cleaner appearance
+    - Updated event styling with dashboard-matching colors and thinner borders (0.5px)
+    - Improved event text rendering with 6pt titles and 5pt times for optimal readability
+  - **Daily Portrait Export (dailyPDFExport.ts)**: Dashboard matching configuration updates
+    - Reduced margins to 20px and time column width to 75px for dashboard proportions
+    - Optimized slot height to 16px and header height to 80px for better space utilization
+    - Updated typography hierarchy with dashboard-matching fonts (18pt title, 14pt time display)
+    - Changed column headers to white backgrounds matching dashboard styling
+    - Reduced minimum event height to 40px for better dashboard alignment
+    - Updated header height to 20px and improved grid line consistency
+  - **RESULT**: PDF exports now provide exact dashboard replication with precise scaling, colors, and typography matching
 
 ## User Preferences
 

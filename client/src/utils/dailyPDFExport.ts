@@ -2,28 +2,28 @@
 import jsPDF from 'jspdf';
 import { CalendarEvent } from '../types/calendar';
 
-// Enhanced configuration for daily view portrait - dashboard matching quality
+// Dashboard-matching configuration for daily view portrait
 const DAILY_CONFIG = {
   pageWidth: 612,   // 8.5 inches = 612 points
   pageHeight: 792,  // 11 inches = 792 points
-  margin: 25,       // Optimized margin for better space utilization
-  timeColumnWidth: 85,  // Optimized time column width for readability
-  appointmentColumnWidth: 502,  // Increased appointment column width (612 - 85 - 25 = 502)
-  timeSlotHeight: 18,  // Optimized slot height for better event display
-  headerHeight: 90,     // Balanced header height for navigation and title
+  margin: 20,       // Reduced margin for dashboard matching
+  timeColumnWidth: 75,  // Dashboard matching time column width
+  appointmentColumnWidth: 517,  // Increased appointment column width (612 - 75 - 20 = 517)
+  timeSlotHeight: 16,  // Dashboard matching slot height
+  headerHeight: 80,     // Compact header height for more content space
 
-  // Enhanced typography - optimized for readability and dashboard matching
+  // Dashboard-matching typography
   fonts: {
-    title: { size: 22, weight: 'bold' },      // Enhanced title for "DAILY PLANNER"
-    date: { size: 14, weight: 'normal' },     // Optimized date display
-    stats: { size: 11, weight: 'normal' },    // Enhanced statistics display
-    timeLabels: { size: 9, weight: 'normal' }, // Optimized time labels (6:00, 6:30, etc.)
-    eventTitle: { size: 11, weight: 'bold' },  // Enhanced appointment title font
-    eventSource: { size: 9, weight: 'normal' }, // Enhanced calendar source font
-    eventTime: { size: 18, weight: 'bold' },   // Enhanced time display matching dashboard proportions
-    eventNotes: { size: 9, weight: 'normal' },  // Enhanced notes section
-    notesHeader: { size: 9, weight: 'bold' },   // Enhanced "Event Notes" header
-    actionsHeader: { size: 9, weight: 'bold' }  // Enhanced "Action Items" header
+    title: { size: 18, weight: 'bold' },      // Dashboard matching title for "DAILY PLANNER"
+    date: { size: 12, weight: 'normal' },     // Dashboard matching date display
+    stats: { size: 10, weight: 'normal' },    // Dashboard matching statistics display
+    timeLabels: { size: 8, weight: 'normal' }, // Dashboard matching time labels (6:00, 6:30, etc.)
+    eventTitle: { size: 10, weight: 'bold' },  // Dashboard matching appointment title font
+    eventSource: { size: 8, weight: 'normal' }, // Dashboard matching calendar source font
+    eventTime: { size: 14, weight: 'bold' },   // Dashboard matching time display
+    eventNotes: { size: 8, weight: 'normal' },  // Dashboard matching notes section
+    notesHeader: { size: 8, weight: 'bold' },   // Dashboard matching "Event Notes" header
+    actionsHeader: { size: 8, weight: 'bold' }  // Dashboard matching "Action Items" header
   },
 
   // Colors - match dashboard daily view exactly
@@ -206,24 +206,24 @@ function drawDailyHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]
 function drawTimeGrid(pdf: jsPDF) {
   const { margin, timeColumnWidth, appointmentColumnWidth, timeSlotHeight } = DAILY_CONFIG;
   const gridStartY = margin + DAILY_CONFIG.headerHeight;
-  const headerHeight = 25;
+  const headerHeight = 20;
 
-  // Column headers - black background like dashboard
-  pdf.setFillColor(...DAILY_CONFIG.colors.black);
+  // Column headers - white background like dashboard
+  pdf.setFillColor(...DAILY_CONFIG.colors.white);
   pdf.setDrawColor(...DAILY_CONFIG.colors.black);
   pdf.setLineWidth(1);
 
   // TIME header
   pdf.rect(margin, gridStartY, timeColumnWidth, headerHeight, 'FD');
-  pdf.setFontSize(10);
+  pdf.setFontSize(9);
   pdf.setFont('helvetica', 'bold');
-  pdf.setTextColor(...DAILY_CONFIG.colors.white);
-  pdf.text('TIME', margin + timeColumnWidth / 2, gridStartY + 15, { align: 'center' });
+  pdf.setTextColor(...DAILY_CONFIG.colors.black);
+  pdf.text('TIME', margin + timeColumnWidth / 2, gridStartY + 13, { align: 'center' });
 
   // APPOINTMENTS header
   const dayX = margin + timeColumnWidth;
   pdf.rect(dayX, gridStartY, appointmentColumnWidth, headerHeight, 'FD');
-  pdf.text('APPOINTMENTS', dayX + appointmentColumnWidth / 2, gridStartY + 15, { align: 'center' });
+  pdf.text('APPOINTMENTS', dayX + appointmentColumnWidth / 2, gridStartY + 13, { align: 'center' });
 
   // Time slots - match dashboard exactly
   TIME_SLOTS_WITH_HOUR.forEach((slot, index) => {
@@ -256,12 +256,13 @@ function drawTimeGrid(pdf: jsPDF) {
   pdf.line(margin + timeColumnWidth, gridStartY, margin + timeColumnWidth, gridStartY + headerHeight + (TIME_SLOTS_WITH_HOUR.length * timeSlotHeight));
 
   // Outer border
+  pdf.setLineWidth(1);
   pdf.rect(margin, gridStartY, timeColumnWidth + appointmentColumnWidth, headerHeight + (TIME_SLOTS_WITH_HOUR.length * timeSlotHeight));
 }
 
 function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
   const { margin, timeColumnWidth, appointmentColumnWidth, timeSlotHeight } = DAILY_CONFIG;
-  const gridStartY = margin + DAILY_CONFIG.headerHeight + 25; // Add header height
+  const gridStartY = margin + DAILY_CONFIG.headerHeight + 20; // Add header height
 
   // Sort events by start time to ensure proper rendering order
   const sortedEvents = [...events].sort((a, b) => 
@@ -286,7 +287,7 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
 
     // Calculate duration
     const durationMinutes = (endDate.getTime() - eventDate.getTime()) / (1000 * 60);
-    const eventHeight = Math.max(60, (durationMinutes / 30) * timeSlotHeight - 4); // Minimum height for text display
+    const eventHeight = Math.max(40, (durationMinutes / 30) * timeSlotHeight - 2); // Dashboard matching minimum height
 
     // Skip if outside range (6:00 to 23:30)
     if (minutesSince6am < 0 || minutesSince6am > (17.5 * 60)) {
