@@ -34,6 +34,7 @@ const DAILY_CONFIG = {
     veryLightGray: [248, 248, 248],
     white: [255, 255, 255],
     bottomHourColor: [255, 255, 240], // #FFFFF0 - light cream for bottom-of-hour rows
+    topHourColor: [249, 246, 238], // #F9F6EE - light beige for top-of-hour rows
     simplePracticeBlue: [100, 149, 237],
     googleGreen: [52, 168, 83],
     holidayOrange: [255, 152, 0],
@@ -264,7 +265,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     
     // Time slot background - match dashboard exactly
     if (isHour) {
-      pdf.setFillColor(...DAILY_CONFIG.colors.lightGray);  // Gray for top of hour (hour marks)
+      pdf.setFillColor(...DAILY_CONFIG.colors.topHourColor);  // #F9F6EE for top of hour (hour marks)
     } else {
       pdf.setFillColor(...DAILY_CONFIG.colors.bottomHourColor);  // #FFFFF0 for bottom of hour (30-minute marks)
     }
@@ -326,8 +327,8 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     const eventType = getEventTypeInfo(event);
     
     // Draw event background - always white like dashboard, STRICTLY contained within grid boundaries
-    const eventBoxX = margin + timeColumnWidth + 4;
-    const eventBoxWidth = appointmentColumnWidth - 8; // Further reduced width for strict containment
+    const eventBoxX = margin + timeColumnWidth + 6; // Start further from time column
+    const eventBoxWidth = appointmentColumnWidth - 12; // Much smaller width to ensure strict containment
     pdf.setFillColor(...DAILY_CONFIG.colors.white);
     pdf.rect(eventBoxX, topPosition, eventBoxWidth, exactHeight, 'F');
     
@@ -355,9 +356,9 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     }
     
     // Draw event content in 3-column layout optimized for reMarkable Paper Pro
-    const eventX = margin + timeColumnWidth + 7;
+    const eventX = margin + timeColumnWidth + 9; // Align with reduced event box
     const eventY = topPosition + 2;  // Position at the very top of the appointment square
-    const columnWidth = (appointmentColumnWidth - 25) / 3;  // Wider columns for better text fitting
+    const columnWidth = (appointmentColumnWidth - 30) / 3;  // Reduced column width to match contained appointment box
     
     // Left column: Event title, calendar source, and time
     pdf.setFontSize(DAILY_CONFIG.fonts.eventTitle.size);
