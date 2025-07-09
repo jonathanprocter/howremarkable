@@ -397,6 +397,15 @@ export const DailyView = ({
                       {event.notes && (
                         <div className="appointment-notes">
                           <div className="appointment-notes-header">Event Notes</div>
+                          <div className="vertical-divider-notes" style={{
+                            position: 'absolute',
+                            left: '12px', // Position under the "E" of "Event Notes"
+                            top: '18px',
+                            width: '1px',
+                            height: 'calc(100% - 18px)',
+                            backgroundColor: '#ccc',
+                            zIndex: 1
+                          }}></div>
                           {event.notes.split('\n')
                             .filter(note => note.trim().length > 0)
                             .map(note => note.trim().replace(/^[•\s-]+/, '').trim())
@@ -413,6 +422,15 @@ export const DailyView = ({
                       {event.actionItems && (
                         <div className="appointment-actions">
                           <div className="appointment-actions-header">Action Items</div>
+                          <div className="vertical-divider-actions" style={{
+                            position: 'absolute',
+                            left: '8px', // Position under the "A" of "Action Items"
+                            top: '18px',
+                            width: '1px',
+                            height: 'calc(100% - 18px)',
+                            backgroundColor: '#ccc',
+                            zIndex: 1
+                          }}></div>
                           {event.actionItems.split('\n')
                             .filter(item => item.trim().length > 0)
                             .map(item => item.trim().replace(/^[•\s-]+/, '').trim())

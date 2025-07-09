@@ -139,6 +139,47 @@
   background: #f59e0b;
 }
 
+/* Weekly Dashboard Header - Navigation Styles */
+.dashboard-header .header-left,
+.dashboard-header .header-right {
+  display: flex;
+  gap: 12px;
+}
+
+.dashboard-header .header-center {
+  flex: 1;
+  text-align: center;
+}
+
+.dashboard-header h1 {
+  font-size: 28px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 8px 0;
+  font-family: 'Times New Roman', serif;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.dashboard-header .nav-btn {
+  padding: 8px 16px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #f0f0f0;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  color: #333;
+}
+
+.dashboard-header .nav-btn:hover {
+  background: #e0e0e0;
+  border-color: #999;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
 .dashboard-header .stats-bar {
   display: flex;
   justify-content: space-between;
