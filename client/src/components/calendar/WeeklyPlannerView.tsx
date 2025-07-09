@@ -78,6 +78,16 @@ export const WeeklyPlannerView = ({
     return className;
   };
 
+  const cleanEventTitle = (title: string) => {
+    // Remove lock symbols and other problematic characters
+    return title
+      .replace(/🔒\s*/g, '') // Remove lock symbol and following space
+      .replace(/[\u{1F500}-\u{1F6FF}]/gu, '') // Remove emoji symbols
+      .replace(/Ø=ÜÅ/g, '') // Remove corrupted symbols
+      .replace(/\s+/g, ' ') // Normalize spaces
+      .trim();
+  };
+
   const renderTimeSlotEvents = (date: Date, slot: any, slotIndex: number) => {
     const dayEvents = events.filter(event => 
       new Date(event.startTime).toDateString() === date.toDateString()
@@ -108,6 +118,8 @@ export const WeeklyPlannerView = ({
         minute: '2-digit', 
         hour12: false 
       });
+
+      const cleanTitle = cleanEventTitle(event.title);
 
       return (
         <div
@@ -144,7 +156,7 @@ export const WeeklyPlannerView = ({
             }));
           }}
         >
-          <div className="appointment-name">{event.title}</div>
+          <div className="appointment-name">{cleanTitle}</div>
           <div className="appointment-time">{startTime}-{endTime}</div>
         </div>
       );

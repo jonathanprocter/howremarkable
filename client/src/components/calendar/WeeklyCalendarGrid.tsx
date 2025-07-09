@@ -134,6 +134,16 @@ export const WeeklyCalendarGrid = ({
     }
   };
 
+  const cleanEventTitle = (title: string) => {
+    // Remove lock symbols and other problematic characters
+    return title
+      .replace(/🔒\s*/g, '') // Remove lock symbol and following space
+      .replace(/[\u{1F500}-\u{1F6FF}]/gu, '') // Remove emoji symbols
+      .replace(/Ø=ÜÅ/g, '') // Remove corrupted symbols
+      .replace(/\s+/g, ' ') // Normalize spaces
+      .trim();
+  };
+
   return (
     <div className="grid grid-cols-8 border border-gray-300 rounded-lg overflow-hidden">
       {/* Headers */}
@@ -171,7 +181,7 @@ export const WeeklyCalendarGrid = ({
                 }}
               >
                 <div className="text-xs font-medium text-gray-800 truncate">
-                  {event.title}
+                  {cleanEventTitle(event.title)}
                 </div>
               </div>
             ))}
@@ -241,7 +251,7 @@ export const WeeklyCalendarGrid = ({
                       }}
                     >
                       <div className="text-xs font-medium text-gray-800 leading-tight break-words">
-                        {event.title}
+                        {cleanEventTitle(event.title)}
                       </div>
                       <div className="text-xs text-gray-600 leading-tight">
                         {event.startTime.toLocaleTimeString('en-US', { 
