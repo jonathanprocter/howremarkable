@@ -11,7 +11,7 @@ const DAILY_CONFIG = {
   timeColumnWidth: 50,  // Compact time column for narrow screen
   appointmentColumnWidth: 449,  // Remaining width for appointments
   timeSlotHeight: 16,  // Compact slots to fit full timeline in portrait
-  headerHeight: 50,    // Compact header for e-ink display
+  headerHeight: 70,    // Increased header space for better layout
 
   // Typography optimized for reMarkable Paper Pro e-ink display
   fonts: {
@@ -94,13 +94,13 @@ function drawDashboardHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEve
   const { margin, pageWidth } = DAILY_CONFIG;
 
   // Title - clean and professional
-  pdf.setFontSize(16);  // Proper header size
+  pdf.setFontSize(14);  // Proper header size for reMarkable Paper Pro
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(...DAILY_CONFIG.colors.black);
-  pdf.text('Daily Planner', pageWidth / 2, margin + 15, { align: 'center' });
+  pdf.text('Daily Planner', pageWidth / 2, margin + 12, { align: 'center' });
 
   // Date - clean formatting
-  pdf.setFontSize(12);  // Proper date font
+  pdf.setFontSize(10);  // Proper date font for reMarkable Paper Pro
   pdf.setFont('helvetica', 'normal');
   const dateStr = selectedDate.toLocaleDateString('en-US', { 
     weekday: 'long', 
@@ -108,7 +108,7 @@ function drawDashboardHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEve
     month: 'long', 
     day: 'numeric' 
   });
-  pdf.text(dateStr, pageWidth / 2, margin + 30, { align: 'center' });
+  pdf.text(dateStr, pageWidth / 2, margin + 25, { align: 'center' });
 
   // Statistics - moved up and left
   const totalEvents = events.length;
@@ -121,42 +121,42 @@ function drawDashboardHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEve
   pdf.setFontSize(DAILY_CONFIG.fonts.stats.size);
   pdf.setFont('helvetica', DAILY_CONFIG.fonts.stats.weight);
   
-  const statsY = margin + 25;  // Compact positioning for reMarkable Paper Pro
+  const statsY = margin + 35;  // Adjusted positioning for increased header height
   const statsSpacing = 112;    // Tighter spacing for narrow screen
   
-  // Statistics with proper sizing
-  pdf.setFontSize(12);
+  // Statistics with proper sizing for reMarkable Paper Pro
+  pdf.setFontSize(10);
   pdf.setFont('helvetica', 'bold');
   
   // Appointments
   pdf.text(`${totalEvents}`, margin + 80, statsY, { align: 'center' });
-  pdf.setFontSize(10);
+  pdf.setFontSize(7);
   pdf.setFont('helvetica', 'normal');
-  pdf.text('Appointments', margin + 80, statsY + 12, { align: 'center' });
+  pdf.text('Appointments', margin + 80, statsY + 10, { align: 'center' });
   
   // Scheduled
-  pdf.setFontSize(12);
+  pdf.setFontSize(10);
   pdf.setFont('helvetica', 'bold');
   pdf.text(`${totalHours.toFixed(1)}h`, margin + 80 + statsSpacing, statsY, { align: 'center' });
-  pdf.setFontSize(10);
+  pdf.setFontSize(7);
   pdf.setFont('helvetica', 'normal');
-  pdf.text('Scheduled', margin + 80 + statsSpacing, statsY + 12, { align: 'center' });
+  pdf.text('Scheduled', margin + 80 + statsSpacing, statsY + 10, { align: 'center' });
   
   // Available
-  pdf.setFontSize(12);
+  pdf.setFontSize(10);
   pdf.setFont('helvetica', 'bold');
   pdf.text(`${availableHours.toFixed(1)}h`, margin + 80 + statsSpacing * 2, statsY, { align: 'center' });
-  pdf.setFontSize(10);
+  pdf.setFontSize(7);
   pdf.setFont('helvetica', 'normal');
-  pdf.text('Available', margin + 80 + statsSpacing * 2, statsY + 12, { align: 'center' });
+  pdf.text('Available', margin + 80 + statsSpacing * 2, statsY + 10, { align: 'center' });
   
   // Free Time
-  pdf.setFontSize(12);
+  pdf.setFontSize(10);
   pdf.setFont('helvetica', 'bold');
   pdf.text(`${freeTimePercentage}%`, margin + 80 + statsSpacing * 3, statsY, { align: 'center' });
-  pdf.setFontSize(10);
+  pdf.setFontSize(7);
   pdf.setFont('helvetica', 'normal');
-  pdf.text('Free Time', margin + 80 + statsSpacing * 3, statsY + 12, { align: 'center' });
+  pdf.text('Free Time', margin + 80 + statsSpacing * 3, statsY + 10, { align: 'center' });
 }
 
 function drawDashboardLegend(pdf: jsPDF) {
@@ -298,24 +298,24 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     
     // Draw event borders based on type - match dashboard styling EXACTLY, aligned with time slots
     if (eventType.isSimplePractice) {
-      // SimplePractice: white background with cornflower blue border and thick left flag
+      // SimplePractice: white background with thin cornflower blue border and left flag
       pdf.setDrawColor(...DAILY_CONFIG.colors.simplePracticeBlue);
-      pdf.setLineWidth(1);
+      pdf.setLineWidth(0.5);
       pdf.rect(margin + timeColumnWidth + 2, topPosition + 1, appointmentColumnWidth - 4, exactHeight, 'D');
-      // Thick left flag (4px wide)
+      // Thin left flag (2px wide instead of 4px)
       pdf.setFillColor(...DAILY_CONFIG.colors.simplePracticeBlue);
-      pdf.rect(margin + timeColumnWidth + 2, topPosition + 1, 4, exactHeight, 'F');
+      pdf.rect(margin + timeColumnWidth + 2, topPosition + 1, 2, exactHeight, 'F');
     } else if (eventType.isGoogle) {
       // Google Calendar: white background with dashed green border all around
       pdf.setDrawColor(...DAILY_CONFIG.colors.googleGreen);
-      pdf.setLineWidth(1);
+      pdf.setLineWidth(0.5);
       pdf.setLineDash([3, 3]);
       pdf.rect(margin + timeColumnWidth + 2, topPosition + 1, appointmentColumnWidth - 4, exactHeight, 'D');
       pdf.setLineDash([]);
     } else {
       // Holiday: orange border around appointment
       pdf.setDrawColor(...DAILY_CONFIG.colors.holidayOrange);
-      pdf.setLineWidth(1);
+      pdf.setLineWidth(0.5);
       pdf.rect(margin + timeColumnWidth + 2, topPosition + 1, appointmentColumnWidth - 4, exactHeight, 'D');
     }
     
