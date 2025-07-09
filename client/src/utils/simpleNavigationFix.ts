@@ -30,8 +30,8 @@ export const simpleNavigationFix = () => {
     console.error('Error removing corrupted symbols:', error);
   }
   
-  // STEP 3: Remove broken text navigation
-  console.log('Step 3: Removing broken text navigation...');
+  // STEP 3: Remove broken text navigation and fix 1600 hour symbols
+  console.log('Step 3: Removing broken text navigation and fixing 1600 hour...');
   try {
     document.querySelectorAll('*').forEach(element => {
       if (element.textContent) {
@@ -43,6 +43,15 @@ export const simpleNavigationFix = () => {
         text = text.replace(/!• Weekly Overview/g, '');
         text = text.replace(/Page \d+ of 8 -[^!]*/g, '');
         text = text.replace(/!• Sunday Tuesday !/g, '');
+        
+        // SPECIAL FIX: Remove symbols from 1600 hour specifically
+        if (text.includes('16:00') || text.includes('1600')) {
+          text = text.replace(/16:00[Ø=ÜÅ]+/g, '16:00');
+          text = text.replace(/1600[Ø=ÜÅ]+/g, '1600');
+          text = text.replace(/Ø=ÜÅ16:00/g, '16:00');
+          text = text.replace(/Ø=ÜÅ1600/g, '1600');
+          console.log('✅ Fixed 1600 hour symbols specifically');
+        }
         
         if (text !== originalText) {
           element.textContent = text;

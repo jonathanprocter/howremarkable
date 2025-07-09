@@ -64,3 +64,6 @@ export const cleanDOMText = () => {
     }
   });
 };
+
+// Export for PDF functions
+export const cleanTextForPDF = cleanEventTitle;

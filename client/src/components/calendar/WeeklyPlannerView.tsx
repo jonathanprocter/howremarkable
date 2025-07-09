@@ -240,11 +240,17 @@ export const WeeklyPlannerView = ({
 
             const slotElements = [];
 
-            // Time slot label
+            // Time slot label - clean up any corrupted symbols especially for 1600 hour
+            let cleanTime = slot.time;
+            if (cleanTime.includes('16:00') || cleanTime.includes('1600')) {
+              cleanTime = cleanTime.replace(/[Ø=ÜÅ]/g, '');
+              console.log(`✅ Cleaned 1600 hour time slot: ${slot.time} -> ${cleanTime}`);
+            }
+            
             slotElements.push(
               <div key={`time-${slot.hour}-${slot.minute}`} className={`time-slot ${isHour ? 'hour' : ''}`}>
                 <span className={isHour ? 'text-sm' : 'text-xs'}>
-                  {slot.time}
+                  {cleanTime}
                 </span>
               </div>
             );
