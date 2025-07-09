@@ -26,11 +26,11 @@ export const exportWeeklyCalendarHTML = async (
     const dailyAverage = totalHours / 7;
     const availableTime = (7 * 17.5) - totalHours;
 
-    // Create PDF with proper A3 landscape dimensions like template
+    // Create PDF with 8.5 x 11 inch landscape dimensions
     const pdf = new jsPDF({
       orientation: 'landscape',
       unit: 'pt',
-      format: [1190, 842] // A3 landscape format matching template
+      format: [792, 612] // 11 x 8.5 inches (landscape)
     });
 
     // Set background

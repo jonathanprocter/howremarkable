@@ -30,11 +30,11 @@ export const exportWeeklyPackage = async (
 
     console.log('Week events:', weekEvents.length);
 
-    // Create master PDF document - start with reMarkable Paper Pro landscape for weekly overview
+    // Create master PDF document - start with 8.5 x 11 inch landscape for weekly overview
     const masterPDF = new jsPDF({
       orientation: 'landscape',
       unit: 'pt',
-      format: [1872, 1404] // reMarkable Paper Pro landscape
+      format: [792, 612] // 11 x 8.5 inches (landscape)
     });
 
     // PAGE 1: Weekly Overview - Use existing weekly grid export functionality
@@ -53,8 +53,8 @@ export const exportWeeklyPackage = async (
       
       console.log(`📄 Creating ${dayName} Page (Page ${pageNumber}) - ${currentDate.toDateString()}`);
       
-      // Add new page for each day - switch to reMarkable Paper Pro portrait for daily pages
-      masterPDF.addPage([1404, 1872], 'portrait');
+      // Add new page for each day - switch to 8.5 x 11 inch portrait for daily pages
+      masterPDF.addPage([612, 792], 'portrait');
       
       // Filter events for this specific day
       const dayEvents = events.filter(event => {

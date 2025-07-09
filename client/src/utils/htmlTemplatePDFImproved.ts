@@ -62,7 +62,7 @@ export const exportHTMLTemplatePDF = async (
   const pdf = new jsPDF({
     orientation: 'landscape',
     unit: 'pt',
-    format: [HTML_TEMPLATE_CONFIG.pageWidth, HTML_TEMPLATE_CONFIG.pageHeight]
+    format: [792, 612] // 11 x 8.5 inches (landscape)
   });
 
   // === DRAW ALL SECTIONS ===

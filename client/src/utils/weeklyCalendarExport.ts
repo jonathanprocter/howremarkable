@@ -42,7 +42,7 @@ export const exportWeeklyCalendar = async (
   const pdf = new jsPDF({
     orientation: 'landscape',
     unit: 'pt',
-    format: 'a4'
+    format: [792, 612] // 11 x 8.5 inches (landscape)
   });
 
   // Filter events for this week

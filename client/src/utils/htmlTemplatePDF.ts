@@ -58,25 +58,30 @@ function getEventTypeInfo(event: CalendarEvent): EventTypeInfo {
   };
 }
 
-// reMarkable Paper Pro specific configuration for daily view - MATCH DASHBOARD EXACTLY
+// reMarkable Paper Pro specific configuration for daily view - reMarkable dimensions
 const REMARKABLE_DAILY_CONFIG = {
-  // Perfect reMarkable Pro portrait dimensions matching dashboard layout
-  pageWidth: 595,   // A4 portrait width
-  pageHeight: 842,  // A4 portrait height
-  margin: 20,       // Clean margins like dashboard
+  // reMarkable Pro portrait dimensions (closer to actual device)
+  pageWidth: 507,   // reMarkable Pro active area width
+  pageHeight: 677,  // reMarkable Pro active area height
+  margin: 20,       // Clean margins for reMarkable
   
-  // Header configuration - EXACTLY match dashboard proportions
-  headerHeight: 80,  // Match dashboard header space
-  statsHeight: 40,   // Match dashboard stats section
-  legendHeight: 25,  // Match dashboard legend
+  // Header configuration - optimized for reMarkable
+  headerHeight: 70,  // Proportional header for reMarkable
+  statsHeight: 35,   // Proportional stats section
+  legendHeight: 25,  // Proportional legend
   
   get totalHeaderHeight() {
     return this.headerHeight + this.statsHeight + this.legendHeight;
   },
   
-  // Grid configuration - EXACTLY match dashboard time slots
-  timeColumnWidth: 80,  // Match dashboard time column width
-  timeSlotHeight: 22,   // Match dashboard time slot height exactly
+  // Grid configuration - optimized for reMarkable with 36 time slots (6:00-23:30)
+  timeColumnWidth: 75,  // Proportional for reMarkable
+  
+  get timeSlotHeight() {
+    // Calculate slot height to fit 36 slots in available space
+    const availableHeight = this.pageHeight - (this.margin * 2) - this.totalHeaderHeight;
+    return Math.floor(availableHeight / 36); // 36 slots from 6:00-23:30
+  },
   
   get gridStartY() {
     return this.margin + this.totalHeaderHeight;
@@ -86,15 +91,15 @@ const REMARKABLE_DAILY_CONFIG = {
     return this.pageWidth - (this.margin * 2) - this.timeColumnWidth;
   },
   
-  // Typography - optimized for reMarkable Pro readability
+  // Typography - optimized for reMarkable readability
   fonts: {
-    title: 16,         // Increased for better header visibility
-    subtitle: 12,      // Increased for better readability
-    stats: 10,         // Increased for better stats visibility
-    timeSlot: 8,       // Increased for better time readability
-    eventTitle: 10,    // Increased for better event title readability
-    eventSource: 8,    // Increased for better source readability
-    eventTime: 9       // Increased for better time readability
+    title: 14,         // Proportional title for reMarkable
+    subtitle: 12,      // Proportional subtitle
+    stats: 10,         // Readable stats
+    timeSlot: 8,       // Clear time labels
+    eventTitle: 10,    // Clear event titles
+    eventSource: 8,    // Clear source labels
+    eventTime: 9       // Clear time display
   },
   
   colors: {
@@ -180,18 +185,18 @@ export const exportHTMLTemplatePDF = async (
   let pdf;
   
   if (isDailyView) {
-    // reMarkable Paper Pro optimized portrait dimensions
+    // 8.5 x 11 inch portrait format for daily view
     pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'pt',
-      format: [REMARKABLE_DAILY_CONFIG.pageWidth, REMARKABLE_DAILY_CONFIG.pageHeight]
+      format: [612, 792] // 8.5 x 11 inches
     });
   } else {
-    // Weekly view uses reMarkable Paper Pro landscape
+    // 8.5 x 11 inch landscape format for weekly view
     pdf = new jsPDF({
       orientation: 'landscape',
       unit: 'pt',
-      format: [HTML_TEMPLATE_CONFIG.pageWidth, HTML_TEMPLATE_CONFIG.pageHeight]
+      format: [792, 612] // 11 x 8.5 inches (landscape)
     });
   }
 

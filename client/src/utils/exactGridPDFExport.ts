@@ -65,11 +65,11 @@ export const exportExactGridPDF = async (
       return eventDate >= weekStartDate && eventDate <= weekEndDate;
     });
 
-    // Create PDF with A3 landscape dimensions
+    // Create PDF with 8.5 x 11 inch landscape dimensions
     const pdf = new jsPDF({
       orientation: 'landscape',
       unit: 'pt',
-      format: [GRID_CONFIG.pageWidth, GRID_CONFIG.pageHeight]
+      format: [792, 612] // 11 x 8.5 inches (landscape)
     });
 
     // Use full width layout positions

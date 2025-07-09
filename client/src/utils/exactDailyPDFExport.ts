@@ -512,7 +512,7 @@ export const exportExactDailyPDF = async (
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'pt',
-      format: 'a4'
+      format: [612, 792] // 8.5 x 11 inches
     });
 
     console.log('✅ PDF OBJECT CREATED SUCCESSFULLY');
