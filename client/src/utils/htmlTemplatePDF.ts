@@ -733,62 +733,69 @@ function drawCalendarGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent
   pdf.setTextColor(...HTML_TEMPLATE_CONFIG.colors.black);
   pdf.text('TIME', margin + HTML_TEMPLATE_CONFIG.timeColumnWidth / 2, gridY + 16, { align: 'center' });
   
-  // === DAY HEADERS ===
+  // === DAY HEADERS - CLEAN AND CLEAR ===
   const dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
   for (let i = 0; i < 7; i++) {
     const dayDate = new Date(weekStartDate);
     dayDate.setDate(weekStartDate.getDate() + i);
     const x = margin + HTML_TEMPLATE_CONFIG.timeColumnWidth + (i * dayColumnWidth);
     
-    // Day header background
+    // Clean day header background
     pdf.setFillColor(...HTML_TEMPLATE_CONFIG.colors.lightGray);
     pdf.rect(x, gridY, dayColumnWidth, headerHeight, 'F');
     
-    // Day name - smaller as requested
-    pdf.setFontSize(8);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text(dayNames[i], x + dayColumnWidth / 2, gridY + 11, { align: 'center' });
-    
-    // Date number - smaller as requested
-    pdf.setFontSize(7);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text(dayDate.getDate().toString(), x + dayColumnWidth / 2, gridY + 20, { align: 'center' });
-  }
-  
-  // === TIME GRID - SIMPLIFIED WITHOUT INDIVIDUAL HOUR BOXES ===
-  // Create simplified time blocks (6am to 11:30pm in 1-hour blocks)
-  const simplifiedTimeSlots = [];
-  for (let hour = 6; hour <= 23; hour++) {
-    simplifiedTimeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
-  }
-  
-  simplifiedTimeSlots.forEach((timeSlot, index) => {
-    const y = gridY + headerHeight + (index * (HTML_TEMPLATE_CONFIG.timeSlotHeight * 2)); // Double height for hourly blocks
-    
-    // Time column cell - only show time label, no individual boxes
-    pdf.setFillColor(...HTML_TEMPLATE_CONFIG.colors.lightGray);
-    pdf.rect(margin, y, HTML_TEMPLATE_CONFIG.timeColumnWidth, HTML_TEMPLATE_CONFIG.timeSlotHeight * 2, 'F');
-    
-    // Time text
+    // Day name - clear and bold
     pdf.setFontSize(10);
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(...HTML_TEMPLATE_CONFIG.colors.black);
-    pdf.text(timeSlot, margin + HTML_TEMPLATE_CONFIG.timeColumnWidth / 2, y + 20, { align: 'center' });
+    pdf.text(dayNames[i], x + dayColumnWidth / 2, gridY + 12, { align: 'center' });
     
-    // Day area - clean white space without individual boxes
+    // Date number - clear and readable
+    pdf.setFontSize(8);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(...HTML_TEMPLATE_CONFIG.colors.black);
+    pdf.text(dayDate.getDate().toString(), x + dayColumnWidth / 2, gridY + 22, { align: 'center' });
+    
+    // Day header border
+    pdf.setLineWidth(1);
+    pdf.setDrawColor(...HTML_TEMPLATE_CONFIG.colors.mediumGray);
+    pdf.rect(x, gridY, dayColumnWidth, headerHeight);
+  }
+  
+  // === TIME GRID - CLEAN HOURLY BLOCKS ===
+  // Create clean hourly time blocks (6am to 11:30pm)
+  const timeSlots = [];
+  for (let hour = 6; hour <= 23; hour++) {
+    timeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
+  }
+  
+  timeSlots.forEach((timeSlot, index) => {
+    const y = gridY + headerHeight + (index * (HTML_TEMPLATE_CONFIG.timeSlotHeight * 2));
+    
+    // Time column cell with clean time display
+    pdf.setFillColor(...HTML_TEMPLATE_CONFIG.colors.lightGray);
+    pdf.rect(margin, y, HTML_TEMPLATE_CONFIG.timeColumnWidth, HTML_TEMPLATE_CONFIG.timeSlotHeight * 2, 'F');
+    
+    // Time text - properly centered and sized
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(...HTML_TEMPLATE_CONFIG.colors.black);
+    pdf.text(timeSlot, margin + HTML_TEMPLATE_CONFIG.timeColumnWidth / 2, y + 18, { align: 'center' });
+    
+    // Day columns - clean white background
     for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
       const x = margin + HTML_TEMPLATE_CONFIG.timeColumnWidth + (dayIndex * dayColumnWidth);
-      
-      // Clean day area background
       pdf.setFillColor(...HTML_TEMPLATE_CONFIG.colors.white);
       pdf.rect(x, y, dayColumnWidth, HTML_TEMPLATE_CONFIG.timeSlotHeight * 2, 'F');
     }
     
-    // Only draw horizontal lines between hours (not half-hours)
-    pdf.setLineWidth(1);
-    pdf.setDrawColor(...HTML_TEMPLATE_CONFIG.colors.mediumGray);
-    const lineY = y + (HTML_TEMPLATE_CONFIG.timeSlotHeight * 2);
-    pdf.line(margin, lineY, margin + HTML_TEMPLATE_CONFIG.timeColumnWidth + (7 * dayColumnWidth), lineY);
+    // Horizontal grid lines
+    if (index < timeSlots.length - 1) {
+      pdf.setLineWidth(0.5);
+      pdf.setDrawColor(...HTML_TEMPLATE_CONFIG.colors.mediumGray);
+      const lineY = y + (HTML_TEMPLATE_CONFIG.timeSlotHeight * 2);
+      pdf.line(margin, lineY, margin + HTML_TEMPLATE_CONFIG.timeColumnWidth + (7 * dayColumnWidth), lineY);
+    }
   });
   
   // === VERTICAL GRID LINES ===
