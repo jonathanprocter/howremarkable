@@ -546,6 +546,65 @@ html, body {
     text-align: left;
 }
 
+/* Event block styling for weekly calendar grid */
+.event-block {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 2px;
+    padding: 2px 4px;
+    font-size: 10px;
+    line-height: 1.2;
+    color: #333;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-sizing: border-box;
+    margin: 1px 0;
+    position: relative;
+    z-index: 10;
+}
+
+.event-block.simplepractice {
+    background: white;
+    border: 1px solid #6495ED;
+    border-left: 4px solid #6495ED;
+    color: #1e3a8a;
+}
+
+.event-block.google {
+    background: white;
+    border: 1px dashed #22c55e;
+    color: #374151;
+}
+
+.event-block.manual {
+    background: white;
+    border: 1px solid #f59e0b;
+    color: #92400e;
+}
+
+.event-block.all-day {
+    background: #f0f0f0;
+    border: 1px solid #ddd;
+    color: #666;
+    font-style: italic;
+}
+
+.event-block:hover {
+    transform: scale(1.02);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    z-index: 20;
+}
+
+.time-slot {
+    min-height: 40px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    box-sizing: border-box;
+}
+
 /* Appointment header styling - exact match to HTML template */
 .appointment-header {
     display: flex;

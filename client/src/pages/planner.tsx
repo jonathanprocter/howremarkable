@@ -5,6 +5,7 @@ import { MainLayout } from '../components/layout/MainLayout';
 import { Sidebar } from '../components/sidebar/Sidebar';
 import { Header } from '../components/common/Header';
 import { WeeklyPlannerView } from '../components/calendar/WeeklyPlannerView';
+import { WeeklyCalendarGrid } from '../components/calendar/WeeklyCalendarGrid';
 import { DailyView } from '../components/calendar/DailyView';
 import { CalendarLegend } from '../components/calendar/CalendarLegend';
 import { CalendarEvent } from '../types/calendar';
@@ -1036,7 +1037,7 @@ export default function Planner() {
       />
 
       {state.viewMode === 'weekly' ? (
-        <WeeklyPlannerView
+        <WeeklyCalendarGrid
           week={state.currentWeek.days}
           events={currentEvents}
           onDayClick={handleDayClick}
