@@ -34,7 +34,7 @@ const DAILY_CONFIG = {
     veryLightGray: [248, 248, 248],
     white: [255, 255, 255],
     bottomHourColor: [250, 249, 246], // #FAF9F6 - light cream for bottom-of-hour rows
-    topHourColor: [247, 252, 254], // #F7FCFE - light blue for top-of-hour rows
+    topHourColor: [242, 243, 244], // #F2F3F4 - light gray for top-of-hour rows
     simplePracticeBlue: [100, 149, 237],
     googleGreen: [52, 168, 83],
     holidayOrange: [255, 152, 0],
