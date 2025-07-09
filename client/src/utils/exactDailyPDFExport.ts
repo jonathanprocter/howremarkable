@@ -374,12 +374,12 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(...DAILY_CONFIG.colors.black);
       const notesHeaderX = eventX + columnWidth + 2;
-      pdf.text('Event Notes', notesHeaderX, eventY + 10);
+      pdf.text('Event Notes', notesHeaderX, eventY + 4);
       
       // Draw underline for Event Notes header
       pdf.setDrawColor(...DAILY_CONFIG.colors.black);
       pdf.setLineWidth(0.3);
-      pdf.line(notesHeaderX, eventY + 11, notesHeaderX + 30, eventY + 11);
+      pdf.line(notesHeaderX, eventY + 5, notesHeaderX + 30, eventY + 5);
       
       pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size);
       pdf.setFont('helvetica', 'normal');
@@ -389,11 +389,11 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
         .map(note => note.trim().replace(/^[•\s-]+/, '').trim())
         .filter(note => note.length > 0 && note !== '•' && note !== '-');
       
-      let currentY = eventY + 16;
+      let currentY = eventY + 10;
       notes.forEach((note, index) => {
-        // Wrap text to fit within column width
+        // Wrap text to fit within column width with block text formatting
         const maxWidth = columnWidth - 10; // Leave margin for bullet and spacing
-        const lines = pdf.splitTextToSize(`• ${note}`, maxWidth);
+        const lines = pdf.splitTextToSize(`| ${note}`, maxWidth);
         
         lines.forEach((line, lineIndex) => {
           pdf.setTextColor(...DAILY_CONFIG.colors.black);
@@ -410,12 +410,12 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(...DAILY_CONFIG.colors.black);
       const actionHeaderX = eventX + columnWidth * 2 + 2;
-      pdf.text('Action Items', actionHeaderX, eventY + 8);
+      pdf.text('Action Items', actionHeaderX, eventY + 4);
       
       // Draw underline for Action Items header
       pdf.setDrawColor(...DAILY_CONFIG.colors.black);
       pdf.setLineWidth(0.3);
-      pdf.line(actionHeaderX, eventY + 9, actionHeaderX + 30, eventY + 9);
+      pdf.line(actionHeaderX, eventY + 5, actionHeaderX + 30, eventY + 5);
       
       pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size);
       pdf.setFont('helvetica', 'normal');
@@ -425,11 +425,11 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
         .map(item => item.trim().replace(/^[•\s-]+/, '').trim())
         .filter(item => item.length > 0 && item !== '•' && item !== '-');
       
-      let currentY = eventY + 14;
+      let currentY = eventY + 10;
       actionItems.forEach((item, index) => {
-        // Wrap text to fit within column width
+        // Wrap text to fit within column width with block text formatting
         const maxWidth = columnWidth - 10; // Leave margin for bullet and spacing
-        const lines = pdf.splitTextToSize(`• ${item}`, maxWidth);
+        const lines = pdf.splitTextToSize(`| ${item}`, maxWidth);
         
         lines.forEach((line, lineIndex) => {
           pdf.setTextColor(...DAILY_CONFIG.colors.black);
@@ -440,16 +440,24 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
       });
     }
     
-    // Draw column dividers for 3-column layout
+    // Draw column dividers for 3-column layout only below Event Notes and Action Items
     if ((event.notes && event.notes.trim()) || (event.actionItems && event.actionItems.trim())) {
       pdf.setDrawColor(...DAILY_CONFIG.colors.lightGray);
       pdf.setLineWidth(0.3);
       
-      // Vertical line between left and center columns
-      pdf.line(eventX + columnWidth - 8, eventY + 5, eventX + columnWidth - 8, eventY + height - 10);
+      // Only draw vertical lines below the headers where bullets are located
+      const dividerStartY = eventY + 8; // Start below the headers
+      const dividerEndY = eventY + height - 10;
       
-      // Vertical line between center and right columns  
-      pdf.line(eventX + columnWidth * 2 - 8, eventY + 5, eventX + columnWidth * 2 - 8, eventY + height - 10);
+      // Vertical line between left and center columns (only if notes exist)
+      if (event.notes && event.notes.trim()) {
+        pdf.line(eventX + columnWidth - 8, dividerStartY, eventX + columnWidth - 8, dividerEndY);
+      }
+      
+      // Vertical line between center and right columns (only if action items exist)
+      if (event.actionItems && event.actionItems.trim()) {
+        pdf.line(eventX + columnWidth * 2 - 8, dividerStartY, eventX + columnWidth * 2 - 8, dividerEndY);
+      }
     }
   });
 }
