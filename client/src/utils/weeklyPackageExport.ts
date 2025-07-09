@@ -90,7 +90,7 @@ export const exportWeeklyPackage = async (
 };
 
 /**
- * Create Weekly Overview Page using existing weekly grid export
+ * Create Weekly Overview Page using working weekly grid export
  */
 async function createWeeklyOverviewPage(
   pdf: jsPDF,
@@ -98,13 +98,263 @@ async function createWeeklyOverviewPage(
   weekEndDate: Date,
   events: CalendarEvent[]
 ): Promise<void> {
-  // Use the existing weekly grid export functionality
-  await drawWeeklyGridToCanvas(pdf, weekStartDate, weekEndDate, events);
+  // Configuration for A3 landscape weekly grid - using exact working configuration
+  const GRID_CONFIG = {
+    pageWidth: 1190,
+    pageHeight: 842,
+    margin: 20,
+    headerHeight: 80,
+    legendHeight: 30,
+    timeColumnWidth: 95,
+    timeSlotHeight: 20,
+    startHour: 6,
+    endHour: 23,
+    totalTimeSlots: 36 // 6:00 to 23:30
+  };
+  
+  const dayColumnWidth = (GRID_CONFIG.pageWidth - GRID_CONFIG.timeColumnWidth - (GRID_CONFIG.margin * 2)) / 7;
+  const gridStartX = GRID_CONFIG.margin;
+  const gridStartY = GRID_CONFIG.headerHeight + GRID_CONFIG.legendHeight;
+  
+  // Clear page with white background
+  pdf.setFillColor(255, 255, 255);
+  pdf.rect(0, 0, GRID_CONFIG.pageWidth, GRID_CONFIG.pageHeight, 'F');
+  
+  // === HEADER ===
+  pdf.setFont('times', 'bold');
+  pdf.setFontSize(24);
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('WEEKLY CALENDAR', GRID_CONFIG.pageWidth / 2, 35, { align: 'center' });
+  
+  // Week date range
+  pdf.setFontSize(16);
+  const weekStart = weekStartDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+  const weekEnd = weekEndDate.toLocaleDateString('en-US', { day: 'numeric', year: 'numeric' });
+  pdf.text(`${weekStart} - ${weekEnd}`, GRID_CONFIG.pageWidth / 2, 60, { align: 'center' });
+  
+  // === LEGEND ===
+  const legendY = GRID_CONFIG.headerHeight;
+  pdf.setFillColor(248, 248, 248);
+  pdf.rect(gridStartX, legendY, GRID_CONFIG.pageWidth - (GRID_CONFIG.margin * 2), GRID_CONFIG.legendHeight, 'F');
+  pdf.setDrawColor(0, 0, 0);
+  pdf.setLineWidth(1);
+  pdf.rect(gridStartX, legendY, GRID_CONFIG.pageWidth - (GRID_CONFIG.margin * 2), GRID_CONFIG.legendHeight, 'S');
+  
+  // Legend items
+  pdf.setFont('times', 'normal');
+  pdf.setFontSize(12);
+  let legendX = gridStartX + 100;
+  
+  // SimplePractice
+  pdf.setFillColor(255, 255, 255);
+  pdf.rect(legendX, legendY + 8, 16, 12, 'F');
+  pdf.setDrawColor(100, 149, 237);
+  pdf.setLineWidth(1);
+  pdf.rect(legendX, legendY + 8, 16, 12, 'S');
+  pdf.setLineWidth(4);
+  pdf.line(legendX, legendY + 8, legendX, legendY + 20);
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('SimplePractice', legendX + 22, legendY + 17);
+  
+  legendX += 200;
+  
+  // Google Calendar
+  pdf.setFillColor(255, 255, 255);
+  pdf.rect(legendX, legendY + 8, 16, 12, 'F');
+  pdf.setDrawColor(34, 197, 94);
+  pdf.setLineWidth(1);
+  pdf.setLineDash([3, 2]);
+  pdf.rect(legendX, legendY + 8, 16, 12, 'S');
+  pdf.setLineDash([]);
+  pdf.text('Google Calendar', legendX + 22, legendY + 17);
+  
+  legendX += 200;
+  
+  // Holidays
+  pdf.setFillColor(255, 255, 0);
+  pdf.rect(legendX, legendY + 8, 16, 12, 'F');
+  pdf.setDrawColor(245, 158, 11);
+  pdf.setLineWidth(1);
+  pdf.rect(legendX, legendY + 8, 16, 12, 'S');
+  pdf.text('Holidays', legendX + 22, legendY + 17);
+  
+  // === CALENDAR GRID ===
+  
+  // Draw TIME column header
+  pdf.setFillColor(255, 255, 255);
+  pdf.rect(gridStartX, gridStartY, GRID_CONFIG.timeColumnWidth, 40, 'F');
+  pdf.setDrawColor(0, 0, 0);
+  pdf.setLineWidth(2);
+  pdf.rect(gridStartX, gridStartY, GRID_CONFIG.timeColumnWidth, 40, 'S');
+  
+  pdf.setFont('times', 'bold');
+  pdf.setFontSize(12);
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('TIME', gridStartX + (GRID_CONFIG.timeColumnWidth / 2), gridStartY + 25, { align: 'center' });
+  
+  // Draw day column headers
+  const daysOfWeek = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+  
+  for (let day = 0; day < 7; day++) {
+    const currentDate = new Date(weekStartDate);
+    currentDate.setDate(weekStartDate.getDate() + day);
+    
+    const dayX = gridStartX + GRID_CONFIG.timeColumnWidth + (day * dayColumnWidth);
+    
+    // Header background
+    pdf.setFillColor(255, 255, 255);
+    pdf.rect(dayX, gridStartY, dayColumnWidth, 40, 'F');
+    pdf.setDrawColor(0, 0, 0);
+    pdf.setLineWidth(2);
+    pdf.rect(dayX, gridStartY, dayColumnWidth, 40, 'S');
+    
+    // Day header text
+    pdf.setFont('times', 'bold');
+    pdf.setFontSize(12);
+    pdf.setTextColor(0, 0, 0);
+    pdf.text(daysOfWeek[day], dayX + (dayColumnWidth / 2), gridStartY + 18, { align: 'center' });
+    pdf.text(currentDate.getDate().toString(), dayX + (dayColumnWidth / 2), gridStartY + 32, { align: 'center' });
+  }
+  
+  // Draw time slots and events
+  const timeGridStartY = gridStartY + 40;
+  
+  for (let slot = 0; slot < GRID_CONFIG.totalTimeSlots; slot++) {
+    const hour = GRID_CONFIG.startHour + Math.floor(slot / 2);
+    const minute = (slot % 2) * 30;
+    const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+    
+    const slotY = timeGridStartY + (slot * GRID_CONFIG.timeSlotHeight);
+    const isTopOfHour = minute === 0;
+    
+    // Time slot background
+    pdf.setFillColor(isTopOfHour ? 240 : 248, isTopOfHour ? 240 : 248, isTopOfHour ? 240 : 248);
+    pdf.rect(gridStartX, slotY, GRID_CONFIG.pageWidth - (GRID_CONFIG.margin * 2), GRID_CONFIG.timeSlotHeight, 'F');
+    
+    // Time label
+    pdf.setFont('times', isTopOfHour ? 'bold' : 'normal');
+    pdf.setFontSize(isTopOfHour ? 11 : 8);
+    pdf.setTextColor(0, 0, 0);
+    pdf.text(timeStr, gridStartX + (GRID_CONFIG.timeColumnWidth / 2), slotY + 14, { align: 'center' });
+    
+    // Grid lines
+    pdf.setDrawColor(isTopOfHour ? 128 : 200, isTopOfHour ? 128 : 200, isTopOfHour ? 128 : 200);
+    pdf.setLineWidth(isTopOfHour ? 2 : 1);
+    pdf.line(gridStartX, slotY, gridStartX + GRID_CONFIG.pageWidth - (GRID_CONFIG.margin * 2), slotY);
+    
+    // Vertical day separators
+    for (let day = 0; day <= 7; day++) {
+      const dayX = gridStartX + GRID_CONFIG.timeColumnWidth + (day * dayColumnWidth);
+      pdf.setDrawColor(128, 128, 128);
+      pdf.setLineWidth(1);
+      pdf.line(dayX, slotY, dayX, slotY + GRID_CONFIG.timeSlotHeight);
+    }
+  }
+  
+  // Draw events
+  const weekEvents = events.filter(event => {
+    const eventDate = new Date(event.startTime);
+    return eventDate >= weekStartDate && eventDate <= weekEndDate;
+  });
+  
+  weekEvents.forEach(event => {
+    const eventDate = new Date(event.startTime);
+    const eventEndDate = new Date(event.endTime);
+    
+    // Calculate day index
+    const dayIndex = Math.floor((eventDate.getTime() - weekStartDate.getTime()) / (24 * 60 * 60 * 1000));
+    if (dayIndex < 0 || dayIndex >= 7) return;
+    
+    // Calculate time slot position
+    const eventHour = eventDate.getHours();
+    const eventMinute = eventDate.getMinutes();
+    const slotIndex = ((eventHour - GRID_CONFIG.startHour) * 2) + (eventMinute >= 30 ? 1 : 0);
+    
+    if (slotIndex < 0 || slotIndex >= GRID_CONFIG.totalTimeSlots) return;
+    
+    // Calculate event height
+    const duration = (eventEndDate.getTime() - eventDate.getTime()) / (1000 * 60); // minutes
+    const eventHeight = Math.max(GRID_CONFIG.timeSlotHeight, (duration / 30) * GRID_CONFIG.timeSlotHeight);
+    
+    // Event position
+    const eventX = gridStartX + GRID_CONFIG.timeColumnWidth + (dayIndex * dayColumnWidth) + 2;
+    const eventY = timeGridStartY + (slotIndex * GRID_CONFIG.timeSlotHeight) + 2;
+    const eventWidth = dayColumnWidth - 4;
+    
+    // Event styling based on source
+    let eventColor = [255, 255, 255];
+    let borderColor = [100, 149, 237];
+    let hasLeftFlag = false;
+    let isDashed = false;
+    
+    if (event.source === 'simplepractice' || event.title.includes('Appointment')) {
+      eventColor = [255, 255, 255];
+      borderColor = [100, 149, 237];
+      hasLeftFlag = true;
+    } else if (event.source === 'google') {
+      eventColor = [255, 255, 255];
+      borderColor = [34, 197, 94];
+      isDashed = true;
+    } else {
+      eventColor = [255, 255, 255];
+      borderColor = [245, 158, 11];
+    }
+    
+    // Draw event background
+    pdf.setFillColor(...eventColor);
+    pdf.rect(eventX, eventY, eventWidth, eventHeight - 4, 'F');
+    
+    // Draw event border
+    pdf.setDrawColor(...borderColor);
+    pdf.setLineWidth(1);
+    if (isDashed) {
+      pdf.setLineDash([3, 2]);
+    }
+    pdf.rect(eventX, eventY, eventWidth, eventHeight - 4, 'S');
+    pdf.setLineDash([]);
+    
+    // Draw left flag for SimplePractice
+    if (hasLeftFlag) {
+      pdf.setLineWidth(4);
+      pdf.line(eventX, eventY, eventX, eventY + eventHeight - 4);
+    }
+    
+    // Event text
+    pdf.setFont('times', 'normal');
+    pdf.setFontSize(8);
+    pdf.setTextColor(0, 0, 0);
+    
+    // Clean event title and fix character encoding
+    let displayTitle = event.title;
+    if (displayTitle.includes('Appointment')) {
+      displayTitle = displayTitle.replace(' Appointment', '');
+    }
+    // Fix lock symbol encoding issues
+    displayTitle = displayTitle.replace(/[🔒Ø=Ý]/g, '🔒');
+    
+    // Split text into lines to fit in event box
+    const maxWidth = eventWidth - 8;
+    const lines = pdf.splitTextToSize(displayTitle, maxWidth);
+    
+    let textY = eventY + 12;
+    lines.slice(0, 2).forEach(line => {
+      pdf.text(line, eventX + 4, textY);
+      textY += 10;
+    });
+    
+    // Add time if there's space
+    if (lines.length <= 1 && eventHeight > 30) {
+      const timeStr = `${eventDate.getHours().toString().padStart(2, '0')}:${eventDate.getMinutes().toString().padStart(2, '0')}-${eventEndDate.getHours().toString().padStart(2, '0')}:${eventEndDate.getMinutes().toString().padStart(2, '0')}`;
+      pdf.setFontSize(6);
+      pdf.text(timeStr, eventX + 4, textY);
+    }
+  });
   
   // Add navigation footer
   pdf.setFont('times', 'italic');
   pdf.setFontSize(10);
-  pdf.text('Page 1 of 8 - Weekly Overview (Navigate to daily pages 2-8)', 595, 820, { align: 'center' });
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('Page 1 of 8 - Weekly Overview (Navigate to daily pages 2-8)', GRID_CONFIG.pageWidth / 2, 820, { align: 'center' });
 }
 
 /**
