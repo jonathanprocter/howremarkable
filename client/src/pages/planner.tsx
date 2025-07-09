@@ -1037,7 +1037,7 @@ export default function Planner() {
       />
 
       {state.viewMode === 'weekly' ? (
-        <WeeklyCalendarGrid
+        <WeeklyPlannerView
           week={state.currentWeek.days}
           events={currentEvents}
           onDayClick={handleDayClick}

@@ -476,6 +476,13 @@ The application uses three main entities:
   - **Better Column Layout**: 3-column positioning with appropriate column widths for 8.5x11 format
   - **Consistent Styling**: Both dailyPDFExport.ts and exactDailyPDFExport.ts updated with matching standard dimensions
   - **RESULT**: PDF exports now maintain exact 8.5x11 inch format with fonts proportional to time grid and PDF export size
+- July 09, 2025. **WEEKLY DASHBOARD LAYOUT RESTORATION**: Reverted weekly dashboard to original layout per user request:
+  - **Component Change**: Switched back from WeeklyCalendarGrid to WeeklyPlannerView component
+  - **Layout Consistency**: Weekly dashboard now displays the familiar original layout that user prefers
+  - **PDF Export Unchanged**: Weekly PDF exports still maintain proper 8.5x11 inch format with correct styling
+  - **User Preference**: Maintained user's preferred weekly dashboard layout while keeping PDF functionality intact
+  - **PDF Export Unchanged**: Weekly PDF exports still maintain proper 8.5x11 inch format with correct styling
+  - **User Preference**: Maintained user's preferred weekly dashboard layout while keeping PDF functionality intact
 
 ## User Preferences
 
