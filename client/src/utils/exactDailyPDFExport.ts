@@ -381,25 +381,25 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     // Appointment name at the very top
     pdf.text(cleanTitle, eventX, eventY + 8);
     
-    // Source line below the name
+    // Source line below the name with small spacing
     pdf.setFontSize(DAILY_CONFIG.fonts.eventSource.size);
     pdf.setFont('helvetica', DAILY_CONFIG.fonts.eventSource.weight);
     pdf.setTextColor(...DAILY_CONFIG.colors.black);
-    pdf.text(eventType.source, eventX, eventY + 13);
+    pdf.text(eventType.source, eventX, eventY + 14);
     
-    // Time range below the source
+    // Time range below the source with small spacing
     pdf.setFontSize(DAILY_CONFIG.fonts.eventTime.size);
     pdf.setFont('helvetica', DAILY_CONFIG.fonts.eventTime.weight);
     pdf.setTextColor(...DAILY_CONFIG.colors.black);
     const timeRange = `${formatMilitaryTime(eventStart)} - ${formatMilitaryTime(eventEnd)}`;
-    pdf.text(timeRange, eventX, eventY + 18);
+    pdf.text(timeRange, eventX, eventY + 20);
     
     // Center column: Event Notes (if they exist)
     if (event.notes && event.notes.trim()) {
       pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size + 1);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(...DAILY_CONFIG.colors.black);
-      const notesHeaderX = eventX + columnWidth + 2;
+      const notesHeaderX = eventX + columnWidth; // Align with vertical divider
       pdf.text('Event Notes', notesHeaderX, eventY + 4);
       
       // Draw underline for Event Notes header
@@ -435,7 +435,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
       pdf.setFontSize(DAILY_CONFIG.fonts.eventNotes.size + 1);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(...DAILY_CONFIG.colors.black);
-      const actionHeaderX = eventX + columnWidth * 2 + 2;
+      const actionHeaderX = eventX + columnWidth * 2; // Align with vertical divider
       pdf.text('Action Items', actionHeaderX, eventY + 4);
       
       // Draw underline for Action Items header
@@ -473,7 +473,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
       
       // Draw vertical line only in the bullet area for notes
       if (event.notes && event.notes.trim()) {
-        const notesX = eventX + columnWidth + 2;
+        const notesX = eventX + columnWidth; // Align with header position
         const bulletStartY = eventY + 10; // Start where bullets begin
         
         // Calculate actual height of notes content
@@ -495,7 +495,7 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
       
       // Draw vertical line only in the bullet area for action items
       if (event.actionItems && event.actionItems.trim()) {
-        const actionX = eventX + columnWidth * 2 + 2;
+        const actionX = eventX + columnWidth * 2; // Align with header position
         const bulletStartY = eventY + 10; // Start where bullets begin
         
         // Calculate actual height of action items content
