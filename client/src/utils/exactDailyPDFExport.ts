@@ -104,33 +104,21 @@ function drawDashboardHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEve
   pdf.rect(margin, headerBoxY, pageWidth - (margin * 2), titleSectionHeight, 'F');
   pdf.line(margin, headerBoxY + titleSectionHeight, pageWidth - margin, headerBoxY + titleSectionHeight);
 
-  // Title - WEEKLY PLANNER at the top
-  pdf.setFontSize(10);
+  // Title - DAILY PLANNER at the top
+  pdf.setFontSize(14);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(...DAILY_CONFIG.colors.black);
-  pdf.text('WEEKLY PLANNER', pageWidth / 2, headerBoxY + 15, { align: 'center' });
+  pdf.text('DAILY PLANNER', pageWidth / 2, headerBoxY + 15, { align: 'center' });
 
-  // Date range and week number
-  pdf.setFontSize(8);
+  // Date display
+  pdf.setFontSize(10);
   pdf.setFont('helvetica', 'normal');
   
-  // Calculate week start (Monday) and end (Sunday) based on selected date
-  const weekStart = new Date(selectedDate);
-  const dayOfWeek = weekStart.getDay();
-  const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Sunday is 0, Monday is 1
-  weekStart.setDate(weekStart.getDate() - daysFromMonday);
-  
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekEnd.getDate() + 6);
-  
-  // Calculate week number (ISO week)
-  const startOfYear = new Date(selectedDate.getFullYear(), 0, 1);
-  const daysSinceStart = Math.floor((weekStart.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
-  const weekNumber = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
-  
-  // Format date range as "July 7 - 13, 2025"
-  const dateRange = `July ${weekStart.getDate()} - ${weekEnd.getDate()}, ${selectedDate.getFullYear()}`;
-  pdf.text(dateRange, pageWidth / 2, headerBoxY + 28, { align: 'center' });
+  // Format date as "Monday, July 7, 2025"
+  const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
+  const dateString = selectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  const fullDate = `${dayName}, ${dateString}`;
+  pdf.text(fullDate, pageWidth / 2, headerBoxY + 28, { align: 'center' });
 
   // Statistics table - full width spanning the four boxes
   const dayEvents = events.filter(event => {

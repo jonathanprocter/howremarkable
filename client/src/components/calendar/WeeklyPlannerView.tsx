@@ -119,9 +119,21 @@ export const WeeklyPlannerView = ({
             top: '2px',
             left: '2px',
             right: '2px',
-            zIndex: 10
+            zIndex: 10,
+            cursor: 'pointer'
           }}
-          onClick={() => onEventClick(event)}
+          onClick={() => {
+            // Navigate to daily view for this appointment's date
+            const appointmentDate = new Date(event.startTime);
+            onDayClick(appointmentDate);
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.opacity = '0.8';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.opacity = '1';
+          }}
+          title="Click to view daily schedule"
           draggable
           onDragStart={(e) => {
             e.dataTransfer.setData('text/plain', JSON.stringify({

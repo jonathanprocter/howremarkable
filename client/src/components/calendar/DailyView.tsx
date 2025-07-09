@@ -207,37 +207,50 @@ export const DailyView = ({
     return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   };
 
+  const getDayNavigationName = (date: Date) => {
+    return date.toLocaleDateString('en-US', { weekday: 'long' });
+  };
+  
+  const getPreviousDay = () => {
+    const prevDay = new Date(selectedDate);
+    prevDay.setDate(prevDay.getDate() - 1);
+    return prevDay;
+  };
+  
+  const getNextDay = () => {
+    const nextDay = new Date(selectedDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+    return nextDay;
+  };
+
   return (
     <div className="planner-container daily-planner">
-      {/* Header - exact match to HTML template */}
-      <div className="header">
-        <h1>Daily Planner</h1>
-        <div className="date-info">{getDayName(selectedDate)}, {getDateString(selectedDate)}</div>
-        <div className="navigation">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onBackToWeek}
-            className="mr-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Week
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onPreviousDay}
-            className="mr-2"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onNextDay}
-          >
-            <ChevronRight className="w-4 h-4" />
-          </Button>
+      {/* Header Navigation Bar - styled buttons implementation */}
+      <div className="nav-header">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onBackToWeek}
+          className="nav-btn weekly-btn"
+          aria-label="Navigate to weekly overview"
+          tabIndex={0}
+        >
+          📅 Weekly Overview
+        </Button>
+        <div className="page-title">
+          <h2>{getDayName(selectedDate)}, {getDateString(selectedDate)}</h2>
+          <span className="appointment-count">{totalEvents} appointments</span>
+        </div>
+        <div className="legend">
+          <div className="legend-item">
+            <span className="legend-symbol simplepractice"></span>SimplePractice
+          </div>
+          <div className="legend-item">
+            <span className="legend-symbol google-calendar"></span>Google Calendar
+          </div>
+          <div className="legend-item">
+            <span className="legend-symbol personal"></span>Holidays in United States
+          </div>
         </div>
       </div>
 
@@ -261,18 +274,7 @@ export const DailyView = ({
         </div>
       </div>
 
-      {/* Legend - exact match to HTML template */}
-      <div className="legend">
-        <div className="legend-item">
-          <span className="legend-symbol simplepractice"></span>SimplePractice
-        </div>
-        <div className="legend-item">
-          <span className="legend-symbol google-calendar"></span>Google Calendar
-        </div>
-        <div className="legend-item">
-          <span className="legend-symbol personal"></span>Holidays in United States
-        </div>
-      </div>
+
 
       {/* All-Day Events Section */}
       {dayEvents.filter(event => {
@@ -474,6 +476,40 @@ export const DailyView = ({
             );
           })}
         </div>
+      </div>
+      
+      {/* Footer Navigation Bar - styled buttons implementation */}
+      <div className="nav-footer">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onPreviousDay}
+          className="nav-btn prev-btn"
+          aria-label={`Navigate to ${getDayNavigationName(getPreviousDay())}`}
+          tabIndex={0}
+        >
+          ← {getDayNavigationName(getPreviousDay())}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onBackToWeek}
+          className="nav-btn weekly-btn"
+          aria-label="Navigate to weekly overview"
+          tabIndex={0}
+        >
+          📅 Weekly Overview
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onNextDay}
+          className="nav-btn next-btn"
+          aria-label={`Navigate to ${getDayNavigationName(getNextDay())}`}
+          tabIndex={0}
+        >
+          {getDayNavigationName(getNextDay())} →
+        </Button>
       </div>
     </div>
   );

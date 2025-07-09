@@ -350,11 +350,36 @@ async function createWeeklyOverviewPage(
     }
   });
   
-  // Add navigation footer
-  pdf.setFont('times', 'italic');
-  pdf.setFontSize(10);
+  // Add navigation footer with navigation buttons (styled text representation)
+  pdf.setFont('times', 'bold');
+  pdf.setFontSize(12);
   pdf.setTextColor(0, 0, 0);
-  pdf.text('Page 1 of 8 - Weekly Overview (Navigate to daily pages 2-8)', GRID_CONFIG.pageWidth / 2, 820, { align: 'center' });
+  
+  // Navigation buttons represented as styled text
+  const navY = 820;
+  const buttonWidth = 150;
+  const buttonHeight = 30;
+  
+  // Daily page buttons (Mon-Sun)
+  const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+  const startX = (GRID_CONFIG.pageWidth - (days.length * buttonWidth + (days.length - 1) * 20)) / 2;
+  
+  days.forEach((day, index) => {
+    const buttonX = startX + index * (buttonWidth + 20);
+    
+    // Draw button background
+    pdf.setFillColor(240, 240, 240);
+    pdf.rect(buttonX, navY - 20, buttonWidth, buttonHeight, 'F');
+    
+    // Draw button border
+    pdf.setDrawColor(150, 150, 150);
+    pdf.setLineWidth(2);
+    pdf.rect(buttonX, navY - 20, buttonWidth, buttonHeight, 'S');
+    
+    // Button text
+    pdf.setTextColor(0, 0, 0);
+    pdf.text(`📅 ${day}`, buttonX + buttonWidth / 2, navY - 5, { align: 'center' });
+  });
 }
 
 /**
@@ -426,10 +451,47 @@ async function createDailyPageContent(
   const dateStr = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
   pdf.text(dateStr, pageWidth / 2, headerY + 20, { align: 'center' });
   
-  // Navigation
-  pdf.setFont('times', 'normal');
-  pdf.setFontSize(8);
-  pdf.text('← Back to Weekly Overview (Page 1)', 20, headerY + 35);
+  // Navigation buttons (styled text representation)
+  pdf.setFont('times', 'bold');
+  pdf.setFontSize(10);
+  
+  // Navigation bar with buttons
+  const navY = headerY + 35;
+  const buttonHeight = 25;
+  
+  // Weekly Overview button
+  pdf.setFillColor(240, 240, 240);
+  pdf.rect(20, navY - 15, 140, buttonHeight, 'F');
+  pdf.setDrawColor(150, 150, 150);
+  pdf.setLineWidth(2);
+  pdf.rect(20, navY - 15, 140, buttonHeight, 'S');
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('📅 Weekly Overview', 90, navY, { align: 'center' });
+  
+  // Previous/Next day buttons
+  const prevDay = new Date(date);
+  prevDay.setDate(prevDay.getDate() - 1);
+  const nextDay = new Date(date);
+  nextDay.setDate(nextDay.getDate() + 1);
+  
+  const prevDayName = prevDay.toLocaleDateString('en-US', { weekday: 'long' });
+  const nextDayName = nextDay.toLocaleDateString('en-US', { weekday: 'long' });
+  
+  // Previous day button
+  pdf.setFillColor(240, 240, 240);
+  pdf.rect(180, navY - 15, 100, buttonHeight, 'F');
+  pdf.setDrawColor(150, 150, 150);
+  pdf.setLineWidth(2);
+  pdf.rect(180, navY - 15, 100, buttonHeight, 'S');
+  pdf.text(`← ${prevDayName}`, 230, navY, { align: 'center' });
+  
+  // Next day button
+  pdf.setFillColor(240, 240, 240);
+  pdf.rect(300, navY - 15, 100, buttonHeight, 'F');
+  pdf.setDrawColor(150, 150, 150);
+  pdf.setLineWidth(2);
+  pdf.rect(300, navY - 15, 100, buttonHeight, 'S');
+  pdf.text(`${nextDayName} →`, 350, navY, { align: 'center' });
   
   // Statistics section
   const statsY = headerY + 45;
