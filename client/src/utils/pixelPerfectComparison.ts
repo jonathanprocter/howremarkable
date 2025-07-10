@@ -56,14 +56,104 @@ export const captureDashboardScreenshot = async (): Promise<string> => {
 export const extractExactDashboardStyles = () => {
   console.log('🔍 Extracting exact dashboard styles...');
   
-  // Find key calendar elements with more specific selectors
+  // Debug: Log all available elements to help with selector detection
+  console.log('🔍 Inspecting DOM structure...');
+  const allElements = document.querySelectorAll('*');
+  const elementClasses = new Set();
+  const elementIds = new Set();
+  
+  allElements.forEach(el => {
+    if (el.className && typeof el.className === 'string') {
+      el.className.split(' ').forEach(cls => cls && elementClasses.add(cls));
+    }
+    if (el.id) elementIds.add(el.id);
+  });
+  
+  console.log('📋 Available classes:', Array.from(elementClasses).slice(0, 20));
+  console.log('📋 Available IDs:', Array.from(elementIds).slice(0, 10));
+  
+  // Try multiple selector strategies to find calendar elements
+  const selectorStrategies = {
+    timeColumn: [
+      'table td:first-child',
+      'th:first-child', 
+      '[class*="time"]',
+      '[data-time]',
+      '.time',
+      'td:contains("TIME")',
+      'th:contains("TIME")'
+    ],
+    dayColumn: [
+      'table th:not(:first-child)',
+      'table td:not(:first-child)',
+      '[class*="day"]',
+      '[class*="column"]',
+      'th:contains("MON"), th:contains("TUE"), th:contains("WED")',
+      '.day'
+    ],
+    timeSlot: [
+      'table tr',
+      'tr:not(:first-child)',
+      '[class*="slot"]',
+      '[class*="hour"]',
+      'td',
+      'tr td'
+    ],
+    events: [
+      '[class*="appointment"]',
+      '[class*="event"]',
+      '.bg-white:not(table)',
+      '[style*="position"]',
+      '.border'
+    ],
+    grid: [
+      'table',
+      '[class*="calendar"]',
+      '[class*="grid"]',
+      '[class*="planner"]',
+      'main',
+      '.container'
+    ],
+    header: [
+      'thead',
+      'table thead',
+      'h1, h2, h3',
+      '[class*="header"]',
+      '.title'
+    ]
+  };
+  
+  const findBestElement = (strategies: string[]) => {
+    for (const strategy of strategies) {
+      const element = document.querySelector(strategy) as HTMLElement;
+      if (element) {
+        console.log(`✅ Found element with: ${strategy}`);
+        return element;
+      }
+    }
+    console.log(`❌ No element found with strategies: ${strategies.join(', ')}`);
+    return null;
+  };
+  
+  const findBestElements = (strategies: string[]) => {
+    for (const strategy of strategies) {
+      const elements = document.querySelectorAll(strategy) as NodeListOf<HTMLElement>;
+      if (elements.length > 0) {
+        console.log(`✅ Found ${elements.length} elements with: ${strategy}`);
+        return elements;
+      }
+    }
+    console.log(`❌ No elements found with strategies: ${strategies.join(', ')}`);
+    return document.querySelectorAll('') as NodeListOf<HTMLElement>; // Empty list
+  };
+  
   const elements = {
-    timeColumn: document.querySelector('.time-column') as HTMLElement,
-    dayColumns: document.querySelectorAll('.day-column') as NodeListOf<HTMLElement>,
-    timeSlots: document.querySelectorAll('.time-slot') as NodeListOf<HTMLElement>,
-    events: document.querySelectorAll('.calendar-event, .event') as NodeListOf<HTMLElement>,
-    grid: document.querySelector('.weekly-calendar-grid, .calendar-grid') as HTMLElement,
-    header: document.querySelector('.calendar-header, .week-header') as HTMLElement
+    timeColumn: findBestElement(selectorStrategies.timeColumn),
+    dayColumns: findBestElements(selectorStrategies.dayColumn),
+    timeSlots: findBestElements(selectorStrategies.timeSlot),
+    events: findBestElements(selectorStrategies.events),
+    grid: findBestElement(selectorStrategies.grid),
+    header: findBestElement(selectorStrategies.header)
   };
 
   // Extract dimensions with exact pixel values
@@ -176,21 +266,40 @@ export const performVisualComparison = async (): Promise<PixelComparisonResult> 
 export const extractPrintOptimizedStyles = () => {
   console.log('🖨️ Extracting print-optimized dashboard styles...');
   
-  // Get the actual calendar grid for measurement
-  const calendarGrid = document.querySelector('.weekly-calendar-grid') as HTMLElement;
+  // Get the actual calendar grid with multiple selector options
+  const calendarGrid = document.querySelector('table, [class*="grid"], [class*="calendar"], .planner-view, main') as HTMLElement;
   if (!calendarGrid) {
-    console.warn('⚠️ Weekly calendar grid not found');
-    return null;
+    console.warn('⚠️ Calendar grid not found, searching entire document');
+    // Fallback to document body for measurements
+    const gridRect = document.body.getBoundingClientRect();
+    const gridStyles = getComputedStyle(document.body);
+    
+    return {
+      gridWidth: gridRect.width,
+      gridHeight: gridRect.height,
+      timeColumnWidth: 80, // Fallback values
+      dayColumnWidth: 120,
+      timeSlotHeight: 40,
+      gridStyles: {
+        fontFamily: gridStyles.fontFamily,
+        fontSize: gridStyles.fontSize,
+        lineHeight: gridStyles.lineHeight,
+        backgroundColor: gridStyles.backgroundColor,
+        borderColor: gridStyles.borderColor,
+        padding: gridStyles.padding,
+        margin: gridStyles.margin
+      }
+    };
   }
 
   // Measure the actual rendered grid
   const gridRect = calendarGrid.getBoundingClientRect();
   const gridStyles = getComputedStyle(calendarGrid);
 
-  // Find time column and day columns for exact measurements
-  const timeColumn = calendarGrid.querySelector('.time-column') as HTMLElement;
-  const firstDayColumn = calendarGrid.querySelector('.day-column') as HTMLElement;
-  const firstTimeSlot = calendarGrid.querySelector('.time-slot') as HTMLElement;
+  // Find time column and day columns with flexible selectors
+  const timeColumn = calendarGrid.querySelector('[class*="time"], table td:first-child, th:first-child') as HTMLElement;
+  const firstDayColumn = calendarGrid.querySelector('[class*="day"], table th:not(:first-child), table td:not(:first-child)') as HTMLElement;
+  const firstTimeSlot = calendarGrid.querySelector('tr, [class*="slot"], [class*="hour"], td, th') as HTMLElement;
 
   const measurements = {
     // Grid container
