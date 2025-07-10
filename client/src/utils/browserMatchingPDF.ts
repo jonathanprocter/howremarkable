@@ -11,7 +11,7 @@ export const exportBrowserMatchingWeeklyPDF = async (
   weekEndDate: Date,
   events: CalendarEvent[]
 ): Promise<void> => {
-  console.log('🔄 Creating browser-matching weekly PDF...');
+  console.log('🔄 Creating browser-matching weekly PDF using EXACT Python specifications...');
 
   // Create PDF with US Letter landscape (11 x 8.5 inches = 792 x 612 points)
   const pdf = new jsPDF({
@@ -20,185 +20,147 @@ export const exportBrowserMatchingWeeklyPDF = async (
     format: 'letter'
   });
 
-  // EXACT BROWSER MEASUREMENTS from debugging
-  const browserMeasurements = {
-    timeColumnWidth: 80,           // EXACT from debugging
-    dayColumnWidth: 137.79296875,  // EXACT from debugging  
-    timeSlotHeight: 40,            // EXACT from debugging
-  };
+  // EXACT SPECIFICATIONS from Python reference file
+  // Original: 3300x2550 pixels at 300 DPI = 11x8.5 inches
+  // PDF: 792x612 points (72 DPI equivalent)
+  // Scale factor: 792/3300 = 0.24 for width, 612/2550 = 0.24 for height
+  const scaleFactor = 792 / 3300;
   
-  // Calculate total width needed for browser layout
-  const totalBrowserWidth = browserMeasurements.timeColumnWidth + (browserMeasurements.dayColumnWidth * 7);
-  const totalBrowserHeight = browserMeasurements.timeSlotHeight * 36; // 36 time slots
-  
-  console.log('📊 EXACT browser measurements:', browserMeasurements);
-  console.log('📊 Total browser dimensions:', { width: totalBrowserWidth, height: totalBrowserHeight });
-  
-  // Available space on US Letter landscape: 792 x 612 points
-  const availableWidth = 792 - 40; // 40pt margins (20pt each side)
-  const availableHeight = 612 - 120; // 120pt for header
-  
-  // Calculate scaling to fit browser layout onto US Letter paper WIDTH ONLY
-  // Let height scale naturally to maintain browser proportions
-  const widthScale = availableWidth / totalBrowserWidth;
-  
-  console.log('📊 Scaling calculations:', { 
-    availableWidth, 
-    availableHeight, 
-    totalBrowserWidth, 
-    totalBrowserHeight,
-    widthScale: widthScale.toFixed(4),
-    scaledHeight: (totalBrowserHeight * widthScale).toFixed(2)
-  });
-  
-  // Apply width-based scaling to browser measurements
   const config = {
-    margin: 20,
-    timeColumnWidth: browserMeasurements.timeColumnWidth * widthScale,
-    dayColumnWidth: browserMeasurements.dayColumnWidth * widthScale,
-    timeSlotHeight: browserMeasurements.timeSlotHeight * widthScale,
-    headerHeight: 80 // Reduced header height
+    // Python specs scaled to PDF points
+    margin: 30 * scaleFactor,           // 30px -> 7.2pt
+    headerHeight: 120 * scaleFactor,    // 120px -> 28.8pt
+    lineSpacing: 20 * scaleFactor,      // 20px -> 4.8pt
+    timeColumnWidth: 180 * scaleFactor, // 180px -> 43.2pt
+    dayColumnWidth: 441 * scaleFactor,  // 441px -> 105.8pt
+    rowHeight: 63 * scaleFactor,        // 63px -> 15.1pt
+    totalRows: 37 // 1 header + 36 time slots
   };
   
-  console.log('📊 Scaled configuration for US Letter:', config);
+  console.log('📊 EXACT Python specifications scaled to PDF:', config);
+  console.log('📊 Scale factor:', scaleFactor);
 
   const gridStartX = config.margin;
-  const gridStartY = config.margin + config.headerHeight;
+  const gridStartY = config.margin + config.headerHeight + config.lineSpacing;
   const totalGridWidth = config.timeColumnWidth + (config.dayColumnWidth * 7);
 
   // White background
   pdf.setFillColor(255, 255, 255);
   pdf.rect(0, 0, 792, 612, 'F');
 
-  // HEADER - exactly match browser title
+  // HEADER - exactly match Python specifications
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(20);
+  pdf.setFontSize(60 * scaleFactor); // 60pt scaled to PDF
   pdf.setTextColor(0, 0, 0);
-  pdf.text('WEEKLY CALENDAR', 792 / 2, config.margin + 25, { align: 'center' });
+  pdf.text('WEEKLY PLANNER', config.margin, config.margin + (20 * scaleFactor));
 
-  // Week info
-  pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(14);
-  const weekStart = weekStartDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-  const weekEnd = weekEndDate.toLocaleDateString('en-US', { day: 'numeric' });
-  pdf.text(`${weekStart} - ${weekEnd}, 2025`, 792 / 2, config.margin + 45, { align: 'center' });
+  // Week info - right aligned like Python spec
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(60 * scaleFactor);
+  const weekText = 'Week 27 — 7/7-7/13';
+  pdf.text(weekText, 792 - (100 * scaleFactor), config.margin + (20 * scaleFactor));
 
-  // LEGEND - moved to top below header
-  const legendY = config.margin + 60;
-  pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(10);
-  
-  // Center the legend items
-  const legendStartX = 792 / 2 - 180; // Center 3 items spanning about 360px
-  
-  // SimplePractice legend
-  pdf.setFillColor(255, 255, 255);
-  pdf.rect(legendStartX, legendY, 20, 10, 'F');
-  pdf.setDrawColor(100, 149, 237);
-  pdf.setLineWidth(1);
-  pdf.rect(legendStartX, legendY, 20, 10, 'S');
-  pdf.setLineWidth(2);
-  pdf.line(legendStartX, legendY, legendStartX, legendY + 10);
-  pdf.setTextColor(0, 0, 0);
-  pdf.text('SimplePractice', legendStartX + 25, legendY + 7);
-  
-  // Google Calendar legend
-  pdf.setFillColor(255, 255, 255);
-  pdf.rect(legendStartX + 150, legendY, 20, 10, 'F');
-  pdf.setDrawColor(34, 197, 94);
-  pdf.setLineWidth(1);
-  for (let i = 0; i < 20; i += 6) {
-    pdf.line(legendStartX + 150 + i, legendY, legendStartX + 150 + Math.min(i + 3, 20), legendY);
-    pdf.line(legendStartX + 150 + i, legendY + 10, legendStartX + 150 + Math.min(i + 3, 20), legendY + 10);
-  }
-  for (let i = 0; i < 10; i += 6) {
-    pdf.line(legendStartX + 150, legendY + i, legendStartX + 150, legendY + Math.min(i + 3, 10));
-    pdf.line(legendStartX + 170, legendY + i, legendStartX + 170, legendY + Math.min(i + 3, 10));
-  }
-  pdf.text('Google Calendar', legendStartX + 175, legendY + 7);
-  
-  // Holiday legend
-  pdf.setFillColor(255, 235, 59);
-  pdf.rect(legendStartX + 320, legendY, 20, 10, 'F');
-  pdf.setDrawColor(245, 158, 11);
-  pdf.setLineWidth(1);
-  pdf.rect(legendStartX + 320, legendY, 20, 10, 'S');
-  pdf.text('Holidays', legendStartX + 345, legendY + 7);
-
-  // GRID STRUCTURE - match browser exactly
+  // Header line - exactly match Python specs
   pdf.setDrawColor(0, 0, 0);
-  pdf.setLineWidth(1);
+  pdf.setLineWidth(2 * scaleFactor);
+  pdf.line(config.margin, config.margin + config.headerHeight, 792 - config.margin, config.margin + config.headerHeight);
 
-  // Main grid border
-  pdf.rect(gridStartX, gridStartY, totalGridWidth, config.timeSlotHeight * 36, 'S'); // 6:00-23:30 = 36 slots
-
-  // TIME COLUMN
-  pdf.setFillColor(240, 240, 240); // Gray background for header
-  pdf.rect(gridStartX, gridStartY, config.timeColumnWidth, config.timeSlotHeight, 'F');
-  pdf.rect(gridStartX, gridStartY, config.timeColumnWidth, config.timeSlotHeight, 'S');
+  // GRID STRUCTURE - EXACT Python specifications
+  const tableStartY = gridStartY;
   
-  pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(10);
-  pdf.setTextColor(0, 0, 0);
-  pdf.text('TIME', gridStartX + config.timeColumnWidth/2, gridStartY + config.timeSlotHeight/2 + 3, { align: 'center' });
-
-  // DAY HEADERS - match browser day format
-  const dayNames = ['MON 7', 'TUE 8', 'WED 9', 'THU 10', 'FRI 11', 'SAT 12', 'SUN 13'];
-  dayNames.forEach((dayName, index) => {
-    const dayX = gridStartX + config.timeColumnWidth + (index * config.dayColumnWidth);
+  // Column headers exactly as Python spec
+  const headers = ['Time', 'Mon 7/7', 'Tue 7/8', 'Wed 7/9', 'Thu 7/10', 'Fri 7/11', 'Sat 7/12', 'Sun 7/13'];
+  
+  // Draw header row with 2px border
+  let currentX = gridStartX;
+  for (let i = 0; i < headers.length; i++) {
+    const colWidth = i === 0 ? config.timeColumnWidth : config.dayColumnWidth;
     
-    // Gray header background
+    // Gray background for header
     pdf.setFillColor(240, 240, 240);
-    pdf.rect(dayX, gridStartY, config.dayColumnWidth, config.timeSlotHeight, 'F');
-    pdf.rect(dayX, gridStartY, config.dayColumnWidth, config.timeSlotHeight, 'S');
+    pdf.rect(currentX, tableStartY, colWidth, config.rowHeight, 'F');
     
+    // Header border - 2px as per Python spec
+    pdf.setDrawColor(0, 0, 0);
+    pdf.setLineWidth(2);
+    pdf.rect(currentX, tableStartY, colWidth, config.rowHeight, 'S');
+    
+    // Header text
     pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(10);
-    pdf.text(dayName, dayX + config.dayColumnWidth/2, gridStartY + config.timeSlotHeight/2 + 3, { align: 'center' });
-  });
-
-  // TIME SLOTS - exactly match browser time display
-  for (let slot = 0; slot < 36; slot++) {
-    const hour = Math.floor(slot / 2) + 6;
-    const minute = (slot % 2) * 30;
-    const timeY = gridStartY + ((slot + 1) * config.timeSlotHeight);
-    
-    // Time slot background (alternating like browser)
-    if (slot % 2 === 0) {
-      pdf.setFillColor(248, 248, 248); // Light gray for hour rows
-    } else {
-      pdf.setFillColor(255, 255, 255); // White for half-hour rows
-    }
-    pdf.rect(gridStartX, timeY, totalGridWidth, config.timeSlotHeight, 'F');
-    
-    // Horizontal line
-    pdf.setDrawColor(200, 200, 200);
-    pdf.setLineWidth(0.5);
-    pdf.line(gridStartX, timeY, gridStartX + totalGridWidth, timeY);
-    
-    // Time label - match browser format
-    pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(slot % 2 === 0 ? 9 : 8); // Slightly larger for hour labels
+    pdf.setFontSize(28 * scaleFactor); // 28pt scaled
     pdf.setTextColor(0, 0, 0);
-    const timeLabel = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-    pdf.text(timeLabel, gridStartX + config.timeColumnWidth/2, timeY + config.timeSlotHeight/2 + 2, { align: 'center' });
+    pdf.text(headers[i], currentX + colWidth/2, tableStartY + config.rowHeight/2 + 2, { align: 'center' });
+    
+    currentX += colWidth;
   }
 
-  // VERTICAL DAY SEPARATORS
+  // Generate ALL 36 time slots exactly as Python spec
+  const timeSlots = [];
+  for (let hour = 6; hour < 24; hour++) {
+    timeSlots.push(`${hour.toString().padStart(2, '0')}00`);  // Top of hour
+    timeSlots.push(`${hour.toString().padStart(2, '0')}30`);  // Half hour
+  }
+  
+  console.log(`Generated ${timeSlots.length} time slots as per Python spec`);
+
+  // Draw all time rows
+  let currentY = tableStartY + config.rowHeight;
+  
+  for (let rowIdx = 0; rowIdx < timeSlots.length; rowIdx++) {
+    const timeSlot = timeSlots[rowIdx];
+    const isTopOfHour = timeSlot.endsWith('00');
+    
+    // Background color - grey for top of hour, white for half hour
+    const bgColor = isTopOfHour ? [220, 220, 220] : [255, 255, 255];
+    const fontSize = isTopOfHour ? (28 * scaleFactor) : (24 * scaleFactor);
+    
+    currentX = gridStartX;
+    
+    // Draw all cells in this row
+    for (let colIdx = 0; colIdx < 8; colIdx++) {
+      const colWidth = colIdx === 0 ? config.timeColumnWidth : config.dayColumnWidth;
+      
+      // Fill background - extends across entire row for top of hour
+      if (isTopOfHour) {
+        pdf.setFillColor(bgColor[0], bgColor[1], bgColor[2]);
+        pdf.rect(currentX + 1, currentY + 1, colWidth - 2, config.rowHeight - 2, 'F');
+      }
+      
+      // Cell border - 1px as per Python spec
+      pdf.setDrawColor(0, 0, 0);
+      pdf.setLineWidth(1);
+      pdf.rect(currentX, currentY, colWidth, config.rowHeight, 'S');
+      
+      // Time text in first column only
+      if (colIdx === 0) {
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(fontSize);
+        pdf.setTextColor(0, 0, 0);
+        pdf.text(timeSlot, currentX + colWidth/2, currentY + config.rowHeight/2 + 2, { align: 'center' });
+      }
+      
+      currentX += colWidth;
+    }
+    
+    currentY += config.rowHeight;
+  }
+
+  // VERTICAL SEPARATORS - strong vertical lines between ALL columns
   pdf.setDrawColor(0, 0, 0);
   pdf.setLineWidth(1);
-  for (let day = 0; day <= 7; day++) {
-    const lineX = gridStartX + config.timeColumnWidth + (day * config.dayColumnWidth);
-    pdf.line(lineX, gridStartY, lineX, gridStartY + (config.timeSlotHeight * 36));
+  currentX = gridStartX;
+  for (let col = 0; col <= 7; col++) {
+    pdf.line(currentX, tableStartY, currentX, tableStartY + (config.rowHeight * 37)); // 37 = 1 header + 36 time slots
+    currentX += (col === 0 ? config.timeColumnWidth : config.dayColumnWidth);
   }
 
-  // EVENTS - match browser styling exactly
+  // EVENTS - positioned according to Python grid structure
   const weekEvents = events.filter(event => {
     const eventDate = new Date(event.startTime);
     return eventDate >= weekStartDate && eventDate <= weekEndDate;
   });
 
-  console.log(`Rendering ${weekEvents.length} events...`);
+  console.log(`Rendering ${weekEvents.length} events using Python grid positioning...`);
 
   weekEvents.forEach(event => {
     const eventDate = new Date(event.startTime);
@@ -207,7 +169,7 @@ export const exportBrowserMatchingWeeklyPDF = async (
     // Calculate day column (0-6 for Mon-Sun)
     const dayOfWeek = (eventDate.getDay() + 6) % 7; // Convert Sunday=0 to Monday=0 format
     
-    // Calculate time slot position
+    // Calculate time slot position (0-35 for 36 slots)
     const startHour = eventDate.getHours();
     const startMinute = eventDate.getMinutes();
     const startSlot = ((startHour - 6) * 2) + (startMinute >= 30 ? 1 : 0);
@@ -218,10 +180,14 @@ export const exportBrowserMatchingWeeklyPDF = async (
     
     if (startSlot < 0 || startSlot >= 36) return; // Skip events outside time range
     
+    // Position within the day column
     const eventX = gridStartX + config.timeColumnWidth + (dayOfWeek * config.dayColumnWidth) + 2;
-    const eventY = gridStartY + ((startSlot + 1) * config.timeSlotHeight) + 2;
+    
+    // Position within the time grid (accounting for header row)
+    const eventY = tableStartY + config.rowHeight + (startSlot * config.rowHeight) + 2;
+    
     const eventWidth = config.dayColumnWidth - 4;
-    const eventHeight = Math.max((endSlot - startSlot) * config.timeSlotHeight - 4, config.timeSlotHeight - 4);
+    const eventHeight = Math.max((endSlot - startSlot) * config.rowHeight - 4, config.rowHeight - 4);
     
     // Event styling based on source (match browser exactly)
     pdf.setFillColor(255, 255, 255); // White background for all events
@@ -233,7 +199,7 @@ export const exportBrowserMatchingWeeklyPDF = async (
       pdf.setLineWidth(1);
       pdf.rect(eventX, eventY, eventWidth, eventHeight, 'S');
       // Thick left border flag
-      pdf.setLineWidth(4);
+      pdf.setLineWidth(2 * scaleFactor);
       pdf.line(eventX, eventY, eventX, eventY + eventHeight);
     } else if (event.source === 'google') {
       // Google Calendar events - dashed green border
@@ -241,7 +207,7 @@ export const exportBrowserMatchingWeeklyPDF = async (
       pdf.setDrawColor(34, 197, 94); // Green
       pdf.setLineWidth(1);
       // Dashed border (approximate with short lines)
-      const dashLength = 3;
+      const dashLength = 3 * scaleFactor;
       for (let i = 0; i < eventWidth; i += dashLength * 2) {
         pdf.line(eventX + i, eventY, eventX + Math.min(i + dashLength, eventWidth), eventY);
         pdf.line(eventX + i, eventY + eventHeight, eventX + Math.min(i + dashLength, eventWidth), eventY + eventHeight);
@@ -258,9 +224,9 @@ export const exportBrowserMatchingWeeklyPDF = async (
       pdf.rect(eventX, eventY, eventWidth, eventHeight, 'S');
     }
     
-    // Event text - match browser font and size
+    // Event text - scaled for readability
     pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(8);
+    pdf.setFontSize(8 * scaleFactor);
     pdf.setTextColor(0, 0, 0);
     
     // Event title (remove "Appointment" suffix like browser)
@@ -270,16 +236,16 @@ export const exportBrowserMatchingWeeklyPDF = async (
     }
     
     // Truncate if too long
-    if (displayTitle.length > 15) {
-      displayTitle = displayTitle.substring(0, 15) + '...';
+    if (displayTitle.length > 12) {
+      displayTitle = displayTitle.substring(0, 12) + '...';
     }
     
-    pdf.text(displayTitle, eventX + 3, eventY + 12);
+    pdf.text(displayTitle, eventX + 3, eventY + 8);
     
     // Time display
-    pdf.setFontSize(7);
+    pdf.setFontSize(6 * scaleFactor);
     const timeDisplay = `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}-${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
-    pdf.text(timeDisplay, eventX + 3, eventY + eventHeight - 5);
+    pdf.text(timeDisplay, eventX + 3, eventY + eventHeight - 3);
   });
 
   // Legend is now at the top
