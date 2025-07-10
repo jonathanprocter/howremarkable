@@ -1368,13 +1368,35 @@ export default function Planner() {
   if (userError || !authenticatedUser) {
     return (
       <MainLayout>
-        <LoadingState 
-          isLoading={false}
-          error={userError || "Authentication required. Please log in to continue."}
-          retryFn={refetchUser}
-        >
-          <div />
-        </LoadingState>
+        <div className="flex flex-col items-center justify-center p-8 text-center min-h-screen">
+          <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6">
+            <h1 className="text-xl font-semibold text-gray-900 mb-4">
+              Welcome to reMarkable Pro Digital Planner
+            </h1>
+            <p className="text-gray-600 mb-6">
+              Please sign in with Google to access your calendar and start planning.
+            </p>
+            <div className="space-y-4">
+              <button
+                onClick={() => window.location.href = '/api/auth/google'}
+                className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                Sign in with Google
+              </button>
+              {userError && (
+                <div className="text-sm text-red-600 bg-red-50 p-3 rounded">
+                  {userError}
+                </div>
+              )}
+              <button
+                onClick={refetchUser}
+                className="w-full px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+              >
+                Check Authentication Status
+              </button>
+            </div>
+          </div>
+        </div>
       </MainLayout>
     );
   }
