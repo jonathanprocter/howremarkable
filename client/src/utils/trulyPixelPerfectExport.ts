@@ -55,23 +55,23 @@ const createPDFConfig = (dashboardStyles: DashboardStyles) => {
         weight: 'normal' as const 
       },
       dayHeader: { 
-        size: Math.min(dashboardStyles.fonts.dayHeader.size * 0.9, 12), 
+        size: 12, // AUDIT FIX: Increased from 10pt to 12pt for better readability
         weight: 'bold' as const 
       },
       timeLabel: { 
-        size: Math.min(dashboardStyles.fonts.timeLabel.size * 0.8, 10), 
+        size: 8, // AUDIT FIX: Increased from 6pt to 8pt for better readability
         weight: 'normal' as const 
       },
       timeHour: { 
-        size: Math.min(dashboardStyles.fonts.timeLabel.size * 0.9, 11), 
+        size: 9, // AUDIT FIX: Increased from 8pt to 9pt for better readability
         weight: 'bold' as const 
       },
       eventTitle: { 
-        size: Math.min(dashboardStyles.fonts.eventTitle.size * 0.7, 9), 
+        size: 11, // AUDIT FIX: Increased from 9pt to 11pt for better readability
         weight: 'bold' as const 
       },
       eventTime: { 
-        size: Math.min(dashboardStyles.fonts.eventTitle.size * 0.6, 7), 
+        size: 10, // AUDIT FIX: Increased from 7pt to 10pt for better readability
         weight: 'normal' as const 
       },
       legend: { 
@@ -92,11 +92,12 @@ const createPDFConfig = (dashboardStyles: DashboardStyles) => {
       holidayOrange: dashboardStyles.colors.holidayOrange
     },
     
-    // Spacing (exact from dashboard)
+    // Spacing (AUDIT FIX: improved padding)
     spacing: {
       borderRadius: dashboardStyles.spacing.borderRadius,
-      eventPadding: dashboardStyles.events.padding,
-      borderWidth: dashboardStyles.spacing.borderWidth
+      eventPadding: 4, // AUDIT FIX: Increased from 3px to 4px to match browser
+      textPadding: 2,  // AUDIT FIX: Reduced from 4px to 2px for better fit
+      borderWidth: 1   // AUDIT FIX: Consistent 1px borders
     },
     
     // Computed properties

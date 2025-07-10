@@ -203,14 +203,14 @@ export const exportExactGridPDF = async (
       pdf.setFillColor(255, 255, 255);
       pdf.rect(dayX, gridStartY, GRID_CONFIG.dayColumnWidth, 20, 'F');
 
-      // Day name
+      // Day name - AUDIT FIX: increased font size
       pdf.setFont('times', 'bold');
-      pdf.setFontSize(7);  // Exact dashboard day name font
+      pdf.setFontSize(12);  // AUDIT FIX: Increased from 7pt to 12pt for headers
       pdf.setTextColor(0, 0, 0);
       pdf.text(dayName, dayX + GRID_CONFIG.dayColumnWidth/2, gridStartY + 10, { align: 'center' });
 
-      // Day number
-      pdf.setFontSize(8);  // Exact dashboard day number font
+      // Day number - AUDIT FIX: increased font size
+      pdf.setFontSize(12);  // AUDIT FIX: Increased from 8pt to 12pt for headers
       pdf.setTextColor(0, 0, 0);
       pdf.text(dayDate.getDate().toString(), dayX + GRID_CONFIG.dayColumnWidth/2, gridStartY + 17, { align: 'center' });
 
@@ -237,9 +237,9 @@ export const exportExactGridPDF = async (
       pdf.setFillColor(slot.isHour ? 240 : 248, slot.isHour ? 240 : 248, slot.isHour ? 240 : 248);
       pdf.rect(centerX, y, GRID_CONFIG.timeColumnWidth, GRID_CONFIG.slotHeight, 'F');
 
-      // Time label - exact dashboard fonts
+      // Time label - AUDIT FIX: increased font sizes for better readability
       pdf.setFont('times', slot.isHour ? 'bold' : 'normal');
-      pdf.setFontSize(slot.isHour ? 6 : 5);  // Exact dashboard time fonts
+      pdf.setFontSize(slot.isHour ? 9 : 8);  // AUDIT FIX: Increased from 6/5pt to 9/8pt
       pdf.setTextColor(0, 0, 0);
       pdf.text(slot.time, centerX + GRID_CONFIG.timeColumnWidth/2, y + GRID_CONFIG.slotHeight/2 + 1.5, { align: 'center' });
 
@@ -409,9 +409,9 @@ export const exportExactGridPDF = async (
             displayTitle = displayTitle.substring(0, maxChars - 3) + '...';
           }
 
-          // Event name - exact dashboard matching font
+          // Event name - AUDIT FIX: increased font size for better readability
           pdf.setFont('times', 'bold');
-          pdf.setFontSize(5);
+          pdf.setFontSize(11);  // AUDIT FIX: Increased from 5pt to 11pt
           
           const cleanTitle = cleanTextForPDF(displayTitle);
           
@@ -446,10 +446,10 @@ export const exportExactGridPDF = async (
             }
           }
 
-          // Event time - show for medium to large events
+          // Event time - AUDIT FIX: show for medium to large events with increased font
           if (eventHeight >= 12) {
             pdf.setFont('times', 'normal');
-            pdf.setFontSize(4);
+            pdf.setFontSize(10);  // AUDIT FIX: Increased from 4pt to 10pt
             pdf.text(`${startTime}-${endTime}`, textX, eventY + eventHeight - 2);
           }
         }
