@@ -2,6 +2,71 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Accessibility styles */
+.high-contrast {
+  --background: 255 255 255;
+  --foreground: 0 0 0;
+  --card: 255 255 255;
+  --card-foreground: 0 0 0;
+  --primary: 0 0 0;
+  --primary-foreground: 255 255 255;
+  --secondary: 245 245 245;
+  --secondary-foreground: 0 0 0;
+  --border: 0 0 0;
+}
+
+.reduced-motion,
+.reduced-motion *,
+.reduced-motion *:before,
+.reduced-motion *:after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+.large-text {
+  font-size: 1.125rem !important;
+  line-height: 1.75rem !important;
+}
+
+.large-text h1 { font-size: 2.5rem !important; }
+.large-text h2 { font-size: 2rem !important; }
+.large-text h3 { font-size: 1.75rem !important; }
+.large-text button { 
+  font-size: 1.125rem !important;
+  padding: 0.75rem 1.5rem !important;
+}
+
+.focus-indicators *:focus {
+  outline: 3px solid #3b82f6 !important;
+  outline-offset: 2px !important;
+}
+
+.focus-indicators button:focus,
+.focus-indicators input:focus,
+.focus-indicators select:focus,
+.focus-indicators textarea:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3) !important;
+}
+
+/* Skip link for keyboard navigation */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: #000;
+  color: #fff;
+  padding: 8px;
+  text-decoration: none;
+  z-index: 1000;
+  border-radius: 4px;
+}
+
+.skip-link:focus {
+  top: 6px;
+}
+
 /* Prevent viewport overflow */
 html, body {
     overflow-x: hidden;

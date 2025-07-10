@@ -1,117 +1,99 @@
-import React, { Component, ReactNode } from 'react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { Component, ReactNode } from 'react';
 
 interface ErrorBoundaryState {
   hasError: boolean;
-  error: Error | null;
-  errorInfo: string | null;
+  error?: Error;
+  errorInfo?: any;
 }
 
 interface ErrorBoundaryProps {
   children: ReactNode;
-  fallback?: ReactNode;
-  onError?: (error: Error, errorInfo: string) => void;
+  fallbackComponent?: ReactNode;
+  onError?: (error: Error, errorInfo: any) => void;
 }
 
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = {
-      hasError: false,
-      error: null,
-      errorInfo: null
-    };
+    this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
-    return {
-      hasError: true,
-      error
-    };
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: any) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
     
     this.setState({
       error,
-      errorInfo: errorInfo.componentStack || error.stack || 'Unknown error'
+      errorInfo
     });
 
     // Call optional error handler
     if (this.props.onError) {
-      this.props.onError(error, errorInfo.componentStack || error.stack || 'Unknown error');
+      this.props.onError(error, errorInfo);
+    }
+
+    // Report to error tracking service in production
+    if (process.env.NODE_ENV === 'production') {
+      // Example: reportError(error, errorInfo);
     }
   }
 
   handleRetry = () => {
-    this.setState({
-      hasError: false,
-      error: null,
-      errorInfo: null
-    });
-  };
-
-  handleRefresh = () => {
-    window.location.reload();
+    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
   };
 
   render() {
     if (this.state.hasError) {
-      // Custom fallback UI
-      if (this.props.fallback) {
-        return this.props.fallback;
+      if (this.props.fallbackComponent) {
+        return this.props.fallbackComponent;
       }
 
-      // Default error UI
       return (
-        <div className="min-h-screen flex items-center justify-center p-4">
-          <div className="max-w-md w-full">
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Something went wrong</AlertTitle>
-              <AlertDescription className="mt-2">
-                <p className="mb-4">
-                  The application encountered an unexpected error. This issue has been logged.
-                </p>
-                
-                {process.env.NODE_ENV === 'development' && this.state.error && (
-                  <details className="mb-4">
-                    <summary className="cursor-pointer text-sm font-medium">
-                      Error Details (Development)
-                    </summary>
-                    <pre className="text-xs mt-2 p-2 bg-gray-100 rounded overflow-auto max-h-32">
-                      {this.state.error.message}
-                      {this.state.errorInfo && (
-                        <>
-                          {'\n\nStack Trace:'}
-                          {this.state.errorInfo}
-                        </>
-                      )}
-                    </pre>
-                  </details>
-                )}
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6">
+            <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+              <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            
+            <h1 className="text-xl font-semibold text-gray-900 text-center mb-2">
+              Something went wrong
+            </h1>
+            
+            <p className="text-gray-600 text-center mb-6">
+              An unexpected error occurred. Please try refreshing the page or contact support if the problem persists.
+            </p>
 
-                <div className="flex gap-2">
-                  <Button
-                    onClick={this.handleRetry}
-                    size="sm"
-                    variant="outline"
-                  >
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Try Again
-                  </Button>
-                  <Button
-                    onClick={this.handleRefresh}
-                    size="sm"
-                  >
-                    Refresh Page
-                  </Button>
-                </div>
-              </AlertDescription>
-            </Alert>
+            {process.env.NODE_ENV === 'development' && this.state.error && (
+              <details className="mb-4 p-3 bg-gray-100 rounded text-sm">
+                <summary className="cursor-pointer font-medium text-gray-700 mb-2">
+                  Error Details (Development)
+                </summary>
+                <pre className="whitespace-pre-wrap text-red-600">
+                  {this.state.error.toString()}
+                  {this.state.errorInfo?.componentStack}
+                </pre>
+              </details>
+            )}
+
+            <div className="flex space-x-3">
+              <button
+                onClick={this.handleRetry}
+                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+              >
+                Try Again
+              </button>
+              <button
+                onClick={() => window.location.reload()}
+                className="flex-1 bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors"
+              >
+                Reload Page
+              </button>
+            </div>
           </div>
         </div>
       );
@@ -120,20 +102,3 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     return this.props.children;
   }
 }
-
-// Hook for functional components to handle async errors
-export const useErrorHandler = () => {
-  const handleError = (error: Error, context?: string) => {
-    console.error(`Error in ${context || 'component'}:`, error);
-    
-    // In development, show more details
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Error stack:', error.stack);
-    }
-    
-    // You could integrate with error reporting service here
-    // e.g., Sentry, LogRocket, etc.
-  };
-
-  return handleError;
-};

@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useCalendar } from '../hooks/useCalendar';
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
+import { useAuthenticatedUser } from '../hooks/useAuthenticatedUser';
+import { usePerformanceMonitor } from '../hooks/usePerformanceMonitor';
+import { LoadingState } from '../components/common/LoadingState';
+import { ErrorBoundary } from '../components/common/ErrorBoundary';
 import { MainLayout } from '../components/layout/MainLayout';
 import { Sidebar } from '../components/sidebar/Sidebar';
 import { Header } from '../components/common/Header';
@@ -61,9 +65,53 @@ export default function Planner() {
   } = useCalendar();
 
   const { authStatus, connectGoogle, fetchCalendarEvents, uploadToDrive, updateCalendarEvent } = useGoogleAuth();
+  const { user: authenticatedUser, isLoading: userLoading, error: userError, refetch: refetchUser } = useAuthenticatedUser();
   const { toast } = useToast();
   const [googleCalendars, setGoogleCalendars] = useState<any[]>([]);
   const [selectedCalendars, setSelectedCalendars] = useState<Set<string>>(new Set(['0np7sib5u30o7oc297j5pb259g'])); // Default to SimplePractice calendar selected
+  const [eventsLoading, setEventsLoading] = useState(false);
+  const [eventsError, setEventsError] = useState<string | null>(null);
+
+  // Performance monitoring
+  const {
+    startRenderTiming,
+    endRenderTiming,
+    markPerformance,
+    metrics
+  } = usePerformanceMonitor('Planner', {
+    enableRenderTracking: true,
+    enableMemoryTracking: true,
+    logThreshold: 16
+  });
+
+  // Show loading state for user authentication
+  if (userLoading) {
+    return (
+      <MainLayout>
+        <LoadingState 
+          isLoading={true} 
+          loadingText="Authenticating user..." 
+        >
+          <div />
+        </LoadingState>
+      </MainLayout>
+    );
+  }
+
+  // Show error if user authentication failed
+  if (userError || !authenticatedUser) {
+    return (
+      <MainLayout>
+        <LoadingState 
+          isLoading={false}
+          error={userError || "Authentication required. Please log in to continue."}
+          retryFn={refetchUser}
+        >
+          <div />
+        </LoadingState>
+      </MainLayout>
+    );
+  }
 
   // Initialize reMarkable Pro optimizations and simple navigation fix on component mount
   useEffect(() => {
@@ -72,14 +120,21 @@ export default function Planner() {
     setTimeout(simpleNavigationFix, 500);
   }, []);
 
-  // Load events from database on component mount
+  // Load events from database when authenticated user is available
   useEffect(() => {
+    if (!authenticatedUser?.id) {
+      return; // Wait for authentication
+    }
+
     const loadDatabaseEvents = async () => {
+      setEventsLoading(true);
+      setEventsError(null);
+      
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
       try {
-        const response = await fetch('/api/events/1', { // TODO: Use actual user ID
+        const response = await fetch(`/api/events/${authenticatedUser.id}`, {
           signal: controller.signal,
           headers: {
             'Content-Type': 'application/json',
@@ -158,29 +213,28 @@ export default function Planner() {
       } catch (error) {
         clearTimeout(timeoutId);
 
-        if (error.name === 'AbortError') {
-          console.error('Database event loading timed out');
-          toast({
-            title: "Loading Timeout",
-            description: "Event loading took too long. Please check your connection and try again.",
-            variant: "destructive"
-          });
-        } else {
-          console.error('Failed to load events from database:', error);
-          toast({
-            title: "Error Loading Events",
-            description: error instanceof Error ? error.message : "Could not load calendar events. Please refresh the page.",
-            variant: "destructive"
-          });
-        }
+        const errorMessage = error.name === 'AbortError' 
+          ? 'Event loading timed out'
+          : error instanceof Error ? error.message : 'Could not load calendar events';
+
+        setEventsError(errorMessage);
+        
+        toast({
+          title: error.name === 'AbortError' ? "Loading Timeout" : "Error Loading Events",
+          description: errorMessage,
+          variant: "destructive"
+        });
+      } finally {
+        setEventsLoading(false);
       }
     };
 
-    // Call the async function and catch any unhandled promise rejections
     loadDatabaseEvents().catch(error => {
       console.error('Unhandled error in loadDatabaseEvents:', error);
+      setEventsError('Unexpected error occurred');
+      setEventsLoading(false);
     });
-  }, []); // Run once on mount
+  }, [authenticatedUser?.id]); // Re-run when authenticated user changes
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
@@ -1120,7 +1174,7 @@ export default function Planner() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: 1, // TODO: Use actual user ID from authentication
+          userId: authenticatedUser.id, // Use authenticated user ID
           title: newEvent.title,
           description: newEvent.description || '',
           startTime: newEvent.startTime.toISOString(),
@@ -1191,7 +1245,20 @@ export default function Planner() {
   const currentDateString = state.selectedDate.toISOString().split('T')[0];
   const currentDailyNotes = state.dailyNotes[currentDateString] || '';
 
+  // End render timing
+  useEffect(() => {
+    endRenderTiming();
+  });
+
   return (
+    <ErrorBoundary onError={(error, errorInfo) => {
+      console.error('Planner component error:', error, errorInfo);
+      toast({
+        title: "Application Error",
+        description: "An unexpected error occurred. The page will reload automatically.",
+        variant: "destructive"
+      });
+    }}>
     <MainLayout
       sidebar={
         <Sidebar
@@ -1266,5 +1333,6 @@ export default function Planner() {
         />
       )}
     </MainLayout>
+    </ErrorBoundary>
   );
 }
