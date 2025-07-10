@@ -3,6 +3,7 @@ import session from "express-session";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import ConnectPgSimple from "connect-pg-simple";
+import http from "http";
 
 const app = express();
 
@@ -78,9 +79,12 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  const server = await registerRoutes(app);
+  try {
+    console.log('Starting server setup...');
+    const server = await registerRoutes(app);
+    console.log('Routes registered successfully');
 
-  // Global error handler
+    // Global error handler
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
@@ -109,7 +113,9 @@ app.use((req, res, next) => {
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
   if (app.get("env") === "development") {
+    console.log('Setting up Vite...');
     await setupVite(app, server);
+    console.log('Vite setup complete');
   } else {
     serveStatic(app);
   }
@@ -118,11 +124,22 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
+  
+  // Add error handling before listen
+  server.on('error', (err) => {
+    console.error('Server error:', err);
+    if (err.code === 'EADDRINUSE') {
+      console.error(`Port ${port} is already in use`);
+      process.exit(1);
+    }
+  });
+  
+  server.listen(port, "0.0.0.0", () => {
     log(`serving on port ${port}`);
   });
+  
+  } catch (error) {
+    console.error('Server startup failed:', error);
+    process.exit(1);
+  }
 })();
