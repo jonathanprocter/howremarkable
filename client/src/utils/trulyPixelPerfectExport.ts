@@ -183,17 +183,17 @@ export const exportTrulyPixelPerfectWeeklyPDF = async (
       headerHeight: 30,
       legendHeight: 35,
       
-      // Typography - use reasonable PDF sizes (not scaled down)
+      // Typography - use dashboard-matching sizes for A3 format
       fonts: {
         family: exactMeasurements.gridStyles?.fontFamily?.includes('Times') ? 'times' : 'helvetica',
-        title: { size: 16, weight: 'bold' as const },
-        weekInfo: { size: 12, weight: 'normal' as const },
-        dayHeader: { size: 10, weight: 'bold' as const },
-        timeLabel: { size: 8, weight: 'normal' as const },
-        timeHour: { size: 9, weight: 'bold' as const },
-        eventTitle: { size: 7, weight: 'bold' as const },
-        eventTime: { size: 6, weight: 'normal' as const },
-        legend: { size: 9, weight: 'normal' as const }
+        title: { size: 20, weight: 'bold' as const },
+        weekInfo: { size: 14, weight: 'normal' as const },
+        dayHeader: { size: 12, weight: 'bold' as const },
+        timeLabel: { size: 10, weight: 'normal' as const },
+        timeHour: { size: 11, weight: 'bold' as const },
+        eventTitle: { size: 9, weight: 'bold' as const },
+        eventTime: { size: 8, weight: 'normal' as const },
+        legend: { size: 11, weight: 'normal' as const }
       },
       
       // Colors and spacing from base config
@@ -398,17 +398,15 @@ export const exportTrulyPixelPerfectWeeklyPDF = async (
       pdf.setFontSize(config.fonts.dayHeader.size + 1);
       pdf.text(dayDate.getDate().toString(), dayX + config.dayColumnWidth/2, headerRowY + 17, { align: 'center' });
       
-      // Enhanced vertical separators
-      if (index < 6) {
-        pdf.setLineWidth(1.5);
-        pdf.setDrawColor(100, 100, 100);
-        pdf.line(
-          dayX + config.dayColumnWidth,
-          headerRowY,
-          dayX + config.dayColumnWidth,
-          headerRowY + headerRowHeight + (timeSlots.length * config.slotHeight)
-        );
-      }
+      // Enhanced vertical separators - draw ALL column separators
+      pdf.setLineWidth(1);
+      pdf.setDrawColor(150, 150, 150);
+      pdf.line(
+        dayX + config.dayColumnWidth,
+        headerRowY,
+        dayX + config.dayColumnWidth,
+        headerRowY + headerRowHeight + (timeSlots.length * config.slotHeight)
+      );
     });
     
     // Enhanced main separator between TIME and days
@@ -508,12 +506,13 @@ export const exportTrulyPixelPerfectWeeklyPDF = async (
             usedSlots.add(slot + (horizontalOffset * 100));
           }
           
-          // Calculate exact positioning
+          // Calculate exact positioning with proper padding
+          const cellPadding = 3;
           const eventX = config.gridStartX + config.timeColumnWidth + (dayIndex * config.dayColumnWidth) + 
-                        (horizontalOffset * (config.dayColumnWidth / 3)) + 2;
-          const eventY = gridStartY + headerRowHeight + (startSlot * config.slotHeight) + 1;
-          const eventWidth = (config.dayColumnWidth / (horizontalOffset + 1)) - 4;
-          const eventHeight = Math.max((endSlot - startSlot) * config.slotHeight - 2, config.slotHeight * 0.8);
+                        (horizontalOffset * (config.dayColumnWidth / 3)) + cellPadding;
+          const eventY = gridStartY + headerRowHeight + (startSlot * config.slotHeight) + cellPadding;
+          const eventWidth = (config.dayColumnWidth / (horizontalOffset + 1)) - (cellPadding * 2);
+          const eventHeight = Math.max((endSlot - startSlot) * config.slotHeight - (cellPadding * 2), config.slotHeight * 0.9);
           
           // Get event source info
           const sourceInfo = getEventSourceInfo(event);
@@ -543,23 +542,24 @@ export const exportTrulyPixelPerfectWeeklyPDF = async (
           
           pdf.setLineDash([]);
           
-          // Event text with dashboard typography
+          // Event text with dashboard typography and proper padding
           const cleanTitle = cleanEventTitle(event.title);
-          const displayTitle = cleanTitle.length > 25 ? cleanTitle.substring(0, 22) + '...' : cleanTitle;
+          const displayTitle = cleanTitle.length > 15 ? cleanTitle.substring(0, 12) + '...' : cleanTitle;
           
           pdf.setFont(config.fonts.family, 'bold');
           pdf.setFontSize(config.fonts.eventTitle.size);
           pdf.setTextColor(...config.colors.black);
           
-          // Event title
-          const titleY = eventY + 8;
-          pdf.text(displayTitle, eventX + 2, titleY);
+          // Event title - positioned with proper padding from left edge
+          const textPadding = 4;
+          const titleY = eventY + 10;
+          pdf.text(displayTitle, eventX + textPadding, titleY);
           
-          // Event time
+          // Event time - positioned at bottom with padding
           pdf.setFont(config.fonts.family, 'normal');
           pdf.setFontSize(config.fonts.eventTime.size);
           const timeText = `${eventDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
-          pdf.text(timeText, eventX + 2, eventY + eventHeight - 4);
+          pdf.text(timeText, eventX + textPadding, eventY + eventHeight - 6);
         }
       });
     });
