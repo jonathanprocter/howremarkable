@@ -222,6 +222,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Development authentication bypass
+  app.post("/api/auth/dev-login", async (req, res) => {
+    try {
+      console.log("🔧 DEV LOGIN: Creating development user session...");
+      
+      // Create or find the development user
+      let dbUser = await storage.getUserByGoogleId('dev-user-123');
+      
+      if (!dbUser) {
+        dbUser = await storage.createGoogleUser(
+          'dev-user-123',
+          'jonathan.procter@gmail.com',
+          'Jonathan Procter'
+        );
+        console.log("Created development user:", dbUser.id);
+      } else {
+        console.log("Found existing development user:", dbUser.id);
+      }
+      
+      // Create user object for session
+      const user = {
+        id: dbUser.id.toString(),
+        googleId: 'dev-user-123',
+        email: 'jonathan.procter@gmail.com',
+        name: 'Jonathan Procter',
+        accessToken: 'dev-access-token',
+        refreshToken: 'dev-refresh-token'
+      };
+      
+      // Log in the user using passport
+      req.logIn(user, (err) => {
+        if (err) {
+          console.error("Dev login error:", err);
+          return res.status(500).json({ error: "Failed to log in development user" });
+        }
+        
+        console.log("✅ DEV LOGIN: User logged in successfully");
+        console.log("Session ID:", req.sessionID);
+        console.log("User in session:", !!req.user);
+        
+        // Force session save
+        req.session.save((saveErr) => {
+          if (saveErr) {
+            console.error("Session save error:", saveErr);
+            return res.status(500).json({ error: "Failed to save session" });
+          }
+          
+          console.log("✅ DEV LOGIN: Session saved successfully");
+          res.json({ 
+            success: true, 
+            user: { id: user.id, email: user.email, name: user.name },
+            sessionId: req.sessionID
+          });
+        });
+      });
+    } catch (error) {
+      console.error("Development login error:", error);
+      res.status(500).json({ error: "Failed to create development session" });
+    }
+  });
+
   // Google Calendar API - Fetch Events
   app.get("/api/calendar/events", async (req, res) => {
     try {

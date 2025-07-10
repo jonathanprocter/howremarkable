@@ -1383,6 +1383,35 @@ export default function Planner() {
               >
                 Sign in with Google
               </button>
+              <button
+                onClick={async () => {
+                  try {
+                    const response = await fetch('/api/auth/dev-login', { method: 'POST' });
+                    const result = await response.json();
+                    if (result.success) {
+                      toast({
+                        title: "Development Login Successful",
+                        description: "You are now logged in with development credentials."
+                      });
+                      // Refresh the user data
+                      setTimeout(() => {
+                        refetchUser();
+                      }, 1000);
+                    } else {
+                      throw new Error('Development login failed');
+                    }
+                  } catch (error) {
+                    toast({
+                      title: "Development Login Failed",
+                      description: "Could not log in with development credentials.",
+                      variant: "destructive"
+                    });
+                  }
+                }}
+                className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+              >
+                Development Login (Skip OAuth)
+              </button>
               {userError && (
                 <div className="text-sm text-red-600 bg-red-50 p-3 rounded">
                   {userError}
