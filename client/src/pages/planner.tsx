@@ -614,12 +614,8 @@ export default function Planner() {
           }
 
         case 'Weekly Package':
-          // Export comprehensive weekly package with all daily pages
           try {
-            // Import the weekly package export function
-            const { exportWeeklyPackage } = await import('../utils/weeklyPackageExport');
-
-            console.log('=== WEEKLY PACKAGE EXPORT START ===');
+            console.log('=== WEEKLY PACKAGE EXPORT ===');
             console.log('Week start:', state.currentWeek.startDate.toDateString());
             console.log('Week end:', state.currentWeek.endDate.toDateString());
             console.log('Total events:', validatedEvents.length);
@@ -632,27 +628,107 @@ export default function Planner() {
 
             console.log('Week events:', weekEvents.length);
 
+            const { exportWeeklyPackage } = await import('../utils/weeklyPackageExport');
             await exportWeeklyPackage(
+              state.currentWeek.startDate,
+              state.currentWeek.endDate,
+              weekEvents
+            );
+
+            toast({
+              title: "Weekly Package Export Successful",
+              description: "Complete weekly package PDF downloaded successfully!"
+            });
+            return;
+          } catch (packageError) {
+            console.error('Weekly package export error:', packageError);
+            toast({
+              title: "Weekly Package Export Failed",
+              description: `Weekly package export failed: ${packageError.message}`,
+              variant: "destructive"
+            });
+            return;
+          }
+
+        case 'Live Dashboard Capture':
+          try {
+            console.log('=== LIVE DASHBOARD CAPTURE EXPORT ===');
+            console.log('Capturing live DOM/CSS grid as rendered...');
+
+            const { exportLiveWeeklyDashboard } = await import('../utils/liveDashboardCapture');
+            await exportLiveWeeklyDashboard(
               state.currentWeek.startDate,
               state.currentWeek.endDate,
               validatedEvents
             );
 
             toast({
-              title: "Weekly Package Export Successful",
-              description: `Complete weekly package PDF downloaded! Page 1: Weekly Overview (Landscape), Pages 2-8: Daily Pages (Portrait) with bidirectional navigation`
+              title: "Live Dashboard Capture Successful",
+              description: "Both raster and vector PDFs exported with exact DOM capture!"
             });
             return;
-          } catch (weeklyError) {
-            console.error('Weekly package export error:', weeklyError);
+          } catch (captureError) {
+            console.error('Live dashboard capture error:', captureError);
             toast({
-              title: "Export Failed",
-              description: `Weekly package export failed: ${weeklyError.message}`,
+              title: "Live Dashboard Capture Failed",
+              description: `Live capture failed: ${captureError.message}`,
               variant: "destructive"
             });
             return;
           }
-          break;
+
+        case 'Live Daily Capture':
+          try {
+            console.log('=== LIVE DAILY CAPTURE EXPORT ===');
+            console.log('Capturing live daily view DOM/CSS...');
+
+            const { exportLiveDailyView } = await import('../utils/liveDashboardCapture');
+            await exportLiveDailyView(
+              state.selectedDate,
+              validatedEvents
+            );
+
+            toast({
+              title: "Live Daily Capture Successful",
+              description: "Daily view captured with exact DOM/CSS styling!"
+            });
+            return;
+          } catch (dailyCaptureError) {
+            console.error('Live daily capture error:', dailyCaptureError);
+            toast({
+              title: "Live Daily Capture Failed",
+              description: `Daily capture failed: ${dailyCaptureError.message}`,
+              variant: "destructive"
+            });
+            return;
+          }
+
+        case 'Live Weekly Package':
+          try {
+            console.log('=== LIVE WEEKLY PACKAGE EXPORT ===');
+            console.log('Creating package with live DOM captures...');
+
+            const { exportLiveWeeklyPackage } = await import('../utils/liveDashboardCapture');
+            await exportLiveWeeklyPackage(
+              state.currentWeek.startDate,
+              state.currentWeek.endDate,
+              validatedEvents
+            );
+
+            toast({
+              title: "Live Weekly Package Successful",
+              description: "Complete package with live captures and navigation!"
+            });
+            return;
+          } catch (livePackageError) {
+            console.error('Live weekly package error:', livePackageError);
+            toast({
+              title: "Live Weekly Package Failed",
+              description: `Live package failed: ${livePackageError.message}`,
+              variant: "destructive"
+            });
+            return;
+          }
 
         case 'reMarkable Weekly':
           // Export weekly view as PDF using the working export function

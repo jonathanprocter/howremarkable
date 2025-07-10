@@ -20,7 +20,7 @@ export const ExportToPDF = ({
   console.log('🔧 ExportToPDF component rendered');
   console.log('🔧 onExportCurrentView:', typeof onExportCurrentView);
   console.log('🔧 onExportDailyView:', typeof onExportDailyView);
-  
+
   // Make the export function globally available for testing
   (window as any).testDailyExport = () => {
     console.log('🚀 GLOBAL TEST EXPORT CALLED!');
@@ -38,14 +38,14 @@ export const ExportToPDF = ({
     try {
       console.log('🔍 STARTING PIXEL-PERFECT AUDIT TEST FROM CONSOLE');
       console.log('='.repeat(80));
-      
+
       // Import and run audit directly
       const { performPixelPerfectAudit, exportAuditResults } = await import('../../utils/pixelPerfectAudit');
       const auditResults = await performPixelPerfectAudit();
       exportAuditResults(auditResults);
-      
+
       console.log('✅ Pixel-perfect audit completed! Check localStorage for results.');
-      
+
     } catch (error) {
       console.error('❌ Pixel-perfect audit test failed:', error);
     }
@@ -56,14 +56,14 @@ export const ExportToPDF = ({
     try {
       console.log('🔍 RUNNING STANDALONE PIXEL-PERFECT AUDIT...');
       console.log('='.repeat(50));
-      
+
       const { performPixelPerfectAudit, exportAuditResults } = await import('../../utils/pixelPerfectAudit');
       const auditResults = await performPixelPerfectAudit();
       exportAuditResults(auditResults);
-      
+
       // Display key results in an alert
       alert(`Pixel-Perfect Audit Complete!\n\nScore: ${auditResults.pixelDiffScore}%\nElements measured: ${auditResults.measurements.length}\nKnown compromises: ${auditResults.compromises.length}\n\nFull results logged to console and saved to localStorage.`);
-      
+
     } catch (error) {
       console.error('❌ Standalone audit failed:', error);
       alert('Audit failed. Check console for details.');
@@ -74,11 +74,11 @@ export const ExportToPDF = ({
     console.log('🚀 DIRECT TEST EXPORT CALLED!');
     onExportCurrentView('Test Export');
   };
-  
+
   return (
     <div className="sidebar-section">
       <h3 className="text-sm font-semibold mb-3 text-gray-900">Export Options</h3>
-      
+
       {/* Debug Export Section */}
       <div className="mb-4">
         <h4 className="text-xs font-medium text-red-700 mb-2">🐛 Debug Exports</h4>
@@ -248,7 +248,7 @@ export const ExportToPDF = ({
           </Button>
         </div>
       </div>
-      
+
       {/* Google Drive Export Section */}
       <div className="mb-4">
         <h4 className="text-xs font-medium text-gray-700 mb-2">☁️ Google Drive</h4>
