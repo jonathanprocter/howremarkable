@@ -308,6 +308,9 @@ export default function Planner() {
       try {
         const { auditExportData, logExportAudit, validateEventData } = await import('../utils/exportAudit');
         
+        console.log('🔍 STARTING EXPORT AUDIT SYSTEM');
+        console.log('================================');
+        
         // Audit export data for completeness
         const auditReport = auditExportData(
           state.events, 
@@ -316,8 +319,28 @@ export default function Planner() {
         );
         logExportAudit(auditReport, type);
 
+        // Show data integrity analysis
+        console.log('📊 DATA INTEGRITY ANALYSIS:');
+        console.log(`   - Dashboard events: ${state.events.length}`);
+        console.log(`   - Filtered events: ${currentEvents.length}`);
+        console.log(`   - Calendar filtering active: ${state.events.length !== currentEvents.length ? 'YES' : 'NO'}`);
+        
         // Validate and clean event data
         validatedEvents = validateEventData(currentEvents);
+        
+        // Show text cleaning results
+        const problemEvents = currentEvents.filter(event => 
+          event.title.includes('🔒') || 
+          event.title.includes('Ø=') || 
+          event.title.includes('!•')
+        );
+        
+        if (problemEvents.length > 0) {
+          console.log('🧹 TEXT CLEANING APPLIED:');
+          problemEvents.forEach(event => {
+            console.log(`   - "${event.title}" → cleaned for export`);
+          });
+        }
         
         // Use validated events for export
         exportData = generateCompleteExportData(
@@ -326,6 +349,7 @@ export default function Planner() {
           dailyNotes
         );
 
+        console.log('✅ AUDIT COMPLETE - Export data validated');
         console.log('Generated export data:', exportData);
         
       } catch (auditError) {
