@@ -184,10 +184,18 @@ export const extractExactDashboardStyles = () => {
     };
   };
 
-  // Calculate proper day column width from grid layout
+  // Calculate proper day column width from grid layout or use standard proportions
   const calculateDayColumnWidth = () => {
     const timeColumnWidth = elements.timeColumn ? elements.timeColumn.getBoundingClientRect().width : 80;
     const gridWidth = elements.grid ? elements.grid.getBoundingClientRect().width : 1000;
+    
+    // If grid width seems too small (likely measuring wrong element), use standard proportions
+    if (gridWidth < 500) {
+      console.log('⚠️ Grid width too small, using standard proportions');
+      // Standard weekly calendar: time column ~80px, each day column ~100-120px
+      return 110; // Use reasonable day column width
+    }
+    
     const availableWidth = gridWidth - timeColumnWidth;
     const dayColumnWidth = availableWidth / 7; // 7 days in a week
     return dayColumnWidth;
@@ -313,10 +321,18 @@ export const extractPrintOptimizedStyles = () => {
   const firstDayColumn = calendarGrid.querySelector('[class*="day"], table th:not(:first-child), table td:not(:first-child)') as HTMLElement;
   const firstTimeSlot = calendarGrid.querySelector('tr, [class*="slot"], [class*="hour"], td, th') as HTMLElement;
 
-  // Calculate proper day column width from grid layout
+  // Calculate proper day column width from grid layout or use standard proportions
   const timeColumnWidth = timeColumn ? timeColumn.getBoundingClientRect().width : 80;
-  const availableWidth = gridRect.width - timeColumnWidth;
-  const calculatedDayColumnWidth = availableWidth / 7; // 7 days in a week
+  
+  // If grid width seems too small (likely measuring wrong element), use standard proportions
+  let calculatedDayColumnWidth;
+  if (gridRect.width < 500) {
+    console.log('⚠️ Grid width too small in print styles, using standard proportions');
+    calculatedDayColumnWidth = 110; // Use reasonable day column width
+  } else {
+    const availableWidth = gridRect.width - timeColumnWidth;
+    calculatedDayColumnWidth = availableWidth / 7; // 7 days in a week
+  }
 
   const measurements = {
     // Grid container
