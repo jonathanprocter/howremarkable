@@ -105,31 +105,32 @@ export const exportPixelPerfectWeeklyPDF = async (
     const weekNumber = Math.ceil(((weekStartDate.getTime() - new Date(weekStartDate.getFullYear(), 0, 1).getTime()) / 86400000 + 1) / 7);
     pdf.text(`${weekStart}-${weekEnd} • Week ${weekNumber}`, PIXEL_PERFECT_CONFIG.pageWidth / 2, headerY + 40, { align: 'center' });
 
-    // Navigation buttons - exact dashboard styling
-    const buttonHeight = 20;
-    const buttonWidth = 120;
-    const buttonY = headerY + 5;
+    // Navigation buttons with rounded corners
+    const buttonHeight = 32;
+    const buttonWidth = 130;
+    const buttonY = headerY + 2;
+    const cornerRadius = 8;
     
     // Previous Week button
-    const prevButtonX = PIXEL_PERFECT_CONFIG.margin + 20;
-    pdf.setFillColor(245, 245, 245);
-    pdf.rect(prevButtonX, buttonY, buttonWidth, buttonHeight, 'F');
-    pdf.setDrawColor(200, 200, 200);
-    pdf.setLineWidth(1);
-    pdf.rect(prevButtonX, buttonY, buttonWidth, buttonHeight, 'S');
-    pdf.setFontSize(10);
-    pdf.setTextColor(...PIXEL_PERFECT_CONFIG.colors.black);
-    pdf.text('!• Previous Week', prevButtonX + buttonWidth/2, buttonY + 13, { align: 'center' });
+    const prevButtonX = PIXEL_PERFECT_CONFIG.margin + 15;
+    pdf.setFillColor(248, 249, 250);
+    pdf.roundedRect(prevButtonX, buttonY, buttonWidth, buttonHeight, cornerRadius, cornerRadius, 'F');
+    pdf.setDrawColor(209, 213, 219);
+    pdf.setLineWidth(1.5);
+    pdf.roundedRect(prevButtonX, buttonY, buttonWidth, buttonHeight, cornerRadius, cornerRadius, 'S');
+    pdf.setFontSize(11);
+    pdf.setTextColor(75, 85, 99);
+    pdf.text('← Previous Week', prevButtonX + buttonWidth/2, buttonY + 21, { align: 'center' });
     
     // Next Week button  
-    const nextButtonX = PIXEL_PERFECT_CONFIG.pageWidth - PIXEL_PERFECT_CONFIG.margin - 20 - buttonWidth;
-    pdf.setFillColor(245, 245, 245);
-    pdf.rect(nextButtonX, buttonY, buttonWidth, buttonHeight, 'F');
-    pdf.setDrawColor(200, 200, 200);
-    pdf.setLineWidth(1);
-    pdf.rect(nextButtonX, buttonY, buttonWidth, buttonHeight, 'S');
-    pdf.setFontSize(10);
-    pdf.text('Next Week !\'', nextButtonX + buttonWidth/2, buttonY + 13, { align: 'center' });
+    const nextButtonX = PIXEL_PERFECT_CONFIG.pageWidth - PIXEL_PERFECT_CONFIG.margin - 15 - buttonWidth;
+    pdf.setFillColor(248, 249, 250);
+    pdf.roundedRect(nextButtonX, buttonY, buttonWidth, buttonHeight, cornerRadius, cornerRadius, 'F');
+    pdf.setDrawColor(209, 213, 219);
+    pdf.setLineWidth(1.5);
+    pdf.roundedRect(nextButtonX, buttonY, buttonWidth, buttonHeight, cornerRadius, cornerRadius, 'S');
+    pdf.setFontSize(11);
+    pdf.text('Next Week →', nextButtonX + buttonWidth/2, buttonY + 21, { align: 'center' });
 
     // === LEGEND SECTION ===
     const legendY = headerY + PIXEL_PERFECT_CONFIG.headerHeight;
@@ -182,14 +183,18 @@ export const exportPixelPerfectWeeklyPDF = async (
     const gridStartY = PIXEL_PERFECT_CONFIG.gridStartY;
     const timeSlots = generateTimeSlots();
     
-    // Grid outline
+    // Grid outline with rounded corners
     pdf.setLineWidth(2);
     pdf.setDrawColor(...PIXEL_PERFECT_CONFIG.colors.black);
-    pdf.rect(
+    const gridRadius = 6;
+    pdf.roundedRect(
       PIXEL_PERFECT_CONFIG.gridStartX, 
       gridStartY, 
       PIXEL_PERFECT_CONFIG.contentWidth, 
-      20 + (timeSlots.length * PIXEL_PERFECT_CONFIG.slotHeight)
+      20 + (timeSlots.length * PIXEL_PERFECT_CONFIG.slotHeight),
+      gridRadius,
+      gridRadius,
+      'S'
     );
 
     // === HEADER ROW ===
@@ -215,16 +220,21 @@ export const exportPixelPerfectWeeklyPDF = async (
       pdf.setFillColor(...PIXEL_PERFECT_CONFIG.colors.white);
       pdf.rect(dayX, headerRowY, PIXEL_PERFECT_CONFIG.dayColumnWidth, headerRowHeight, 'F');
       
-      // Day name and number
+      // Day name and number with improved spacing
       pdf.setFont('times', 'bold');
       pdf.setFontSize(PIXEL_PERFECT_CONFIG.fonts.dayHeader.size);
-      pdf.text(dayName, dayX + PIXEL_PERFECT_CONFIG.dayColumnWidth/2, headerRowY + 8, { align: 'center' });
-      pdf.text(dayDate.getDate().toString(), dayX + PIXEL_PERFECT_CONFIG.dayColumnWidth/2, headerRowY + 16, { align: 'center' });
       
-      // Vertical separator
+      // Day name (e.g., "MON")
+      pdf.text(dayName, dayX + PIXEL_PERFECT_CONFIG.dayColumnWidth/2, headerRowY + 7, { align: 'center' });
+      
+      // Day number (e.g., "7") - positioned more clearly below day name
+      pdf.setFontSize(PIXEL_PERFECT_CONFIG.fonts.dayHeader.size + 1);
+      pdf.text(dayDate.getDate().toString(), dayX + PIXEL_PERFECT_CONFIG.dayColumnWidth/2, headerRowY + 17, { align: 'center' });
+      
+      // Enhanced vertical separator extending from top to bottom
       if (index < 6) {
-        pdf.setLineWidth(1);
-        pdf.setDrawColor(...PIXEL_PERFECT_CONFIG.colors.black);
+        pdf.setLineWidth(1.5);
+        pdf.setDrawColor(100, 100, 100); // Darker gray for better visibility
         pdf.line(
           dayX + PIXEL_PERFECT_CONFIG.dayColumnWidth, 
           headerRowY, 
@@ -234,9 +244,9 @@ export const exportPixelPerfectWeeklyPDF = async (
       }
     });
     
-    // Vertical separator between time column and day columns
-    pdf.setLineWidth(2);
-    pdf.setDrawColor(...PIXEL_PERFECT_CONFIG.colors.black);
+    // Enhanced vertical separator between TIME column and day columns
+    pdf.setLineWidth(2.5);
+    pdf.setDrawColor(80, 80, 80); // Darker color for main separator
     pdf.line(
       PIXEL_PERFECT_CONFIG.gridStartX + PIXEL_PERFECT_CONFIG.timeColumnWidth,
       headerRowY,
