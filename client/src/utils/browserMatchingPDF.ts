@@ -23,17 +23,19 @@ export const exportBrowserMatchingWeeklyPDF = async (
   // EXACT SPECIFICATIONS from Python reference file
   // Original: 3300x2550 pixels at 300 DPI = 11x8.5 inches
   // PDF: 792x612 points (72 DPI equivalent)
-  // Scale factor: 792/3300 = 0.24 for width, 612/2550 = 0.24 for height
-  const scaleFactor = 792 / 3300;
+  // Calculate scale factor to ensure full grid fits within page margins
+  const availableWidth = 792 - 40; // 20pt margins on each side
+  const pythonTotalWidth = 180 + (441 * 7); // time column + 7 day columns
+  const scaleFactor = availableWidth / pythonTotalWidth;
   
   const config = {
-    // Python specs scaled to PDF points
-    margin: 30 * scaleFactor,           // 30px -> 7.2pt
-    headerHeight: 120 * scaleFactor,    // 120px -> 28.8pt
-    lineSpacing: 20 * scaleFactor,      // 20px -> 4.8pt
-    timeColumnWidth: 180 * scaleFactor, // 180px -> 43.2pt
-    dayColumnWidth: 441 * scaleFactor,  // 441px -> 105.8pt
-    rowHeight: 63 * scaleFactor,        // 63px -> 15.1pt
+    // Python specs scaled to fit within PDF margins
+    margin: 20,                         // Fixed margins
+    headerHeight: 120 * scaleFactor,    // 120px scaled
+    lineSpacing: 20 * scaleFactor,      // 20px scaled
+    timeColumnWidth: 180 * scaleFactor, // 180px scaled
+    dayColumnWidth: 441 * scaleFactor,  // 441px scaled
+    rowHeight: 63 * scaleFactor,        // 63px scaled
     totalRows: 37 // 1 header + 36 time slots
   };
   
@@ -54,11 +56,12 @@ export const exportBrowserMatchingWeeklyPDF = async (
   pdf.setTextColor(0, 0, 0);
   pdf.text('WEEKLY PLANNER', config.margin, config.margin + (20 * scaleFactor));
 
-  // Week info - right aligned like Python spec
+  // Week info - right aligned like Python spec but ensure it fits
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(60 * scaleFactor);
   const weekText = 'Week 27 — 7/7-7/13';
-  pdf.text(weekText, 792 - (100 * scaleFactor), config.margin + (20 * scaleFactor));
+  const weekTextWidth = pdf.getTextWidth(weekText);
+  pdf.text(weekText, 792 - config.margin - weekTextWidth, config.margin + (20 * scaleFactor));
 
   // Header line - exactly match Python specs
   pdf.setDrawColor(0, 0, 0);
