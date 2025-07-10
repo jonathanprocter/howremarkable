@@ -635,6 +635,9 @@ The application uses three main entities:
     - Typography and word wrapping matching dashboard behavior exactly
     - Column and row sizing using exact dashboard measurements
     - Foundation for automated pixel diff comparison with visual regression testing
+  - **CRITICAL SCALING FIX**: Removed erroneous 0.6 scaling factor that was reducing dashboard measurements
+    - Fixed timeSlotHeight from being reduced from 40px to 24px in PDF output
+    - Now uses exact dashboard measurements without modification for true pixel-perfect matching
   - **RESULT**: Enhanced export system with comprehensive visual comparison and exact dashboard measurement extraction for true pixel-perfect replication
 
 ## User Preferences

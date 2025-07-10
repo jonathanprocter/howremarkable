@@ -169,10 +169,10 @@ export const exportTrulyPixelPerfectWeeklyPDF = async (
     const baseConfig = createPDFConfig(dashboardStyles);
     const exactConfig = exactMeasurements ? {
       ...baseConfig,
-      // Use EXACT measured dimensions from dashboard
-      timeColumnWidth: exactMeasurements.timeColumnWidth,
-      dayColumnWidth: exactMeasurements.dayColumnWidth, 
-      slotHeight: Math.max(exactMeasurements.timeSlotHeight * 0.6, 12), // Scale for PDF density
+      // Use EXACT measured dimensions from dashboard WITHOUT scaling
+      timeColumnWidth: exactMeasurements.timeColumnWidth, // Use exact 80px from dashboard
+      dayColumnWidth: exactMeasurements.dayColumnWidth,   // Use exact 120px from dashboard  
+      slotHeight: exactMeasurements.timeSlotHeight,       // Use exact 40px from dashboard (NO scaling!)
       
       // Typography - use exact dashboard font settings
       fonts: {
