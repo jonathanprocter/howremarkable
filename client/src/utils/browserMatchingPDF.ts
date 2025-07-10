@@ -13,26 +13,54 @@ export const exportBrowserMatchingWeeklyPDF = async (
 ): Promise<void> => {
   console.log('🔄 Creating browser-matching weekly PDF...');
 
-  // Create PDF with exact browser size - NO SCALING
-  // Total width needed: 80px + (137.79 * 7) = 1044.53px
-  // Add margins: 40px total = 1084.53px
-  // Height needed: 120px header + (40px * 36 slots) + 40px = 1600px
+  // Create PDF with US Letter landscape (11 x 8.5 inches = 792 x 612 points)
   const pdf = new jsPDF({
     orientation: 'landscape',
-    unit: 'px',
-    format: [1085, 1600]  // Exact size needed for browser measurements
+    unit: 'pt',
+    format: 'letter'
   });
 
-  // USE EXACT BROWSER MEASUREMENTS - NO CALCULATIONS
-  const config = {
-    margin: 20,
+  // EXACT BROWSER MEASUREMENTS from debugging
+  const browserMeasurements = {
     timeColumnWidth: 80,           // EXACT from debugging
     dayColumnWidth: 137.79296875,  // EXACT from debugging  
     timeSlotHeight: 40,            // EXACT from debugging
-    headerHeight: 120
   };
   
-  console.log('📊 Using EXACT browser measurements:', config);
+  // Calculate total width needed for browser layout
+  const totalBrowserWidth = browserMeasurements.timeColumnWidth + (browserMeasurements.dayColumnWidth * 7);
+  const totalBrowserHeight = browserMeasurements.timeSlotHeight * 36; // 36 time slots
+  
+  console.log('📊 EXACT browser measurements:', browserMeasurements);
+  console.log('📊 Total browser dimensions:', { width: totalBrowserWidth, height: totalBrowserHeight });
+  
+  // Available space on US Letter landscape: 792 x 612 points
+  const availableWidth = 792 - 40; // 40pt margins (20pt each side)
+  const availableHeight = 612 - 120; // 120pt for header
+  
+  // Calculate scaling to fit browser layout onto US Letter paper
+  const widthScale = availableWidth / totalBrowserWidth;
+  const heightScale = availableHeight / totalBrowserHeight;
+  const uniformScale = Math.min(widthScale, heightScale); // Use smaller scale to fit both dimensions
+  
+  console.log('📊 Scaling calculations:', { 
+    availableWidth, 
+    availableHeight, 
+    widthScale: widthScale.toFixed(4), 
+    heightScale: heightScale.toFixed(4), 
+    uniformScale: uniformScale.toFixed(4) 
+  });
+  
+  // Apply uniform scaling to browser measurements
+  const config = {
+    margin: 20,
+    timeColumnWidth: browserMeasurements.timeColumnWidth * uniformScale,
+    dayColumnWidth: browserMeasurements.dayColumnWidth * uniformScale,
+    timeSlotHeight: browserMeasurements.timeSlotHeight * uniformScale,
+    headerHeight: 100 // Fixed header height
+  };
+  
+  console.log('📊 Scaled configuration for US Letter:', config);
 
   const gridStartX = config.margin;
   const gridStartY = config.margin + config.headerHeight;
@@ -40,20 +68,20 @@ export const exportBrowserMatchingWeeklyPDF = async (
 
   // White background
   pdf.setFillColor(255, 255, 255);
-  pdf.rect(0, 0, 1085, 1600, 'F');
+  pdf.rect(0, 0, 792, 612, 'F');
 
   // HEADER - exactly match browser title
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(20);
   pdf.setTextColor(0, 0, 0);
-  pdf.text('WEEKLY CALENDAR', 1085 / 2, config.margin + 25, { align: 'center' });
+  pdf.text('WEEKLY CALENDAR', 792 / 2, config.margin + 25, { align: 'center' });
 
   // Week info
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(14);
   const weekStart = weekStartDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
   const weekEnd = weekEndDate.toLocaleDateString('en-US', { day: 'numeric' });
-  pdf.text(`${weekStart} - ${weekEnd}, 2025`, 1085 / 2, config.margin + 45, { align: 'center' });
+  pdf.text(`${weekStart} - ${weekEnd}, 2025`, 792 / 2, config.margin + 45, { align: 'center' });
 
   // LEGEND - moved to top below header
   const legendY = config.margin + 60;
@@ -61,7 +89,7 @@ export const exportBrowserMatchingWeeklyPDF = async (
   pdf.setFontSize(10);
   
   // Center the legend items
-  const legendStartX = 1085 / 2 - 180; // Center 3 items spanning about 360px
+  const legendStartX = 792 / 2 - 180; // Center 3 items spanning about 360px
   
   // SimplePractice legend
   pdf.setFillColor(255, 255, 255);
