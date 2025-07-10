@@ -306,27 +306,44 @@ export default function Planner() {
       let validatedEvents = currentEvents;
       
       try {
-        const { auditExportData, logExportAudit, validateEventData } = await import('../utils/exportAudit');
+        const { runPixelPerfectAudit, logExportAudit, validateEventData } = await import('../utils/exportAudit');
         
-        console.log('🔍 STARTING EXPORT AUDIT SYSTEM');
-        console.log('================================');
+        console.log('🔍 STARTING PIXEL-PERFECT EXPORT AUDIT SYSTEM');
+        console.log('='.repeat(80));
         
-        // Audit export data for completeness
-        const auditReport = auditExportData(
-          state.events, 
-          currentEvents, 
-          state.viewMode === 'daily' ? state.selectedDate : undefined
+        // Run comprehensive pixel-perfect audit
+        const exportType = state.viewMode === 'daily' ? 'daily' : 'weekly';
+        const pixelPerfectAudit = runPixelPerfectAudit(
+          state.events,
+          currentEvents,
+          state.viewMode === 'daily' ? state.selectedDate : undefined,
+          exportType
         );
-        logExportAudit(auditReport, type);
-
-        // Show data integrity analysis
-        console.log('📊 DATA INTEGRITY ANALYSIS:');
-        console.log(`   - Dashboard events: ${state.events.length}`);
-        console.log(`   - Filtered events: ${currentEvents.length}`);
-        console.log(`   - Calendar filtering active: ${state.events.length !== currentEvents.length ? 'YES' : 'NO'}`);
         
-        // Validate and clean event data
-        validatedEvents = validateEventData(currentEvents);
+        // Log detailed audit results
+        logExportAudit(pixelPerfectAudit.auditReport, type);
+        
+        // Show pixel-perfect analysis
+        console.log('🎯 PIXEL-PERFECT ANALYSIS:');
+        console.log(`   - Overall Score: ${pixelPerfectAudit.pixelPerfectScore}/100`);
+        console.log(`   - Data Integrity: ${pixelPerfectAudit.auditReport.dataIntegrityScore.toFixed(1)}%`);
+        console.log(`   - Grid Alignment: ${pixelPerfectAudit.gridValidation.isValid ? 'VALID' : 'INVALID'}`);
+        console.log(`   - Event Count Match: ${pixelPerfectAudit.auditReport.missingEvents.length === 0 ? 'PERFECT' : 'MISMATCH'}`);
+        
+        // Show grid validation issues if any
+        if (pixelPerfectAudit.gridValidation.issues.length > 0) {
+          console.log('⚠️ GRID ALIGNMENT ISSUES:');
+          pixelPerfectAudit.gridValidation.issues.forEach(issue => {
+            console.log(`   - ${issue}`);
+          });
+        }
+        
+        // Show unified event data summary
+        console.log('📋 UNIFIED EVENT DATA SUMMARY:');
+        console.log(`   - Total unified events: ${pixelPerfectAudit.unifiedData.length}`);
+        console.log(`   - Events with notes: ${pixelPerfectAudit.unifiedData.filter(e => e.hasNotes).length}`);
+        console.log(`   - Events with action items: ${pixelPerfectAudit.unifiedData.filter(e => e.hasActionItems).length}`);
+        console.log(`   - 3-column layout required: ${pixelPerfectAudit.exportConfig.layout.use3ColumnLayout ? 'YES' : 'NO'}`);
         
         // Show text cleaning results
         const problemEvents = currentEvents.filter(event => 
@@ -343,17 +360,27 @@ export default function Planner() {
         }
         
         // Use validated events for export
+        validatedEvents = validateEventData(currentEvents);
         exportData = generateCompleteExportData(
           selectedDateForExport,
           validatedEvents,
           dailyNotes
         );
 
-        console.log('✅ AUDIT COMPLETE - Export data validated');
+        // Final assessment
+        if (pixelPerfectAudit.pixelPerfectScore >= 95) {
+          console.log('✅ PIXEL-PERFECT MATCH ACHIEVED - PDF will match dashboard exactly');
+        } else if (pixelPerfectAudit.pixelPerfectScore >= 85) {
+          console.log('⚠️ GOOD MATCH - Minor differences may exist between dashboard and PDF');
+        } else {
+          console.log('❌ SIGNIFICANT ISSUES - PDF may not match dashboard accurately');
+        }
+        
         console.log('Generated export data:', exportData);
+        console.log('='.repeat(80));
         
       } catch (auditError) {
-        console.error('Audit system error:', auditError);
+        console.error('Pixel-perfect audit system error:', auditError);
         // Continue with regular export if audit fails
         exportData = generateCompleteExportData(
           selectedDateForExport,
