@@ -115,7 +115,7 @@ export const exportBrowserMatchingWeeklyPDF = async (
     
     // Background color - grey for top of hour, white for half hour
     const bgColor = isTopOfHour ? [220, 220, 220] : [255, 255, 255];
-    const fontSize = isTopOfHour ? (28 * scaleFactor) : (24 * scaleFactor);
+    const fontSize = isTopOfHour ? Math.max(12, 28 * scaleFactor) : Math.max(10, 24 * scaleFactor);
     
     currentX = gridStartX;
     
@@ -227,9 +227,9 @@ export const exportBrowserMatchingWeeklyPDF = async (
       pdf.rect(eventX, eventY, eventWidth, eventHeight, 'S');
     }
     
-    // Event text - scaled for readability
+    // Event text - increased font sizes for better readability
     pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(8 * scaleFactor);
+    pdf.setFontSize(Math.max(10, 8 * scaleFactor)); // Minimum 10pt for event titles
     pdf.setTextColor(0, 0, 0);
     
     // Event title (remove "Appointment" suffix like browser)
@@ -238,17 +238,17 @@ export const exportBrowserMatchingWeeklyPDF = async (
       displayTitle = displayTitle.replace(/ appointment$/i, '');
     }
     
-    // Truncate if too long
-    if (displayTitle.length > 12) {
-      displayTitle = displayTitle.substring(0, 12) + '...';
+    // Truncate if too long for readability
+    if (displayTitle.length > 10) {
+      displayTitle = displayTitle.substring(0, 10) + '...';
     }
     
-    pdf.text(displayTitle, eventX + 3, eventY + 8);
+    pdf.text(displayTitle, eventX + 3, eventY + 10);
     
-    // Time display
-    pdf.setFontSize(6 * scaleFactor);
+    // Time display - larger font for better readability
+    pdf.setFontSize(Math.max(9, 6 * scaleFactor)); // Minimum 9pt for time display
     const timeDisplay = `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}-${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
-    pdf.text(timeDisplay, eventX + 3, eventY + eventHeight - 3);
+    pdf.text(timeDisplay, eventX + 3, eventY + eventHeight - 5);
   });
 
   // Legend is now at the top
