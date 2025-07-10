@@ -193,6 +193,14 @@ export const ExportToPDF = ({
           </Button>
           <Button 
             variant="outline" 
+            onClick={() => onExportCurrentView('Browser Matching')}
+            className="w-full text-xs bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 font-bold"
+            size="sm"
+          >
+            🔍 Browser Matching
+          </Button>
+          <Button 
+            variant="outline" 
             onClick={() => onExportCurrentView('Truly Pixel Perfect Weekly')}
             className="w-full text-xs bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100"
             size="sm"

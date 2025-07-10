@@ -19,11 +19,12 @@ import { exportWeeklyCalendarHTML } from '../utils/htmlWeeklyExport';
 import { exportExactGridPDF } from '../utils/exactGridPDFExport';
 import { generateCompleteExportData, exportToText, exportToJSON, exportToCSV, testExportData } from '../utils/completePDFExport';
 
-// Import the daily PDF export functions
+// Import the PDF export functions
 import { exportDailyToPDF } from '../utils/dailyPDFExport';
 import { exportExactDailyPDF } from '../utils/exactDailyPDFExport';
 import { exportPerfectWeeklyPDF, exportPerfectDailyPDF } from '../utils/perfectDashboardExport';
 import { exportTrulyPixelPerfectWeeklyPDF } from '../utils/trulyPixelPerfectExport';
+import { exportBrowserMatchingWeeklyPDF, exportBrowserMatchingDailyPDF } from '../utils/browserMatchingPDF';
 
 
 
@@ -644,6 +645,57 @@ export default function Planner() {
               variant: "destructive"
             });
             return;
+          }
+
+        case 'Browser Matching':
+          // Export that exactly matches what's displayed in the browser
+          if (state.viewMode === 'daily') {
+            try {
+              console.log('=== BROWSER MATCHING DAILY PDF EXPORT ===');
+              console.log('Selected date:', selectedDateForExport.toDateString());
+              
+              await exportBrowserMatchingDailyPDF(selectedDateForExport, validatedEvents);
+              
+              toast({
+                title: "Browser-Matching Export Successful",
+                description: "PDF that exactly matches your browser display downloaded!"
+              });
+              return;
+            } catch (dailyError) {
+              console.error('Browser matching daily PDF export error:', dailyError);
+              toast({
+                title: "Browser-Matching Export Failed",
+                description: `Browser matching export failed: ${dailyError.message}`,
+                variant: "destructive"
+              });
+              return;
+            }
+          } else {
+            try {
+              console.log('=== BROWSER MATCHING WEEKLY PDF EXPORT ===');
+              console.log('Week start:', state.currentWeek.startDate.toDateString());
+              console.log('Week end:', state.currentWeek.endDate.toDateString());
+              
+              await exportBrowserMatchingWeeklyPDF(
+                state.currentWeek.startDate,
+                state.currentWeek.endDate,
+                validatedEvents
+              );
+              
+              toast({
+                title: "Browser-Matching Export Successful",
+                description: "PDF that exactly matches your browser display downloaded!"
+              });
+              return;
+            } catch (weeklyError) {
+              console.error('Browser matching weekly PDF export error:', weeklyError);
+              toast({
+                title: "Browser-Matching Export Failed",
+                description: `Browser matching export failed: ${weeklyError.message}`,
+                variant: "destructive"
+              });
+              return;
+            }
           }
 
         case 'Live Dashboard Capture':
