@@ -638,6 +638,10 @@ The application uses three main entities:
   - **CRITICAL SCALING FIX**: Removed erroneous 0.6 scaling factor that was reducing dashboard measurements
     - Fixed timeSlotHeight from being reduced from 40px to 24px in PDF output
     - Now uses exact dashboard measurements without modification for true pixel-perfect matching
+  - **DAY COLUMN WIDTH CALCULATION FIX**: Fixed measurement extraction to calculate proper day column width
+    - Previously measuring individual day header cells (32px) causing excessive zoom
+    - Now calculates proper day column width: (gridWidth - timeColumnWidth) / 7 days
+    - Prevents PDF from being zoomed in too much due to incorrect column measurements
   - **RESULT**: Enhanced export system with comprehensive visual comparison and exact dashboard measurement extraction for true pixel-perfect replication
 
 ## User Preferences

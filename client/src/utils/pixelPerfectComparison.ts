@@ -184,10 +184,22 @@ export const extractExactDashboardStyles = () => {
     };
   };
 
+  // Calculate proper day column width from grid layout
+  const calculateDayColumnWidth = () => {
+    const timeColumnWidth = elements.timeColumn ? elements.timeColumn.getBoundingClientRect().width : 80;
+    const gridWidth = elements.grid ? elements.grid.getBoundingClientRect().width : 1000;
+    const availableWidth = gridWidth - timeColumnWidth;
+    const dayColumnWidth = availableWidth / 7; // 7 days in a week
+    return dayColumnWidth;
+  };
+
   // Extract exact styles from each element type
   const exactStyles = {
     timeColumn: extractExactDimensions(elements.timeColumn),
-    dayColumn: elements.dayColumns.length > 0 ? extractExactDimensions(elements.dayColumns[0]) : null,
+    dayColumn: elements.dayColumns.length > 0 ? {
+      ...extractExactDimensions(elements.dayColumns[0]),
+      width: calculateDayColumnWidth() // Use calculated width instead of individual header width
+    } : null,
     timeSlot: elements.timeSlots.length > 0 ? extractExactDimensions(elements.timeSlots[0]) : null,
     event: elements.events.length > 0 ? extractExactDimensions(elements.events[0]) : null,
     grid: extractExactDimensions(elements.grid),
@@ -301,17 +313,22 @@ export const extractPrintOptimizedStyles = () => {
   const firstDayColumn = calendarGrid.querySelector('[class*="day"], table th:not(:first-child), table td:not(:first-child)') as HTMLElement;
   const firstTimeSlot = calendarGrid.querySelector('tr, [class*="slot"], [class*="hour"], td, th') as HTMLElement;
 
+  // Calculate proper day column width from grid layout
+  const timeColumnWidth = timeColumn ? timeColumn.getBoundingClientRect().width : 80;
+  const availableWidth = gridRect.width - timeColumnWidth;
+  const calculatedDayColumnWidth = availableWidth / 7; // 7 days in a week
+
   const measurements = {
     // Grid container
     gridWidth: gridRect.width,
     gridHeight: gridRect.height,
     
     // Time column measurements
-    timeColumnWidth: timeColumn ? timeColumn.getBoundingClientRect().width : 80,
+    timeColumnWidth: timeColumnWidth,
     timeColumnStyles: timeColumn ? getComputedStyle(timeColumn) : null,
     
     // Day column measurements  
-    dayColumnWidth: firstDayColumn ? firstDayColumn.getBoundingClientRect().width : 120,
+    dayColumnWidth: calculatedDayColumnWidth, // Use calculated width instead of individual header width
     dayColumnStyles: firstDayColumn ? getComputedStyle(firstDayColumn) : null,
     
     // Time slot measurements
