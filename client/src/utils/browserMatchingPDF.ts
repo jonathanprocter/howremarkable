@@ -13,119 +13,26 @@ export const exportBrowserMatchingWeeklyPDF = async (
 ): Promise<void> => {
   console.log('🔄 Creating browser-matching weekly PDF...');
 
-  // Create PDF with 11x8.5 landscape format
+  // Create PDF with exact browser size - NO SCALING
+  // Total width needed: 80px + (137.79 * 7) = 1044.53px
+  // Add margins: 40px total = 1084.53px
+  // Height needed: 120px header + (40px * 36 slots) + 40px = 1600px
   const pdf = new jsPDF({
     orientation: 'landscape',
-    unit: 'pt',
-    format: [792, 612]
+    unit: 'px',
+    format: [1085, 1600]  // Exact size needed for browser measurements
   });
 
-  // Extract exact browser grid measurements using correct CSS Grid selectors
-  const plannerContainer = document.querySelector('.planner-container');
-  const calendarGrid = document.querySelector('.calendar-grid');
-  const timeHeader = document.querySelector('.time-header');
-  const dayHeaders = document.querySelectorAll('.day-header');
-  const timeSlots = document.querySelectorAll('.time-slot');
-  const calendarCells = document.querySelectorAll('.calendar-cell');
-
-  // Debug: Log all potential selectors
-  console.log('🔍 DOM Analysis for CSS Grid Weekly Planner:');
-  console.log('- Planner container found:', !!plannerContainer);
-  console.log('- Calendar grid found:', !!calendarGrid);
-  console.log('- Time header found:', !!timeHeader);
-  console.log('- Day headers found:', dayHeaders.length);
-  console.log('- Time slots found:', timeSlots.length);
-  console.log('- Calendar cells found:', calendarCells.length);
-
-  // Get computed styles from browser with better fallback logic
-  let timeColumnWidth = 80;
-  let dayColumnWidth = 110;
-  let timeSlotHeight = 40;
-
-  // Extract from CSS Grid structure
-  if (calendarGrid) {
-    const gridRect = calendarGrid.getBoundingClientRect();
-    console.log('📏 CSS Grid dimensions:', { width: gridRect.width, height: gridRect.height });
-    
-    // Get actual time header width (first column)
-    if (timeHeader) {
-      const timeHeaderRect = timeHeader.getBoundingClientRect();
-      timeColumnWidth = timeHeaderRect.width;
-      console.log('✓ Time column width from .time-header:', timeColumnWidth);
-    }
-    
-    // Get actual day header width (any of the 7 day columns)
-    if (dayHeaders.length > 0) {
-      const dayHeaderRect = dayHeaders[0].getBoundingClientRect();
-      dayColumnWidth = dayHeaderRect.width;
-      console.log('✓ Day column width from .day-header:', dayColumnWidth);
-    }
-    
-    // Get actual time slot height
-    if (timeSlots.length > 0) {
-      const timeSlotRect = timeSlots[0].getBoundingClientRect();
-      timeSlotHeight = timeSlotRect.height;
-      console.log('✓ Time slot height from .time-slot:', timeSlotHeight);
-    }
-    
-    // Fallback calculation if specific elements not found
-    if (timeColumnWidth < 50 || dayColumnWidth < 50) {
-      // Use grid container dimensions with sensible proportions
-      if (gridRect.width > 500) {
-        timeColumnWidth = Math.max(gridRect.width * 0.12, 60); // About 12% for time column
-        dayColumnWidth = Math.max((gridRect.width - timeColumnWidth) / 7, 90);
-        console.log('📐 Calculated from grid proportions - time:', timeColumnWidth, 'day:', dayColumnWidth);
-      }
-    }
-  }
-
-  // Final fallback: Use reasonable defaults if measurements are still wrong
-  if (dayColumnWidth < 50) dayColumnWidth = 110;
-  if (timeColumnWidth < 50) timeColumnWidth = 80;
-  if (timeSlotHeight < 20) timeSlotHeight = 40;
-
-  console.log('Browser measurements:', {
-    timeColumnWidth,
-    dayColumnWidth,
-    timeSlotHeight,
-    dayColumnsCount: dayHeaders.length
-  });
-
-  // Use exact browser measurements - no guessing!
-  // From debugging: time=80px, day=137.79px, slot=40px
-  const exactTimeWidth = 80;
-  const exactDayWidth = 137.79296875;
-  const exactSlotHeight = 40;
-  
-  // Calculate exact total width needed
-  const exactTotalWidth = exactTimeWidth + (exactDayWidth * 7); // 1044.55px
-  
-  // Available space on PDF page
-  const availableWidth = 792 - 40; // 752px
-  const availableHeight = 612 - 120; // 492px for grid
-  
-  // Scale to fit width exactly
-  const scaleFactor = availableWidth / exactTotalWidth; // ~0.72
-  
-  console.log('📐 EXACT measurements from browser:', {
-    exactTimeWidth,
-    exactDayWidth,
-    exactSlotHeight,
-    exactTotalWidth,
-    availableWidth,
-    scaleFactor: scaleFactor.toFixed(4)
-  });
-  
+  // USE EXACT BROWSER MEASUREMENTS - NO CALCULATIONS
   const config = {
     margin: 20,
-    timeColumnWidth: exactTimeWidth * scaleFactor,
-    dayColumnWidth: exactDayWidth * scaleFactor,
-    timeSlotHeight: exactSlotHeight * scaleFactor,
-    headerHeight: 120, // Header with legend
-    legendHeight: 30
+    timeColumnWidth: 80,           // EXACT from debugging
+    dayColumnWidth: 137.79296875,  // EXACT from debugging  
+    timeSlotHeight: 40,            // EXACT from debugging
+    headerHeight: 120
   };
   
-  console.log('📊 EXACT PDF configuration using browser values:', config);
+  console.log('📊 Using EXACT browser measurements:', config);
 
   const gridStartX = config.margin;
   const gridStartY = config.margin + config.headerHeight;
@@ -133,20 +40,20 @@ export const exportBrowserMatchingWeeklyPDF = async (
 
   // White background
   pdf.setFillColor(255, 255, 255);
-  pdf.rect(0, 0, 792, 612, 'F');
+  pdf.rect(0, 0, 1085, 1600, 'F');
 
   // HEADER - exactly match browser title
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(20);
   pdf.setTextColor(0, 0, 0);
-  pdf.text('WEEKLY CALENDAR', 792 / 2, config.margin + 25, { align: 'center' });
+  pdf.text('WEEKLY CALENDAR', 1085 / 2, config.margin + 25, { align: 'center' });
 
   // Week info
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(14);
   const weekStart = weekStartDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
   const weekEnd = weekEndDate.toLocaleDateString('en-US', { day: 'numeric' });
-  pdf.text(`${weekStart} - ${weekEnd}, 2025`, 792 / 2, config.margin + 45, { align: 'center' });
+  pdf.text(`${weekStart} - ${weekEnd}, 2025`, 1085 / 2, config.margin + 45, { align: 'center' });
 
   // LEGEND - moved to top below header
   const legendY = config.margin + 60;
@@ -154,7 +61,7 @@ export const exportBrowserMatchingWeeklyPDF = async (
   pdf.setFontSize(10);
   
   // Center the legend items
-  const legendStartX = 792 / 2 - 180; // Center 3 items spanning about 360px
+  const legendStartX = 1085 / 2 - 180; // Center 3 items spanning about 360px
   
   // SimplePractice legend
   pdf.setFillColor(255, 255, 255);
