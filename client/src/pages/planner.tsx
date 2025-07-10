@@ -640,7 +640,7 @@ export default function Planner() {
 
             toast({
               title: "Weekly Package Export Successful",
-              description: `Complete weekly package with 8 pages downloaded! (1 weekly overview + 7 daily pages)`
+              description: `Complete weekly package PDF downloaded! Page 1: Weekly Overview (Landscape), Pages 2-8: Daily Pages (Portrait) with bidirectional navigation`
             });
             return;
           } catch (weeklyError) {

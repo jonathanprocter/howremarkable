@@ -2,6 +2,27 @@ import jsPDF from 'jspdf';
 import { CalendarEvent } from '../types/calendar';
 import { drawDailyHeader, drawDailyFooter, drawDailyGrid } from './htmlTemplatePDF';
 
+// Weekly Package Export Configuration
+const WEEKLY_CONFIG = {
+  pageWidth: 842,   // A3 landscape width for better weekly view
+  pageHeight: 595,  // A3 landscape height
+  margin: 20,
+  timeColumnWidth: 55,
+  dayColumnWidth: 100,
+  timeSlotHeight: 12,
+  headerHeight: 40
+};
+
+const DAILY_CONFIG = {
+  pageWidth: 612,   // A4 portrait width  
+  pageHeight: 792,  // A4 portrait height
+  margin: 25,
+  timeColumnWidth: 75,
+  appointmentColumnWidth: 502,
+  timeSlotHeight: 18,
+  headerHeight: 60
+};
+
 /**
  * Comprehensive Weekly Package Export with Complete Bidirectional Linking
  * 
@@ -30,43 +51,44 @@ export const exportWeeklyPackage = async (
 
     console.log('Week events:', weekEvents.length);
 
-    // Create master PDF document - start with 8.5 x 11 inch landscape for weekly overview
-    const masterPDF = new jsPDF({
+    // Create PDF with weekly overview page (A3 landscape for better visibility)
+    const pdf = new jsPDF({
       orientation: 'landscape',
       unit: 'pt',
-      format: [792, 612] // 11 x 8.5 inches (landscape)
+      format: [WEEKLY_CONFIG.pageWidth, WEEKLY_CONFIG.pageHeight]
     });
 
-    // PAGE 1: Weekly Overview - Use existing weekly grid export functionality
-    console.log('📄 Creating Weekly Overview Page (Page 1) - Landscape A3');
-    await createWeeklyOverviewPage(masterPDF, weekStartDate, weekEndDate, weekEvents);
+    // Add weekly overview page
+    drawWeeklyOverviewPage(pdf, weekStartDate, weekEndDate, weekEvents);
 
-    // PAGES 2-8: Individual Daily Pages - Use existing daily export functionality
-    const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    // Add daily pages
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-    for (let i = 0; i < 7; i++) {
+    // Page 2-8: Daily pages (Portrait A4)
+    dayNames.forEach((dayName, dayIndex) => {
       const currentDate = new Date(weekStartDate);
-      currentDate.setDate(weekStartDate.getDate() + i);
+      currentDate.setDate(weekStartDate.getDate() + dayIndex);
 
-      const dayName = daysOfWeek[i];
-      const pageNumber = i + 2;
+      if (dayIndex > 0) {
+        pdf.addPage([DAILY_CONFIG.pageWidth, DAILY_CONFIG.pageHeight], 'portrait');
+      }
 
-      console.log(`📄 Creating ${dayName} Page (Page ${pageNumber}) - ${currentDate.toDateString()}`);
+      const currentPageNum = dayIndex + 2; // Pages 2-8
+      const totalPages = 8; // 1 weekly + 7 daily
 
-      // Add new page for each day - switch to 8.5 x 11 inch portrait for daily pages
-      masterPDF.addPage([612, 792], 'portrait');
+      console.log(`📄 Creating ${dayName} Page (Page ${currentPageNum}) - ${currentDate.toDateString()}`);
 
-      // Filter events for this specific day
-      const dayEvents = events.filter(event => {
+      const dayEvents = weekEvents.filter(event => {
         const eventDate = new Date(event.startTime);
         return eventDate.toDateString() === currentDate.toDateString();
       });
 
       console.log(`  - ${dayName} events: ${dayEvents.length}`);
 
-      // Add daily page content using existing daily export function
-      await createDailyPageContent(masterPDF, currentDate, dayEvents, pageNumber, dayName, i + 1);
-    }
+      drawDailyHeader(pdf, DAILY_CONFIG, currentDate, dayEvents);
+      drawDailyNavigationButtons(pdf, DAILY_CONFIG, currentDate, weekStartDate, weekEndDate, currentPageNum, totalPages);
+      drawDailyGrid(pdf, DAILY_CONFIG, currentDate, dayEvents);
+    });
 
     // Generate filename with week info
     const weekStart = weekStartDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -74,7 +96,7 @@ export const exportWeeklyPackage = async (
     const filename = `weekly-package-${weekStart}-to-${weekEnd}-${weekStartDate.getFullYear()}.pdf`;
 
     // Save the complete package
-    masterPDF.save(filename);
+    pdf.save(filename);
 
     console.log('✅ WEEKLY PACKAGE EXPORT COMPLETE');
     console.log('📊 Package Summary:');
@@ -93,23 +115,18 @@ export const exportWeeklyPackage = async (
 };
 
 /**
- * Create Weekly Overview Page using working weekly grid export
+ * New version with no external calls and dashboard styling
  */
-async function createWeeklyOverviewPage(
-  pdf: jsPDF,
-  weekStartDate: Date,
-  weekEndDate: Date,
-  events: CalendarEvent[]
-): Promise<void> {
-  // Enhanced configuration for 8.5x11 landscape weekly overview - dashboard matching
+function drawWeeklyOverviewPage(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date, events: CalendarEvent[]) {
+  // Enhanced configuration for A3 landscape weekly overview - dashboard matching
   const GRID_CONFIG = {
-    pageWidth: 792,   // 11 inches = 792 points (8.5x11 landscape)
-    pageHeight: 612,  // 8.5 inches = 612 points  
-    margin: 30,
-    headerHeight: 60,
+    pageWidth: 842,   // A3 landscape width
+    pageHeight: 595,  // A3 landscape height
+    margin: 20,
+    headerHeight: 40,
     legendHeight: 30,
-    timeColumnWidth: 75,
-    timeSlotHeight: 12,  // Optimized for better content density
+    timeColumnWidth: 55,
+    timeSlotHeight: 12,
     startHour: 6,
     endHour: 23,
     totalTimeSlots: 36 // 6:00 to 23:30
@@ -125,43 +142,15 @@ async function createWeeklyOverviewPage(
 
   // === HEADER ===
   pdf.setFont('times', 'bold');
-  pdf.setFontSize(20);
+  pdf.setFontSize(18);
   pdf.setTextColor(0, 0, 0);
-  pdf.text('WEEKLY CALENDAR', GRID_CONFIG.pageWidth / 2, 30, { align: 'center' });
+  pdf.text('WEEKLY CALENDAR', GRID_CONFIG.pageWidth / 2, 25, { align: 'center' });
 
   // Week date range
-  pdf.setFontSize(14);
+  pdf.setFontSize(12);
   const weekStart = weekStartDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
   const weekEnd = weekEndDate.toLocaleDateString('en-US', { day: 'numeric', year: 'numeric' });
-  pdf.text(`${weekStart} - ${weekEnd}`, GRID_CONFIG.pageWidth / 2, 50, { align: 'center' });
-
-  // Navigation buttons
-  const buttonHeight = 20;
-  const buttonWidth = 100;
-
-  // Previous week button
-  const prevButtonX = GRID_CONFIG.margin + 20;
-  const prevButtonY = 8;
-  pdf.setFillColor(245, 245, 245);
-  pdf.rect(prevButtonX, prevButtonY, buttonWidth, buttonHeight, 'F');
-  pdf.setDrawColor(200, 200, 200);
-  pdf.setLineWidth(1);
-  pdf.rect(prevButtonX, prevButtonY, buttonWidth, buttonHeight, 'S');
-  pdf.setFontSize(10);
-  pdf.setTextColor(0, 0, 0);
-  pdf.text('← Previous Week', prevButtonX + buttonWidth/2, prevButtonY + 13, { align: 'center' });
-
-  // Next week button
-  const nextButtonX = GRID_CONFIG.pageWidth - GRID_CONFIG.margin - 20 - buttonWidth;
-  const nextButtonY = 8;
-  pdf.setFillColor(245, 245, 245);
-  pdf.rect(nextButtonX, nextButtonY, buttonWidth, buttonHeight, 'F');
-  pdf.setDrawColor(200, 200, 200);
-  pdf.setLineWidth(1);
-  pdf.rect(nextButtonX, nextButtonY, buttonWidth, buttonHeight, 'S');
-  pdf.setFontSize(10);
-  pdf.setTextColor(0, 0, 0);
-  pdf.text('Next Week →', nextButtonX + buttonWidth/2, nextButtonY + 13, { align: 'center' });
+  pdf.text(`${weekStart} - ${weekEnd}`, GRID_CONFIG.pageWidth / 2, 40, { align: 'center' });
 
   // === LEGEND ===
   const legendY = GRID_CONFIG.headerHeight;
@@ -173,55 +162,55 @@ async function createWeeklyOverviewPage(
 
   // Legend items
   pdf.setFont('times', 'normal');
-  pdf.setFontSize(10);
-  let legendX = gridStartX + 80;
+  pdf.setFontSize(9);
+  let legendX = gridStartX + 70;
 
   // SimplePractice
   pdf.setFillColor(255, 255, 255);
-  pdf.rect(legendX, legendY + 8, 16, 12, 'F');
+  pdf.rect(legendX, legendY + 7, 14, 10, 'F');
   pdf.setDrawColor(100, 149, 237);
   pdf.setLineWidth(1);
-  pdf.rect(legendX, legendY + 8, 16, 12, 'S');
-  pdf.setLineWidth(4);
-  pdf.line(legendX, legendY + 8, legendX, legendY + 20);
+  pdf.rect(legendX, legendY + 7, 14, 10, 'S');
+  pdf.setLineWidth(3);
+  pdf.line(legendX, legendY + 7, legendX, legendY + 17);
   pdf.setTextColor(0, 0, 0);
-  pdf.text('SimplePractice', legendX + 22, legendY + 17);
+  pdf.text('SimplePractice', legendX + 20, legendY + 15);
 
-  legendX += 200;
+  legendX += 180;
 
   // Google Calendar
   pdf.setFillColor(255, 255, 255);
-  pdf.rect(legendX, legendY + 8, 16, 12, 'F');
+  pdf.rect(legendX, legendY + 7, 14, 10, 'F');
   pdf.setDrawColor(34, 197, 94);
   pdf.setLineWidth(1);
   pdf.setLineDash([3, 2]);
-  pdf.rect(legendX, legendY + 8, 16, 12, 'S');
+  pdf.rect(legendX, legendY + 7, 14, 10, 'S');
   pdf.setLineDash([]);
-  pdf.text('Google Calendar', legendX + 22, legendY + 17);
+  pdf.text('Google Calendar', legendX + 20, legendY + 15);
 
-  legendX += 200;
+  legendX += 180;
 
   // Holidays
   pdf.setFillColor(255, 255, 0);
-  pdf.rect(legendX, legendY + 8, 16, 12, 'F');
+  pdf.rect(legendX, legendY + 7, 14, 10, 'F');
   pdf.setDrawColor(245, 158, 11);
   pdf.setLineWidth(1);
-  pdf.rect(legendX, legendY + 8, 16, 12, 'S');
-  pdf.text('Holidays', legendX + 22, legendY + 17);
+  pdf.rect(legendX, legendY + 7, 14, 10, 'S');
+  pdf.text('Holidays', legendX + 20, legendY + 15);
 
   // === CALENDAR GRID ===
 
   // Draw TIME column header
   pdf.setFillColor(255, 255, 255);
-  pdf.rect(gridStartX, gridStartY, GRID_CONFIG.timeColumnWidth, 40, 'F');
+  pdf.rect(gridStartX, gridStartY, GRID_CONFIG.timeColumnWidth, 35, 'F');
   pdf.setDrawColor(0, 0, 0);
   pdf.setLineWidth(2);
-  pdf.rect(gridStartX, gridStartY, GRID_CONFIG.timeColumnWidth, 40, 'S');
+  pdf.rect(gridStartX, gridStartY, GRID_CONFIG.timeColumnWidth, 35, 'S');
 
   pdf.setFont('times', 'bold');
-  pdf.setFontSize(12);
+  pdf.setFontSize(11);
   pdf.setTextColor(0, 0, 0);
-  pdf.text('TIME', gridStartX + (GRID_CONFIG.timeColumnWidth / 2), gridStartY + 25, { align: 'center' });
+  pdf.text('TIME', gridStartX + (GRID_CONFIG.timeColumnWidth / 2), gridStartY + 22, { align: 'center' });
 
   // Draw day column headers
   const daysOfWeek = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -234,21 +223,21 @@ async function createWeeklyOverviewPage(
 
     // Header background
     pdf.setFillColor(255, 255, 255);
-    pdf.rect(dayX, gridStartY, dayColumnWidth, 40, 'F');
+    pdf.rect(dayX, gridStartY, dayColumnWidth, 35, 'F');
     pdf.setDrawColor(0, 0, 0);
     pdf.setLineWidth(2);
-    pdf.rect(dayX, gridStartY, dayColumnWidth, 40, 'S');
+    pdf.rect(dayX, gridStartY, dayColumnWidth, 35, 'S');
 
     // Day header text
     pdf.setFont('times', 'bold');
-    pdf.setFontSize(12);
+    pdf.setFontSize(11);
     pdf.setTextColor(0, 0, 0);
-    pdf.text(daysOfWeek[day], dayX + (dayColumnWidth / 2), gridStartY + 18, { align: 'center' });
-    pdf.text(currentDate.getDate().toString(), dayX + (dayColumnWidth / 2), gridStartY + 32, { align: 'center' });
+    pdf.text(daysOfWeek[day], dayX + (dayColumnWidth / 2), gridStartY + 16, { align: 'center' });
+    pdf.text(currentDate.getDate().toString(), dayX + (dayColumnWidth / 2), gridStartY + 28, { align: 'center' });
   }
 
   // Draw time slots and events
-  const timeGridStartY = gridStartY + 40;
+  const timeGridStartY = gridStartY + 35;
 
   for (let slot = 0; slot < GRID_CONFIG.totalTimeSlots; slot++) {
     const hour = GRID_CONFIG.startHour + Math.floor(slot / 2);
@@ -264,9 +253,9 @@ async function createWeeklyOverviewPage(
 
     // Time label
     pdf.setFont('times', isTopOfHour ? 'bold' : 'normal');
-    pdf.setFontSize(isTopOfHour ? 11 : 8);
+    pdf.setFontSize(isTopOfHour ? 10 : 8);
     pdf.setTextColor(0, 0, 0);
-    pdf.text(timeStr, gridStartX + (GRID_CONFIG.timeColumnWidth / 2), slotY + 14, { align: 'center' });
+    pdf.text(timeStr, gridStartX + (GRID_CONFIG.timeColumnWidth / 2), slotY + 11, { align: 'center' });
 
     // Grid lines
     pdf.setDrawColor(isTopOfHour ? 128 : 200, isTopOfHour ? 128 : 200, isTopOfHour ? 128 : 200);
@@ -365,7 +354,7 @@ async function createWeeklyOverviewPage(
 
     // Event text
     pdf.setFont('times', 'normal');
-    pdf.setFontSize(8);
+    pdf.setFontSize(7);
     pdf.setTextColor(0, 0, 0);
 
     // Clean event title and fix character encoding - COMPLETE CLEANUP
@@ -390,50 +379,127 @@ async function createWeeklyOverviewPage(
     const maxWidth = eventWidth - 8;
     const lines = pdf.splitTextToSize(displayTitle, maxWidth);
 
-    let textY = eventY + 12;
+    let textY = eventY + 11;
     lines.slice(0, 2).forEach(line => {
       pdf.text(line, eventX + 4, textY);
-      textY += 10;
+      textY += 9;
     });
 
     // Add time if there's space
     if (lines.length <= 1 && eventHeight > 30) {
       const timeStr = `${eventDate.getHours().toString().padStart(2, '0')}:${eventDate.getMinutes().toString().padStart(2, '0')}-${eventEndDate.getHours().toString().padStart(2, '0')}:${eventEndDate.getMinutes().toString().padStart(2, '0')}`;
-      pdf.setFontSize(6);
+      pdf.setFontSize(5);
       pdf.text(timeStr, eventX + 4, textY);
     }
   });
 
-  // Add navigation footer with dashboard-style navigation buttons
-  pdf.setFont('times', 'normal');
+  drawWeeklyNavigationButtons(pdf, GRID_CONFIG, weekStartDate, weekEndDate);
+}
+
+/**
+ * Add Navigation Footers to All Pages
+ */
+function drawDailyNavigationButtons(pdf: jsPDF, config: any, selectedDate: Date, weekStartDate: Date, weekEndDate: Date, currentPageNum: number, totalPages: number) {
+  const { pageWidth, margin } = config;
+  const buttonY = 30;
+  const buttonHeight = 20;
+  const buttonWidth = 80;
+
+  // Back to Week button (left) - links to page 1
+  pdf.setFillColor(240, 240, 240);
+  pdf.rect(margin, buttonY, buttonWidth, buttonHeight, 'F');
+  pdf.setDrawColor(180, 180, 180);
+  pdf.rect(margin, buttonY, buttonWidth, buttonHeight, 'S');
   pdf.setFontSize(10);
-  pdf.setTextColor(51, 51, 51);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(60, 60, 60);
+  pdf.text('← Week Overview', margin + buttonWidth/2, buttonY + 13, { align: 'center' });
 
-  // Navigation buttons with exact dashboard styling
-  const navY = 820;
-  const navButtonWidth = 100;
-  const navButtonHeight = 24;
+  // Add link annotation to week overview (page 1)
+  pdf.link(margin, buttonY, buttonWidth, buttonHeight, { pageNumber: 1 });
 
-  // Daily page buttons (Mon-Sun) - dashboard nav-btn styling
-  const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-  const startX = (GRID_CONFIG.pageWidth - (days.length * navButtonWidth + (days.length - 1) * 15)) / 2;
-
-  days.forEach((day, index) => {
-    const buttonX = startX + index * (navButtonWidth + 15);
-
-    // Draw button background - dashboard nav-btn background
+  // Previous day button
+  if (currentPageNum > 2) { // Page 2 is Monday, so can go previous from Tuesday onwards
     pdf.setFillColor(240, 240, 240);
-    pdf.rect(buttonX, navY - 20, navButtonWidth, navButtonHeight, 'F');
+    pdf.rect(pageWidth - margin - 2*buttonWidth - 10, buttonY, buttonWidth, buttonHeight, 'F');
+    pdf.setDrawColor(180, 180, 180);
+    pdf.rect(pageWidth - margin - 2*buttonWidth - 10, buttonY, buttonWidth, buttonHeight, 'S');
+    pdf.text('← Previous Day', pageWidth - margin - 2*buttonWidth - 10 + buttonWidth/2, buttonY + 13, { align: 'center' });
+    // Link to previous day page
+    pdf.link(pageWidth - margin - 2*buttonWidth - 10, buttonY, buttonWidth, buttonHeight, { pageNumber: currentPageNum - 1 });
+  }
 
-    // Draw button border - dashboard nav-btn border
-    pdf.setDrawColor(204, 204, 204);
-    pdf.setLineWidth(1);
-    pdf.rect(buttonX, navY - 20, navButtonWidth, navButtonHeight, 'S');
+  // Next day button
+  if (currentPageNum < totalPages) { // Can go next until Sunday (last page)
+    pdf.setFillColor(240, 240, 240);
+    pdf.rect(pageWidth - margin - buttonWidth, buttonY, buttonWidth, buttonHeight, 'F');
+    pdf.setDrawColor(180, 180, 180);
+    pdf.rect(pageWidth - margin - buttonWidth, buttonY, buttonWidth, buttonHeight, 'S');
+    pdf.text('Next Day →', pageWidth - margin - buttonWidth + buttonWidth/2, buttonY + 13, { align: 'center' });
+    // Link to next day page
+    pdf.link(pageWidth - margin - buttonWidth, buttonY, buttonWidth, buttonHeight, { pageNumber: currentPageNum + 1 });
+  }
 
-    // Button text - clean dashboard styling
-    pdf.setTextColor(51, 51, 51);
-    pdf.text(`${day}`, buttonX + navButtonWidth / 2, navY - 8, { align: 'center' });
+  // Page indicator
+  pdf.setFontSize(8);
+  pdf.setTextColor(120, 120, 120);
+  pdf.text(`Page ${currentPageNum} of ${totalPages}`, pageWidth/2, buttonY + 35, { align: 'center' });
+}
+
+/**
+ * Add bidirectional navigation to weekly overview with links to daily pages
+ */
+function drawWeeklyNavigationButtons(pdf: jsPDF, config: any, weekStartDate: Date, weekEndDate: Date) {
+  const { pageWidth, margin } = config;
+  const buttonY = 25;
+  const buttonHeight = 18;
+  const buttonWidth = 70;
+
+  // Previous week button
+  pdf.setFillColor(240, 240, 240);
+  pdf.rect(margin, buttonY, buttonWidth, buttonHeight, 'F');
+  pdf.setDrawColor(180, 180, 180);
+  pdf.rect(margin, buttonY, buttonWidth, buttonHeight, 'S');
+  pdf.setFontSize(9);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(60, 60, 60);
+  pdf.text('← Prev Week', margin + buttonWidth/2, buttonY + 12, { align: 'center' });
+
+  // Next week button
+  pdf.setFillColor(240, 240, 240);
+  pdf.rect(pageWidth - margin - buttonWidth, buttonY, buttonWidth, buttonHeight, 'F');
+  pdf.setDrawColor(180, 180, 180);
+  pdf.rect(pageWidth - margin - buttonWidth, buttonY, buttonWidth, buttonHeight, 'S');
+  pdf.text('Next Week →', pageWidth - margin - buttonWidth + buttonWidth/2, buttonY + 12, { align: 'center' });
+
+  // Daily page navigation buttons
+  const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const dayButtonWidth = 45;
+  const dayButtonHeight = 15;
+  const startX = pageWidth/2 - (7 * dayButtonWidth + 6 * 5) / 2; // Center the buttons
+  const dayButtonY = buttonY + 30;
+
+  dayNames.forEach((day, index) => {
+    const x = startX + index * (dayButtonWidth + 5);
+    const pageNum = index + 2; // Pages 2-8 are the daily pages
+
+    pdf.setFillColor(250, 250, 250);
+    pdf.rect(x, dayButtonY, dayButtonWidth, dayButtonHeight, 'F');
+    pdf.setDrawColor(200, 200, 200);
+    pdf.rect(x, dayButtonY, dayButtonWidth, dayButtonHeight, 'S');
+
+    pdf.setFontSize(8);
+    pdf.setTextColor(80, 80, 80);
+    pdf.text(day, x + dayButtonWidth/2, dayButtonY + 10, { align: 'center' });
+
+    // Add link to corresponding daily page
+    pdf.link(x, dayButtonY, dayButtonWidth, dayButtonHeight, { pageNumber: pageNum });
   });
+
+  // Instructions text
+  pdf.setFontSize(7);
+  pdf.setTextColor(120, 120, 120);
+  pdf.text('Click day buttons above to jump to daily pages', pageWidth/2, dayButtonY + 25, { align: 'center' });
 }
 
 /**
@@ -550,7 +616,7 @@ async function drawWeeklyGridToCanvas(
     // Time label
     pdf.setTextColor(0, 0, 0);
     pdf.setFont('times', isTopOfHour ? 'bold' : 'normal');
-    pdf.setFontSize(isTopOfHour ? 10 : 8);
+    pdf.setFontSize(10);
     pdf.text(timeStr, config.timeColumnWidth / 2, slotY + 14, { align: 'center' });
 
     // Grid lines
