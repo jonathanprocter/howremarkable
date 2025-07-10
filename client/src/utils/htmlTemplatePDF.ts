@@ -244,10 +244,6 @@ export const exportHTMLTemplatePDF = async (
       console.log('✅ PDF download should have started automatically');
     } catch (error) {
       console.error('❌ Error saving daily PDF:', error);
-      throw error;
-    }
-  } catch (error) {
-      console.error('❌ Error saving daily PDF:', error);
       alert('Sorry, something went wrong while generating your daily PDF. Please try again or contact support if this issue persists.\n\nError details: ' + (error instanceof Error ? error.message : 'Unknown error'));
       throw error;
     }
@@ -269,12 +265,13 @@ export const exportHTMLTemplatePDF = async (
       throw error;
     }
   }
-} catch (error) {
-  // Catch-all error handler for the entire function
-  console.error('❌ Critical PDF generation error:', error);
-  alert('Sorry, something went wrong while generating your PDF. Please try again or contact support if this issue persists.\n\nError details: ' + (error instanceof Error ? error.message : 'Unknown error'));
-  throw new Error(`PDF generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-}
+  } catch (error) {
+    // Catch-all error handler for the entire function
+    console.error('❌ Critical PDF generation error:', error);
+    alert('Sorry, something went wrong while generating your PDF. Please try again or contact support if this issue persists.\n\nError details: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    throw new Error(`PDF generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+};
 
 export function drawDailyHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[], pageNumber: number = 1, dayOfWeek: number = 1): void {
   const { margin, pageWidth, pageHeight } = REMARKABLE_DAILY_CONFIG;
