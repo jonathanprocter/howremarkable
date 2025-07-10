@@ -301,13 +301,43 @@ export default function Planner() {
       console.log('Current events being passed to generateCompleteExportData:', currentEvents.length);
       console.log('Daily notes:', dailyNotes);
 
-      const exportData = generateCompleteExportData(
-        selectedDateForExport,
-        currentEvents,
-        dailyNotes
-      );
+      // Import and use the audit system
+      let exportData;
+      let validatedEvents = currentEvents;
+      
+      try {
+        const { auditExportData, logExportAudit, validateEventData } = await import('../utils/exportAudit');
+        
+        // Audit export data for completeness
+        const auditReport = auditExportData(
+          state.events, 
+          currentEvents, 
+          state.viewMode === 'daily' ? state.selectedDate : undefined
+        );
+        logExportAudit(auditReport, type);
 
-      console.log('Generated export data:', exportData);
+        // Validate and clean event data
+        validatedEvents = validateEventData(currentEvents);
+        
+        // Use validated events for export
+        exportData = generateCompleteExportData(
+          selectedDateForExport,
+          validatedEvents,
+          dailyNotes
+        );
+
+        console.log('Generated export data:', exportData);
+        
+      } catch (auditError) {
+        console.error('Audit system error:', auditError);
+        // Continue with regular export if audit fails
+        exportData = generateCompleteExportData(
+          selectedDateForExport,
+          currentEvents,
+          dailyNotes
+        );
+        console.log('Generated export data (fallback):', exportData);
+      }
 
       // For daily exports, allow proceeding even with no appointments
       if (exportData.appointments.length === 0 && type !== 'Daily View' && type !== 'reMarkable Daily' && type !== 'Current View') {
@@ -344,7 +374,7 @@ export default function Planner() {
               console.log('Current events count:', currentEvents.length);
 
               // Filter events for debugging
-              const dayEvents = currentEvents.filter(event => {
+              const dayEvents = validatedEvents.filter(event => {
                 const eventDate = new Date(event.startTime);
                 return eventDate.getFullYear() === selectedDateForExport.getFullYear() &&
                        eventDate.getMonth() === selectedDateForExport.getMonth() &&
@@ -357,7 +387,7 @@ export default function Planner() {
                 console.log(`Event ${i+1}: "${event.title}" - Duration: ${duration} minutes`);
               });
 
-              await exportExactDailyPDF(selectedDateForExport, currentEvents);
+              await exportExactDailyPDF(selectedDateForExport, validatedEvents);
 
               toast({
                 title: "Export Successful",
@@ -381,7 +411,7 @@ export default function Planner() {
               await exportExactGridPDF(
                 state.currentWeek.startDate,
                 state.currentWeek.endDate,
-                currentEvents
+                validatedEvents
               );
 
               toast({
@@ -405,7 +435,7 @@ export default function Planner() {
             console.log('Current events count:', currentEvents.length);
 
             // Filter events for debugging
-            const dayEvents = currentEvents.filter(event => {
+            const dayEvents = validatedEvents.filter(event => {
               const eventDate = new Date(event.startTime);
               const matches = eventDate.toDateString() === selectedDateForExport.toDateString();
               console.log(`Daily Export Filter - Event: ${event.title} on ${eventDate.toDateString()}, Selected: ${selectedDateForExport.toDateString()}, Matches: ${matches}`);
@@ -421,13 +451,13 @@ export default function Planner() {
             if (dayEvents.length === 0) {
               console.log('WARNING: No events found for selected date');
               console.log('Available events dates:');
-              currentEvents.forEach(event => {
+              validatedEvents.forEach(event => {
                 console.log(`  - ${event.title}: ${new Date(event.startTime).toDateString()}`);
               });
             }
 
             // Use the dedicated daily export function directly
-            await exportExactDailyPDF(selectedDateForExport, currentEvents);
+            await exportExactDailyPDF(selectedDateForExport, validatedEvents);
 
             toast({
               title: "Export Successful",
@@ -455,10 +485,10 @@ export default function Planner() {
             console.log('=== WEEKLY PACKAGE EXPORT START ===');
             console.log('Week start:', state.currentWeek.startDate.toDateString());
             console.log('Week end:', state.currentWeek.endDate.toDateString());
-            console.log('Total events:', currentEvents.length);
+            console.log('Total events:', validatedEvents.length);
 
             // Filter events for the current week
-            const weekEvents = currentEvents.filter(event => {
+            const weekEvents = validatedEvents.filter(event => {
               const eventDate = new Date(event.startTime);
               return eventDate >= state.currentWeek.startDate && eventDate <= state.currentWeek.endDate;
             });
@@ -468,7 +498,7 @@ export default function Planner() {
             await exportWeeklyPackage(
               state.currentWeek.startDate,
               state.currentWeek.endDate,
-              currentEvents
+              validatedEvents
             );
 
             toast({
@@ -493,7 +523,7 @@ export default function Planner() {
             await exportExactGridPDF(
               state.currentWeek.startDate,
               state.currentWeek.endDate,
-              currentEvents
+              validatedEvents
             );
 
             toast({
