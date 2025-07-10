@@ -91,38 +91,41 @@ export const exportBrowserMatchingWeeklyPDF = async (
     dayColumnsCount: dayHeaders.length
   });
 
-  // PDF configuration based on browser measurements with pixel-perfect scaling
-  const availableWidth = 792 - 40; // Page width minus margins
-  const availableHeight = 612 - 140; // Page height minus header and legend space (legend now at top)
+  // Use exact browser measurements - no guessing!
+  // From debugging: time=80px, day=137.79px, slot=40px
+  const exactTimeWidth = 80;
+  const exactDayWidth = 137.79296875;
+  const exactSlotHeight = 40;
   
-  // Calculate optimal scaling to fit the page while maintaining exact proportions
-  const totalBrowserWidth = timeColumnWidth + (dayColumnWidth * 7);
-  const widthScaleFactor = availableWidth / totalBrowserWidth;
-  const heightScaleFactor = availableHeight / (timeSlotHeight * 36); // 36 slots total
+  // Calculate exact total width needed
+  const exactTotalWidth = exactTimeWidth + (exactDayWidth * 7); // 1044.55px
   
-  // Use the most limiting factor to maintain proportions
-  const scaleFactor = Math.min(widthScaleFactor, heightScaleFactor);
+  // Available space on PDF page
+  const availableWidth = 792 - 40; // 752px
+  const availableHeight = 612 - 120; // 492px for grid
   
-  console.log('📐 Pixel-perfect scaling calculations:', {
-    totalBrowserWidth,
-    browserHeight: timeSlotHeight * 36,
+  // Scale to fit width exactly
+  const scaleFactor = availableWidth / exactTotalWidth; // ~0.72
+  
+  console.log('📐 EXACT measurements from browser:', {
+    exactTimeWidth,
+    exactDayWidth,
+    exactSlotHeight,
+    exactTotalWidth,
     availableWidth,
-    availableHeight,
-    widthScaleFactor: widthScaleFactor.toFixed(4),
-    heightScaleFactor: heightScaleFactor.toFixed(4),
-    finalScaleFactor: scaleFactor.toFixed(4)
+    scaleFactor: scaleFactor.toFixed(4)
   });
   
   const config = {
     margin: 20,
-    timeColumnWidth: timeColumnWidth * scaleFactor,
-    dayColumnWidth: dayColumnWidth * scaleFactor,
-    timeSlotHeight: timeSlotHeight * scaleFactor,
-    headerHeight: 80, // Increased to accommodate legend at top
+    timeColumnWidth: exactTimeWidth * scaleFactor,
+    dayColumnWidth: exactDayWidth * scaleFactor,
+    timeSlotHeight: exactSlotHeight * scaleFactor,
+    headerHeight: 120, // Header with legend
     legendHeight: 30
   };
   
-  console.log('📊 Pixel-perfect PDF configuration:', config);
+  console.log('📊 EXACT PDF configuration using browser values:', config);
 
   const gridStartX = config.margin;
   const gridStartY = config.margin + config.headerHeight;
