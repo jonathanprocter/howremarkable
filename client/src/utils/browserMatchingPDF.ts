@@ -91,29 +91,38 @@ export const exportBrowserMatchingWeeklyPDF = async (
     dayColumnsCount: dayHeaders.length
   });
 
-  // PDF configuration based on browser measurements with improved scaling
+  // PDF configuration based on browser measurements with pixel-perfect scaling
   const availableWidth = 792 - 40; // Page width minus margins
-  const availableHeight = 612 - 120; // Page height minus header and legend space
+  const availableHeight = 612 - 140; // Page height minus header and legend space (legend now at top)
   
-  // Calculate optimal scaling to fit the page while maintaining proportions
+  // Calculate optimal scaling to fit the page while maintaining exact proportions
   const totalBrowserWidth = timeColumnWidth + (dayColumnWidth * 7);
-  const scaleFactor = Math.min(availableWidth / totalBrowserWidth, 1.0);
+  const widthScaleFactor = availableWidth / totalBrowserWidth;
+  const heightScaleFactor = availableHeight / (timeSlotHeight * 36); // 36 slots total
   
-  console.log('📐 Scaling calculations:', {
+  // Use the most limiting factor to maintain proportions
+  const scaleFactor = Math.min(widthScaleFactor, heightScaleFactor);
+  
+  console.log('📐 Pixel-perfect scaling calculations:', {
     totalBrowserWidth,
+    browserHeight: timeSlotHeight * 36,
     availableWidth,
-    scaleFactor: scaleFactor.toFixed(3)
+    availableHeight,
+    widthScaleFactor: widthScaleFactor.toFixed(4),
+    heightScaleFactor: heightScaleFactor.toFixed(4),
+    finalScaleFactor: scaleFactor.toFixed(4)
   });
   
   const config = {
     margin: 20,
     timeColumnWidth: timeColumnWidth * scaleFactor,
     dayColumnWidth: dayColumnWidth * scaleFactor,
-    timeSlotHeight: Math.min(timeSlotHeight * 0.6, availableHeight / 36), // Ensure 36 slots fit
-    headerHeight: 60
+    timeSlotHeight: timeSlotHeight * scaleFactor,
+    headerHeight: 80, // Increased to accommodate legend at top
+    legendHeight: 30
   };
   
-  console.log('📊 PDF configuration:', config);
+  console.log('📊 Pixel-perfect PDF configuration:', config);
 
   const gridStartX = config.margin;
   const gridStartY = config.margin + config.headerHeight;
@@ -135,6 +144,48 @@ export const exportBrowserMatchingWeeklyPDF = async (
   const weekStart = weekStartDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
   const weekEnd = weekEndDate.toLocaleDateString('en-US', { day: 'numeric' });
   pdf.text(`${weekStart} - ${weekEnd}, 2025`, 792 / 2, config.margin + 45, { align: 'center' });
+
+  // LEGEND - moved to top below header
+  const legendY = config.margin + 60;
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(10);
+  
+  // Center the legend items
+  const legendStartX = 792 / 2 - 180; // Center 3 items spanning about 360px
+  
+  // SimplePractice legend
+  pdf.setFillColor(255, 255, 255);
+  pdf.rect(legendStartX, legendY, 20, 10, 'F');
+  pdf.setDrawColor(100, 149, 237);
+  pdf.setLineWidth(1);
+  pdf.rect(legendStartX, legendY, 20, 10, 'S');
+  pdf.setLineWidth(2);
+  pdf.line(legendStartX, legendY, legendStartX, legendY + 10);
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('SimplePractice', legendStartX + 25, legendY + 7);
+  
+  // Google Calendar legend
+  pdf.setFillColor(255, 255, 255);
+  pdf.rect(legendStartX + 150, legendY, 20, 10, 'F');
+  pdf.setDrawColor(34, 197, 94);
+  pdf.setLineWidth(1);
+  for (let i = 0; i < 20; i += 6) {
+    pdf.line(legendStartX + 150 + i, legendY, legendStartX + 150 + Math.min(i + 3, 20), legendY);
+    pdf.line(legendStartX + 150 + i, legendY + 10, legendStartX + 150 + Math.min(i + 3, 20), legendY + 10);
+  }
+  for (let i = 0; i < 10; i += 6) {
+    pdf.line(legendStartX + 150, legendY + i, legendStartX + 150, legendY + Math.min(i + 3, 10));
+    pdf.line(legendStartX + 170, legendY + i, legendStartX + 170, legendY + Math.min(i + 3, 10));
+  }
+  pdf.text('Google Calendar', legendStartX + 175, legendY + 7);
+  
+  // Holiday legend
+  pdf.setFillColor(255, 235, 59);
+  pdf.rect(legendStartX + 320, legendY, 20, 10, 'F');
+  pdf.setDrawColor(245, 158, 11);
+  pdf.setLineWidth(1);
+  pdf.rect(legendStartX + 320, legendY, 20, 10, 'S');
+  pdf.text('Holidays', legendStartX + 345, legendY + 7);
 
   // GRID STRUCTURE - match browser exactly
   pdf.setDrawColor(0, 0, 0);
@@ -293,44 +344,7 @@ export const exportBrowserMatchingWeeklyPDF = async (
     pdf.text(timeDisplay, eventX + 3, eventY + eventHeight - 5);
   });
 
-  // LEGEND - match browser legend exactly
-  const legendY = 612 - 30; // Bottom of page
-  pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(8);
-  
-  // SimplePractice legend
-  pdf.setFillColor(255, 255, 255);
-  pdf.rect(50, legendY, 20, 10, 'F');
-  pdf.setDrawColor(100, 149, 237);
-  pdf.setLineWidth(1);
-  pdf.rect(50, legendY, 20, 10, 'S');
-  pdf.setLineWidth(2);
-  pdf.line(50, legendY, 50, legendY + 10);
-  pdf.setTextColor(0, 0, 0);
-  pdf.text('SimplePractice', 75, legendY + 7);
-  
-  // Google Calendar legend
-  pdf.setFillColor(255, 255, 255);
-  pdf.rect(200, legendY, 20, 10, 'F');
-  pdf.setDrawColor(34, 197, 94);
-  pdf.setLineWidth(1);
-  for (let i = 0; i < 20; i += 6) {
-    pdf.line(200 + i, legendY, 200 + Math.min(i + 3, 20), legendY);
-    pdf.line(200 + i, legendY + 10, 200 + Math.min(i + 3, 20), legendY + 10);
-  }
-  for (let i = 0; i < 10; i += 6) {
-    pdf.line(200, legendY + i, 200, legendY + Math.min(i + 3, 10));
-    pdf.line(220, legendY + i, 220, legendY + Math.min(i + 3, 10));
-  }
-  pdf.text('Google Calendar', 225, legendY + 7);
-  
-  // Holiday legend
-  pdf.setFillColor(255, 235, 59);
-  pdf.rect(370, legendY, 20, 10, 'F');
-  pdf.setDrawColor(245, 158, 11);
-  pdf.setLineWidth(1);
-  pdf.rect(370, legendY, 20, 10, 'S');
-  pdf.text('Holidays in United States', 395, legendY + 7);
+  // Legend is now at the top
 
   // Save PDF
   const filename = `browser-matching-weekly-${weekStartDate.getFullYear()}-${String(weekStartDate.getMonth() + 1).padStart(2, '0')}-${String(weekStartDate.getDate()).padStart(2, '0')}.pdf`;
