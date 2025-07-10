@@ -37,29 +37,21 @@ export const exportWeeklyPackage = async (
   weekEndDate: Date,
   events: CalendarEvent[]
 ): Promise<void> => {
-  try {
-    console.log('🎯 STARTING COMPREHENSIVE WEEKLY PACKAGE EXPORT');
-    console.log('Week start:', weekStartDate.toDateString());
-    console.log('Week end:', weekEndDate.toDateString());
-    console.log('Total events:', events.length);
+  console.log('🎯 STARTING COMPREHENSIVE WEEKLY PACKAGE EXPORT');
 
-    // Filter events for the week
-    const weekEvents = events.filter(event => {
-      const eventDate = new Date(event.startTime);
-      return eventDate >= weekStartDate && eventDate <= weekEndDate;
-    });
+  const pdf = new jsPDF({
+    orientation: 'landscape',
+    unit: 'pt',
+    format: [792, 612] // 11 x 8.5 inches landscape for weekly overview
+  });
 
-    console.log('Week events:', weekEvents.length);
+  // === PAGE 1: WEEKLY OVERVIEW (Landscape) ===
+  console.log('📄 Creating Weekly Overview Page (Page 1) - Landscape 11x8.5');
 
-    // Create PDF with weekly overview page (A3 landscape for better visibility)
-    const pdf = new jsPDF({
-      orientation: 'landscape',
-      unit: 'pt',
-      format: [WEEKLY_CONFIG.pageWidth, WEEKLY_CONFIG.pageHeight]
-    });
+  // Capture the actual dashboard weekly view using the exact same function as exactGridPDFExport
+  await drawExactWeeklyDashboard(pdf, weekStartDate, weekEndDate, events);
 
-    // Add weekly overview page
-    drawWeeklyOverviewPage(pdf, weekStartDate, weekEndDate, weekEvents);
+  drawWeeklyPackageFooter(pdf, 1, 8);
 
     // Add daily pages
     const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -78,7 +70,7 @@ export const exportWeeklyPackage = async (
 
       console.log(`📄 Creating ${dayName} Page (Page ${currentPageNum}) - ${currentDate.toDateString()}`);
 
-      const dayEvents = weekEvents.filter(event => {
+      const dayEvents = events.filter(event => {
         const eventDate = new Date(event.startTime);
         return eventDate.toDateString() === currentDate.toDateString();
       });
@@ -103,7 +95,7 @@ export const exportWeeklyPackage = async (
     console.log(`  - Total Pages: 8`);
     console.log(`  - Weekly Overview: Page 1 (Landscape A3)`);
     console.log(`  - Daily Pages: 7 (Portrait A4)`);
-    console.log(`  - Total Events: ${weekEvents.length}`);
+    console.log(`  - Total Events: ${events.length}`);
     console.log(`  - Filename: ${filename}`);
 
   } catch (error) {
@@ -820,4 +812,265 @@ function formatDateRange(startDate: Date, endDate: Date): string {
   const year = startDate.getFullYear();
 
   return `${startMonth}-${startDay}-to-${endMonth}-${endDay}-${year}`;
+}
+
+// Helper function to draw weekly overview exactly like dashboard
+async function drawExactWeeklyDashboard(
+  pdf: jsPDF,
+  weekStartDate: Date,
+  weekEndDate: Date,
+  events: CalendarEvent[]
+): Promise<void> {
+  // Use the exact same configuration and drawing functions as exactGridPDFExport
+  const WEEKLY_CONFIG = {
+    pageWidth: 792,   // 11 inches
+    pageHeight: 612,  // 8.5 inches
+    margin: 20,
+    headerHeight: 35,
+    timeColumnWidth: 50,
+    timeSlotHeight: 12,
+    colors: {
+      black: [0, 0, 0],
+      white: [255, 255, 255],
+      lightGray: [248, 248, 248],
+      mediumGray: [220, 220, 220],
+      darkGray: [100, 100, 100],
+      simplePracticeBlue: [100, 149, 237],
+      googleGreen: [52, 168, 83],
+      holidayYellow: [251, 188, 4]
+    }
+  };
+
+  // Calculate day column width
+  const dayColumnWidth = (WEEKLY_CONFIG.pageWidth - (WEEKLY_CONFIG.margin * 2) - WEEKLY_CONFIG.timeColumnWidth) / 7;
+
+  // Draw header exactly like dashboard
+  drawWeeklyHeader(pdf, weekStartDate, weekEndDate, events, WEEKLY_CONFIG);
+
+  // Draw grid exactly like dashboard
+  drawWeeklyGrid(pdf, weekStartDate, events, WEEKLY_CONFIG, dayColumnWidth);
+}
+
+// Draw weekly header exactly like dashboard
+function drawWeeklyHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date, events: CalendarEvent[], config: any): void {
+  const { margin, pageWidth, headerHeight } = config;
+
+  // Header background
+  pdf.setFillColor(...config.colors.white);
+  pdf.rect(margin, margin, pageWidth - (margin * 2), headerHeight, 'F');
+
+  // Title
+  pdf.setFontSize(14);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(...config.colors.black);
+  pdf.text('WEEKLY PLANNER', pageWidth / 2, margin + 18, { align: 'center' });
+
+  // Week info
+  pdf.setFontSize(10);
+  pdf.setFont('helvetica', 'normal');
+  const weekText = `${weekStartDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEndDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+  pdf.text(weekText, pageWidth / 2, margin + 32, { align: 'center' });
+
+  // Header border
+  pdf.setLineWidth(1);
+  pdf.setDrawColor(...config.colors.black);
+  pdf.line(margin, margin + headerHeight, pageWidth - margin, margin + headerHeight);
+}
+
+// Draw weekly grid exactly like dashboard
+function drawWeeklyGrid(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent[], config: any, dayColumnWidth: number): void {
+  const { margin, timeColumnWidth, timeSlotHeight, headerHeight } = config;
+  const gridStartY = margin + headerHeight;
+
+  // Time slots from 6:00 to 23:30
+  const timeSlots = [];
+  for (let hour = 6; hour <= 23; hour++) {
+    timeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
+    if (hour < 23) timeSlots.push(`${hour.toString().padStart(2, '0')}:30`);
+  }
+  timeSlots.push('23:30');
+
+  const totalGridHeight = timeSlots.length * timeSlotHeight;
+
+  // Grid background
+  pdf.setFillColor(...config.colors.white);
+  pdf.rect(margin, gridStartY, timeColumnWidth + (7 * dayColumnWidth), totalGridHeight, 'F');
+
+  // Grid border
+  pdf.setLineWidth(1);
+  pdf.setDrawColor(...config.colors.black);
+  pdf.rect(margin, gridStartY, timeColumnWidth + (7 * dayColumnWidth), totalGridHeight);
+
+  // Time column
+  timeSlots.forEach((time, index) => {
+    const y = gridStartY + (index * timeSlotHeight);
+    const isHour = time.endsWith(':00');
+
+    // Time cell background
+    pdf.setFillColor(...config.colors.lightGray);
+    pdf.rect(margin, y, timeColumnWidth, timeSlotHeight, 'F');
+
+    // Time text
+    pdf.setFontSize(isHour ? 6 : 5);
+    pdf.setFont('helvetica', isHour ? 'bold' : 'normal');
+    pdf.setTextColor(...config.colors.black);
+    pdf.text(time, margin + timeColumnWidth / 2, y + timeSlotHeight / 2 + 2, { align: 'center' });
+  });
+
+  // Day columns and headers
+  const dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+  for (let i = 0; i < 7; i++) {
+    const dayDate = new Date(weekStartDate);
+    dayDate.setDate(weekStartDate.getDate() + i);
+    const x = margin + timeColumnWidth + (i * dayColumnWidth);
+
+    // Day header background
+    pdf.setFillColor(...config.colors.lightGray);
+    pdf.rect(x, gridStartY - 20, dayColumnWidth, 20, 'F');
+
+    // Day name
+    pdf.setFontSize(7);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(dayNames[i], x + dayColumnWidth / 2, gridStartY - 12, { align: 'center' });
+
+    // Day number
+    pdf.setFontSize(8);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(dayDate.getDate().toString(), x + dayColumnWidth / 2, gridStartY - 4, { align: 'center' });
+
+    // Day column background
+    pdf.setFillColor(...config.colors.white);
+    pdf.rect(x, gridStartY, dayColumnWidth, totalGridHeight, 'F');
+  }
+
+  // Vertical grid lines
+  for (let i = 0; i <= 7; i++) {
+    const x = margin + timeColumnWidth + (i * dayColumnWidth);
+    pdf.setLineWidth(0.5);
+    pdf.setDrawColor(...config.colors.mediumGray);
+    pdf.line(x, gridStartY - 20, x, gridStartY + totalGridHeight);
+  }
+
+  // Draw events
+  drawWeeklyEvents(pdf, weekStartDate, events, config, dayColumnWidth, gridStartY, timeSlots);
+}
+
+// Draw weekly events exactly like dashboard
+function drawWeeklyEvents(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent[], config: any, dayColumnWidth: number, gridStartY: number, timeSlots: string[]): void {
+  const { margin, timeColumnWidth } = config;
+
+  events.forEach(event => {
+    const eventDate = new Date(event.startTime);
+    const dayIndex = Math.floor((eventDate.getTime() - weekStartDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (dayIndex < 0 || dayIndex >= 7) return;
+
+    // Find time slot
+    const startHour = eventDate.getHours();
+    const startMinute = eventDate.getMinutes();
+    const timeString = `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}`;
+
+    let slotIndex = timeSlots.findIndex(slot => slot === timeString);
+    if (slotIndex === -1) {
+      // Find approximate slot
+      slotIndex = timeSlots.findIndex(slot => {
+        const [slotHour, slotMin] = slot.split(':').map(Number);
+        return startHour === slotHour && Math.abs(startMinute - slotMin) <= 15;
+      });
+    }
+
+    if (slotIndex === -1) return;
+
+    // Calculate position
+    const x = margin + timeColumnWidth + (dayIndex * dayColumnWidth) + 1;
+    const y = gridStartY + (slotIndex * config.timeSlotHeight) + 1;
+    const width = dayColumnWidth - 2;
+    const height = Math.max(config.timeSlotHeight - 2, 10);
+
+    // Event styling based on type
+    const isSimplePractice = event.title.includes('Appointment') && !event.title.includes('haircut') && !event.title.includes('Blake') && !event.title.includes('Dan re:');
+    const isGoogle = event.title.includes('haircut') || event.title.includes('Blake') || event.title.includes('Dan re:');
+    const isHoliday = event.calendarId === 'en.usa#holiday@group.v.calendar.google.com';
+
+    if (isSimplePractice) {
+      // White background with blue left border
+      pdf.setFillColor(...config.colors.white);
+      pdf.rect(x, y, width, height, 'F');
+      pdf.setDrawColor(...config.colors.simplePracticeBlue);
+      pdf.setLineWidth(2);
+      pdf.line(x, y, x, y + height);
+    } else if (isGoogle) {
+      // White background with green dashed border
+      pdf.setFillColor(...config.colors.white);
+      pdf.rect(x, y, width, height, 'F');
+      pdf.setDrawColor(...config.colors.googleGreen);
+      pdf.setLineWidth(1);
+      pdf.setLineDash([2, 1]);
+      pdf.rect(x, y, width, height);
+      pdf.setLineDash([]);
+    } else if (isHoliday) {
+      // Yellow background
+      pdf.setFillColor(...config.colors.holidayYellow);
+      pdf.rect(x, y, width, height, 'F');
+    }
+
+    // Event text
+    const cleanTitle = event.title.replace(/ Appointment$/, '').replace(/🔒\s*/, '');
+    pdf.setFontSize(4);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(...config.colors.black);
+
+    if (width > 30) {
+      const titleLines = pdf.splitTextToSize(cleanTitle, width - 4);
+      const maxLines = Math.floor(height / 5);
+      for (let i = 0; i < Math.min(titleLines.length, maxLines); i++) {
+        pdf.text(titleLines[i], x + 2, y + 6 + (i * 5));
+      }
+    }
+  });
+}
+
+// Footer for weekly package navigation
+function drawWeeklyPackageFooter(pdf: jsPDF, pageNumber: number, totalPages: number): void {
+  const margin = 20;
+  const pageWidth = 792;
+  const pageHeight = 612;
+
+  // Footer area
+  const footerY = pageHeight - margin - 25;
+  const footerHeight = 20;
+
+  // Footer background
+  pdf.setFillColor(245, 245, 245);
+  pdf.rect(margin, footerY, pageWidth - (margin * 2), footerHeight, 'F');
+
+  // Footer border
+  pdf.setLineWidth(1);
+  pdf.setDrawColor(200, 200, 200);
+  pdf.rect(margin, footerY, pageWidth - (margin * 2), footerHeight);
+
+  // Navigation text for bidirectional linking
+  pdf.setFontSize(9);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(0, 0, 0);
+
+  if (pageNumber === 1) {
+    // Weekly overview page
+    pdf.text('Weekly Overview - Navigate to any daily page (Pages 2-8)', pageWidth / 2, footerY + 13, { align: 'center' });
+  } else {
+    // Daily pages
+    const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const dayName = dayNames[pageNumber - 2];
+
+    // Left: Return to weekly
+    pdf.text('← Return to Weekly Overview (Page 1)', margin + 10, footerY + 13);
+
+    // Center: Current page
+    pdf.text(`${dayName} - Page ${pageNumber} of ${totalPages}`, pageWidth / 2, footerY + 13, { align: 'center' });
+
+    // Right: Day navigation
+    const prevPage = pageNumber > 2 ? pageNumber - 1 : totalPages;
+    const nextPage = pageNumber < totalPages ? pageNumber + 1 : 2;
+    pdf.text(`← Page ${prevPage} | Page ${nextPage} →`, pageWidth - margin - 10, footerY + 13, { align: 'right' });
+  }
 }
