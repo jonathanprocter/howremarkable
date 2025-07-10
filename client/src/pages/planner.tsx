@@ -592,6 +592,11 @@ export default function Planner() {
         case 'Perfect Weekly':
           // Export perfect weekly view matching dashboard exactly
           try {
+            console.log('=== PERFECT WEEKLY PDF EXPORT ===');
+            console.log('Week start:', state.currentWeek.startDate.toDateString());
+            console.log('Week end:', state.currentWeek.endDate.toDateString());
+            console.log('Total events:', validatedEvents.length);
+
             await exportPerfectWeeklyPDF(
               state.currentWeek.startDate,
               state.currentWeek.endDate,
@@ -600,33 +605,54 @@ export default function Planner() {
 
             toast({
               title: "Perfect Weekly Export Successful",
-              description: "Perfect dashboard-matching weekly PDF downloaded!"
+              description: "Pixel-perfect weekly calendar PDF downloaded successfully!"
             });
             return;
           } catch (weeklyError) {
             console.error('Perfect weekly PDF export error:', weeklyError);
-            throw weeklyError;
+            toast({
+              title: "Perfect Weekly Export Failed",
+              description: `Perfect weekly PDF export failed: ${weeklyError.message}`,
+              variant: "destructive"
+            });
+            return;
           }
-          break;
 
         case 'Perfect Daily':
           // Export perfect daily view matching dashboard exactly
           try {
-            await exportPerfectDailyPDF(
-              selectedDateForExport,
-              validatedEvents
-            );
+            console.log('=== PERFECT DAILY PDF EXPORT ===');
+            console.log('Selected date:', selectedDateForExport.toDateString());
+            console.log('Current events count:', currentEvents.length);
+
+            // Filter events for the selected day
+            const dayEvents = validatedEvents.filter(event => {
+              const eventDate = new Date(event.startTime);
+              return eventDate.toDateString() === selectedDateForExport.toDateString();
+            });
+
+            console.log('Day events count:', dayEvents.length);
+            dayEvents.forEach((event, i) => {
+              const duration = (event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60);
+              console.log(`Event ${i+1}: "${event.title}" - Duration: ${duration} minutes`);
+            });
+
+            await exportPerfectDailyPDF(selectedDateForExport, validatedEvents);
 
             toast({
               title: "Perfect Daily Export Successful",
-              description: "Perfect dashboard-matching daily PDF downloaded!"
+              description: `Pixel-perfect daily planner PDF downloaded with ${dayEvents.length} appointments!`
             });
             return;
           } catch (dailyError) {
             console.error('Perfect daily PDF export error:', dailyError);
-            throw dailyError;
+            toast({
+              title: "Perfect Daily Export Failed",
+              description: `Perfect daily PDF export failed: ${dailyError.message}`,
+              variant: "destructive"
+            });
+            return;
           }
-          break;
 
         case 'JSON Export':
           fileContent = exportToJSON(exportData);
