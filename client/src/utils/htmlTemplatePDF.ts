@@ -182,6 +182,7 @@ export const exportHTMLTemplatePDF = async (
   events: CalendarEvent[],
   isDailyView: boolean = false
 ): Promise<void> => {
+  try {
   let pdf;
   
   if (isDailyView) {
@@ -244,6 +245,10 @@ export const exportHTMLTemplatePDF = async (
       console.error('❌ Error saving daily PDF:', error);
       throw error;
     }
+  } catch (error) {
+    console.error('❌ Critical PDF generation error:', error);
+    throw new Error(`PDF generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
   } else {
     // === WEEKLY VIEW LAYOUT ===
     drawHeader(pdf, weekStartDate, weekEndDate, events);
