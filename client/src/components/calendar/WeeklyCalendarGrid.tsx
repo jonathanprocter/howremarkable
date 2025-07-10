@@ -243,9 +243,10 @@ export const WeeklyCalendarGrid = ({
                     <div
                       key={eventIndex}
                       className={cn(
-                        "event-in-grid",
-                        isSimplePractice ? "event-simplepractice" : 
-                        isGoogle ? "event-google-calendar" : "event-personal"
+                        "event-in-grid appointment",
+                        event.calendarId === '0np7sib5u30o7oc297j5pb259g' ? "simplepractice" : 
+                        event.calendarId === 'en.usa#holiday@group.v.calendar.google.com' ? "personal" : 
+                        "google-calendar"
                       )}
                       style={getEventStyle(event)}
                       draggable={event.source === 'google'}

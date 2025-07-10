@@ -352,10 +352,13 @@ export const DailyView = ({
             return !(isMarkedAllDay || isFullDay || hours >= 20);
           }).map((event) => {
             const { className, style } = getEventStyle(event);
+            const calendarClass = event.calendarId === '0np7sib5u30o7oc297j5pb259g' ? 'simplepractice' : 
+                                  event.calendarId === 'en.usa#holiday@group.v.calendar.google.com' ? 'personal' : 
+                                  'google-calendar';
             return (
               <div key={event.id}>
                 <div
-                  className={className}
+                  className={`appointment ${calendarClass} ${className}`}
                   style={style}
                   draggable
                   onDragStart={(e) => handleDragStart(e, event)}
@@ -366,7 +369,11 @@ export const DailyView = ({
                     {/* Left: Event title, calendar, and time */}
                     <div className="appointment-left">
                       <div className="appointment-title-bold">{event.title}</div>
-                      <div className="appointment-calendar">{event.source} calendar</div>
+                      <div className="appointment-calendar">
+                        {event.calendarId === '0np7sib5u30o7oc297j5pb259g' ? 'SimplePractice' : 
+                         event.calendarId === 'en.usa#holiday@group.v.calendar.google.com' ? 'Holidays in United States' : 
+                         'Google Calendar'}
+                      </div>
                       <div className="appointment-time">{formatEventTime(event)}</div>
                     </div>
                     
