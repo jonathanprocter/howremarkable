@@ -9,18 +9,18 @@ import { generateTimeSlots } from './timeSlots';
  */
 
 const PIXEL_PERFECT_CONFIG = {
-  // Page dimensions - 11x8.5 landscape
-  pageWidth: 792,
-  pageHeight: 612,
+  // Page dimensions - A3 landscape for better perspective
+  pageWidth: 1190,
+  pageHeight: 842,
   
-  // Exact dashboard margins and spacing
-  margin: 20,
-  headerHeight: 60,
-  legendHeight: 25,
+  // Adjusted margins and spacing for proper perspective
+  margin: 40,
+  headerHeight: 80,
+  legendHeight: 35,
   
-  // Grid configuration matching dashboard exactly
-  timeColumnWidth: 80,
-  slotHeight: 30,
+  // Grid configuration matching dashboard exactly with better scaling
+  timeColumnWidth: 95,
+  slotHeight: 18,
   
   // Dashboard colors
   colors: {
@@ -34,16 +34,16 @@ const PIXEL_PERFECT_CONFIG = {
     borderGray: [200, 200, 200]
   },
   
-  // Typography matching dashboard exactly
+  // Typography matching dashboard exactly with better scaling
   fonts: {
-    title: { size: 16, weight: 'bold' },
-    weekInfo: { size: 12, weight: 'normal' },
-    legend: { size: 8, weight: 'normal' },
-    dayHeader: { size: 8, weight: 'bold' },
-    timeLabel: { size: 8, weight: 'normal' },
-    timeHour: { size: 9, weight: 'bold' },
-    eventTitle: { size: 6, weight: 'bold' },
-    eventTime: { size: 5, weight: 'normal' }
+    title: { size: 24, weight: 'bold' },
+    weekInfo: { size: 16, weight: 'normal' },
+    legend: { size: 12, weight: 'normal' },
+    dayHeader: { size: 12, weight: 'bold' },
+    timeLabel: { size: 10, weight: 'normal' },
+    timeHour: { size: 12, weight: 'bold' },
+    eventTitle: { size: 9, weight: 'bold' },
+    eventTime: { size: 7, weight: 'normal' }
   },
   
   get contentWidth() {
@@ -81,7 +81,7 @@ export const exportPixelPerfectWeeklyPDF = async (
     const pdf = new jsPDF({
       orientation: 'landscape',
       unit: 'pt',
-      format: [792, 612]
+      format: [1190, 842]
     });
 
     // White background
@@ -347,14 +347,14 @@ export const exportPixelPerfectWeeklyPDF = async (
             horizontalOffset++;
           }
           
-          // Event dimensions
-          const baseEventWidth = PIXEL_PERFECT_CONFIG.dayColumnWidth - 4;
-          const eventWidth = horizontalOffset > 0 ? Math.max(baseEventWidth * 0.6, 40) : baseEventWidth;
-          const eventHeight = Math.max((endSlot - startSlot) * PIXEL_PERFECT_CONFIG.slotHeight - 2, 10);
+          // Event dimensions - better sizing for larger page
+          const baseEventWidth = PIXEL_PERFECT_CONFIG.dayColumnWidth - 8;
+          const eventWidth = horizontalOffset > 0 ? Math.max(baseEventWidth * 0.7, 60) : baseEventWidth;
+          const eventHeight = Math.max((endSlot - startSlot) * PIXEL_PERFECT_CONFIG.slotHeight - 3, 15);
           
-          // Event position
-          const eventX = PIXEL_PERFECT_CONFIG.gridStartX + PIXEL_PERFECT_CONFIG.timeColumnWidth + (dayIndex * PIXEL_PERFECT_CONFIG.dayColumnWidth) + 2 + (horizontalOffset * (eventWidth * 0.3));
-          const eventY = gridStartY + headerRowHeight + (startSlot * PIXEL_PERFECT_CONFIG.slotHeight) + 2;
+          // Event position - adjusted for better perspective
+          const eventX = PIXEL_PERFECT_CONFIG.gridStartX + PIXEL_PERFECT_CONFIG.timeColumnWidth + (dayIndex * PIXEL_PERFECT_CONFIG.dayColumnWidth) + 4 + (horizontalOffset * (eventWidth * 0.4));
+          const eventY = gridStartY + headerRowHeight + (startSlot * PIXEL_PERFECT_CONFIG.slotHeight) + 3;
           
           // Event type detection
           const isSimplePractice = event.source === 'simplepractice' || event.title.includes('Appointment');
