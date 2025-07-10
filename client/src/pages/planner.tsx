@@ -18,6 +18,7 @@ import { generateCompleteExportData, exportToText, exportToJSON, exportToCSV, te
 // Import the daily PDF export functions
 import { exportDailyToPDF } from '../utils/dailyPDFExport';
 import { exportExactDailyPDF } from '../utils/exactDailyPDFExport';
+import { exportPerfectWeeklyPDF, exportPerfectDailyPDF } from '../utils/perfectDashboardExport';
 
 
 
@@ -585,6 +586,45 @@ export default function Planner() {
           } catch (weeklyError) {
             console.error('Weekly PDF export error:', weeklyError);
             throw weeklyError;
+          }
+          break;
+
+        case 'Perfect Weekly':
+          // Export perfect weekly view matching dashboard exactly
+          try {
+            await exportPerfectWeeklyPDF(
+              state.currentWeek.startDate,
+              state.currentWeek.endDate,
+              validatedEvents
+            );
+
+            toast({
+              title: "Perfect Weekly Export Successful",
+              description: "Perfect dashboard-matching weekly PDF downloaded!"
+            });
+            return;
+          } catch (weeklyError) {
+            console.error('Perfect weekly PDF export error:', weeklyError);
+            throw weeklyError;
+          }
+          break;
+
+        case 'Perfect Daily':
+          // Export perfect daily view matching dashboard exactly
+          try {
+            await exportPerfectDailyPDF(
+              selectedDateForExport,
+              validatedEvents
+            );
+
+            toast({
+              title: "Perfect Daily Export Successful",
+              description: "Perfect dashboard-matching daily PDF downloaded!"
+            });
+            return;
+          } catch (dailyError) {
+            console.error('Perfect daily PDF export error:', dailyError);
+            throw dailyError;
           }
           break;
 

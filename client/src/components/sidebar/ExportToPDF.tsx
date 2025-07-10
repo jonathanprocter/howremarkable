@@ -141,6 +141,29 @@ export const ExportToPDF = ({
         </div>
       </div>
 
+      {/* Perfect Dashboard Exports */}
+      <div className="mb-4">
+        <h4 className="text-xs font-medium text-purple-700 mb-2">✨ Perfect Dashboard Match</h4>
+        <div className="space-y-1">
+          <Button 
+            variant="outline" 
+            onClick={() => onExportCurrentView('Perfect Weekly')}
+            className="w-full text-xs bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 font-medium"
+            size="sm"
+          >
+            ✨ Perfect Weekly
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => onExportCurrentView('Perfect Daily')}
+            className="w-full text-xs bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 font-medium"
+            size="sm"
+          >
+            ✨ Perfect Daily
+          </Button>
+        </div>
+      </div>
+
       {/* reMarkable Pro Optimized Exports */}
       <div className="mb-4">
         <h4 className="text-xs font-medium text-gray-700 mb-2">📱 reMarkable Pro</h4>
