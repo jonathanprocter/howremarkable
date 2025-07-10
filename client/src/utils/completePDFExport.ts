@@ -175,25 +175,31 @@ export const exportToCSV = (data: ExportData): string => {
 
 // Test function to verify data
 export const testExportData = (events: CalendarEvent[], selectedDate: Date): void => {
-  console.log('=== EXPORT DATA TEST ===');
-  console.log('Input events:', events.length);
-  console.log('Selected date:', selectedDate);
-  
-  const data = generateCompleteExportData(selectedDate, events);
-  console.log('Generated data:', data);
-  
-  const textOutput = exportToText(data);
-  console.log('Text output length:', textOutput.length);
-  console.log('Text output preview:', textOutput.substring(0, 500));
-  
-  // Download the text file for testing
-  const blob = new Blob([textOutput], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `daily-planner-test-${selectedDate.toISOString().split('T')[0]}.txt`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  try {
+    console.log('=== EXPORT DATA TEST ===');
+    console.log('Input events:', events.length);
+    console.log('Selected date:', selectedDate);
+    
+    const data = generateCompleteExportData(selectedDate, events);
+    console.log('Generated data:', data);
+    
+    const textOutput = exportToText(data);
+    console.log('Text output length:', textOutput.length);
+    console.log('Text output preview:', textOutput.substring(0, 500));
+    
+    // Download the text file for testing
+    const blob = new Blob([textOutput], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `daily-planner-test-${selectedDate.toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+  } catch (error) {
+    console.error('❌ Export data test failed:', error);
+    alert('Sorry, something went wrong while testing the export data. Please try again or contact support if this issue persists.\n\nError details: ' + (error instanceof Error ? error.message : 'Unknown error'));
+  }
 };

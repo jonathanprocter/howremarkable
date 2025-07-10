@@ -183,26 +183,27 @@ export const exportHTMLTemplatePDF = async (
   isDailyView: boolean = false
 ): Promise<void> => {
   try {
-  let pdf;
-  
-  if (isDailyView) {
-    // 8.5 x 11 inch portrait format for daily view
-    pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'pt',
-      format: [612, 792] // 8.5 x 11 inches
-    });
-  } else {
-    // 8.5 x 11 inch landscape format for weekly view
-    pdf = new jsPDF({
-      orientation: 'landscape',
-      unit: 'pt',
-      format: [792, 612] // 11 x 8.5 inches (landscape)
-    });
-  }
+    console.log('📄 Starting PDF export...');
+    let pdf;
+    
+    if (isDailyView) {
+      // 8.5 x 11 inch portrait format for daily view
+      pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'pt',
+        format: [612, 792] // 8.5 x 11 inches
+      });
+    } else {
+      // 8.5 x 11 inch landscape format for weekly view
+      pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'pt',
+        format: [792, 612] // 11 x 8.5 inches (landscape)
+      });
+    }
 
-  // Set default font - use helvetica instead of arial for better compatibility
-  pdf.setFont('helvetica', 'normal');
+    // Set default font - use helvetica instead of arial for better compatibility
+    pdf.setFont('helvetica', 'normal');
 
   if (isDailyView) {
     // === DAILY VIEW LAYOUT - COMPLETELY REWRITTEN ===
@@ -246,9 +247,10 @@ export const exportHTMLTemplatePDF = async (
       throw error;
     }
   } catch (error) {
-    console.error('❌ Critical PDF generation error:', error);
-    throw new Error(`PDF generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
+      console.error('❌ Error saving daily PDF:', error);
+      alert('Sorry, something went wrong while generating your daily PDF. Please try again or contact support if this issue persists.\n\nError details: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      throw error;
+    }
   } else {
     // === WEEKLY VIEW LAYOUT ===
     drawHeader(pdf, weekStartDate, weekEndDate, events);
@@ -262,11 +264,17 @@ export const exportHTMLTemplatePDF = async (
       console.log(`✅ HTML Template PDF exported: ${filename}`);
       console.log('✅ PDF download should have started automatically');
     } catch (error) {
-      console.error('❌ Error saving PDF:', error);
+      console.error('❌ Error saving weekly PDF:', error);
+      alert('Sorry, something went wrong while generating your weekly PDF. Please try again or contact support if this issue persists.\n\nError details: ' + (error instanceof Error ? error.message : 'Unknown error'));
       throw error;
     }
   }
-};
+} catch (error) {
+  // Catch-all error handler for the entire function
+  console.error('❌ Critical PDF generation error:', error);
+  alert('Sorry, something went wrong while generating your PDF. Please try again or contact support if this issue persists.\n\nError details: ' + (error instanceof Error ? error.message : 'Unknown error'));
+  throw new Error(`PDF generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+}
 
 export function drawDailyHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[], pageNumber: number = 1, dayOfWeek: number = 1): void {
   const { margin, pageWidth, pageHeight } = REMARKABLE_DAILY_CONFIG;

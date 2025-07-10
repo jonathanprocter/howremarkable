@@ -91,7 +91,7 @@ export default function Planner() {
         }
 
         const dbEvents = await response.json();
-        
+
         if (!Array.isArray(dbEvents)) {
           throw new Error('Invalid response format: expected array of events');
         }
@@ -155,7 +155,7 @@ export default function Planner() {
         console.log(`Successfully loaded ${convertedEvents.length} events from database`);
       } catch (error) {
         clearTimeout(timeoutId);
-        
+
         if (error.name === 'AbortError') {
           console.error('Database event loading timed out');
           toast({
@@ -342,7 +342,7 @@ export default function Planner() {
               console.log('=== BEFORE DAILY PDF EXPORT ===');
               console.log('Selected date:', selectedDateForExport.toDateString());
               console.log('Current events count:', currentEvents.length);
-              
+
               // Filter events for debugging
               const dayEvents = currentEvents.filter(event => {
                 const eventDate = new Date(event.startTime);
@@ -350,15 +350,15 @@ export default function Planner() {
                        eventDate.getMonth() === selectedDateForExport.getMonth() &&
                        eventDate.getDate() === selectedDateForExport.getDate();
               });
-              
+
               console.log('Day events count:', dayEvents.length);
               dayEvents.forEach((event, i) => {
                 const duration = (event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60);
                 console.log(`Event ${i+1}: "${event.title}" - Duration: ${duration} minutes`);
               });
-              
+
               await exportExactDailyPDF(selectedDateForExport, currentEvents);
-              
+
               toast({
                 title: "Export Successful",
                 description: `Daily planner PDF downloaded with ${dayEvents.length} appointments!`
@@ -395,7 +395,7 @@ export default function Planner() {
             }
           }
           break;
-        
+
         case 'Daily View':
         case 'reMarkable Daily':
           // Export daily view as PDF using the correct daily export function
@@ -403,7 +403,7 @@ export default function Planner() {
             console.log(`=== BEFORE ${type} PDF EXPORT ===`);
             console.log('Selected date:', selectedDateForExport.toDateString());
             console.log('Current events count:', currentEvents.length);
-            
+
             // Filter events for debugging
             const dayEvents = currentEvents.filter(event => {
               const eventDate = new Date(event.startTime);
@@ -411,13 +411,13 @@ export default function Planner() {
               console.log(`Daily Export Filter - Event: ${event.title} on ${eventDate.toDateString()}, Selected: ${selectedDateForExport.toDateString()}, Matches: ${matches}`);
               return matches;
             });
-            
+
             console.log('Day events count:', dayEvents.length);
             dayEvents.forEach((event, i) => {
               const duration = (event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60);
               console.log(`Event ${i+1}: "${event.title}" - Duration: ${duration} minutes`);
             });
-            
+
             if (dayEvents.length === 0) {
               console.log('WARNING: No events found for selected date');
               console.log('Available events dates:');
@@ -425,10 +425,10 @@ export default function Planner() {
                 console.log(`  - ${event.title}: ${new Date(event.startTime).toDateString()}`);
               });
             }
-            
+
             // Use the dedicated daily export function directly
             await exportExactDailyPDF(selectedDateForExport, currentEvents);
-            
+
             toast({
               title: "Export Successful",
               description: `Daily planner PDF downloaded with ${dayEvents.length} appointments!`
@@ -451,20 +451,20 @@ export default function Planner() {
           try {
             // Import the weekly package export function
             const { exportWeeklyPackage } = await import('../utils/weeklyPackageExport');
-            
+
             console.log('=== WEEKLY PACKAGE EXPORT START ===');
             console.log('Week start:', state.currentWeek.startDate.toDateString());
             console.log('Week end:', state.currentWeek.endDate.toDateString());
             console.log('Total events:', currentEvents.length);
-            
+
             // Filter events for the current week
             const weekEvents = currentEvents.filter(event => {
               const eventDate = new Date(event.startTime);
               return eventDate >= state.currentWeek.startDate && eventDate <= state.currentWeek.endDate;
             });
-            
+
             console.log('Week events:', weekEvents.length);
-            
+
             await exportWeeklyPackage(
               state.currentWeek.startDate,
               state.currentWeek.endDate,
@@ -573,11 +573,11 @@ export default function Planner() {
     output += '='.repeat(80) + '\n\n';
 
     let totalAppointments = 0;
-    
+
     weeklyData.forEach((dayData, index) => {
       output += `${dayData.date}\n`;
       output += '-'.repeat(40) + '\n';
-      
+
       if (dayData.appointments.length === 0) {
         output += 'No appointments\n';
       } else {
@@ -589,16 +589,16 @@ export default function Planner() {
         });
         totalAppointments += dayData.appointments.length;
       }
-      
+
       if (dayData.dailyNotes && dayData.dailyNotes.trim()) {
         output += `Daily Notes: ${dayData.dailyNotes}\n`;
       }
-      
+
       output += '\n';
     });
 
     output += `\nWEEK SUMMARY: ${totalAppointments} total appointments\n`;
-    
+
     return output;
   };
 
@@ -901,8 +901,7 @@ export default function Planner() {
       endTime,
       source: 'manual',
       color: '#999',
-      notes: ''
-    };
+      notes: ''    };
 
     // Add to local state immediately for responsiveness
     addEvent(newEvent);
