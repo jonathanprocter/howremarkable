@@ -8,6 +8,7 @@ import { CalendarEvent } from '../types/calendar';
 import { generateTimeSlots } from './timeSlots';
 import { cleanEventTitle } from './textCleaner';
 import { extractDashboardStyles, logStyleComparison, DashboardStyles } from './dashboardStyleExtractor';
+import { performVisualComparison, extractPrintOptimizedStyles, logDetailedStyleComparison } from './pixelPerfectComparison';
 
 // Get source of truth styles from dashboard DOM
 const getDashboardStyles = (): DashboardStyles => {
@@ -146,12 +147,55 @@ export const exportTrulyPixelPerfectWeeklyPDF = async (
   try {
     console.log('🎯 Creating TRULY pixel-perfect weekly PDF using dashboard styles...');
     
+    // STEP 1: Perform visual comparison and capture exact measurements as requested by user
+    console.log('📸 Step 1: Capturing dashboard screenshot for visual comparison...');
+    const visualComparison = await performVisualComparison();
+    
+    // STEP 2: Extract exact print-optimized styles from dashboard
+    console.log('📐 Step 2: Extracting exact dashboard measurements...');
+    const exactMeasurements = extractPrintOptimizedStyles();
+    
+    if (!exactMeasurements) {
+      console.warn('⚠️ Could not extract exact measurements, falling back to extracted styles');
+    }
+    
+    // STEP 3: Use exact dashboard dimensions for PDF configuration
+    console.log('🎯 Step 3: Creating PDF with exact dashboard dimensions...');
+    
     // Extract styles from actual dashboard
     const dashboardStyles = getDashboardStyles();
-    const config = createPDFConfig(dashboardStyles);
     
-    // Log style comparison for debugging
-    logStyleComparison(dashboardStyles, config);
+    // Create exact PDF configuration using real dashboard measurements if available
+    const baseConfig = createPDFConfig(dashboardStyles);
+    const exactConfig = exactMeasurements ? {
+      ...baseConfig,
+      // Use EXACT measured dimensions from dashboard
+      timeColumnWidth: exactMeasurements.timeColumnWidth,
+      dayColumnWidth: exactMeasurements.dayColumnWidth, 
+      slotHeight: Math.max(exactMeasurements.timeSlotHeight * 0.6, 12), // Scale for PDF density
+      
+      // Typography - use exact dashboard font settings
+      fonts: {
+        ...baseConfig.fonts,
+        family: exactMeasurements.gridStyles.fontFamily.includes('Times') ? 'times' : 'helvetica'
+      }
+    } : baseConfig;
+    
+    console.log('📏 Using dashboard measurements:', exactMeasurements ? {
+      timeColumnWidth: exactConfig.timeColumnWidth,
+      dayColumnWidth: exactConfig.dayColumnWidth,
+      slotHeight: exactConfig.slotHeight,
+      fontFamily: exactConfig.fonts.family
+    } : 'Fallback configuration');
+    
+    // Log detailed comparison as requested by user
+    if (exactMeasurements) {
+      logDetailedStyleComparison(exactMeasurements, exactConfig);
+    } else {
+      logStyleComparison(dashboardStyles, exactConfig);
+    }
+    
+    const config = exactConfig;
     
     // Filter events for the week
     const weekEvents = events.filter(event => {
