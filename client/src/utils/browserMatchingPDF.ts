@@ -20,22 +20,88 @@ export const exportBrowserMatchingWeeklyPDF = async (
     format: [792, 612]
   });
 
-  // Extract exact browser grid measurements
-  const timeColumn = document.querySelector('.time-column');
-  const dayColumns = document.querySelectorAll('[class*="day-column"]');
-  const timeSlots = document.querySelectorAll('[class*="time-slot"]');
-  const appointments = document.querySelectorAll('[class*="appointment"]');
+  // Extract exact browser grid measurements using correct selectors for the weekly planner
+  const plannerContainer = document.querySelector('.planner-container');
+  const weeklyPlanner = document.querySelector('.weekly-planner');
+  const calendarGrid = document.querySelector('.calendar-grid');
+  const tableElement = document.querySelector('table');
+  const timeHeaders = document.querySelectorAll('th:first-child, td:first-child');
+  const dayHeaders = document.querySelectorAll('th:not(:first-child), td:not(:first-child)');
+  const timeSlots = document.querySelectorAll('.time-slot');
 
-  // Get computed styles from browser
-  const timeColumnWidth = timeColumn ? parseFloat(getComputedStyle(timeColumn).width) : 80;
-  const dayColumnWidth = dayColumns.length > 0 ? parseFloat(getComputedStyle(dayColumns[0]).width) : 110;
-  const timeSlotHeight = timeSlots.length > 0 ? parseFloat(getComputedStyle(timeSlots[0]).height) : 40;
+  // Debug: Log all potential selectors
+  console.log('🔍 DOM Analysis for Weekly Planner:');
+  console.log('- Planner container found:', !!plannerContainer);
+  console.log('- Weekly planner found:', !!weeklyPlanner);
+  console.log('- Calendar grid found:', !!calendarGrid);
+  console.log('- Table element found:', !!tableElement);
+  console.log('- Time headers found:', timeHeaders.length);
+  console.log('- Day headers found:', dayHeaders.length);
+  console.log('- Time slots found:', timeSlots.length);
+
+  // Get computed styles from browser with better fallback logic
+  let timeColumnWidth = 80;
+  let dayColumnWidth = 110;
+  let timeSlotHeight = 40;
+
+  // Try to extract from table structure (which seems to be the actual layout)
+  if (tableElement) {
+    const tableRect = tableElement.getBoundingClientRect();
+    console.log('📏 Table dimensions:', { width: tableRect.width, height: tableRect.height });
+    
+    // Get first row cells to measure column widths
+    const firstRow = tableElement.querySelector('tr');
+    if (firstRow) {
+      const cells = firstRow.querySelectorAll('th, td');
+      if (cells.length > 0) {
+        const firstCell = cells[0];
+        const firstCellRect = firstCell.getBoundingClientRect();
+        timeColumnWidth = firstCellRect.width;
+        console.log('✓ Time column width from table cell:', timeColumnWidth);
+        
+        if (cells.length > 1) {
+          const secondCell = cells[1];
+          const secondCellRect = secondCell.getBoundingClientRect();
+          dayColumnWidth = secondCellRect.width;
+          console.log('✓ Day column width from table cell:', dayColumnWidth);
+        }
+      }
+    }
+    
+    // Get row height from table rows
+    const rows = tableElement.querySelectorAll('tr');
+    if (rows.length > 1) {
+      const row = rows[1]; // Skip header row
+      const rowRect = row.getBoundingClientRect();
+      timeSlotHeight = rowRect.height;
+      console.log('✓ Time slot height from table row:', timeSlotHeight);
+    }
+  }
+
+  // Fallback: Try the grid container approach
+  if (calendarGrid && (dayColumnWidth < 50 || timeColumnWidth < 50)) {
+    const containerRect = calendarGrid.getBoundingClientRect();
+    console.log('📏 Grid container dimensions:', { width: containerRect.width, height: containerRect.height });
+    
+    // Calculate based on grid container
+    if (containerRect.width > 500) {
+      // Assume 7 day columns + 1 time column
+      timeColumnWidth = Math.max(containerRect.width * 0.12, 60); // About 12% for time column
+      dayColumnWidth = Math.max((containerRect.width - timeColumnWidth) / 7, 90);
+      console.log('📐 Calculated from grid container - time:', timeColumnWidth, 'day:', dayColumnWidth);
+    }
+  }
+
+  // Final fallback: Use reasonable defaults if measurements are still wrong
+  if (dayColumnWidth < 50) dayColumnWidth = 110;
+  if (timeColumnWidth < 50) timeColumnWidth = 80;
+  if (timeSlotHeight < 20) timeSlotHeight = 40;
 
   console.log('Browser measurements:', {
     timeColumnWidth,
     dayColumnWidth,
     timeSlotHeight,
-    dayColumnsCount: dayColumns.length
+    dayColumnsCount: dayHeaders.length
   });
 
   // PDF configuration based on browser measurements
