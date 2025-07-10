@@ -52,13 +52,24 @@ export interface DashboardStyles {
  * Extracts computed styles directly from the dashboard DOM elements
  */
 export const extractDashboardStyles = (): DashboardStyles => {
-  // Find the calendar grid container
-  const gridContainer = document.querySelector('.weekly-calendar-grid, .calendar-grid, [data-testid="weekly-grid"]');
-  const timeColumn = document.querySelector('.time-column, [data-time-column]');
-  const dayColumn = document.querySelector('.day-column, [data-day-column]');
-  const timeSlot = document.querySelector('.time-slot, [data-time-slot]');
-  const eventElement = document.querySelector('.calendar-event, .event');
-  const headerElement = document.querySelector('.calendar-header, .week-header');
+  console.log('🔍 EXTRACTING DASHBOARD STYLES FROM DOM...');
+  
+  // Find the weekly calendar grid container (used in weekly view)
+  const gridContainer = document.querySelector('.calendar-grid, .weekly-calendar-grid, .planner-container');
+  
+  // For weekly view, look for specific grid elements
+  const timeHeader = document.querySelector('.time-header');
+  const dayHeaders = document.querySelectorAll('.day-header');
+  const timeSlotElements = document.querySelectorAll('.time-label');
+  const appointmentElements = document.querySelectorAll('.appointment');
+  
+  console.log('📊 Found DOM elements:', {
+    gridContainer: !!gridContainer,
+    timeHeader: !!timeHeader,
+    dayHeaders: dayHeaders.length,
+    timeSlots: timeSlotElements.length,
+    appointments: appointmentElements.length
+  });
   
   // Helper function to parse computed style values
   const parsePixels = (value: string): number => {
@@ -93,33 +104,63 @@ export const extractDashboardStyles = (): DashboardStyles => {
   };
   
   // Extract dimensions from computed styles
-  const timeColumnStyles = timeColumn ? getComputedStyle(timeColumn) : null;
-  const dayColumnStyles = dayColumn ? getComputedStyle(dayColumn) : null;
-  const timeSlotStyles = timeSlot ? getComputedStyle(timeSlot) : null;
-  const headerStyles = headerElement ? getComputedStyle(headerElement) : null;
-  const eventStyles = eventElement ? getComputedStyle(eventElement) : null;
+  const timeHeaderStyles = timeHeader ? getComputedStyle(timeHeader) : null;
+  const dayHeaderStyles = dayHeaders.length > 0 ? getComputedStyle(dayHeaders[0]) : null;
+  const timeSlotStyles = timeSlotElements.length > 0 ? getComputedStyle(timeSlotElements[0]) : null;
+  const appointmentStyles = appointmentElements.length > 0 ? getComputedStyle(appointmentElements[0]) : null;
+  const gridStyles = gridContainer ? getComputedStyle(gridContainer) : null;
+  
+  // Calculate actual grid dimensions from the weekly calendar grid
+  let timeColumnWidth = 80; // Default fallback
+  let dayColumnWidth = 120; // Default fallback
+  let timeSlotHeight = 40; // Default fallback
+  
+  if (gridContainer) {
+    const gridRect = gridContainer.getBoundingClientRect();
+    console.log('📏 Grid container dimensions:', { width: gridRect.width, height: gridRect.height });
+    
+    // For weekly calendar, calculate day column width
+    // Grid typically has TIME column + 7 day columns
+    if (timeHeader) {
+      const timeHeaderRect = timeHeader.getBoundingClientRect();
+      timeColumnWidth = Math.round(timeHeaderRect.width);
+      console.log('📏 Time header width:', timeColumnWidth);
+      
+      // Day column width = (total grid width - time column width) / 7 days
+      const remainingWidth = gridRect.width - timeColumnWidth;
+      dayColumnWidth = Math.round(remainingWidth / 7);
+      console.log('📏 Calculated day column width:', dayColumnWidth);
+    }
+    
+    // Check for time slot height from the first time slot
+    if (timeSlotElements.length > 0) {
+      const timeSlotRect = timeSlotElements[0].getBoundingClientRect();
+      timeSlotHeight = Math.round(timeSlotRect.height);
+      console.log('📏 Time slot height:', timeSlotHeight);
+    }
+  }
   
   return {
     // Grid dimensions extracted from DOM
-    timeColumnWidth: timeColumnStyles ? parsePixels(timeColumnStyles.width) : 80,
-    dayColumnWidth: dayColumnStyles ? parsePixels(dayColumnStyles.width) : 120,
-    timeSlotHeight: timeSlotStyles ? parsePixels(timeSlotStyles.height) : 24,
-    headerHeight: headerStyles ? parsePixels(headerStyles.height) : 40,
+    timeColumnWidth,
+    dayColumnWidth,
+    timeSlotHeight,
+    headerHeight: dayHeaderStyles ? parsePixels(dayHeaderStyles.height) : 40,
     
     // Typography from computed styles
     fonts: {
-      family: timeColumnStyles?.fontFamily || 'Times New Roman, serif',
+      family: timeHeaderStyles?.fontFamily || 'Inter, system-ui, Helvetica, Arial, sans-serif',
       timeLabel: {
-        size: parseFontSize(timeColumn),
-        weight: timeColumnStyles?.fontWeight || 'normal'
+        size: parseFontSize(timeSlotElements.length > 0 ? timeSlotElements[0] : null),
+        weight: timeSlotStyles?.fontWeight || 'normal'
       },
       dayHeader: {
-        size: parseFontSize(headerElement),
-        weight: headerStyles?.fontWeight || 'bold'
+        size: parseFontSize(dayHeaders.length > 0 ? dayHeaders[0] : null),
+        weight: dayHeaderStyles?.fontWeight || 'bold'
       },
       eventTitle: {
-        size: parseFontSize(eventElement),
-        weight: eventStyles?.fontWeight || 'normal'
+        size: parseFontSize(appointmentElements.length > 0 ? appointmentElements[0] : null),
+        weight: appointmentStyles?.fontWeight || 'normal'
       },
       headerTitle: {
         size: parseFontSize(document.querySelector('h1, .header-title')),
@@ -149,10 +190,10 @@ export const extractDashboardStyles = (): DashboardStyles => {
     
     // Event styling
     events: {
-      padding: eventStyles ? parsePixels(eventStyles.padding) : 4,
-      borderWidth: eventStyles ? parsePixels(eventStyles.borderWidth) : 1,
-      borderRadius: eventStyles ? parsePixels(eventStyles.borderRadius) : 4,
-      minHeight: eventStyles ? parsePixels(eventStyles.minHeight) : 20
+      padding: appointmentStyles ? parsePixels(appointmentStyles.padding) : 4,
+      borderWidth: appointmentStyles ? parsePixels(appointmentStyles.borderWidth) : 1,
+      borderRadius: appointmentStyles ? parsePixels(appointmentStyles.borderRadius) : 4,
+      minHeight: appointmentStyles ? parsePixels(appointmentStyles.minHeight) : 20
     }
   };
 };

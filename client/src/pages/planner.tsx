@@ -1222,7 +1222,7 @@ export default function Planner() {
   // End render timing
   useEffect(() => {
     endRenderTiming();
-  });
+  }, [endRenderTiming]);
 
   // Show loading state for user authentication
   if (userLoading) {
