@@ -352,9 +352,13 @@ export const DailyView = ({
             return !(isMarkedAllDay || isFullDay || hours >= 20);
           }).map((event) => {
             const { className, style } = getEventStyle(event);
-            const calendarClass = event.calendarId === '0np7sib5u30o7oc297j5pb259g' ? 'simplepractice' : 
-                                  event.calendarId === 'en.usa#holiday@group.v.calendar.google.com' ? 'personal' : 
-                                  'google-calendar';
+            // Match the same logic from WeeklyCalendarGrid
+            const calendarClass = event.calendarId === 'en.usa#holiday@group.v.calendar.google.com' ? 'personal' : 
+                                  (event.title.toLowerCase().includes('haircut') ||
+                                   event.title.toLowerCase().includes('dan re:') ||
+                                   event.title.toLowerCase().includes('blake') ||
+                                   event.title.toLowerCase().includes('phone call')) ? 'google-calendar' :
+                                  'simplepractice';
             return (
               <div key={event.id}>
                 <div

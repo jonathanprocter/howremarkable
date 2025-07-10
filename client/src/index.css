@@ -313,7 +313,11 @@ html, body {
     border: 1px solid #f59e0b;
 }
 
-/* Ensure all appointment combinations have white backgrounds */
+/* Force white backgrounds for ALL weekly view appointments */
+.event-in-grid.appointment {
+    background: #FFFFFF !important;
+}
+
 .event-in-grid.appointment.simplepractice {
     background: #FFFFFF !important;
 }
@@ -323,6 +327,13 @@ html, body {
 }
 
 .event-in-grid.appointment.personal {
+    background: #FFFFFF !important;
+}
+
+/* Additional selectors to catch any missed combinations */
+.appointment.simplepractice,
+.appointment.google-calendar,
+.appointment.personal {
     background: #FFFFFF !important;
 }
 
@@ -503,7 +514,7 @@ html, body {
 
 /* Appointment types - pixel-perfect reference styling */
 .appointment.simplepractice {
-    background: #f5f5f5 !important; /* Very light grey background */
+    background: #FFFFFF !important; /* White background to match weekly view */
     color: black !important;
     border: 2px solid #6495ED !important;
     border-left: 8px solid #6495ED !important; /* Cornflower blue left accent */
@@ -512,7 +523,7 @@ html, body {
 }
 
 .appointment.google-calendar {
-    background: #e0e0e0 !important;
+    background: #FFFFFF !important;
     color: black !important;
     border: 2px dashed #666 !important;
     box-shadow: none !important;
@@ -520,7 +531,7 @@ html, body {
 }
 
 .appointment.personal {
-    background: #f0f0f0 !important;
+    background: #FFFFFF !important;
     color: black !important;
     border: 2px solid #999 !important;
     border-style: double !important;
@@ -529,7 +540,7 @@ html, body {
 }
 
 .appointment.outlook {
-    background: #f5f5f5 !important;
+    background: #FFFFFF !important;
     color: black !important;
     border: 2px dotted #333 !important;
     box-shadow: none !important;
