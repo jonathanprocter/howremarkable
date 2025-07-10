@@ -39,11 +39,34 @@ export const ExportToPDF = ({
       console.log('🔍 STARTING PIXEL-PERFECT AUDIT TEST FROM CONSOLE');
       console.log('='.repeat(80));
       
-      // This will trigger the full audit system when an export is called
-      onExportCurrentView('Enhanced Pixel Perfect Audit Test');
+      // Import and run audit directly
+      const { performPixelPerfectAudit, exportAuditResults } = await import('../../utils/pixelPerfectAudit');
+      const auditResults = await performPixelPerfectAudit();
+      exportAuditResults(auditResults);
+      
+      console.log('✅ Pixel-perfect audit completed! Check localStorage for results.');
       
     } catch (error) {
       console.error('❌ Pixel-perfect audit test failed:', error);
+    }
+  };
+
+  // Add standalone audit function (no export)
+  const runStandaloneAudit = async () => {
+    try {
+      console.log('🔍 RUNNING STANDALONE PIXEL-PERFECT AUDIT...');
+      console.log('='.repeat(50));
+      
+      const { performPixelPerfectAudit, exportAuditResults } = await import('../../utils/pixelPerfectAudit');
+      const auditResults = await performPixelPerfectAudit();
+      exportAuditResults(auditResults);
+      
+      // Display key results in an alert
+      alert(`Pixel-Perfect Audit Complete!\n\nScore: ${auditResults.pixelDiffScore}%\nElements measured: ${auditResults.measurements.length}\nKnown compromises: ${auditResults.compromises.length}\n\nFull results logged to console and saved to localStorage.`);
+      
+    } catch (error) {
+      console.error('❌ Standalone audit failed:', error);
+      alert('Audit failed. Check console for details.');
     }
   };
 
@@ -68,7 +91,14 @@ export const ExportToPDF = ({
             className="w-full text-xs bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 border rounded px-2 py-1 font-medium"
             style={{ pointerEvents: 'auto', zIndex: 9999 }}
           >
-            🔍 Test Pixel-Perfect Audit
+            🔍 Export + Audit
+          </button>
+          <button
+            onClick={runStandaloneAudit}
+            className="w-full text-xs bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 border rounded px-2 py-1 font-medium"
+            style={{ pointerEvents: 'auto', zIndex: 9999 }}
+          >
+            📊 Audit Only (No Export)
           </button>
           <button
             onClick={() => {
