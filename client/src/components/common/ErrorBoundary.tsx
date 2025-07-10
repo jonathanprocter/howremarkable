@@ -24,7 +24,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   componentDidCatch(error: Error, errorInfo: any) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
-    
+
     this.setState({
       error,
       errorInfo
@@ -59,11 +59,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            
+
             <h1 className="text-xl font-semibold text-gray-900 text-center mb-2">
               Something went wrong
             </h1>
-            
+
             <p className="text-gray-600 text-center mb-6">
               An unexpected error occurred. Please try refreshing the page or contact support if the problem persists.
             </p>

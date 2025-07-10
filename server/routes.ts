@@ -70,22 +70,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     done(null, user); // Return entire user object from session
   });
 
-  // Session debugging middleware
+  // Session debugging middleware (reduced logging)
   app.use((req, res, next) => {
-    if (req.path.startsWith('/api/')) {
-      console.log(`🔍 Session Debug [${req.method} ${req.path}]:`);
-      console.log(`  - Session ID: ${req.sessionID}`);
-      console.log(`  - Has User: ${!!req.user}`);
-      console.log(`  - Session Passport: ${!!req.session.passport}`);
-      console.log(`  - Cookie Header: ${req.headers.cookie || 'NONE'}`);
-      
-      if (req.session.passport) {
-        console.log(`  - Passport User: ${JSON.stringify(req.session.passport.user)}`);
-      }
-      if (req.user) {
-        console.log(`  - User ID: ${req.user.id}`);
-        console.log(`  - User Email: ${req.user.email}`);
-      }
+    // Only log session debug for non-status endpoints to reduce spam
+    if (req.path.startsWith('/api/') && !req.path.includes('/auth/status')) {
+      console.log(`🔍 Session Debug [${req.method} ${req.path}]: User=${!!req.user}, Session=${req.sessionID.slice(0,8)}...`);
     }
     next();
   });

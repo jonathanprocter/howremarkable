@@ -126,6 +126,11 @@ export default function Planner() {
       return; // Wait for authentication
     }
 
+    // Prevent multiple simultaneous loads
+    if (eventsLoading) {
+      return;
+    }
+
     const loadDatabaseEvents = async () => {
       setEventsLoading(true);
       setEventsError(null);

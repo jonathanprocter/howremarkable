@@ -29,6 +29,16 @@ const sessionStore = new PgSession({
 // Handle session store errors
 sessionStore.on('error', (err) => {
   console.error('Session store error:', err);
+  // Don't crash the server on session store errors
+});
+
+// Add connection error handling
+sessionStore.on('connect', () => {
+  console.log('✅ Session store connected to PostgreSQL');
+});
+
+sessionStore.on('disconnect', () => {
+  console.warn('⚠️ Session store disconnected from PostgreSQL');
 });
 
 app.use(session({
