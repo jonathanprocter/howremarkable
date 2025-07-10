@@ -93,12 +93,8 @@ export default function Planner() {
 
   // Load events from database when authenticated user is available
   useEffect(() => {
-    if (!authenticatedUser?.id) {
-      return; // Wait for authentication
-    }
-
-    // Prevent multiple simultaneous loads
-    if (eventsLoading) {
+    // Only proceed if we have an authenticated user and are not already loading
+    if (!authenticatedUser?.id || eventsLoading) {
       return;
     }
 
