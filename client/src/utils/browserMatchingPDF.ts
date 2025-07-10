@@ -38,26 +38,26 @@ export const exportBrowserMatchingWeeklyPDF = async (
   const availableWidth = 792 - 40; // 40pt margins (20pt each side)
   const availableHeight = 612 - 120; // 120pt for header
   
-  // Calculate scaling to fit browser layout onto US Letter paper
+  // Calculate scaling to fit browser layout onto US Letter paper WIDTH ONLY
+  // Let height scale naturally to maintain browser proportions
   const widthScale = availableWidth / totalBrowserWidth;
-  const heightScale = availableHeight / totalBrowserHeight;
-  const uniformScale = Math.min(widthScale, heightScale); // Use smaller scale to fit both dimensions
   
   console.log('📊 Scaling calculations:', { 
     availableWidth, 
     availableHeight, 
-    widthScale: widthScale.toFixed(4), 
-    heightScale: heightScale.toFixed(4), 
-    uniformScale: uniformScale.toFixed(4) 
+    totalBrowserWidth, 
+    totalBrowserHeight,
+    widthScale: widthScale.toFixed(4),
+    scaledHeight: (totalBrowserHeight * widthScale).toFixed(2)
   });
   
-  // Apply uniform scaling to browser measurements
+  // Apply width-based scaling to browser measurements
   const config = {
     margin: 20,
-    timeColumnWidth: browserMeasurements.timeColumnWidth * uniformScale,
-    dayColumnWidth: browserMeasurements.dayColumnWidth * uniformScale,
-    timeSlotHeight: browserMeasurements.timeSlotHeight * uniformScale,
-    headerHeight: 100 // Fixed header height
+    timeColumnWidth: browserMeasurements.timeColumnWidth * widthScale,
+    dayColumnWidth: browserMeasurements.dayColumnWidth * widthScale,
+    timeSlotHeight: browserMeasurements.timeSlotHeight * widthScale,
+    headerHeight: 80 // Reduced header height
   };
   
   console.log('📊 Scaled configuration for US Letter:', config);
