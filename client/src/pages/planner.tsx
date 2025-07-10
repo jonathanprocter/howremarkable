@@ -19,6 +19,7 @@ import { generateCompleteExportData, exportToText, exportToJSON, exportToCSV, te
 import { exportDailyToPDF } from '../utils/dailyPDFExport';
 import { exportExactDailyPDF } from '../utils/exactDailyPDFExport';
 import { exportPerfectWeeklyPDF, exportPerfectDailyPDF } from '../utils/perfectDashboardExport';
+import { exportTrulyPixelPerfectWeeklyPDF } from '../utils/trulyPixelPerfectExport';
 
 
 
@@ -588,6 +589,36 @@ export default function Planner() {
             throw weeklyError;
           }
           break;
+
+        case 'Truly Pixel Perfect Weekly':
+          // Export truly pixel-perfect weekly calendar PDF using extracted dashboard styles
+          try {
+            console.log('=== TRULY PIXEL-PERFECT WEEKLY PDF EXPORT ===');
+            console.log('Week start:', state.currentWeek.startDate.toDateString());
+            console.log('Week end:', state.currentWeek.endDate.toDateString());
+            console.log('Total events:', validatedEvents.length);
+            console.log('🎯 Creating truly pixel-perfect weekly PDF using dashboard styles...');
+
+            await exportTrulyPixelPerfectWeeklyPDF(
+              state.currentWeek.startDate,
+              state.currentWeek.endDate,
+              validatedEvents
+            );
+
+            toast({
+              title: "Truly Pixel-Perfect Export Successful",
+              description: "PDF with extracted dashboard styles downloaded successfully!"
+            });
+            return;
+          } catch (weeklyError) {
+            console.error('Truly pixel-perfect weekly PDF export error:', weeklyError);
+            toast({
+              title: "Truly Pixel-Perfect Export Failed",
+              description: `Dashboard-extracted export failed: ${weeklyError.message}`,
+              variant: "destructive"
+            });
+            return;
+          }
 
         case 'Pixel Perfect Weekly':
           // Export pixel-perfect weekly view matching dashboard exactly
