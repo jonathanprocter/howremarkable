@@ -354,22 +354,22 @@ export const logDetailedStyleComparison = (dashboardStyles: any, pdfStyles: any)
     },
     'Time Slot Height': {
       Dashboard: `${dashboardStyles.timeSlotHeight}px`,
-      PDF: `${pdfStyles.timeSlotHeight}px`, 
-      Match: dashboardStyles.timeSlotHeight === pdfStyles.timeSlotHeight ? '✅' : '❌'
+      PDF: `${pdfStyles.slotHeight}px`, 
+      Match: dashboardStyles.timeSlotHeight === pdfStyles.slotHeight ? '✅' : '❌'
     }
   });
 
   console.log('🎨 TYPOGRAPHY COMPARISON:');
   console.table({
     'Font Family': {
-      Dashboard: dashboardStyles.fontFamily,
-      PDF: pdfStyles.fontFamily,
-      Match: dashboardStyles.fontFamily === pdfStyles.fontFamily ? '✅' : '❌'
+      Dashboard: dashboardStyles.gridStyles?.fontFamily || 'Not extracted',
+      PDF: pdfStyles.fonts?.family || 'Not configured',
+      Match: (dashboardStyles.gridStyles?.fontFamily || '').includes(pdfStyles.fonts?.family || '') ? '✅' : '❌'
     },
     'Font Size': {
-      Dashboard: `${dashboardStyles.fontSize}px`,
-      PDF: `${pdfStyles.fontSize}px`,
-      Match: dashboardStyles.fontSize === pdfStyles.fontSize ? '✅' : '❌'
+      Dashboard: `${dashboardStyles.gridStyles?.fontSize || 'Not extracted'}`,
+      PDF: `${pdfStyles.fonts?.timeLabel?.size || 'Not configured'}pt`,
+      Match: dashboardStyles.gridStyles?.fontSize === `${pdfStyles.fonts?.timeLabel?.size || 0}px` ? '✅' : '❌'
     }
   });
 
