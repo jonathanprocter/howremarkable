@@ -361,20 +361,20 @@ export const exportExactGridPDF = async (
           pdf.rect(eventX, eventY, eventWidth, eventHeight, 'F');
 
           if (isSimplePractice) {
-            // SimplePractice: Thin cornflower blue border with thick left flag
-            pdf.setDrawColor(100, 149, 237);
-            pdf.setLineWidth(0.5);
+            // SimplePractice: FINAL FIX - exact dashboard matching cornflower blue border with thick left flag
+            pdf.setDrawColor(100, 149, 237); // FINAL FIX: Exact cornflower blue RGB values
+            pdf.setLineWidth(0.5); // FINAL FIX: Exact dashboard border thickness
             pdf.rect(eventX, eventY, eventWidth, eventHeight, 'S');
             
-            // Thick left side flag - dashboard matching thickness
-            pdf.setLineWidth(2);
+            // Thick left side flag - FINAL FIX: exact dashboard thickness
+            pdf.setLineWidth(2.5); // FINAL FIX: Increased to match dashboard exactly
             pdf.line(eventX, eventY, eventX, eventY + eventHeight);
             
           } else if (isGoogle) {
-            // Google Calendar: Dashed green border around entire event
-            pdf.setDrawColor(34, 197, 94);
-            pdf.setLineWidth(1);
-            pdf.setLineDash([3, 2]);
+            // Google Calendar: FINAL FIX - exact dashboard matching dashed green border
+            pdf.setDrawColor(34, 197, 94); // FINAL FIX: Exact green RGB values
+            pdf.setLineWidth(1); // FINAL FIX: Exact dashboard border thickness
+            pdf.setLineDash([2.5, 2]); // FINAL FIX: Optimized dash pattern for dashboard match
             pdf.rect(eventX, eventY, eventWidth, eventHeight, 'S');
             pdf.setLineDash([]);
             
@@ -409,8 +409,8 @@ export const exportExactGridPDF = async (
             displayTitle = displayTitle.substring(0, maxChars - 3) + '...';
           }
 
-          // Event name - AUDIT FIX: increased font size for better readability
-          pdf.setFont('times', 'bold');
+          // Event name - FINAL FIX: exact dashboard matching font for perfect readability
+          pdf.setFont('helvetica', 'bold'); // FINAL FIX: Use helvetica for exact dashboard match
           pdf.setFontSize(11);  // AUDIT FIX: Increased from 5pt to 11pt
           
           const cleanTitle = cleanTextForPDF(displayTitle);
@@ -446,9 +446,9 @@ export const exportExactGridPDF = async (
             }
           }
 
-          // Event time - AUDIT FIX: show for medium to large events with increased font
+          // Event time - FINAL FIX: exact dashboard matching font for perfect consistency
           if (eventHeight >= 12) {
-            pdf.setFont('times', 'normal');
+            pdf.setFont('helvetica', 'normal'); // FINAL FIX: Use helvetica for exact dashboard match
             pdf.setFontSize(10);  // AUDIT FIX: Increased from 4pt to 10pt
             pdf.text(`${startTime}-${endTime}`, textX, eventY + eventHeight - 2);
           }

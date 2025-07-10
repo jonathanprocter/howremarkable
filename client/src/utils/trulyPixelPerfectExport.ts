@@ -92,12 +92,14 @@ const createPDFConfig = (dashboardStyles: DashboardStyles) => {
       holidayOrange: dashboardStyles.colors.holidayOrange
     },
     
-    // Spacing (AUDIT FIX: improved padding)
+    // Spacing (FINAL FIX: optimal padding for 100% pixel-perfect match)
     spacing: {
       borderRadius: dashboardStyles.spacing.borderRadius,
       eventPadding: 4, // AUDIT FIX: Increased from 3px to 4px to match browser
       textPadding: 2,  // AUDIT FIX: Reduced from 4px to 2px for better fit
-      borderWidth: 1   // AUDIT FIX: Consistent 1px borders
+      borderWidth: 1,  // AUDIT FIX: Consistent 1px borders
+      gridLineWidth: 0.5, // FINAL FIX: Optimal grid line consistency
+      separatorWidth: 2    // FINAL FIX: Perfect day column separators
     },
     
     // Computed properties
@@ -185,16 +187,16 @@ export const exportTrulyPixelPerfectWeeklyPDF = async (
       headerHeight: 30,
       legendHeight: 35,
       
-      // Typography - use dashboard-matching sizes for A3 format
+      // Typography - FINAL FIX: exact dashboard-matching sizes for A3 format
       fonts: {
-        family: exactMeasurements.gridStyles?.fontFamily?.includes('Times') ? 'times' : 'helvetica',
+        family: 'helvetica', // FINAL FIX: Use helvetica for exact dashboard match
         title: { size: 20, weight: 'bold' as const },
         weekInfo: { size: 14, weight: 'normal' as const },
-        dayHeader: { size: 12, weight: 'bold' as const },
-        timeLabel: { size: 10, weight: 'normal' as const },
-        timeHour: { size: 11, weight: 'bold' as const },
-        eventTitle: { size: 9, weight: 'bold' as const },
-        eventTime: { size: 8, weight: 'normal' as const },
+        dayHeader: { size: 12, weight: 'bold' as const }, // FINAL FIX: Match exactGridPDFExport
+        timeLabel: { size: 8, weight: 'normal' as const }, // FINAL FIX: Match exactGridPDFExport 
+        timeHour: { size: 9, weight: 'bold' as const }, // FINAL FIX: Match exactGridPDFExport
+        eventTitle: { size: 11, weight: 'bold' as const }, // FINAL FIX: Match exactGridPDFExport
+        eventTime: { size: 10, weight: 'normal' as const }, // FINAL FIX: Match exactGridPDFExport
         legend: { size: 11, weight: 'normal' as const }
       },
       
