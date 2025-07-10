@@ -165,28 +165,59 @@ export const exportTrulyPixelPerfectWeeklyPDF = async (
     // Extract styles from actual dashboard
     const dashboardStyles = getDashboardStyles();
     
-    // Create exact PDF configuration using real dashboard measurements if available
+    // Create TRUE pixel-perfect PDF configuration using UNSCALED dashboard measurements
     const baseConfig = createPDFConfig(dashboardStyles);
+    
+    // ROOT CAUSE FIX: Use extracted measurements WITHOUT any scaling factors
     const exactConfig = exactMeasurements ? {
-      ...baseConfig,
-      // Use EXACT measured dimensions from dashboard WITHOUT scaling
-      timeColumnWidth: exactMeasurements.timeColumnWidth, // Use exact 80px from dashboard
-      dayColumnWidth: exactMeasurements.dayColumnWidth,   // Use exact 120px from dashboard  
-      slotHeight: exactMeasurements.timeSlotHeight,       // Use exact 40px from dashboard (NO scaling!)
+      // Page setup - keep standard PDF dimensions
+      pageWidth: 1190,
+      pageHeight: 842,
+      margin: 20,
+      contentWidth: 1150,
       
-      // Typography - use exact dashboard font settings
+      // Grid dimensions - USE EXACT DASHBOARD VALUES (NO SCALING!)
+      timeColumnWidth: exactMeasurements.timeColumnWidth,    // 80px exactly as dashboard
+      dayColumnWidth: exactMeasurements.dayColumnWidth,      // 110px exactly as dashboard  
+      slotHeight: exactMeasurements.timeSlotHeight,          // 40px exactly as dashboard
+      headerHeight: 30,
+      legendHeight: 35,
+      
+      // Typography - use reasonable PDF sizes (not scaled down)
       fonts: {
-        ...baseConfig.fonts,
-        family: exactMeasurements.gridStyles.fontFamily.includes('Times') ? 'times' : 'helvetica'
-      }
+        family: exactMeasurements.gridStyles?.fontFamily?.includes('Times') ? 'times' : 'helvetica',
+        title: { size: 16, weight: 'bold' as const },
+        weekInfo: { size: 12, weight: 'normal' as const },
+        dayHeader: { size: 10, weight: 'bold' as const },
+        timeLabel: { size: 8, weight: 'normal' as const },
+        timeHour: { size: 9, weight: 'bold' as const },
+        eventTitle: { size: 7, weight: 'bold' as const },
+        eventTime: { size: 6, weight: 'normal' as const },
+        legend: { size: 9, weight: 'normal' as const }
+      },
+      
+      // Colors and spacing from base config
+      colors: baseConfig.colors,
+      spacing: baseConfig.spacing,
+      
+      // Grid positioning
+      gridStartX: 20,
+      gridStartY: 90
     } : baseConfig;
     
-    console.log('📏 Using dashboard measurements:', exactMeasurements ? {
+    // ROOT CAUSE ANALYSIS: Log every transformation step
+    console.log('🔍 ROOT CAUSE ANALYSIS - Value Flow:');
+    console.log('  Step 1 - Dashboard Extracted:', {
+      timeColumnWidth: exactMeasurements?.timeColumnWidth,
+      dayColumnWidth: exactMeasurements?.dayColumnWidth,
+      timeSlotHeight: exactMeasurements?.timeSlotHeight
+    });
+    console.log('  Step 2 - PDF Config Applied:', {
       timeColumnWidth: exactConfig.timeColumnWidth,
       dayColumnWidth: exactConfig.dayColumnWidth,
-      slotHeight: exactConfig.slotHeight,
-      fontFamily: exactConfig.fonts.family
-    } : 'Fallback configuration');
+      slotHeight: exactConfig.slotHeight
+    });
+    console.log('  Step 3 - About to render PDF with these EXACT values (no further scaling)');
     
     // Log detailed comparison as requested by user
     if (exactMeasurements) {
@@ -310,6 +341,14 @@ export const exportTrulyPixelPerfectWeeklyPDF = async (
     // === GRID STRUCTURE ===
     const gridStartY = config.gridStartY;
     const timeSlots = generateTimeSlots();
+    
+    // Step 4 - FINAL VALUES BEFORE PDF RENDERING
+    console.log('  Step 4 - ACTUAL VALUES BEING USED FOR PDF RENDERING:');
+    console.log('    config.timeColumnWidth:', config.timeColumnWidth);
+    console.log('    config.dayColumnWidth:', config.dayColumnWidth);
+    console.log('    config.slotHeight:', config.slotHeight);
+    console.log('    gridStartY:', gridStartY);
+    console.log('    Total content width:', config.contentWidth);
     
     // Grid outline with rounded corners
     pdf.setLineWidth(2);
