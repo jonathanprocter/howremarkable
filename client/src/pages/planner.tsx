@@ -105,7 +105,7 @@ export default function Planner() {
     const loadDatabaseEvents = async () => {
       setEventsLoading(true);
       setEventsError(null);
-      
+
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
 
@@ -194,7 +194,7 @@ export default function Planner() {
           : error instanceof Error ? error.message : 'Could not load calendar events';
 
         setEventsError(errorMessage);
-        
+
         toast({
           title: error.name === 'AbortError' ? "Loading Timeout" : "Error Loading Events",
           description: errorMessage,
@@ -336,13 +336,13 @@ export default function Planner() {
       // Import and use the audit system
       let exportData;
       let validatedEvents = currentEvents;
-      
+
       try {
         const { runPixelPerfectAudit, logExportAudit, validateEventData } = await import('../utils/exportAudit');
-        
+
         console.log('🔍 STARTING PIXEL-PERFECT EXPORT AUDIT SYSTEM');
         console.log('='.repeat(80));
-        
+
         // Run comprehensive pixel-perfect audit
         const exportType = state.viewMode === 'daily' ? 'daily' : 'weekly';
         const pixelPerfectAudit = runPixelPerfectAudit(
@@ -351,17 +351,17 @@ export default function Planner() {
           state.viewMode === 'daily' ? state.selectedDate : undefined,
           exportType
         );
-        
+
         // Log detailed audit results
         logExportAudit(pixelPerfectAudit.auditReport, type);
-        
+
         // Show pixel-perfect analysis
         console.log('🎯 PIXEL-PERFECT ANALYSIS:');
         console.log(`   - Overall Score: ${pixelPerfectAudit.pixelPerfectScore}/100`);
         console.log(`   - Data Integrity: ${pixelPerfectAudit.auditReport.dataIntegrityScore.toFixed(1)}%`);
         console.log(`   - Grid Alignment: ${pixelPerfectAudit.gridValidation.isValid ? 'VALID' : 'INVALID'}`);
         console.log(`   - Event Count Match: ${pixelPerfectAudit.auditReport.missingEvents.length === 0 ? 'PERFECT' : 'MISMATCH'}`);
-        
+
         // Show grid validation issues if any
         if (pixelPerfectAudit.gridValidation.issues.length > 0) {
           console.log('⚠️ GRID ALIGNMENT ISSUES:');
@@ -369,28 +369,28 @@ export default function Planner() {
             console.log(`   - ${issue}`);
           });
         }
-        
+
         // Show unified event data summary
         console.log('📋 UNIFIED EVENT DATA SUMMARY:');
         console.log(`   - Total unified events: ${pixelPerfectAudit.unifiedData.length}`);
         console.log(`   - Events with notes: ${pixelPerfectAudit.unifiedData.filter(e => e.hasNotes).length}`);
         console.log(`   - Events with action items: ${pixelPerfectAudit.unifiedData.filter(e => e.hasActionItems).length}`);
         console.log(`   - 3-column layout required: ${pixelPerfectAudit.exportConfig.layout.use3ColumnLayout ? 'YES' : 'NO'}`);
-        
+
         // Show text cleaning results
         const problemEvents = currentEvents.filter(event => 
           event.title.includes('🔒') || 
           event.title.includes('Ø=') || 
           event.title.includes('!•')
         );
-        
+
         if (problemEvents.length > 0) {
           console.log('🧹 TEXT CLEANING APPLIED:');
           problemEvents.forEach(event => {
             console.log(`   - "${event.title}" → cleaned for export`);
           });
         }
-        
+
         // Use validated events for export
         validatedEvents = validateEventData(currentEvents);
         exportData = generateCompleteExportData(
@@ -407,10 +407,10 @@ export default function Planner() {
         } else {
           console.log('❌ SIGNIFICANT ISSUES - PDF may not match dashboard accurately');
         }
-        
+
         console.log('Generated export data:', exportData);
         console.log('='.repeat(80));
-        
+
       } catch (auditError) {
         console.error('Pixel-perfect audit system error:', auditError);
         // Continue with regular export if audit fails
@@ -510,6 +510,60 @@ export default function Planner() {
           break;
 
         case 'Daily View':
+          // Export current daily view
+          try {
+            console.log('=== DAILY VIEW PDF EXPORT ===');
+            console.log('Selected date:', selectedDateForExport.toDateString());
+            console.log('Current view state:', state.currentView);
+            console.log('Events for export:', validatedEvents.length);
+
+            // Use HTML template PDF for daily view
+            const { exportHTMLTemplatePDF } = await import('../utils/htmlTemplatePDF');
+            await exportHTMLTemplatePDF(
+              selectedDateForExport,
+              selectedDateForExport, // Same date for start and end for daily view
+              validatedEvents,
+              true // isDailyView = true
+            );
+
+            toast({
+              title: "Daily View Export Successful",
+              description: `Daily planner for ${selectedDateForExport.toLocaleDateString()} downloaded successfully!`
+            });
+            return;
+          } catch (dailyError) {
+            console.error('Daily view PDF export error:', dailyError);
+            toast({
+              title: "Daily View Export Failed",
+              description: `Daily PDF export failed: ${dailyError.message}`,
+              variant: "destructive"
+            });
+            return;
+          }
+
+        case 'Dashboard Perfect Daily':
+          // Export daily using live dashboard style extraction
+          try {
+            console.log('=== DASHBOARD PERFECT DAILY PDF EXPORT ===');
+            console.log('🎯 Extracting live dashboard styles for pixel-perfect daily replication...');
+
+            const { exportPixelPerfectDaily } = await import('../utils/pixelPerfectDashboardExport');
+            await exportPixelPerfectDaily(selectedDateForExport, validatedEvents);
+
+            toast({
+              title: "Dashboard Perfect Daily Export Successful",
+              description: `Daily planner perfectly matching your dashboard view downloaded!`
+            });
+            return;
+          } catch (dailyError) {
+            console.error('Dashboard perfect daily PDF export error:', dailyError);
+            toast({
+              title: "Dashboard Perfect Daily Export Failed",
+              description: `Live daily style extraction failed: ${dailyError.message}`,
+              variant: "destructive"
+            });
+            return;
+          }
         case 'reMarkable Daily':
           // Export daily view as PDF using the correct daily export function
           try {
@@ -814,7 +868,7 @@ export default function Planner() {
 
     weeklyData.forEach((dayData, index) => {
       output += `${dayData.date}\n`;
-      output += '-'.repeat(40) + '\n';
+      output += '-'.repeat(40)+ '\n';
 
       if (dayData.appointments.length === 0) {
         output += 'No appointments\n';

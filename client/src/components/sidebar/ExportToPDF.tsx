@@ -173,23 +173,31 @@ export const ExportToPDF = ({
 
       {/* Perfect Dashboard Exports */}
       <div className="mb-4">
-        <h4 className="text-xs font-medium text-purple-700 mb-2">✨ Perfect Dashboard Match</h4>
+        <h4 className="text-xs font-medium text-emerald-700 mb-2">🎯 Dashboard Perfect Match</h4>
         <div className="space-y-1">
           <Button 
             variant="outline" 
-            onClick={() => onExportCurrentView('Truly Pixel Perfect Weekly')}
+            onClick={() => onExportCurrentView('Dashboard Perfect Weekly')}
             className="w-full text-xs bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 font-bold"
             size="sm"
           >
-            🎯 Truly Pixel Perfect
+            🎯 Perfect Weekly (Live Styles)
           </Button>
           <Button 
             variant="outline" 
-            onClick={() => onExportCurrentView('Pixel Perfect Weekly')}
+            onClick={() => onExportCurrentView('Dashboard Perfect Daily')}
+            className="w-full text-xs bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 font-bold"
+            size="sm"
+          >
+            🎯 Perfect Daily (Live Styles)
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => onExportCurrentView('Truly Pixel Perfect Weekly')}
             className="w-full text-xs bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100"
             size="sm"
           >
-            🎯 Pixel Perfect Weekly
+            📐 Pixel Perfect Weekly
           </Button>
           <Button 
             variant="outline" 
