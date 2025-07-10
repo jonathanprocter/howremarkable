@@ -84,35 +84,6 @@ export default function Planner() {
     logThreshold: 16
   });
 
-  // Show loading state for user authentication
-  if (userLoading) {
-    return (
-      <MainLayout>
-        <LoadingState 
-          isLoading={true} 
-          loadingText="Authenticating user..." 
-        >
-          <div />
-        </LoadingState>
-      </MainLayout>
-    );
-  }
-
-  // Show error if user authentication failed
-  if (userError || !authenticatedUser) {
-    return (
-      <MainLayout>
-        <LoadingState 
-          isLoading={false}
-          error={userError || "Authentication required. Please log in to continue."}
-          retryFn={refetchUser}
-        >
-          <div />
-        </LoadingState>
-      </MainLayout>
-    );
-  }
-
   // Initialize reMarkable Pro optimizations and simple navigation fix on component mount
   useEffect(() => {
     initializeRemarkableOptimizations();
@@ -1245,8 +1216,6 @@ export default function Planner() {
     return true;
   });
 
-
-
   const currentDateString = state.selectedDate.toISOString().split('T')[0];
   const currentDailyNotes = state.dailyNotes[currentDateString] || '';
 
@@ -1254,6 +1223,35 @@ export default function Planner() {
   useEffect(() => {
     endRenderTiming();
   });
+
+  // Show loading state for user authentication
+  if (userLoading) {
+    return (
+      <MainLayout>
+        <LoadingState 
+          isLoading={true} 
+          loadingText="Authenticating user..." 
+        >
+          <div />
+        </LoadingState>
+      </MainLayout>
+    );
+  }
+
+  // Show error if user authentication failed
+  if (userError || !authenticatedUser) {
+    return (
+      <MainLayout>
+        <LoadingState 
+          isLoading={false}
+          error={userError || "Authentication required. Please log in to continue."}
+          retryFn={refetchUser}
+        >
+          <div />
+        </LoadingState>
+      </MainLayout>
+    );
+  }
 
   return (
     <ErrorBoundary onError={(error, errorInfo) => {
