@@ -147,6 +147,14 @@ export const ExportToPDF = ({
         <div className="space-y-1">
           <Button 
             variant="outline" 
+            onClick={() => onExportCurrentView('Pixel Perfect Weekly')}
+            className="w-full text-xs bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100"
+            size="sm"
+          >
+            🎯 Pixel Perfect Weekly
+          </Button>
+          <Button 
+            variant="outline" 
             onClick={() => onExportCurrentView('Perfect Weekly')}
             className="w-full text-xs bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 font-medium"
             size="sm"

@@ -589,6 +589,36 @@ export default function Planner() {
           }
           break;
 
+        case 'Pixel Perfect Weekly':
+          // Export pixel-perfect weekly view matching dashboard exactly
+          try {
+            console.log('=== PIXEL-PERFECT WEEKLY PDF EXPORT ===');
+            console.log('Week start:', state.currentWeek.startDate.toDateString());
+            console.log('Week end:', state.currentWeek.endDate.toDateString());
+            console.log('Total events:', validatedEvents.length);
+
+            const { exportPixelPerfectWeeklyPDF } = await import('../utils/pixelPerfectWeeklyExport');
+            await exportPixelPerfectWeeklyPDF(
+              state.currentWeek.startDate,
+              state.currentWeek.endDate,
+              validatedEvents
+            );
+
+            toast({
+              title: "Pixel-Perfect Weekly Export Successful",
+              description: "Exact dashboard replica PDF downloaded successfully!"
+            });
+            return;
+          } catch (weeklyError) {
+            console.error('Pixel-perfect weekly PDF export error:', weeklyError);
+            toast({
+              title: "Pixel-Perfect Weekly Export Failed",
+              description: `Pixel-perfect weekly PDF export failed: ${weeklyError.message}`,
+              variant: "destructive"
+            });
+            return;
+          }
+
         case 'Perfect Weekly':
           // Export perfect weekly view matching dashboard exactly
           try {
