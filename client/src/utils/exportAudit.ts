@@ -1,4 +1,9 @@
 import { CalendarEvent } from '../types/calendar';
+import { 
+  enhanceEventDataIntegrity, 
+  validateDataIntegrity, 
+  generatePixelPerfectReport 
+} from './dataIntegrityFix';
 
 /**
  * Comprehensive Export Audit Utility
@@ -509,5 +514,94 @@ export function runPixelPerfectAudit(
     gridValidation,
     exportConfig,
     pixelPerfectScore: Math.round(pixelPerfectScore)
+  };
+}
+
+/**
+ * Enhanced Pixel-Perfect Audit with Data Integrity Fix
+ * 
+ * This function provides comprehensive validation with automatic fixes
+ * for data integrity issues identified in the audit feedback
+ */
+export function runEnhancedPixelPerfectAudit(
+  dashboardEvents: CalendarEvent[],
+  exportEvents: CalendarEvent[],
+  selectedDate: Date,
+  exportType: string = 'daily'
+): {
+  pixelPerfectScore: number;
+  dataIntegrityScore: number;
+  auditReport: ExportAuditReport;
+  enhancedReport: any;
+  recommendations: string[];
+} {
+  console.log('🔍 ENHANCED PIXEL-PERFECT AUDIT STARTING');
+  console.log('='.repeat(80));
+  
+  // Generate comprehensive pixel-perfect report
+  const enhancedReport = generatePixelPerfectReport(
+    dashboardEvents,
+    exportEvents,
+    selectedDate
+  );
+  
+  // Run original audit for compatibility
+  const originalAudit = auditExportData(dashboardEvents, exportEvents, selectedDate);
+  
+  // Enhance events with data integrity fixes
+  const dashboardDayEvents = dashboardEvents.filter(event => {
+    const eventDate = new Date(event.startTime);
+    return eventDate.toDateString() === selectedDate.toDateString();
+  });
+  
+  const enhancedDashboardData = enhanceEventDataIntegrity(dashboardDayEvents);
+  const dataIntegrityValidation = validateDataIntegrity(enhancedDashboardData);
+  
+  // Merge results
+  const combinedReport: ExportAuditReport = {
+    ...originalAudit,
+    dataIntegrityScore: enhancedReport.dataIntegrityScore,
+    pixelPerfectMatch: enhancedReport.pixelPerfectScore >= 95,
+    warnings: [
+      ...originalAudit.warnings,
+      ...enhancedReport.issues
+    ]
+  };
+  
+  // Log enhanced results
+  console.log('🎯 ENHANCED PIXEL-PERFECT ANALYSIS:');
+  console.log(`   📊 Overall Score: ${enhancedReport.pixelPerfectScore}/100`);
+  console.log(`   🔍 Data Integrity: ${enhancedReport.dataIntegrityScore.toFixed(1)}%`);
+  console.log(`   📝 Summary: ${enhancedReport.summary}`);
+  
+  console.log('\n📋 ENHANCED EVENT DATA ANALYSIS:');
+  enhancedDashboardData.forEach((eventData, index) => {
+    console.log(`   Event ${index + 1}: "${eventData.displayTitle}"`);
+    console.log(`     - Source: ${eventData.sourceType}`);
+    console.log(`     - Has Notes: ${eventData.hasNotes ? 'YES' : 'NO'}`);
+    console.log(`     - Has Action Items: ${eventData.hasActionItems ? 'YES' : 'NO'}`);
+    console.log(`     - Enhanced Notes: ${eventData.enhancedNotes ? 'YES' : 'NO'}`);
+    console.log(`     - Enhanced Action Items: ${eventData.enhancedActionItems ? 'YES' : 'NO'}`);
+    console.log(`     - Background: ${eventData.styling.backgroundColor}`);
+    console.log(`     - Border: ${eventData.styling.borderStyle} ${eventData.styling.borderColor}`);
+  });
+  
+  if (enhancedReport.recommendations.length > 0) {
+    console.log('\n💡 RECOMMENDATIONS:');
+    enhancedReport.recommendations.forEach(rec => console.log(`  - ${rec}`));
+  }
+  
+  console.log('\n🏆 FINAL ENHANCED ASSESSMENT:');
+  console.log(`   ${enhancedReport.summary}`);
+  
+  console.log('='.repeat(80));
+  console.log('🔍 ENHANCED PIXEL-PERFECT AUDIT COMPLETE');
+  
+  return {
+    pixelPerfectScore: enhancedReport.pixelPerfectScore,
+    dataIntegrityScore: enhancedReport.dataIntegrityScore,
+    auditReport: combinedReport,
+    enhancedReport,
+    recommendations: enhancedReport.recommendations
   };
 }

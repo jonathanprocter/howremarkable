@@ -40,7 +40,7 @@ export const ExportToPDF = ({
       console.log('='.repeat(80));
       
       // This will trigger the full audit system when an export is called
-      onExportCurrentView('Pixel Perfect Audit Test');
+      onExportCurrentView('Enhanced Pixel Perfect Audit Test');
       
     } catch (error) {
       console.error('❌ Pixel-perfect audit test failed:', error);
@@ -62,8 +62,8 @@ export const ExportToPDF = ({
         <div className="space-y-1">
           <button
             onClick={() => {
-              console.log('🔍 PIXEL-PERFECT AUDIT TEST BUTTON CLICKED!');
-              onExportCurrentView('Pixel Perfect Audit Test');
+              console.log('🔍 ENHANCED PIXEL-PERFECT AUDIT TEST BUTTON CLICKED!');
+              onExportCurrentView('Enhanced Pixel Perfect Audit Test');
             }}
             className="w-full text-xs bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 border rounded px-2 py-1 font-medium"
             style={{ pointerEvents: 'auto', zIndex: 9999 }}
