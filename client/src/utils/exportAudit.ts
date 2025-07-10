@@ -311,12 +311,15 @@ export function unifyEventData(
     
     // Determine source type
     let sourceType: UnifiedEventData['sourceType'] = 'manual';
-    if (event.source === 'simplepractice' || event.title.toLowerCase().includes('appointment')) {
-      sourceType = 'simplepractice';
-    } else if (event.source === 'google' && !event.title.toLowerCase().includes('holiday')) {
-      sourceType = 'google';
-    } else if (event.title.toLowerCase().includes('holiday')) {
+    if (event.title.toLowerCase().includes('holiday')) {
       sourceType = 'holiday';
+    } else if (event.title.toLowerCase().includes('haircut') ||
+               event.title.toLowerCase().includes('dan re:') ||
+               event.title.toLowerCase().includes('blake') ||
+               event.title.toLowerCase().includes('phone call')) {
+      sourceType = 'google';
+    } else if (event.title.toLowerCase().includes('appointment')) {
+      sourceType = 'simplepractice';
     }
     
     // Calculate grid position

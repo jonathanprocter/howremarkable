@@ -114,16 +114,7 @@ const createPDFConfig = (dashboardStyles: DashboardStyles) => {
 const getEventSourceInfo = (event: CalendarEvent) => {
   const title = event.title.toLowerCase();
   
-  if (title.includes('appointment') || event.source === 'simplepractice') {
-    return {
-      source: 'SimplePractice',
-      color: 'simplePracticeBlue' as const,
-      borderStyle: 'solid' as const,
-      hasLeftFlag: true
-    };
-  }
-  
-  if (title.includes('holiday') || event.source === 'holidays') {
+  if (title.includes('holiday')) {
     return {
       source: 'Holidays',
       color: 'holidayOrange' as const,
@@ -132,11 +123,21 @@ const getEventSourceInfo = (event: CalendarEvent) => {
     };
   }
   
+  if (title.includes('haircut') || title.includes('dan re:') || title.includes('blake') || title.includes('phone call')) {
+    return {
+      source: 'Google Calendar',
+      color: 'googleGreen' as const,
+      borderStyle: 'dashed' as const,
+      hasLeftFlag: false
+    };
+  }
+  
+  // All other appointments are SimplePractice
   return {
-    source: 'Google Calendar',
-    color: 'googleGreen' as const,
-    borderStyle: 'dashed' as const,
-    hasLeftFlag: false
+    source: 'SimplePractice',
+    color: 'simplePracticeBlue' as const,
+    borderStyle: 'solid' as const,
+    hasLeftFlag: true
   };
 };
 

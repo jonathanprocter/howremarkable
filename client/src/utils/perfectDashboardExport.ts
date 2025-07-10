@@ -131,19 +131,6 @@ function generateTimeSlots() {
  * Determine event styling based on source and calendar analysis
  */
 function getEventStyling(event: CalendarEvent) {
-  // SimplePractice events detection
-  if (event.source === 'simplepractice' || 
-      event.title.toLowerCase().includes('appointment') ||
-      event.calendarId === '0np7sib5u30o7oc297j5pb259g') {
-    return {
-      type: 'simplepractice',
-      background: '#d4e3fc', // Light blue from perfect screenshot
-      border: '#4285f4', // Blue border
-      borderStyle: 'solid',
-      textColor: '#000000'
-    };
-  }
-  
   // Holiday events detection
   if (event.title.toLowerCase().includes('holiday') ||
       event.calendarId === 'en.usa#holiday@group.v.calendar.google.com') {
@@ -156,12 +143,26 @@ function getEventStyling(event: CalendarEvent) {
     };
   }
   
-  // Google Calendar events (default)
+  // Google Calendar events (specific non-appointment events)
+  if (event.title.toLowerCase().includes('haircut') ||
+      event.title.toLowerCase().includes('dan re:') ||
+      event.title.toLowerCase().includes('blake') ||
+      event.title.toLowerCase().includes('phone call')) {
+    return {
+      type: 'google',
+      background: '#ffffff', // White background
+      border: '#34a853', // Green border
+      borderStyle: 'dashed',
+      textColor: '#000000'
+    };
+  }
+  
+  // SimplePractice events (all other appointments)
   return {
-    type: 'google',
-    background: '#ffffff', // White background
-    border: '#34a853', // Green border
-    borderStyle: 'dashed',
+    type: 'simplepractice',
+    background: '#d4e3fc', // Light blue from perfect screenshot
+    border: '#4285f4', // Blue border
+    borderStyle: 'solid',
     textColor: '#000000'
   };
 }

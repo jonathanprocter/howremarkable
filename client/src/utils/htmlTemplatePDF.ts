@@ -21,22 +21,22 @@ interface EventTypeInfo {
 }
 
 function getEventTypeInfo(event: CalendarEvent): EventTypeInfo {
-  // Check for SimplePractice events
-  const isSimplePractice = 
-    event.source === 'simplepractice' || 
-    event.title.toLowerCase().includes('appointment') ||
-    event.notes?.toLowerCase().includes('simplepractice') ||
-    event.calendarId === '0np7sib5u30o7oc297j5pb259g'; // Your SimplePractice calendar ID
-  
-  // Check for Google Calendar events  
-  const isGoogle = 
-    event.source === 'google' && !isSimplePractice && !event.title.toLowerCase().includes('holiday');
-  
-  // Check for holidays
+  // Check for holidays first
   const isHoliday = 
     event.title.toLowerCase().includes('holiday') ||
     event.calendarId === 'en.usa#holiday@group.v.calendar.google.com' ||
     event.source === 'holiday';
+  
+  // Check for specific Google Calendar events (non-appointments)
+  const isGoogle = !isHoliday && (
+    event.title.toLowerCase().includes('haircut') ||
+    event.title.toLowerCase().includes('dan re:') ||
+    event.title.toLowerCase().includes('blake') ||
+    event.title.toLowerCase().includes('phone call')
+  );
+  
+  // All other appointments are SimplePractice
+  const isSimplePractice = !isHoliday && !isGoogle && event.title.toLowerCase().includes('appointment');
   
   // Determine source text for display
   let sourceText = '';

@@ -244,9 +244,12 @@ export const WeeklyCalendarGrid = ({
                       key={eventIndex}
                       className={cn(
                         "event-in-grid appointment",
-                        event.calendarId === '0np7sib5u30o7oc297j5pb259g' ? "simplepractice" : 
                         event.calendarId === 'en.usa#holiday@group.v.calendar.google.com' ? "personal" : 
-                        "google-calendar"
+                        (event.title.toLowerCase().includes('haircut') ||
+                         event.title.toLowerCase().includes('dan re:') ||
+                         event.title.toLowerCase().includes('blake') ||
+                         event.title.toLowerCase().includes('phone call')) ? "google-calendar" :
+                        "simplepractice"
                       )}
                       style={getEventStyle(event)}
                       draggable={event.source === 'google'}
