@@ -155,44 +155,39 @@ export const WeeklyCalendarGrid = ({
 
 
   return (
-    <div className="grid grid-cols-8 border border-gray-300 rounded-lg overflow-hidden">
+    <div className="calendar-grid">
       {/* Headers */}
-      <div className="time-header p-3 text-sm font-semibold text-center border-r border-gray-300 bg-white">
-        Time
+      <div className="calendar-cell header-cell">
+        TIME
       </div>
       {week.map((day, index) => (
         <div
           key={index}
-          className="day-header p-3 text-sm font-semibold text-center border-r border-gray-300 last:border-r-0 bg-white"
+          className="calendar-cell header-cell"
           onClick={() => onDayClick(day.date)}
         >
-          {day.dayOfWeek} {formatDateShort(day.date)}
+          {day.dayOfWeek.substring(0, 3).toUpperCase()} {formatDateShort(day.date)}
         </div>
       ))}
 
       {/* All-Day Events Section */}
-      <div className="all-day-header p-2 text-sm font-medium text-gray-600 bg-white border-r border-gray-300 border-b border-gray-300 text-center">
-        All Day
+      <div className="calendar-cell all-day-header">
+        ALL DAY
       </div>
       {week.map((day, dayIndex) => {
         const allDayEvents = getAllDayEventsForDate(day.date);
         return (
-          <div key={`allday-${dayIndex}`} className="all-day-slot p-2 bg-white border-r border-gray-300 border-b border-gray-300 last:border-r-0 min-h-[60px]">
+          <div key={`allday-${dayIndex}`} className="calendar-cell all-day-slot">
             {allDayEvents.map((event) => (
               <div
                 key={event.id}
-                className={cn(
-                  "event-block cursor-pointer mb-1",
-                  "event-block all-day"
-                )}
+                className="event-in-grid event-personal"
                 onClick={(e) => {
                   e.stopPropagation();
                   onEventClick(event);
                 }}
               >
-                <div className="text-xs font-medium text-gray-800 truncate">
-                  {cleanEventTitle(event.title)}
-                </div>
+                {cleanEventTitle(event.title)}
               </div>
             ))}
           </div>
@@ -204,15 +199,10 @@ export const WeeklyCalendarGrid = ({
         <div key={slotIndex} className="contents">
           {/* Time column */}
           <div className={cn(
-            "time-slot p-2 border-r border-gray-300",
-            timeSlot.minute === 0 ? "bg-gray-50" : "bg-white"
+            "calendar-cell time-cell",
+            timeSlot.minute === 0 ? "hour" : "half-hour"
           )}>
-            <div className={cn(
-              "text-gray-600 font-medium",
-              timeSlot.minute === 0 ? "text-sm" : "text-xs" // Top of hour (larger), 30-minute (smaller)
-            )}>
-              {timeSlot.time}
-            </div>
+            {timeSlot.time}
           </div>
 
           {/* Day columns */}
@@ -235,8 +225,8 @@ export const WeeklyCalendarGrid = ({
               <div
                 key={dayIndex}
                 className={cn(
-                  "time-slot border-r border-gray-300 last:border-r-0 relative cursor-pointer hover:bg-gray-50",
-                  timeSlot.minute === 0 ? "bg-gray-50" : "bg-white"
+                  "calendar-cell",
+                  timeSlot.minute === 0 ? "hour" : "half-hour"
                 )}
                 onClick={() => onTimeSlotClick(day.date, timeSlot.time)}
                 onDragOver={handleDragOver}
@@ -245,12 +235,17 @@ export const WeeklyCalendarGrid = ({
                 {slotEvents.map((event, eventIndex) => {
                   if (!isFirstSlotOfEvent(event)) return null;
 
+                  const eventSourceClass = getEventSourceClass(event);
+                  const isSimplePractice = eventSourceClass.includes('simplepractice');
+                  const isGoogle = eventSourceClass.includes('google');
+
                   return (
                     <div
                       key={eventIndex}
                       className={cn(
-                        "event-block absolute left-1 right-1 top-0 cursor-move",
-                        getEventSourceClass(event)
+                        "event-in-grid",
+                        isSimplePractice ? "event-simplepractice" : 
+                        isGoogle ? "event-google-calendar" : "event-personal"
                       )}
                       style={getEventStyle(event)}
                       draggable={event.source === 'google'}
@@ -260,10 +255,10 @@ export const WeeklyCalendarGrid = ({
                         onEventClick(event);
                       }}
                     >
-                      <div className="text-xs font-medium text-gray-800 leading-tight break-words">
+                      <div className="appointment-name">
                         {cleanEventTitle(event.title)}
                       </div>
-                      <div className="text-xs text-gray-600 leading-tight">
+                      <div className="appointment-time">
                         {event.startTime.toLocaleTimeString('en-US', { 
                           hour: '2-digit', 
                           minute: '2-digit', 

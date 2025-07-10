@@ -286,9 +286,9 @@ export const DailyView = ({
         const isFullDay = startHour === 0 && startMinute === 0 && (hours === 24 || hours % 24 === 0);
         return isMarkedAllDay || isFullDay || hours >= 20;
       }).length > 0 && (
-        <div className="all-day-section mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-          <h4 className="text-sm font-medium text-blue-800 mb-2">All Day</h4>
-          <div className="space-y-2">
+        <div className="all-day-section">
+          <h4 className="all-day-title">All Day</h4>
+          <div className="all-day-events">
             {dayEvents.filter(event => {
               const isMarkedAllDay = (event as any).isAllDay;
               const duration = event.endTime.getTime() - event.startTime.getTime();
@@ -300,12 +300,12 @@ export const DailyView = ({
             }).map((event) => (
               <div
                 key={event.id}
-                className="all-day-event p-2 bg-blue-100 border border-blue-300 rounded text-sm cursor-pointer hover:bg-blue-200 transition-colors"
+                className="all-day-event"
                 onClick={() => toggleEventExpansion(event.id)}
               >
-                <div className="font-medium text-blue-900">{event.title}</div>
+                <div className="event-title">{event.title}</div>
                 {event.description && (
-                  <div className="text-blue-700 text-xs mt-1">{event.description}</div>
+                  <div className="event-description">{event.description}</div>
                 )}
               </div>
             ))}
