@@ -283,7 +283,7 @@ html, body {
 }
 
 .event-in-grid {
-    background: white;
+    background: #FFFFFF !important;
     border: 1px solid #ddd;
     padding: 2px 4px;
     margin: 1px 0;
@@ -298,19 +298,32 @@ html, body {
 }
 
 .event-simplepractice {
-    background: white;
+    background: #FFFFFF !important;
     border: 1px solid #6495ED;
     border-left: 4px solid #6495ED;
 }
 
 .event-google-calendar {
-    background: white;
+    background: #FFFFFF !important;
     border: 1px dashed #22c55e;
 }
 
 .event-personal {
-    background: white;
+    background: #FFFFFF !important;
     border: 1px solid #f59e0b;
+}
+
+/* Ensure all appointment combinations have white backgrounds */
+.event-in-grid.appointment.simplepractice {
+    background: #FFFFFF !important;
+}
+
+.event-in-grid.appointment.google-calendar {
+    background: #FFFFFF !important;
+}
+
+.event-in-grid.appointment.personal {
+    background: #FFFFFF !important;
 }
 
 .calendar-container {
