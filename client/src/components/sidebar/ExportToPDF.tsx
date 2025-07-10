@@ -33,6 +33,20 @@ export const ExportToPDF = ({
     onExportCurrentView('Daily View');
   };
 
+  // Add pixel-perfect audit test function
+  (window as any).testPixelPerfectAudit = async () => {
+    try {
+      console.log('🔍 STARTING PIXEL-PERFECT AUDIT TEST FROM CONSOLE');
+      console.log('='.repeat(80));
+      
+      // This will trigger the full audit system when an export is called
+      onExportCurrentView('Pixel Perfect Audit Test');
+      
+    } catch (error) {
+      console.error('❌ Pixel-perfect audit test failed:', error);
+    }
+  };
+
   const testExport = () => {
     console.log('🚀 DIRECT TEST EXPORT CALLED!');
     onExportCurrentView('Test Export');
@@ -46,6 +60,16 @@ export const ExportToPDF = ({
       <div className="mb-4">
         <h4 className="text-xs font-medium text-red-700 mb-2">🐛 Debug Exports</h4>
         <div className="space-y-1">
+          <button
+            onClick={() => {
+              console.log('🔍 PIXEL-PERFECT AUDIT TEST BUTTON CLICKED!');
+              onExportCurrentView('Pixel Perfect Audit Test');
+            }}
+            className="w-full text-xs bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 border rounded px-2 py-1 font-medium"
+            style={{ pointerEvents: 'auto', zIndex: 9999 }}
+          >
+            🔍 Test Pixel-Perfect Audit
+          </button>
           <button
             onClick={() => {
               console.log('🟢 HTML BUTTON CLICKED!');
