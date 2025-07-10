@@ -20,75 +20,62 @@ export const exportBrowserMatchingWeeklyPDF = async (
     format: [792, 612]
   });
 
-  // Extract exact browser grid measurements using correct selectors for the weekly planner
+  // Extract exact browser grid measurements using correct CSS Grid selectors
   const plannerContainer = document.querySelector('.planner-container');
-  const weeklyPlanner = document.querySelector('.weekly-planner');
   const calendarGrid = document.querySelector('.calendar-grid');
-  const tableElement = document.querySelector('table');
-  const timeHeaders = document.querySelectorAll('th:first-child, td:first-child');
-  const dayHeaders = document.querySelectorAll('th:not(:first-child), td:not(:first-child)');
+  const timeHeader = document.querySelector('.time-header');
+  const dayHeaders = document.querySelectorAll('.day-header');
   const timeSlots = document.querySelectorAll('.time-slot');
+  const calendarCells = document.querySelectorAll('.calendar-cell');
 
   // Debug: Log all potential selectors
-  console.log('🔍 DOM Analysis for Weekly Planner:');
+  console.log('🔍 DOM Analysis for CSS Grid Weekly Planner:');
   console.log('- Planner container found:', !!plannerContainer);
-  console.log('- Weekly planner found:', !!weeklyPlanner);
   console.log('- Calendar grid found:', !!calendarGrid);
-  console.log('- Table element found:', !!tableElement);
-  console.log('- Time headers found:', timeHeaders.length);
+  console.log('- Time header found:', !!timeHeader);
   console.log('- Day headers found:', dayHeaders.length);
   console.log('- Time slots found:', timeSlots.length);
+  console.log('- Calendar cells found:', calendarCells.length);
 
   // Get computed styles from browser with better fallback logic
   let timeColumnWidth = 80;
   let dayColumnWidth = 110;
   let timeSlotHeight = 40;
 
-  // Try to extract from table structure (which seems to be the actual layout)
-  if (tableElement) {
-    const tableRect = tableElement.getBoundingClientRect();
-    console.log('📏 Table dimensions:', { width: tableRect.width, height: tableRect.height });
+  // Extract from CSS Grid structure
+  if (calendarGrid) {
+    const gridRect = calendarGrid.getBoundingClientRect();
+    console.log('📏 CSS Grid dimensions:', { width: gridRect.width, height: gridRect.height });
     
-    // Get first row cells to measure column widths
-    const firstRow = tableElement.querySelector('tr');
-    if (firstRow) {
-      const cells = firstRow.querySelectorAll('th, td');
-      if (cells.length > 0) {
-        const firstCell = cells[0];
-        const firstCellRect = firstCell.getBoundingClientRect();
-        timeColumnWidth = firstCellRect.width;
-        console.log('✓ Time column width from table cell:', timeColumnWidth);
-        
-        if (cells.length > 1) {
-          const secondCell = cells[1];
-          const secondCellRect = secondCell.getBoundingClientRect();
-          dayColumnWidth = secondCellRect.width;
-          console.log('✓ Day column width from table cell:', dayColumnWidth);
-        }
+    // Get actual time header width (first column)
+    if (timeHeader) {
+      const timeHeaderRect = timeHeader.getBoundingClientRect();
+      timeColumnWidth = timeHeaderRect.width;
+      console.log('✓ Time column width from .time-header:', timeColumnWidth);
+    }
+    
+    // Get actual day header width (any of the 7 day columns)
+    if (dayHeaders.length > 0) {
+      const dayHeaderRect = dayHeaders[0].getBoundingClientRect();
+      dayColumnWidth = dayHeaderRect.width;
+      console.log('✓ Day column width from .day-header:', dayColumnWidth);
+    }
+    
+    // Get actual time slot height
+    if (timeSlots.length > 0) {
+      const timeSlotRect = timeSlots[0].getBoundingClientRect();
+      timeSlotHeight = timeSlotRect.height;
+      console.log('✓ Time slot height from .time-slot:', timeSlotHeight);
+    }
+    
+    // Fallback calculation if specific elements not found
+    if (timeColumnWidth < 50 || dayColumnWidth < 50) {
+      // Use grid container dimensions with sensible proportions
+      if (gridRect.width > 500) {
+        timeColumnWidth = Math.max(gridRect.width * 0.12, 60); // About 12% for time column
+        dayColumnWidth = Math.max((gridRect.width - timeColumnWidth) / 7, 90);
+        console.log('📐 Calculated from grid proportions - time:', timeColumnWidth, 'day:', dayColumnWidth);
       }
-    }
-    
-    // Get row height from table rows
-    const rows = tableElement.querySelectorAll('tr');
-    if (rows.length > 1) {
-      const row = rows[1]; // Skip header row
-      const rowRect = row.getBoundingClientRect();
-      timeSlotHeight = rowRect.height;
-      console.log('✓ Time slot height from table row:', timeSlotHeight);
-    }
-  }
-
-  // Fallback: Try the grid container approach
-  if (calendarGrid && (dayColumnWidth < 50 || timeColumnWidth < 50)) {
-    const containerRect = calendarGrid.getBoundingClientRect();
-    console.log('📏 Grid container dimensions:', { width: containerRect.width, height: containerRect.height });
-    
-    // Calculate based on grid container
-    if (containerRect.width > 500) {
-      // Assume 7 day columns + 1 time column
-      timeColumnWidth = Math.max(containerRect.width * 0.12, 60); // About 12% for time column
-      dayColumnWidth = Math.max((containerRect.width - timeColumnWidth) / 7, 90);
-      console.log('📐 Calculated from grid container - time:', timeColumnWidth, 'day:', dayColumnWidth);
     }
   }
 
