@@ -91,14 +91,29 @@ export const exportBrowserMatchingWeeklyPDF = async (
     dayColumnsCount: dayHeaders.length
   });
 
-  // PDF configuration based on browser measurements
+  // PDF configuration based on browser measurements with improved scaling
+  const availableWidth = 792 - 40; // Page width minus margins
+  const availableHeight = 612 - 120; // Page height minus header and legend space
+  
+  // Calculate optimal scaling to fit the page while maintaining proportions
+  const totalBrowserWidth = timeColumnWidth + (dayColumnWidth * 7);
+  const scaleFactor = Math.min(availableWidth / totalBrowserWidth, 1.0);
+  
+  console.log('📐 Scaling calculations:', {
+    totalBrowserWidth,
+    availableWidth,
+    scaleFactor: scaleFactor.toFixed(3)
+  });
+  
   const config = {
     margin: 20,
-    timeColumnWidth: Math.max(timeColumnWidth * 0.6, 60), // Scale for PDF
-    dayColumnWidth: Math.max(dayColumnWidth * 0.6, 90),
-    timeSlotHeight: Math.max(timeSlotHeight * 0.5, 20),
+    timeColumnWidth: timeColumnWidth * scaleFactor,
+    dayColumnWidth: dayColumnWidth * scaleFactor,
+    timeSlotHeight: Math.min(timeSlotHeight * 0.6, availableHeight / 36), // Ensure 36 slots fit
     headerHeight: 60
   };
+  
+  console.log('📊 PDF configuration:', config);
 
   const gridStartX = config.margin;
   const gridStartY = config.margin + config.headerHeight;
