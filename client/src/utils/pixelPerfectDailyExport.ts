@@ -684,10 +684,10 @@ export const exportPixelPerfectDailyPlanner = async (
 ```text
   pdf.save(filename);
 
-  console.log(`✅ Pixel Perfect Daily Planner exported: ${filename}`);
-  console.log(`📐 Canvas dimensions: ${PIXEL_PERFECT_CONFIG.pageWidth} × ${PIXEL_PERFECT_CONFIG.pageHeight} pixels`);
-  console.log(`📊 DPI: ${PIXEL_PERFECT_CONFIG.dpi} (print quality)`);
-  console.log(`⏰ Time slots: ${ALL_TIME_SLOTS.length} slots from 06:00 to 23:30`);
+  console.log(`Pixel Perfect Daily Planner exported: ${filename}`);
+  console.log(`Canvas dimensions: ${PIXEL_PERFECT_CONFIG.pageWidth} × ${PIXEL_PERFECT_CONFIG.pageHeight} pixels`);
+  console.log(`DPI: ${PIXEL_PERFECT_CONFIG.dpi} (print quality)`);
+  console.log(`Time slots: ${ALL_TIME_SLOTS.length} slots from 06:00 to 23:30`);
 };
 
 export const generatePixelPerfectDailyExport = async (
