@@ -343,78 +343,112 @@ function drawExactAppointments(pdf: jsPDF, weekStartDate: Date, events: Calendar
     const availableHeight = height - (padding * 2);
     const availableWidth = width - (padding * 2);
     
-    // Ultra-small font sizes to guarantee all content fits within appointment boxes
+    // Optimized font sizes for text wrapping - slightly smaller to accommodate multiple lines
     let titleFontSize, sourceFontSize, timeFontSize;
     
     if (durationInMinutes <= 30) {
-      // 30-minute appointments: ultra-small fonts for cramped space
+      // 30-minute appointments: very small fonts with text wrapping
+      titleFontSize = 2.5;
+      sourceFontSize = 2;
+      timeFontSize = 2;
+    } else if (durationInMinutes >= 90) {
+      // 90-minute appointments: larger fonts with room for wrapping
+      titleFontSize = 4;
+      sourceFontSize = 3;
+      timeFontSize = 3;
+    } else {
+      // 60-minute appointments: small fonts with text wrapping
       titleFontSize = 3;
       sourceFontSize = 2.5;
       timeFontSize = 2.5;
-    } else if (durationInMinutes >= 90) {
-      // 90-minute appointments: small but readable in taller boxes
-      titleFontSize = 4.5;
-      sourceFontSize = 3.5;
-      timeFontSize = 3.5;
-    } else {
-      // 60-minute appointments: very small to ensure no overflow
-      titleFontSize = 3.5;
-      sourceFontSize = 3;
-      timeFontSize = 3;
     }
     
-    // Calculate text positioning to fit within appointment box bounds with minimal spacing
-    let titleY, sourceY, timeY;
+    // Calculate starting position for text with better spacing for wrapped lines
+    let titleY;
     
     if (durationInMinutes <= 30) {
-      // 30-minute appointments: ultra-tight spacing for minimal boxes
-      titleY = y + padding + 2;
-      sourceY = y + padding + 4.5;
-      timeY = y + padding + 7;
+      // 30-minute appointments: start near top with minimal padding
+      titleY = y + padding + 1.5;
     } else if (durationInMinutes >= 90) {
-      // 90-minute appointments: better distributed spacing in taller boxes
-      titleY = y + padding + 3;
-      sourceY = y + padding + 8;
-      timeY = y + padding + 13;
-    } else {
-      // 60-minute appointments: minimal spacing to prevent overflow
+      // 90-minute appointments: start with more spacing in taller boxes
       titleY = y + padding + 2.5;
-      sourceY = y + padding + 6;
-      timeY = y + padding + 9.5;
+    } else {
+      // 60-minute appointments: balanced starting position
+      titleY = y + padding + 2;
     }
     
-    // Measure and truncate title if needed to fit width
+    // Helper function to wrap text to fit within available width
+    function wrapText(text: string, fontSize: number, maxWidth: number): string[] {
+      pdf.setFontSize(fontSize);
+      const words = text.split(' ');
+      const lines: string[] = [];
+      let currentLine = '';
+      
+      for (const word of words) {
+        const testLine = currentLine ? `${currentLine} ${word}` : word;
+        const testWidth = pdf.getTextWidth(testLine);
+        
+        if (testWidth <= maxWidth) {
+          currentLine = testLine;
+        } else {
+          if (currentLine) {
+            lines.push(currentLine);
+            currentLine = word;
+          } else {
+            // Single word is too long, split it
+            lines.push(word);
+          }
+        }
+      }
+      
+      if (currentLine) {
+        lines.push(currentLine);
+      }
+      
+      return lines;
+    }
+    
+    // Wrap title text to fit within available width
     pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(titleFontSize); // Remove SCALE factor for proper sizing
-    let truncatedTitle = title;
-    const titleWidth = pdf.getTextWidth(truncatedTitle);
+    pdf.setFontSize(titleFontSize);
+    const titleLines = wrapText(title, titleFontSize, availableWidth);
     
-    if (titleWidth > availableWidth) {
-      // Aggressively truncate title to fit within available width
-      const charRatio = availableWidth / titleWidth;
-      const maxChars = Math.floor(title.length * charRatio * 0.8); // 80% safety margin for smaller fonts
-      truncatedTitle = title.substring(0, Math.max(1, maxChars - 3)) + '...';
-    }
-    
-    // Additional truncation for very small boxes
-    if (durationInMinutes <= 30 && truncatedTitle.length > 12) {
-      truncatedTitle = truncatedTitle.substring(0, 9) + '...';
-    } else if (durationInMinutes <= 60 && truncatedTitle.length > 15) {
-      truncatedTitle = truncatedTitle.substring(0, 12) + '...';
-    }
-    
-    // Draw title - large and bold for maximum readability
+    // Draw title lines
     pdf.setTextColor(...SPEC.BLACK);
-    pdf.text(truncatedTitle, x + padding, titleY);
+    let currentY = titleY;
+    const lineHeight = titleFontSize * 1.2; // 20% line spacing
     
-    // Draw source - positioned in middle section
+    for (let i = 0; i < titleLines.length && currentY < y + height - padding; i++) {
+      pdf.text(titleLines[i], x + padding, currentY);
+      currentY += lineHeight;
+    }
+    
+    // Draw source - wrap text to fit within available width
     pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(sourceFontSize); // Remove SCALE factor for proper sizing
-    pdf.text(source, x + padding, sourceY);
+    pdf.setFontSize(sourceFontSize);
+    const sourceLines = wrapText(source, sourceFontSize, availableWidth);
     
-    // Draw time range - positioned at bottom section
+    // Calculate dynamic sourceY based on title lines
+    let dynamicSourceY = titleY + (titleLines.length * lineHeight) + 2;
+    const sourceLineHeight = sourceFontSize * 1.2;
+    
+    for (let i = 0; i < sourceLines.length && dynamicSourceY < y + height - padding; i++) {
+      pdf.text(sourceLines[i], x + padding, dynamicSourceY);
+      dynamicSourceY += sourceLineHeight;
+    }
+    
+    // Draw time range - wrap text to fit within available width
     pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(timeFontSize); // Remove SCALE factor for proper sizing
-    pdf.text(timeText, x + padding, timeY);
+    pdf.setFontSize(timeFontSize);
+    const timeLines = wrapText(timeText, timeFontSize, availableWidth);
+    
+    // Calculate dynamic timeY based on source lines
+    let dynamicTimeY = dynamicSourceY + 2;
+    const timeLineHeight = timeFontSize * 1.2;
+    
+    for (let i = 0; i < timeLines.length && dynamicTimeY < y + height - padding; i++) {
+      pdf.text(timeLines[i], x + padding, dynamicTimeY);
+      dynamicTimeY += timeLineHeight;
+    }
   });
 }
