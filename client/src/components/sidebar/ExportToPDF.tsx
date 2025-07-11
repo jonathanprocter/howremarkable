@@ -234,13 +234,13 @@ export const ExportToPDF = ({
           <Button 
             variant="outline" 
             onClick={() => {
-              console.log('🐍 PERFECT WEEKLY EXPORT - PYTHON SPECIFICATIONS IMPLEMENTED!');
-              onExportCurrentView('Browser Matching');
+              console.log('🎯 TRULY PIXEL PERFECT EXPORT - FINAL ITERATION!');
+              onExportCurrentView('Truly Pixel Perfect');
             }}
             className="w-full text-xs bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 font-bold"
             size="sm"
           >
-            🐍 PERFECT Weekly (Python Specs)
+            🎯 PERFECT Weekly (Final Iteration)
           </Button>
 
           <p className="text-xs text-gray-600 mb-2 mt-3">📦 Multi-Page Export</p>

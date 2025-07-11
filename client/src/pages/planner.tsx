@@ -826,6 +826,7 @@ export default function Planner() {
           }
           break;
 
+        case 'Truly Pixel Perfect':
         case 'Truly Pixel Perfect Weekly':
           // Export truly pixel-perfect weekly calendar PDF using extracted dashboard styles
           try {
