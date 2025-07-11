@@ -80,19 +80,19 @@ export const exportExactGridPDF = async (
     pdf.setFillColor(255, 255, 255);
     pdf.rect(0, 0, GRID_CONFIG.pageWidth, GRID_CONFIG.pageHeight, 'F');
 
-    // HEADER - improved spacing and navigation with larger fonts
+    // HEADER - Move "WEEKLY PLANNER" down to be centered in header space
     pdf.setFont('times', 'bold');
     pdf.setFontSize(24);  // Much larger title font for better visibility
     pdf.setTextColor(0, 0, 0);
-    pdf.text('WEEKLY CALENDAR', GRID_CONFIG.pageWidth / 2, centerY + 25, { align: 'center' });
+    pdf.text('WEEKLY PLANNER', GRID_CONFIG.pageWidth / 2, centerY + 35, { align: 'center' });
 
-    // Week info
+    // Week info - move to the left side
     pdf.setFont('times', 'normal');
     pdf.setFontSize(18);  // Much larger week info font
-    const weekStart = weekStartDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-    const weekEnd = weekEndDate.toLocaleDateString('en-US', { day: 'numeric' });
+    const weekStart = weekStartDate.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
+    const weekEnd = weekEndDate.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
     const weekNumber = Math.ceil(((weekStartDate.getTime() - new Date(weekStartDate.getFullYear(), 0, 1).getTime()) / 86400000 + 1) / 7);
-    pdf.text(`${weekStart}-${weekEnd} • Week ${weekNumber}`, GRID_CONFIG.pageWidth / 2, centerY + 45, { align: 'center' });
+    pdf.text(`WEEK ${weekNumber} -- ${weekStart} - ${weekEnd}`, centerX + 40, centerY + 35, { align: 'left' });
 
     // Navigation buttons - styled to match dashboard with larger fonts
     const buttonHeight = 25;
@@ -192,8 +192,8 @@ export const exportExactGridPDF = async (
     pdf.setTextColor(0, 0, 0);
     pdf.text('TIME', centerX + GRID_CONFIG.timeColumnWidth/2, gridStartY + 16, { align: 'center' });
 
-    // Day headers
-    const dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+    // Day headers - Full day names with dates
+    const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     dayNames.forEach((dayName, index) => {
       const dayX = centerX + GRID_CONFIG.timeColumnWidth + (index * GRID_CONFIG.dayColumnWidth);
       const dayDate = new Date(weekStartDate);
@@ -203,16 +203,13 @@ export const exportExactGridPDF = async (
       pdf.setFillColor(255, 255, 255);
       pdf.rect(dayX, gridStartY, GRID_CONFIG.dayColumnWidth, 25, 'F');
 
-      // Day name - Much larger font for better readability
+      // Full day name with date (e.g., "Monday 7-7-2025")
       pdf.setFont('times', 'bold');
-      pdf.setFontSize(16);  // Much larger day name font
+      pdf.setFontSize(12);  // Smaller font to fit full day name and date
       pdf.setTextColor(0, 0, 0);
-      pdf.text(dayName, dayX + GRID_CONFIG.dayColumnWidth/2, gridStartY + 12, { align: 'center' });
-
-      // Day number - Much larger font for better readability
-      pdf.setFontSize(16);  // Much larger day number font
-      pdf.setTextColor(0, 0, 0);
-      pdf.text(dayDate.getDate().toString(), dayX + GRID_CONFIG.dayColumnWidth/2, gridStartY + 20, { align: 'center' });
+      const formattedDate = `${dayDate.getMonth() + 1}-${dayDate.getDate()}-${dayDate.getFullYear()}`;
+      const dayHeader = `${dayName} ${formattedDate}`;
+      pdf.text(dayHeader, dayX + GRID_CONFIG.dayColumnWidth/2, gridStartY + 16, { align: 'center' });
 
       // Vertical border between days
       if (index < 6) {
@@ -233,23 +230,33 @@ export const exportExactGridPDF = async (
     timeSlots.forEach((slot, index) => {
       const y = gridStartY + 25 + (index * GRID_CONFIG.slotHeight);
 
-      // Time slot background - exact dashboard colors
+      // For top-of-hour rows, extend gray background all the way to the right margin
+      if (slot.isHour) {
+        pdf.setFillColor(240, 240, 240);
+        pdf.rect(centerX, y, GRID_CONFIG.totalGridWidth, GRID_CONFIG.slotHeight, 'F');
+      }
+
+      // Time slot background - only for time column
       pdf.setFillColor(slot.isHour ? 240 : 248, slot.isHour ? 240 : 248, slot.isHour ? 240 : 248);
       pdf.rect(centerX, y, GRID_CONFIG.timeColumnWidth, GRID_CONFIG.slotHeight, 'F');
 
-      // Time label - Much larger fonts for better readability
+      // Time label - centered both horizontally and vertically
       pdf.setFont('times', slot.isHour ? 'bold' : 'normal');
       pdf.setFontSize(slot.isHour ? 12 : 10);  // Much larger time fonts
       pdf.setTextColor(0, 0, 0);
-      pdf.text(slot.time, centerX + GRID_CONFIG.timeColumnWidth/2, y + GRID_CONFIG.slotHeight/2 + 2, { align: 'center' });
+      // Center vertically by adjusting Y position more precisely
+      const textY = y + (GRID_CONFIG.slotHeight / 2) + 4; // Better vertical centering
+      pdf.text(slot.time, centerX + GRID_CONFIG.timeColumnWidth/2, textY, { align: 'center' });
 
       // Day cells
       for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
         const cellX = centerX + GRID_CONFIG.timeColumnWidth + (dayIndex * GRID_CONFIG.dayColumnWidth);
 
-        // Cell background - exact dashboard alternating colors
-        pdf.setFillColor(slot.isHour ? 240 : 255, slot.isHour ? 240 : 255, slot.isHour ? 240 : 255);
-        pdf.rect(cellX, y, GRID_CONFIG.dayColumnWidth, GRID_CONFIG.slotHeight, 'F');
+        // Cell background - only for half-hour slots if not already filled by hour background
+        if (!slot.isHour) {
+          pdf.setFillColor(255, 255, 255);
+          pdf.rect(cellX, y, GRID_CONFIG.dayColumnWidth, GRID_CONFIG.slotHeight, 'F');
+        }
 
         // Cell border - consistent grid lines
         pdf.setLineWidth(0.5);
@@ -366,8 +373,8 @@ export const exportExactGridPDF = async (
             pdf.setLineWidth(0.5); // FINAL FIX: Exact dashboard border thickness
             pdf.rect(eventX, eventY, eventWidth, eventHeight, 'S');
             
-            // Thick left side flag - FINAL FIX: exact dashboard thickness
-            pdf.setLineWidth(2.5); // FINAL FIX: Increased to match dashboard exactly
+            // Thick left side flag - USER REQUESTED: 2px thicker than before
+            pdf.setLineWidth(4.5); // USER REQUESTED: Made 2px thicker (2.5 + 2 = 4.5)
             pdf.line(eventX, eventY, eventX, eventY + eventHeight);
             
           } else if (isGoogle) {
@@ -409,9 +416,9 @@ export const exportExactGridPDF = async (
             displayTitle = displayTitle.substring(0, maxChars - 3) + '...';
           }
 
-          // Event name - Much larger font for better readability
+          // Event name - Sized to match screenshot example
           pdf.setFont('helvetica', 'bold'); // Use helvetica for exact dashboard match
-          pdf.setFontSize(14);  // Much larger font for better readability
+          pdf.setFontSize(8);  // Sized to match the screenshot provided
           
           const cleanTitle = cleanTextForPDF(displayTitle);
           
@@ -446,10 +453,10 @@ export const exportExactGridPDF = async (
             }
           }
 
-          // Event time - Much larger font for better readability
+          // Event time - Sized to match screenshot example
           if (eventHeight >= 12) {
             pdf.setFont('helvetica', 'normal'); // Use helvetica for exact dashboard match
-            pdf.setFontSize(12);  // Much larger time font for better readability
+            pdf.setFontSize(7);  // Sized to match the screenshot provided
             pdf.text(`${startTime}-${endTime}`, textX, eventY + eventHeight - 2);
           }
         }
