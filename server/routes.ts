@@ -82,6 +82,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
   passport.deserializeUser(async (id: string, done) => {
+    // Validate ID first
+    if (!id || id === 'undefined' || id === 'null' || id === 'NaN') {
+      console.error("❌ Invalid user ID for deserialization:", id);
+      return done(null, false);
+    }
+
     // Check cache first
     const cached = userCache.get(id);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
@@ -105,7 +111,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         done(null, user);
       } else {
         // For production, fetch user from database
-        const dbUser = await storage.getUserById(parseInt(id));
+        const parsedId = parseInt(id);
+        if (isNaN(parsedId)) {
+          console.error("❌ Cannot parse user ID:", id);
+          return done(null, false);
+        }
+        
+        const dbUser = await storage.getUserById(parsedId);
         if (dbUser) {
           const user = {
             id: dbUser.id.toString(),
@@ -125,7 +137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       console.error("❌ Error deserializing user:", error);
-      done(error, false);
+      done(null, false);
     }
   });
 
