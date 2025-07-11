@@ -193,6 +193,14 @@ export const ExportToPDF = ({
           </Button>
           <Button 
             variant="outline" 
+            onClick={() => onExportCurrentView('Pixel Perfect Daily')}
+            className="w-full text-xs bg-red-50 border-red-200 text-red-700 hover:bg-red-100 font-bold"
+            size="sm"
+          >
+            📐 Pixel Perfect Daily (300 DPI)
+          </Button>
+          <Button 
+            variant="outline" 
             onClick={() => onExportCurrentView('Browser Matching')}
             className="w-full text-xs bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 font-bold"
             size="sm"

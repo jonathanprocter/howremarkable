@@ -538,6 +538,33 @@ export default function Planner() {
             return;
           }
 
+        case 'Pixel Perfect Daily':
+          // Export using exact specifications (2550x3300 pixels, 300 DPI)
+          try {
+            console.log('=== PIXEL PERFECT DAILY PLANNER EXPORT ===');
+            console.log('Selected date:', selectedDateForExport.toDateString());
+            console.log('Canvas: 2550×3300 pixels (8.5×11 inches at 300 DPI)');
+            console.log('Events for export:', validatedEvents.length);
+
+            // Use the pixel perfect export function
+            const { exportPixelPerfectDailyPlanner } = await import('../utils/pixelPerfectDailyExport');
+            await exportPixelPerfectDailyPlanner(selectedDateForExport, validatedEvents);
+
+            toast({
+              title: "Pixel Perfect Daily Export Successful",
+              description: `Daily planner exported at 300 DPI print quality (2550×3300 pixels)!`
+            });
+            return;
+          } catch (pixelError) {
+            console.error('Pixel perfect daily export error:', pixelError);
+            toast({
+              title: "Pixel Perfect Daily Export Failed",
+              description: `Pixel perfect export failed: ${pixelError.message}`,
+              variant: "destructive"
+            });
+            return;
+          }
+
         case 'Dashboard Perfect Daily':
           // Export daily using live dashboard style extraction
           try {
