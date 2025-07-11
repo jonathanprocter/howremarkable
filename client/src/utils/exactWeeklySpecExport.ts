@@ -192,14 +192,15 @@ function drawExactTable(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent[]
     const bgColor = slot.isTopHour ? SPEC.GREY_BG : SPEC.WHITE;
     const fontToUse = slot.isTopHour ? SPEC.TOP_HOUR_FONT : SPEC.HALF_HOUR_FONT;
     
-    // Fill background for top of hour rows across ALL columns extending to right margin
+    // Fill background for top of hour rows only within the grid area
     if (slot.isTopHour) {
       pdf.setFillColor(...bgColor);
-      // Extend gray background to absolute right margin
+      // Gray background only within the grid, not extending beyond right grid line
+      const gridWidth = columnPositions[columnPositions.length - 1].end - columnPositions[0].start;
       pdf.rect(
-        SPEC.MARGIN * SCALE,
+        columnPositions[0].start * SCALE,
         y,
-        (SPEC.TOTAL_WIDTH - SPEC.MARGIN) * SCALE,
+        gridWidth * SCALE,
         SPEC.ROW_HEIGHT * SCALE,
         'F'
       );
@@ -307,30 +308,43 @@ function drawExactAppointments(pdf: jsPDF, weekStartDate: Date, events: Calendar
       pdf.rect(x, y, width, height, 'F');
     }
     
-    // Event text - sized to match screenshot and stay within boxes
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(8 * SCALE); // Title font size to match screenshot
-    pdf.setTextColor(...SPEC.BLACK);
+    // Event text - sized to utilize ALL cell height proportionally
+    const padding = 6; // Padding from edges
     
     // Clean title and handle long text
     let title = event.title.replace(' Appointment', '');
-    const timeText = `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}`;
+    const source = event.source === 'google' ? 'GOOGLE CALENDAR' : 'SIMPLEPRACTICE';
+    const timeText = `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}-${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
+    
+    // Calculate font sizes based on available height - much larger to fill proportionally
+    const availableHeight = height - (padding * 2);
+    const titleFontSize = Math.min(24, availableHeight / 4); // Much larger title font
+    const sourceFontSize = Math.min(16, availableHeight / 6); // Larger source font
+    const timeFontSize = Math.min(20, availableHeight / 5); // Much larger time font
     
     // Calculate available width for text (with padding)
-    const availableWidth = width - 8; // 4px padding on each side
-    const maxTitleLength = Math.floor(availableWidth / (4 * SCALE)); // Approximate character width
+    const availableWidth = width - (padding * 2);
+    const maxTitleLength = Math.floor(availableWidth / (titleFontSize * 0.6)); // Approximate character width
     
     // Truncate title if too long to fit within box
     if (title.length > maxTitleLength) {
       title = title.substring(0, maxTitleLength - 3) + '...';
     }
     
-    // Draw title within box bounds
-    pdf.text(title, x + 4, y + 15);
+    // Draw title - much larger and positioned proportionally
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(titleFontSize * SCALE);
+    pdf.setTextColor(...SPEC.BLACK);
+    pdf.text(title, x + padding, y + padding + (titleFontSize * 0.8));
     
-    // Draw time - sized to match screenshot and positioned within box
+    // Draw source - positioned below title
     pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(7 * SCALE); // Time font size to match screenshot
-    pdf.text(timeText, x + 4, y + height - 6);
+    pdf.setFontSize(sourceFontSize * SCALE);
+    pdf.text(source, x + padding, y + padding + (titleFontSize * 0.8) + (sourceFontSize * 1.2));
+    
+    // Draw time range - positioned at bottom, much larger
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(timeFontSize * SCALE);
+    pdf.text(timeText, x + padding, y + height - padding - (timeFontSize * 0.2));
   });
 }
