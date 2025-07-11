@@ -120,6 +120,7 @@ app.use((req, res, next) => {
   // Handle uncaught exceptions
   process.on('uncaughtException', (error) => {
     console.error('Uncaught Exception:', error);
+    console.error('Stack:', error.stack);
     // Don't exit the process, just log the error
   });
 
@@ -130,6 +131,11 @@ app.use((req, res, next) => {
 
   process.on('SIGINT', () => {
     console.log('SIGINT received, keeping server running...');
+  });
+
+  // Add process debugging
+  process.on('exit', (code) => {
+    console.log(`Process exiting with code: ${code}`);
   });
 
   // importantly only setup vite in development and after
@@ -157,7 +163,15 @@ app.use((req, res, next) => {
     }
   });
   
-  server.listen(port, "0.0.0.0", () => {
+  server.on('listening', () => {
+    console.log(`✅ Server is actually listening on port ${port}`);
+  });
+  
+  server.listen(port, "0.0.0.0", (err?: any) => {
+    if (err) {
+      console.error('Failed to start server:', err);
+      process.exit(1);
+    }
     log(`serving on port ${port}`);
     console.log(`✅ Server is ready and accepting connections on http://0.0.0.0:${port}`);
   });

@@ -31,6 +31,11 @@ import { exportPixelPerfectDailyPlanner } from '../utils/pixelPerfectDailyExport
 
 // Import the weekly package export function
 import { exportWeeklyPackage as exportWeeklyPackageToPDF } from '../utils/weeklyPackageExport';
+import { getWeekNumber } from '../utils/dateUtils';
+import { initializeRemarkableOptimizations } from '../utils/remarkableDisplayOptimizer';
+import { simpleNavigationFix } from '../utils/simpleNavigationFix';
+import { optimizeForReMarkable, debounce } from '../utils/performanceOptimizer';
+
 const exportWeeklyToPDF = async (...args: any[]): Promise<string> => { 
   console.log('Weekly export temporarily disabled'); 
   return Promise.resolve(''); 
@@ -43,10 +48,6 @@ const generateFilename = (type: string, date: Date): string => {
   const dateStr = date.toISOString().split('T')[0];
   return `${type}-${dateStr}.pdf`;
 };
-import { getWeekNumber } from '../utils/dateUtils';
-import { initializeRemarkableOptimizations } from '../utils/remarkableDisplayOptimizer';
-import { simpleNavigationFix } from '../utils/simpleNavigationFix';
-import { optimizeForReMarkable, debounce } from '../utils/performanceOptimizer';
 
 export default function Planner() {
   const {
