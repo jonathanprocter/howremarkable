@@ -30,6 +30,7 @@ export const useAuthenticatedUser = (): UseAuthenticatedUserReturn => {
 
       const response = await fetch('/api/auth/status', {
         signal: controller.signal,
+        credentials: 'include', // Include cookies for session
         headers: {
           'Content-Type': 'application/json',
         },

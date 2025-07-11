@@ -74,12 +74,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   passport.serializeUser((user: any, done) => {
     console.log("✅ Serializing user:", { id: user.id, email: user.email });
-    done(null, user); // Store entire user object in session
+    done(null, user.id); // Store only user ID in session for security
   });
 
-  passport.deserializeUser((user: any, done) => {
-    console.log("✅ Deserializing user:", { id: user.id, email: user.email });
-    done(null, user); // Return entire user object from session
+  passport.deserializeUser(async (id: string, done) => {
+    console.log("✅ Deserializing user ID:", id);
+    try {
+      // For development, always return user object for ID 1
+      if (id === '1') {
+        const user = {
+          id: '1',
+          googleId: '116610633375195855574',
+          email: 'jonathan.procter@gmail.com',
+          name: 'Jonathan Procter',
+          accessToken: 'dev-access-token',
+          refreshToken: 'dev-refresh-token'
+        };
+        console.log("✅ Deserializing development user:", { id: user.id, email: user.email });
+        done(null, user);
+      } else {
+        // For production, fetch user from database
+        const dbUser = await storage.getUserById(parseInt(id));
+        if (dbUser) {
+          const user = {
+            id: dbUser.id.toString(),
+            googleId: dbUser.googleId,
+            email: dbUser.email,
+            name: dbUser.name,
+            accessToken: 'stored-access-token',
+            refreshToken: 'stored-refresh-token'
+          };
+          console.log("✅ Deserializing database user:", { id: user.id, email: user.email });
+          done(null, user);
+        } else {
+          console.log("❌ User not found for ID:", id);
+          done(null, false);
+        }
+      }
+    } catch (error) {
+      console.error("❌ Error deserializing user:", error);
+      done(error, false);
+    }
   });
 
   // Session debugging middleware (reduced logging)
