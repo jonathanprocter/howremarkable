@@ -18,10 +18,10 @@ const DAILY_CONFIG = {
     date: { size: 16, weight: 'normal' },     // Date display
     stats: { size: 12, weight: 'normal' },    // Statistics display
     timeLabels: { size: 10, weight: 'normal' }, // Time labels
-    eventTitle: { size: 12, weight: 'bold' },  // Appointment title
-    eventSource: { size: 10, weight: 'normal' }, // Calendar source
-    eventTime: { size: 24, weight: 'bold' },   // Large time display matching dashboard
-    eventNotes: { size: 10, weight: 'normal' }  // Notes section
+    eventTitle: { size: 18, weight: 'bold' },  // Increased from 12 to 18
+    eventSource: { size: 14, weight: 'normal' }, // Increased from 10 to 14
+    eventTime: { size: 28, weight: 'bold' },   // Increased from 24 to 28
+    eventNotes: { size: 12, weight: 'normal' }  // Increased from 10 to 12
   },
 
   // Colors matching dashboard

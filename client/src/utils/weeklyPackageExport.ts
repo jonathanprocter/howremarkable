@@ -85,12 +85,12 @@ function drawWeeklyOverviewPage(pdf: jsPDF, weekStartDate: Date, weekEndDate: Da
 
   // Draw day headers
   const daysOfWeek = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-  
+
   for (let day = 0; day < 7; day++) {
     const dayX = config.timeColumnWidth + (day * config.dayColumnWidth);
     const currentDate = new Date(weekStartDate);
     currentDate.setDate(weekStartDate.getDate() + day);
-    
+
     // Day name
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(10);
@@ -169,11 +169,11 @@ function drawWeeklyOverviewPage(pdf: jsPDF, weekStartDate: Date, weekEndDate: Da
         // Draw event text
         pdf.setTextColor(0, 0, 0);
         pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(8);
-        
+        pdf.setFontSize(14);
+
         const eventTitle = event.title || 'Untitled Event';
         const eventTime = `${startTime.getHours()}:${startTime.getMinutes().toString().padStart(2, '0')}`;
-        
+
         pdf.text(eventTitle, eventX + 4, eventY + 12);
         pdf.text(eventTime, eventX + 4, eventY + 24);
       }

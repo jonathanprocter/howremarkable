@@ -97,7 +97,7 @@ export const exportExactGridPDF = async (
     // Navigation buttons - styled to match dashboard with larger fonts
     const buttonHeight = 25;
     const buttonWidth = 120;
-    
+
     // Previous week button
     const prevButtonX = centerX + 60;
     const prevButtonY = centerY + 10;
@@ -109,7 +109,7 @@ export const exportExactGridPDF = async (
     pdf.setFontSize(12);
     pdf.setTextColor(0, 0, 0);
     pdf.text('← Previous Week', prevButtonX + buttonWidth/2, prevButtonY + 16, { align: 'center' });
-    
+
     // Next week button
     const nextButtonX = GRID_CONFIG.pageWidth - centerX - 60 - buttonWidth;
     const nextButtonY = centerY + 10;
@@ -125,7 +125,7 @@ export const exportExactGridPDF = async (
     // LEGEND - positioned below header with improved spacing
     const legendY = centerY + GRID_CONFIG.headerHeight + 5;
     const legendWidth = GRID_CONFIG.totalGridWidth;
-    
+
     pdf.setFillColor(248, 248, 248);
     pdf.rect(centerX, legendY, legendWidth, GRID_CONFIG.legendHeight, 'F');
     pdf.setLineWidth(1);
@@ -277,13 +277,13 @@ export const exportExactGridPDF = async (
 
     // EVENTS - place them exactly like dashboard with NO overlapping using absolute positioning
     console.log(`📅 Rendering ${weekEvents.length} events for weekly PDF export`);
-    
+
     // Group events by day to handle overlaps properly
     const eventsByDay: { [key: number]: CalendarEvent[] } = {};
     weekEvents.forEach(event => {
       const eventDate = new Date(event.startTime);
       const dayIndex = Math.floor((eventDate.getTime() - weekStartDate.getTime()) / (1000 * 60 * 60 * 24));
-      
+
       if (dayIndex >= 0 && dayIndex < 7) {
         if (!eventsByDay[dayIndex]) {
           eventsByDay[dayIndex] = [];
@@ -298,12 +298,12 @@ export const exportExactGridPDF = async (
       const dayEvents = eventsByDay[dayIndex].sort((a, b) => 
         new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
       );
-      
+
       console.log(`📅 Day ${dayIndex}: ${dayEvents.length} events`);
-      
+
       // Track used time slots for overlap detection
       const usedSlots: Set<number> = new Set();
-      
+
       dayEvents.forEach((event, eventIndex) => {
         const eventDate = new Date(event.startTime);
         const eventEndDate = new Date(event.endTime);
@@ -317,15 +317,15 @@ export const exportExactGridPDF = async (
           // Calculate precise slot position matching dashboard
           const startMinuteOfDay = (eventHour - 6) * 60 + eventMinute;
           const endMinuteOfDay = (endHour - 6) * 60 + endMinute;
-          
+
           // Convert to slot positions (each slot is 30 minutes)
           const startSlot = Math.floor(startMinuteOfDay / 30);
           const endSlot = Math.min(Math.ceil(endMinuteOfDay / 30), 35); // Cap at 23:30
-          
+
           // Check for overlaps and adjust position
           let horizontalOffset = 0;
           const maxOverlaps = 3; // Limit to 3 overlapping events max
-          
+
           // Find available horizontal position
           while (horizontalOffset < maxOverlaps) {
             let hasOverlap = false;
@@ -335,7 +335,7 @@ export const exportExactGridPDF = async (
                 break;
               }
             }
-            
+
             if (!hasOverlap) {
               // Mark slots as used
               for (let slot = startSlot; slot < endSlot; slot++) {
@@ -343,19 +343,19 @@ export const exportExactGridPDF = async (
               }
               break;
             }
-            
+
             horizontalOffset++;
           }
-          
+
           // Calculate event dimensions with overlap handling
           const baseEventWidth = GRID_CONFIG.dayColumnWidth - 2;
           const eventWidth = horizontalOffset > 0 ? Math.max(baseEventWidth * 0.6, 40) : baseEventWidth;
           const eventHeight = Math.max((endSlot - startSlot) * GRID_CONFIG.slotHeight - 1, 8);
-          
+
           // Position with horizontal offset for overlapping events
           const eventX = centerX + GRID_CONFIG.timeColumnWidth + (dayIndex * GRID_CONFIG.dayColumnWidth) + 1 + (horizontalOffset * (eventWidth * 0.3));
           const eventY = gridStartY + 25 + (startSlot * GRID_CONFIG.slotHeight) + 1;
-          
+
           console.log(`  📍 Event ${eventIndex + 1}: "${event.title}" at slot ${startSlot}-${endSlot}, offset ${horizontalOffset}`);
 
           // Event styling based on type - exact dashboard matching
@@ -372,11 +372,11 @@ export const exportExactGridPDF = async (
             pdf.setDrawColor(100, 149, 237); // FINAL FIX: Exact cornflower blue RGB values
             pdf.setLineWidth(0.5); // FINAL FIX: Exact dashboard border thickness
             pdf.rect(eventX, eventY, eventWidth, eventHeight, 'S');
-            
+
             // Thick left side flag - USER REQUESTED: 2px thicker than before
             pdf.setLineWidth(4.5); // USER REQUESTED: Made 2px thicker (2.5 + 2 = 4.5)
             pdf.line(eventX, eventY, eventX, eventY + eventHeight);
-            
+
           } else if (isGoogle) {
             // Google Calendar: FINAL FIX - exact dashboard matching dashed green border
             pdf.setDrawColor(34, 197, 94); // FINAL FIX: Exact green RGB values
@@ -384,13 +384,13 @@ export const exportExactGridPDF = async (
             pdf.setLineDash([2.5, 2]); // FINAL FIX: Optimized dash pattern for dashboard match
             pdf.rect(eventX, eventY, eventWidth, eventHeight, 'S');
             pdf.setLineDash([]);
-            
+
           } else if (isHoliday) {
             // Holidays: Orange border
             pdf.setDrawColor(245, 158, 11);
             pdf.setLineWidth(1);
             pdf.rect(eventX, eventY, eventWidth, eventHeight, 'S');
-            
+
           } else {
             // Default: Gray border
             pdf.setDrawColor(156, 163, 175);
@@ -408,53 +408,53 @@ export const exportExactGridPDF = async (
           // Calculate available text space - account for thick left border on SimplePractice
           const textX = isSimplePractice ? eventX + 6 : eventX + 3;
           const maxWidth = eventWidth - (isSimplePractice ? 12 : 6);
-          
+
           // Calculate proportional font sizes that fit within the appointment box
           const textPadding = 4;
           const availableHeight = eventHeight - (textPadding * 2);
           const availableWidth = maxWidth - textPadding;
-          
+
           // Base font sizes and proportional scaling
           const baseHeightRatio = availableHeight / 12; // Based on standard slot height
           const baseWidthRatio = availableWidth / 60; // Based on typical text width
           const scaleFactor = Math.min(baseHeightRatio, baseWidthRatio, 1.0); // Don't scale up beyond 100%
-          
+
           // Apply proportional sizing with reasonable limits
           const titleFontSize = Math.max(4, Math.min(10, 8 * scaleFactor)); // Between 4-10pt
           const timeFontSize = Math.max(3, Math.min(8, 6 * scaleFactor)); // Between 3-8pt
-          
+
           // Clean and measure title text
           let displayTitle = eventTitle;
           const cleanTitle = cleanTextForPDF(displayTitle);
-          
+
           // Show title for all events that are tall enough
           if (eventHeight >= 8) {
             // Set proportional font size for title
             pdf.setFont('helvetica', 'bold');
             pdf.setFontSize(titleFontSize);
-            
+
             // Measure and truncate title if needed to fit width
             let truncatedTitle = cleanTitle;
             const titleWidth = pdf.getTextWidth(truncatedTitle);
-            
+
             if (titleWidth > availableWidth) {
               // Truncate title to fit within available width
               const charRatio = availableWidth / titleWidth;
               const maxChars = Math.floor(cleanTitle.length * charRatio * 0.9); // 90% safety margin
               truncatedTitle = cleanTitle.substring(0, Math.max(1, maxChars - 3)) + '...';
             }
-            
+
             // Handle text wrapping using proportional line height
             const words = truncatedTitle.split(' ');
             const lineHeight = titleFontSize * 1.2; // Proportional line height
             const maxLines = Math.floor(availableHeight / lineHeight);
             let currentLine = '';
             let lineCount = 0;
-            
+
             for (const word of words) {
               const testLine = currentLine ? `${currentLine} ${word}` : word;
               const textWidth = pdf.getTextWidth(testLine);
-              
+
               if (textWidth <= availableWidth) {
                 currentLine = testLine;
               } else {
@@ -467,7 +467,7 @@ export const exportExactGridPDF = async (
                 }
               }
             }
-            
+
             // Print remaining text if there's space
             if (currentLine && lineCount < maxLines) {
               pdf.text(currentLine, textX, eventY + textPadding + (lineCount * lineHeight) + titleFontSize);
@@ -478,7 +478,7 @@ export const exportExactGridPDF = async (
           if (eventHeight >= 12) {
             pdf.setFont('helvetica', 'normal');
             pdf.setFontSize(timeFontSize);
-            
+
             // Position time at bottom of appointment box
             const timeY = eventY + eventHeight - textPadding - (timeFontSize * 0.3);
             pdf.text(`${startTime}-${endTime}`, textX, timeY);
