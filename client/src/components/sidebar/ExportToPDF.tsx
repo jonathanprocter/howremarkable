@@ -217,13 +217,13 @@ export const ExportToPDF = ({
           <Button 
             variant="outline" 
             onClick={() => {
-              console.log('🎯 PIXEL PERFECT WEEKLY EXPORT BUTTON CLICKED!');
-              onExportCurrentView('Pixel Perfect Weekly');
+              console.log('🐍 PYTHON-BASED PERFECT WEEKLY EXPORT BUTTON CLICKED!');
+              onExportCurrentView('reMarkable Weekly');
             }}
             className="w-full text-xs bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 font-bold"
             size="sm"
           >
-            🎯 Perfect Weekly (Python-Based)
+            🐍 Perfect Weekly (Python-Based)
           </Button>
 
           <p className="text-xs text-gray-600 mb-2 mt-3">📦 Multi-Page Export</p>
