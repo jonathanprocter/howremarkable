@@ -16,20 +16,10 @@ const PIXEL_PERFECT_CONFIG = {
   
   // Layout structure
   header: {
-    navButton: {
-      x: 50,
-      y: 20,
-      width: 160,
-      height: 32,
-      text: 'Back to week',
-      fontSize: 14,
-      bgColor: [255, 255, 255],
-      borderColor: [34, 34, 34],
-      borderRadius: 999 // Pill shape
-    },
+    // Removed navButton - moved to bottom
     title: {
       text: 'DAILY PLANNER',
-      fontSize: 28,
+      fontSize: 36,      // H1 size
       y: 70,
       weight: 'bold'
     },
@@ -54,8 +44,8 @@ const PIXEL_PERFECT_CONFIG = {
     totalRows: 36,       // All time slots 06:00-23:30
     
     // Time formatting
-    topHourFont: 22,     // Bold for top of hour
-    halfHourFont: 18,    // Regular for half hour
+    topHourFont: 24,     // Larger font for top of hour
+    halfHourFont: 23,    // 1pt smaller for half hour (bottom of hour)
     topHourBg: [240, 240, 240], // Light grey
     halfHourBg: [255, 255, 255], // White
     
@@ -77,11 +67,11 @@ const PIXEL_PERFECT_CONFIG = {
     
     // Content layout
     singleColumn: {
-      titleY: 20,
+      titleY: 30,        // Moved down to keep within appointment box
       titleFont: 40,     // Large, bold font to fill space
-      sourceY: 55,
+      sourceY: 65,       // Moved down proportionally
       sourceFont: 28,    // Increased for visibility
-      timeY: 80,
+      timeY: 90,         // Moved down proportionally
       timeFont: 32,      // Bold time display
       leftMargin: 15
     },
@@ -96,7 +86,7 @@ const PIXEL_PERFECT_CONFIG = {
     // Calendar-specific styling
     simplePractice: {
       borderColor: [100, 149, 237], // Cornflower blue
-      leftBorderWidth: 3,
+      leftBorderWidth: 4,           // Increased by 1px as requested
       normalBorderWidth: 1
     },
     
@@ -111,6 +101,21 @@ const PIXEL_PERFECT_CONFIG = {
     }
   },
   
+  // Bottom navigation
+  bottomNav: {
+    y: 3240, // Near bottom of page
+    height: 40,
+    buttonWidth: 120,
+    buttonHeight: 32,
+    fontSize: 14,
+    arrowSize: 24,
+    spacing: 80,
+    centerX: 1275, // Center of page
+    bgColor: [255, 255, 255],
+    borderColor: [34, 34, 34],
+    borderRadius: 999 // Pill shape
+  },
+
   // Colors
   colors: {
     black: [0, 0, 0],
@@ -186,26 +191,7 @@ function formatMilitaryTime(date: Date): string {
 function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
   const config = PIXEL_PERFECT_CONFIG;
   
-  // Navigation button (top left, distinct pill-shaped button)
-  const btn = config.header.navButton;
-  
-  // Create rounded pill button using multiple segments
-  const radius = btn.height / 2;
-  
-  // Fill the button background
-  pdf.setFillColor(...btn.bgColor);
-  pdf.roundedRect(btn.x, btn.y, btn.width, btn.height, radius, radius, 'F');
-  
-  // Draw the border
-  pdf.setDrawColor(...btn.borderColor);
-  pdf.setLineWidth(1.5);
-  pdf.roundedRect(btn.x, btn.y, btn.width, btn.height, radius, radius, 'S');
-  
-  // Button text
-  pdf.setFontSize(btn.fontSize);
-  pdf.setFont('helvetica', 'bold');
-  pdf.setTextColor(...config.colors.black);
-  pdf.text(btn.text, btn.x + btn.width / 2, btn.y + btn.height / 2 + 5, { align: 'center' });
+  // No navigation button at top - moved to bottom
   
   // Title - centered and bold
   pdf.setFontSize(config.header.title.fontSize);
@@ -263,6 +249,51 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   pdf.text('Holidays in US', legendX + 8, legendY + 12);
 }
 
+// Draw bottom navigation with arrows
+function drawBottomNavigation(pdf: jsPDF, selectedDate: Date) {
+  const config = PIXEL_PERFECT_CONFIG;
+  const nav = config.bottomNav;
+  
+  // Previous day arrow
+  const prevX = nav.centerX - nav.spacing - nav.buttonWidth;
+  pdf.setFillColor(...nav.bgColor);
+  pdf.setDrawColor(...nav.borderColor);
+  pdf.setLineWidth(1.5);
+  pdf.roundedRect(prevX, nav.y, nav.buttonWidth, nav.buttonHeight, nav.borderRadius, nav.borderRadius, 'FD');
+  
+  // Previous day arrow text
+  pdf.setFontSize(nav.fontSize);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(...config.colors.black);
+  pdf.text('← Sunday', prevX + nav.buttonWidth / 2, nav.y + nav.buttonHeight / 2 + 5, { align: 'center' });
+  
+  // Back to week button (center)
+  const backX = nav.centerX - nav.buttonWidth / 2;
+  pdf.setFillColor(...nav.bgColor);
+  pdf.setDrawColor(...nav.borderColor);
+  pdf.setLineWidth(1.5);
+  pdf.roundedRect(backX, nav.y, nav.buttonWidth, nav.buttonHeight, nav.borderRadius, nav.borderRadius, 'FD');
+  
+  // Back to week text
+  pdf.setFontSize(nav.fontSize);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(...config.colors.black);
+  pdf.text('Back to week', backX + nav.buttonWidth / 2, nav.y + nav.buttonHeight / 2 + 5, { align: 'center' });
+  
+  // Next day arrow
+  const nextX = nav.centerX + nav.spacing;
+  pdf.setFillColor(...nav.bgColor);
+  pdf.setDrawColor(...nav.borderColor);
+  pdf.setLineWidth(1.5);
+  pdf.roundedRect(nextX, nav.y, nav.buttonWidth, nav.buttonHeight, nav.borderRadius, nav.borderRadius, 'FD');
+  
+  // Next day arrow text
+  pdf.setFontSize(nav.fontSize);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(...config.colors.black);
+  pdf.text('Tuesday →', nextX + nav.buttonWidth / 2, nav.y + nav.buttonHeight / 2 + 5, { align: 'center' });
+}
+
 // Draw time grid with all 36 time slots
 function drawPixelPerfectTimeGrid(pdf: jsPDF) {
   const config = PIXEL_PERFECT_CONFIG;
@@ -298,11 +329,11 @@ function drawPixelPerfectTimeGrid(pdf: jsPDF) {
     // Fill entire row width (time column + main area)
     pdf.rect(config.margin, y, grid.timeColumnWidth + grid.mainAreaWidth, grid.rowHeight, 'F');
     
-    // Time text - right-aligned and vertically centered
+    // Time text - centered both horizontally and vertically
     pdf.setFontSize(slot.isHour ? grid.topHourFont : grid.halfHourFont);
-    pdf.setFont('helvetica', slot.isHour ? 'normal' : 'normal'); // Don't bold times
+    pdf.setFont('helvetica', 'normal'); // Don't bold times
     pdf.setTextColor(...config.colors.black);
-    pdf.text(slot.time, config.margin + grid.timeColumnWidth - 10, y + grid.rowHeight / 2 + 8, { align: 'right' });
+    pdf.text(slot.time, config.margin + grid.timeColumnWidth / 2, y + grid.rowHeight / 2 + 8, { align: 'center' });
     
     // Horizontal grid lines
     pdf.setDrawColor(...grid.borderColor);
@@ -404,7 +435,7 @@ function drawPixelPerfectAppointments(pdf: jsPDF, selectedDate: Date, events: Ca
       
       // Column 1: Appointment details
       pdf.setFontSize(appointments.singleColumn.titleFont);
-      pdf.setFont('helvetica', 'normal');
+      pdf.setFont('helvetica', 'bold'); // Make appointment titles bold
       pdf.setTextColor(...config.colors.black);
       pdf.text(displayTitle, eventX + appointments.singleColumn.leftMargin, eventY + appointments.singleColumn.titleY);
       
@@ -413,10 +444,10 @@ function drawPixelPerfectAppointments(pdf: jsPDF, selectedDate: Date, events: Ca
       pdf.setFontSize(appointments.singleColumn.sourceFont);
       pdf.text(sourceText, eventX + appointments.singleColumn.leftMargin, eventY + appointments.singleColumn.sourceY);
       
-      // Time
+      // Time - with additional spacing after source
       const timeRange = `${formatMilitaryTime(eventDate)}-${formatMilitaryTime(endDate)}`;
       pdf.setFontSize(appointments.singleColumn.timeFont);
-      pdf.text(timeRange, eventX + appointments.singleColumn.leftMargin, eventY + appointments.singleColumn.timeY);
+      pdf.text(timeRange, eventX + appointments.singleColumn.leftMargin, eventY + appointments.singleColumn.timeY + 10); // Added 10px spacing
       
       // Column separators - only draw if we have content
       pdf.setDrawColor(...appointments.threeColumn.separatorColor);
@@ -487,11 +518,11 @@ function drawPixelPerfectAppointments(pdf: jsPDF, selectedDate: Date, events: Ca
       pdf.setFont('helvetica', 'normal');
       pdf.text(sourceText, eventX + appointments.singleColumn.leftMargin, currentY);
       
-      // Time
+      // Time - with additional spacing after source
       const timeRange = `${formatMilitaryTime(eventDate)}-${formatMilitaryTime(endDate)}`;
       pdf.setFontSize(appointments.singleColumn.timeFont);
       pdf.setFont('helvetica', 'bold'); // Make time bold and larger
-      pdf.text(timeRange, eventX + appointments.singleColumn.leftMargin, currentY + 25);
+      pdf.text(timeRange, eventX + appointments.singleColumn.leftMargin, currentY + 35); // Increased from 25 to 35
     }
   });
 }
@@ -546,6 +577,7 @@ export const exportPixelPerfectDailyPlanner = async (
   drawPixelPerfectHeader(pdf, selectedDate, events);
   drawPixelPerfectTimeGrid(pdf);
   drawPixelPerfectAppointments(pdf, selectedDate, events);
+  drawBottomNavigation(pdf, selectedDate);
   
   // Save with descriptive filename
   const filename = `pixel-perfect-daily-planner-${selectedDate.toISOString().split('T')[0]}.pdf`;
