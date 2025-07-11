@@ -23,14 +23,14 @@ const DAILY_CONFIG = {
   },
   
   fonts: {
-    title: 16,
-    subtitle: 12,
-    stats: 10,
-    timeLabels: 9,
-    eventTitle: 9,
-    eventMeta: 7,
-    legend: 7,
-    navButton: 8
+    title: 14,
+    subtitle: 10,
+    stats: 9,
+    timeLabels: 8,
+    eventTitle: 8,
+    eventMeta: 6,
+    legend: 6,
+    navButton: 7
   }
 };
 
@@ -87,72 +87,43 @@ function formatEventTime(event: CalendarEvent) {
 function drawHeader(pdf: jsPDF, selectedDate: Date, totalEvents: number) {
   const { margin, colors, fonts } = DAILY_CONFIG;
   
-  // Header background
-  pdf.setFillColor(...colors.headerBackground);
-  pdf.rect(margin, margin, DAILY_CONFIG.pageWidth - 2 * margin, 50, 'F');
+  // Simple header matching DailyView component structure
+  const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
+  const dateString = selectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   
-  // Navigation buttons (left and right)
+  // Navigation buttons - simplified
   const prevDay = new Date(selectedDate);
   prevDay.setDate(prevDay.getDate() - 1);
   const nextDay = new Date(selectedDate);
   nextDay.setDate(nextDay.getDate() + 1);
   
-  const prevDayName = prevDay.toLocaleDateString('en-US', { weekday: 'long' });
-  const nextDayName = nextDay.toLocaleDateString('en-US', { weekday: 'long' });
+  const prevDayName = prevDay.toLocaleDateString('en-US', { weekday: 'short' });
+  const nextDayName = nextDay.toLocaleDateString('en-US', { weekday: 'short' });
   
-  // Previous day button (left)
+  // Previous day button
   pdf.setFillColor(...colors.white);
   pdf.setDrawColor(...colors.gray);
-  pdf.rect(margin + 5, margin + 8, 70, 16, 'FD');
+  pdf.rect(margin, margin, 60, 20, 'FD');
   pdf.setFontSize(fonts.navButton);
   pdf.setTextColor(...colors.black);
-  pdf.text(`← ${prevDayName}`, margin + 8, margin + 18);
+  pdf.text(`← ${prevDayName}`, margin + 5, margin + 13);
   
-  // Next day button (right)
-  pdf.rect(DAILY_CONFIG.pageWidth - margin - 75, margin + 8, 70, 16, 'FD');
-  pdf.text(`${nextDayName} →`, DAILY_CONFIG.pageWidth - margin - 72, margin + 18);
+  // Next day button
+  pdf.rect(DAILY_CONFIG.pageWidth - margin - 60, margin, 60, 20, 'FD');
+  pdf.text(`${nextDayName} →`, DAILY_CONFIG.pageWidth - margin - 55, margin + 13);
   
-  // Weekly Overview button (center top)
-  pdf.rect((DAILY_CONFIG.pageWidth - 80) / 2, margin + 8, 80, 16, 'FD');
-  pdf.text('📅 Weekly Overview', (DAILY_CONFIG.pageWidth - 80) / 2 + 3, margin + 18);
+  // Back to Weekly button (center)
+  pdf.rect((DAILY_CONFIG.pageWidth - 80) / 2, margin, 80, 20, 'FD');
+  pdf.text('Back to Weekly', (DAILY_CONFIG.pageWidth - 80) / 2 + 5, margin + 13);
   
-  // Page title (center)
-  const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
-  const dateString = selectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  
+  // Page title
   pdf.setFontSize(fonts.title);
   pdf.setFont('helvetica', 'bold');
   const titleText = `${dayName}, ${dateString}`;
   const titleWidth = pdf.getTextWidth(titleText);
-  pdf.text(titleText, (DAILY_CONFIG.pageWidth - titleWidth) / 2, margin + 32);
+  pdf.text(titleText, (DAILY_CONFIG.pageWidth - titleWidth) / 2, margin + 35);
   
-  pdf.setFontSize(fonts.subtitle);
-  pdf.setFont('helvetica', 'normal');
-  const subtitleText = `${totalEvents} appointments`;
-  const subtitleWidth = pdf.getTextWidth(subtitleText);
-  pdf.text(subtitleText, (DAILY_CONFIG.pageWidth - subtitleWidth) / 2, margin + 45);
-  
-  // Legend (right side, smaller)
-  const legendX = DAILY_CONFIG.pageWidth - margin - 90;
-  pdf.setFontSize(fonts.legend);
-  
-  // SimplePractice legend
-  pdf.setFillColor(...colors.simplePracticeBlue);
-  pdf.rect(legendX, margin + 30, 6, 4, 'F');
-  pdf.setTextColor(...colors.black);
-  pdf.text('SP', legendX + 8, margin + 33);
-  
-  // Google Calendar legend
-  pdf.setFillColor(...colors.googleGreen);
-  pdf.rect(legendX + 25, margin + 30, 6, 4, 'F');
-  pdf.text('GC', legendX + 33, margin + 33);
-  
-  // Holidays legend
-  pdf.setFillColor(...colors.holidayOrange);
-  pdf.rect(legendX + 50, margin + 30, 6, 4, 'F');
-  pdf.text('H', legendX + 58, margin + 33);
-  
-  return margin + 60; // Return Y position for next section
+  return margin + 45; // Return Y position for next section
 }
 
 function drawStats(pdf: jsPDF, events: CalendarEvent[], yPosition: number) {
@@ -256,9 +227,9 @@ function drawScheduleGrid(pdf: jsPDF, events: CalendarEvent[], yPosition: number
   // Filter out all-day events
   const timedEvents = events.filter(event => !isAllDayEvent(event));
   
-  const timeColumnWidth = 65;
+  const timeColumnWidth = 50;
   const appointmentColumnWidth = DAILY_CONFIG.pageWidth - 2 * margin - timeColumnWidth;
-  const slotHeight = 20;
+  const slotHeight = 16;
   const gridHeight = TIME_SLOTS.length * slotHeight;
   
   // Draw time column header
@@ -327,10 +298,8 @@ function drawScheduleGrid(pdf: jsPDF, events: CalendarEvent[], yPosition: number
       let additionalHeight = 0;
       
       if (hasNotes || hasActions) {
-        const notesLines = hasNotes ? event.notes.split('\n').filter(n => n.trim()).length : 0;
-        const actionsLines = hasActions ? event.actionItems.split('\n').filter(a => a.trim()).length : 0;
-        const maxLines = Math.max(notesLines, actionsLines);
-        additionalHeight = Math.max(0, (maxLines * 8) - 20); // Extra space for content
+        // Add moderate extra height for 3-column layout
+        additionalHeight = Math.max(0, slotHeight * 0.5); // 50% extra height
       }
       
       const eventHeight = baseEventHeight + additionalHeight;
@@ -363,97 +332,93 @@ function drawScheduleGrid(pdf: jsPDF, events: CalendarEvent[], yPosition: number
       const useThreeColumns = hasNotes || hasActions;
       
       if (useThreeColumns) {
-        // Draw vertical separators between columns
+        // Simple 3-column layout with vertical separators
         pdf.setDrawColor(...colors.separatorGray);
-        pdf.setLineWidth(1);
+        pdf.setLineWidth(0.5);
         
-        // First vertical separator (between left and center columns)
+        // Draw vertical separators
         const sep1X = eventX + columnWidth;
-        pdf.line(sep1X, eventY + 2, sep1X, eventY + eventHeight - 4);
-        
-        // Second vertical separator (between center and right columns)
         const sep2X = eventX + columnWidth * 2;
-        pdf.line(sep2X, eventY + 2, sep2X, eventY + eventHeight - 4);
+        pdf.line(sep1X, eventY + 2, sep1X, eventY + eventHeight - 2);
+        pdf.line(sep2X, eventY + 2, sep2X, eventY + eventHeight - 2);
         
         // Left column: Title, source, time
         pdf.setFontSize(fonts.eventTitle);
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(...colors.black);
-        const titleLines = pdf.splitTextToSize(cleanEventTitle(event.title), columnWidth - 8);
-        let textY = eventY + 12;
+        const titleText = cleanEventTitle(event.title);
+        const titleLines = pdf.splitTextToSize(titleText, columnWidth - 8);
+        let textY = eventY + 8;
         titleLines.forEach(line => {
           pdf.text(line, eventX + 2, textY);
-          textY += 10;
+          textY += 8;
         });
         
         pdf.setFontSize(fonts.eventMeta);
         pdf.setFont('helvetica', 'normal');
         pdf.text(getEventCalendarSource(event), eventX + 2, textY + 2);
-        pdf.text(formatEventTime(event), eventX + 2, textY + 10);
+        pdf.text(formatEventTime(event), eventX + 2, textY + 8);
         
-        // Center column: Event Notes (if they exist)
+        // Center column: Event Notes
         if (hasNotes) {
-          const notesX = eventX + columnWidth + 4;
+          const notesX = eventX + columnWidth + 2;
           pdf.setFontSize(fonts.eventMeta);
           pdf.setFont('helvetica', 'bold');
-          pdf.text('Event Notes', notesX, eventY + 12);
+          pdf.text('Notes', notesX, eventY + 8);
           
           pdf.setFont('helvetica', 'normal');
-          const notes = event.notes.split('\n')
-            .filter(note => note.trim().length > 0)
-            .map(note => note.trim().replace(/^[•\s-]+/, '').trim())
-            .filter(note => note.length > 0);
-          
-          let noteY = eventY + 22;
+          const notes = event.notes.split('\n').slice(0, 3); // Limit to 3 lines
+          let noteY = eventY + 16;
           notes.forEach(note => {
-            const noteLines = pdf.splitTextToSize(`• ${note}`, columnWidth - 8);
-            noteLines.forEach(line => {
-              pdf.text(line, notesX, noteY);
-              noteY += 8;
-            });
-            noteY += 2; // Small gap between notes
+            const trimmedNote = note.trim();
+            if (trimmedNote) {
+              const noteLines = pdf.splitTextToSize(`• ${trimmedNote}`, columnWidth - 8);
+              noteLines.slice(0, 2).forEach(line => { // Limit to 2 lines per note
+                pdf.text(line, notesX, noteY);
+                noteY += 6;
+              });
+            }
           });
         }
         
-        // Right column: Action Items (if they exist)
+        // Right column: Action Items
         if (hasActions) {
-          const actionsX = eventX + columnWidth * 2 + 4;
+          const actionsX = eventX + columnWidth * 2 + 2;
           pdf.setFontSize(fonts.eventMeta);
           pdf.setFont('helvetica', 'bold');
-          pdf.text('Action Items', actionsX, eventY + 12);
+          pdf.text('Actions', actionsX, eventY + 8);
           
           pdf.setFont('helvetica', 'normal');
-          const actions = event.actionItems.split('\n')
-            .filter(item => item.trim().length > 0)
-            .map(item => item.trim().replace(/^[•\s-]+/, '').trim())
-            .filter(item => item.length > 0);
-          
-          let actionY = eventY + 22;
+          const actions = event.actionItems.split('\n').slice(0, 3); // Limit to 3 lines
+          let actionY = eventY + 16;
           actions.forEach(action => {
-            const actionLines = pdf.splitTextToSize(`• ${action}`, columnWidth - 8);
-            actionLines.forEach(line => {
-              pdf.text(line, actionsX, actionY);
-              actionY += 8;
-            });
-            actionY += 2; // Small gap between actions
+            const trimmedAction = action.trim();
+            if (trimmedAction) {
+              const actionLines = pdf.splitTextToSize(`• ${trimmedAction}`, columnWidth - 8);
+              actionLines.slice(0, 2).forEach(line => { // Limit to 2 lines per action
+                pdf.text(line, actionsX, actionY);
+                actionY += 6;
+              });
+            }
           });
         }
       } else {
-        // Single column layout for appointments without notes/actions
+        // Single column layout for simple appointments
         pdf.setFontSize(fonts.eventTitle);
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(...colors.black);
-        const titleLines = pdf.splitTextToSize(cleanEventTitle(event.title), appointmentColumnWidth - 16);
-        let textY = eventY + 12;
+        const titleText = cleanEventTitle(event.title);
+        const titleLines = pdf.splitTextToSize(titleText, appointmentColumnWidth - 12);
+        let textY = eventY + 8;
         titleLines.forEach(line => {
           pdf.text(line, eventX + 2, textY);
-          textY += 10;
+          textY += 8;
         });
         
         pdf.setFontSize(fonts.eventMeta);
         pdf.setFont('helvetica', 'normal');
         pdf.text(getEventCalendarSource(event), eventX + 2, textY + 2);
-        pdf.text(formatEventTime(event), eventX + 2, textY + 10);
+        pdf.text(formatEventTime(event), eventX + 2, textY + 8);
       }
     }
   });
