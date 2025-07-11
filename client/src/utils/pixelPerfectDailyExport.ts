@@ -16,6 +16,7 @@ const PIXEL_PERFECT_CONFIG = {
 
   // Layout structure
   header: {
+    height: 120, // Add missing header height
     // Weekly Overview button (top left)
     weeklyButton: {
       x: 50,
@@ -218,7 +219,13 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   // Draw main border around entire header
   pdf.setDrawColor(...config.colors.black);
   pdf.setLineWidth(1);
-  pdf.rect(config.margin, config.headerStartY, config.pageWidth - (config.margin * 2), config.header.height, 'S');
+  const headerWidth = config.pageWidth - (config.margin * 2);
+  const headerHeight = config.header.height;
+  
+  // Validate parameters before calling rect
+  if (headerWidth > 0 && headerHeight > 0) {
+    pdf.rect(config.margin, config.headerStartY, headerWidth, headerHeight, 'S');
+  }
 
   // TOP SECTION - exact positioning from Python code
   const topY = config.headerStartY + 12;
