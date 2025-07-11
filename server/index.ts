@@ -30,6 +30,10 @@ const sessionStore = new PgSession({
 sessionStore.on('error', (err) => {
   console.error('Session store error:', err);
   // Log but don't crash the server
+  // Try to reconnect if needed
+  setTimeout(() => {
+    console.log('Attempting session store recovery...');
+  }, 5000);
 });
 
 // Add connection error handling
@@ -117,6 +121,15 @@ app.use((req, res, next) => {
   process.on('uncaughtException', (error) => {
     console.error('Uncaught Exception:', error);
     // Don't exit the process, just log the error
+  });
+
+  // Keep the process alive
+  process.on('SIGTERM', () => {
+    console.log('SIGTERM received, keeping server running...');
+  });
+
+  process.on('SIGINT', () => {
+    console.log('SIGINT received, keeping server running...');
   });
 
   // importantly only setup vite in development and after

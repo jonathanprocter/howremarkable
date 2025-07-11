@@ -269,6 +269,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Health check endpoint
+  app.get("/api/health", (req, res) => {
+    res.json({ 
+      status: "healthy", 
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      memory: process.memoryUsage()
+    });
+  });
+
   // Test session persistence endpoint
   app.get("/api/auth/session-test", (req, res) => {
     console.log("=== SESSION TEST ===");
