@@ -769,6 +769,17 @@ The application uses three main entities:
   - **Proportional Scaling**: Implemented intelligent scaling up to 300% for appointment boxes
   - **Text Fitting**: Enhanced text measurement and truncation for optimal box utilization
   - **RESULT**: Highly visible, proportionally-sized appointment text that maximizes readability within appointment boxes
+- July 11, 2025. **MAXIMUM FONT SIZE INCREASE AND EMOJI REMOVAL**: Further enhanced font sizes and cleaned up appointment titles:
+  - **exactWeeklySpecExport.ts**: Further increased font ranges for maximum readability:
+    - Title fonts: 24-48pt (extremely large increase from 18-36pt)
+    - Source fonts: 18-36pt (extremely large increase from 14-28pt)
+    - Time fonts: 20-40pt (extremely large increase from 16-32pt)
+  - **exactGridPDFExport.ts**: Further increased font ranges for maximum visibility:
+    - Title fonts: 20-40pt (extremely large increase from 16-32pt)
+    - Time fonts: 18-36pt (extremely large increase from 14-28pt)
+  - **Emoji Removal**: Integrated cleanEventTitle function to remove lock emojis and problematic characters from all appointment titles
+  - **Clean Text Processing**: Added comprehensive text cleaning to remove 🔒 symbols, corrupted characters, and other problematic elements
+  - **RESULT**: Extremely large, clean appointment text without emojis or corrupted characters for maximum readability
 
 ## User Preferences
 

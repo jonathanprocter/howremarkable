@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import { CalendarEvent } from '../types/calendar';
+import { cleanEventTitle } from './titleCleaner';
 
 // EXACT WEEKLY PLANNER SPECIFICATIONS IMPLEMENTATION
 export const exportExactWeeklySpec = async (
@@ -311,8 +312,12 @@ function drawExactAppointments(pdf: jsPDF, weekStartDate: Date, events: Calendar
     // Event text - sized to fit proportionally within the appointment box
     const padding = 4; // Reduced padding for better text fitting
     
-    // Clean title and handle long text
-    let title = event.title.replace(' Appointment', '');
+    // Clean title and handle long text - remove emojis and problematic characters
+    let title = cleanEventTitle(event.title);
+    // Remove "Appointment" suffix if present
+    if (title.endsWith(' Appointment')) {
+      title = title.slice(0, -12);
+    }
     const source = event.source === 'google' ? 'GOOGLE CALENDAR' : 'SIMPLEPRACTICE';
     const timeText = `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}-${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
     
@@ -326,10 +331,10 @@ function drawExactAppointments(pdf: jsPDF, weekStartDate: Date, events: Calendar
     const baseWidthRatio = availableWidth / 400; // Based on typical column width
     const scaleFactor = Math.min(baseHeightRatio, baseWidthRatio, 2.0); // Allow scaling up to 200%
     
-    // Apply proportional sizing with dramatically larger limits for maximum readability
-    const titleFontSize = Math.max(18, Math.min(36, 28 * scaleFactor)); // Between 18-36pt (dramatically larger)
-    const sourceFontSize = Math.max(14, Math.min(28, 22 * scaleFactor)); // Between 14-28pt (dramatically larger)
-    const timeFontSize = Math.max(16, Math.min(32, 24 * scaleFactor)); // Between 16-32pt (dramatically larger)
+    // Apply proportional sizing with extremely large limits for maximum readability
+    const titleFontSize = Math.max(24, Math.min(48, 36 * scaleFactor)); // Between 24-48pt (extremely large)
+    const sourceFontSize = Math.max(18, Math.min(36, 28 * scaleFactor)); // Between 18-36pt (extremely large)
+    const timeFontSize = Math.max(20, Math.min(40, 32 * scaleFactor)); // Between 20-40pt (extremely large)
     
     // Calculate text positioning to fit all three lines within the box
     const lineHeight = availableHeight / 3; // Divide space into 3 equal parts
