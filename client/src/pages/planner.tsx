@@ -22,6 +22,7 @@ import { generateCompleteExportData, exportToText, exportToJSON, exportToCSV, te
 // Import the PDF export functions
 import { exportDailyToPDF } from '../utils/dailyPDFExport';
 import { exportExactDailyPDF } from '../utils/exactDailyPDFExport';
+import { exportMatchingDailyPDF } from '../utils/matchingDailyExport';
 import { exportPerfectWeeklyPDF, exportPerfectDailyPDF } from '../utils/perfectDashboardExport';
 import { exportTrulyPixelPerfectWeeklyPDF } from '../utils/trulyPixelPerfectExport';
 import { exportBrowserMatchingWeeklyPDF, exportBrowserMatchingDailyPDF } from '../utils/browserMatchingPDF';
@@ -471,7 +472,7 @@ export default function Planner() {
                 console.log(`Event ${i+1}: "${event.title}" - Duration: ${duration} minutes`);
               });
 
-              await exportExactDailyPDF(selectedDateForExport, validatedEvents);
+              await exportMatchingDailyPDF(selectedDateForExport, validatedEvents);
 
               toast({
                 title: "Export Successful",
@@ -519,7 +520,7 @@ export default function Planner() {
             console.log('Events for export:', validatedEvents.length);
 
             // Use the exact daily PDF export function that matches the daily view
-            await exportExactDailyPDF(selectedDateForExport, validatedEvents);
+            await exportMatchingDailyPDF(selectedDateForExport, validatedEvents);
 
             toast({
               title: "Daily View Export Successful",
@@ -616,7 +617,7 @@ export default function Planner() {
             }
 
             // Use the dedicated daily export function directly
-            await exportExactDailyPDF(selectedDateForExport, validatedEvents);
+            await exportMatchingDailyPDF(selectedDateForExport, validatedEvents);
 
             toast({
               title: "Export Successful",
