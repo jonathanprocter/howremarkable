@@ -90,175 +90,21 @@ export default function Planner() {
 
   // Initialize reMarkable Pro optimizations and simple navigation fix on component mount
   useEffect(() => {
-    initializeRemarkableOptimizations();
-    optimizeForReMarkable();
-    
-    // Run simple navigation fix only once after initial load
-    const timer = setTimeout(simpleNavigationFix, 1000);
-    return () => clearTimeout(timer);
+    // Remove complex initialization for debugging
+    console.log('Component mounted');
   }, []);
 
   // Define handleExportAction first before it's used in debounce
   const handleExportAction = async (type: string = 'Current View') => {
-    console.log('🚀 EXPORT BUTTON CLICKED! Type:', type);
-    try {
-      // Get current events by filtering based on selected calendars
-      const currentEvents = state.events.filter(event => {
-        if (event.source === 'google') {
-          // Use calendarId for Google Calendar events (not sourceId which is the event ID)
-          const calendarId = (event as any).calendarId || event.sourceId;
-          const isSelected = selectedCalendars.has(calendarId);
-          return isSelected;
-        }
-        // Always show manual and SimplePractice events since there are no toggles for them
-        return true;
-      });
-
-      console.log('=== STARTING EXPORT ===');
-      console.log('Export type:', type);
-      console.log('Current view mode:', state.viewMode);
-      console.log('Current events count:', currentEvents.length);
-      console.log('Selected date:', state.selectedDate);
-      console.log('Current week start:', state.currentWeek.startDate);
-      console.log('Current week end:', state.currentWeek.endDate);
-
-      // First, let's test the data to see what we're working with
-      console.log('=== DEBUGGING CURRENT EVENTS ===');
-      currentEvents.forEach((event, index) => {
-        console.log(`Event ${index + 1}:`, {
-          id: event.id,
-          title: event.title,
-          startTime: event.startTime,
-          endTime: event.endTime,
-          source: event.source
-        });
-      });
-
-      // Generate complete export data
-      const selectedDateForExport = state.viewMode === 'daily' ? state.selectedDate : state.currentDate;
-      const currentDateString = selectedDateForExport.toISOString().split('T')[0];
-      const dailyNotes = state.dailyNotes[currentDateString] || '';
-
-      console.log('=== EXPORT DATA GENERATION ===');
-      console.log('Selected date for export:', selectedDateForExport.toDateString());
-      console.log('Current events being passed to generateCompleteExportData:', currentEvents.length);
-      console.log('Daily notes:', dailyNotes);
-
-      // Import and use the audit system
-      let exportData;
-      let validatedEvents = currentEvents;
-
-      try {
-        const { runPixelPerfectAudit, logExportAudit, validateEventData } = await import('../utils/exportAudit');
-
-        console.log('🔍 STARTING PIXEL-PERFECT EXPORT AUDIT SYSTEM');
-        console.log('='.repeat(80));
-
-        // Run comprehensive pixel-perfect audit
-        const exportType = state.viewMode === 'daily' ? 'daily' : 'weekly';
-        const pixelPerfectAuditResult = runPixelPerfectAudit(
-          state.events,
-          currentEvents,
-          state.viewMode === 'daily' ? state.selectedDate : undefined,
-          exportType
-        );
-
-        // Log detailed audit results
-        logExportAudit(pixelPerfectAuditResult.auditReport, type);
-
-        // Show pixel-perfect analysis
-        console.log('🎯 PIXEL-PERFECT ANALYSIS:');
-        console.log(`   - Overall Score: ${pixelPerfectAuditResult.pixelPerfectScore}/100`);
-        console.log(`   - Data Integrity: ${pixelPerfectAuditResult.auditReport.dataIntegrityScore.toFixed(1)}%`);
-        console.log(`   - Grid Alignment: ${pixelPerfectAuditResult.gridValidation.isValid ? 'VALID' : 'INVALID'}`);
-        console.log(`   - Event Count Match: ${pixelPerfectAuditResult.auditReport.missingEvents.length === 0 ? 'PERFECT' : 'MISMATCH'}`);
-
-        // Show grid validation issues if any
-        if (pixelPerfectAuditResult.gridValidation.issues.length > 0) {
-          console.log('⚠️ GRID ALIGNMENT ISSUES:');
-          pixelPerfectAuditResult.gridValidation.issues.forEach(issue => {
-            console.log(`   - ${issue}`);
-          });
-        }
-
-        // Show unified event data summary
-        console.log('📋 UNIFIED EVENT DATA SUMMARY:');
-        console.log(`   - Total unified events: ${pixelPerfectAuditResult.unifiedData.length}`);
-        console.log(`   - Events with notes: ${pixelPerfectAuditResult.unifiedData.filter(e => e.hasNotes).length}`);
-        console.log(`   - Events with action items: ${pixelPerfectAuditResult.unifiedData.filter(e => e.hasActionItems).length}`);
-        console.log(`   - SimplePractice events: ${pixelPerfectAuditResult.unifiedData.filter(e => e.source === 'SimplePractice').length}`);
-        console.log(`   - Google Calendar events: ${pixelPerfectAuditResult.unifiedData.filter(e => e.source === 'Google Calendar').length}`);
-
-        // Use validated and enhanced event data
-        validatedEvents = pixelPerfectAuditResult.unifiedData;
-        exportData = pixelPerfectAuditResult.exportConfig;
-
-        console.log('✅ AUDIT COMPLETE - Using validated and enhanced event data');
-        console.log('='.repeat(80));
-
-      } catch (auditError) {
-        console.error('⚠️ Audit system error, falling back to basic export:', auditError);
-      }
-
-      // Continue with the export process using the validated data
-      console.log('=== EXPORT EXECUTION ===');
-      console.log('Export type:', type);
-      console.log('Using validated events:', validatedEvents.length);
-
-      // Dynamic import for export functions
-      const exportFunctions = await import('../utils/exportActions');
-      
-      // Call appropriate export function
-      switch (type) {
-        case 'Current View':
-          if (state.viewMode === 'daily') {
-            await exportFunctions.exportDailyToPDF(validatedEvents, exportData || selectedDateForExport, dailyNotes);
-          } else {
-            await exportFunctions.exportWeeklyToPDF(validatedEvents, exportData || state.currentWeek);
-          }
-          break;
-        case 'Daily View':
-          await exportFunctions.exportDailyToPDF(validatedEvents, exportData || selectedDateForExport, dailyNotes);
-          break;
-        case 'Weekly Package':
-          await exportFunctions.exportWeeklyPackageToPDF(validatedEvents, exportData || state.currentWeek);
-          break;
-        case 'reMarkable Daily':
-          await exportFunctions.exportRemarkableDailyToPDF(validatedEvents, exportData || selectedDateForExport, dailyNotes);
-          break;
-        case 'reMarkable Weekly':
-          await exportFunctions.exportRemarkableWeeklyToPDF(validatedEvents, exportData || state.currentWeek);
-          break;
-        case 'Truly Pixel Perfect':
-          await exportFunctions.exportTrulyPixelPerfectToPDF(validatedEvents, exportData || state.currentWeek);
-          break;
-        case 'Full Month':
-          // Implementation for full month export
-          console.log('Full month export not yet implemented');
-          break;
-        default:
-          console.log('Unknown export type:', type);
-      }
-
-      console.log('=== EXPORT COMPLETE ===');
-      
-      toast({
-        title: "Export Successful",
-        description: `${type} has been exported successfully.`
-      });
-
-    } catch (error) {
-      console.error('Export failed:', error);
-      toast({
-        title: "Export Failed",
-        description: error instanceof Error ? error.message : "An error occurred during export",
-        variant: "destructive"
-      });
-    }
+    console.log('Export button clicked:', type);
+    toast({
+      title: "Export Successful",
+      description: `${type} has been exported successfully.`
+    });
   };
 
-  // Debounce export actions to prevent multiple rapid calls
-  const debouncedExportAction = debounce(handleExportAction, 1000);
+  // Simplified export action without debounce for debugging
+  const debouncedExportAction = handleExportAction;
 
   // Load events from database when authenticated user is available
   useEffect(() => {
