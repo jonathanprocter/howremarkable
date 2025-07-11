@@ -19,28 +19,29 @@ const PIXEL_PERFECT_CONFIG = {
     navButton: {
       x: 50,
       y: 20,
-      width: 180,
-      height: 35,
-      text: '← Back to week',
+      width: 160,
+      height: 32,
+      text: 'Back to week',
       fontSize: 14,
-      bgColor: [250, 250, 250],
-      borderColor: [150, 150, 150]
+      bgColor: [245, 245, 245],
+      borderColor: [200, 200, 200]
     },
     title: {
       text: 'DAILY PLANNER',
-      fontSize: 32,
-      y: 45,
+      fontSize: 28,
+      y: 70,
       weight: 'bold'
     },
     subtitle: {
-      y: 75,
-      fontSize: 18
+      y: 95,
+      fontSize: 16
     },
     legend: {
-      y: 95,
-      fontSize: 14,
-      symbolSize: 12,
-      spacing: 140
+      y: 110,
+      fontSize: 12,
+      symbolSize: 14,
+      spacing: 120,
+      height: 18
     }
   },
   
@@ -75,13 +76,13 @@ const PIXEL_PERFECT_CONFIG = {
     
     // Content layout
     singleColumn: {
-      titleY: 8,
-      titleFont: 32,     // Increased from 24 to better utilize space
-      sourceY: 38,
-      sourceFont: 26,    // Increased from 20
-      timeY: 64,
-      timeFont: 28,      // Increased from 24
-      leftMargin: 10
+      titleY: 20,
+      titleFont: 40,     // Large, bold font to fill space
+      sourceY: 55,
+      sourceFont: 28,    // Increased for visibility
+      timeY: 80,
+      timeFont: 32,      // Bold time display
+      leftMargin: 15
     },
     
     threeColumn: {
@@ -184,7 +185,7 @@ function formatMilitaryTime(date: Date): string {
 function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
   const config = PIXEL_PERFECT_CONFIG;
   
-  // Navigation button (top left)
+  // Navigation button (top left, distinct and standalone)
   const btn = config.header.navButton;
   pdf.setFillColor(...btn.bgColor);
   pdf.rect(btn.x, btn.y, btn.width, btn.height, 'F');
@@ -198,18 +199,18 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   pdf.setTextColor(...config.colors.black);
   pdf.text(btn.text, btn.x + btn.width / 2, btn.y + btn.height / 2 + 5, { align: 'center' });
   
-  // Title and date in single row
+  // Title - centered and bold
+  pdf.setFontSize(config.header.title.fontSize);
+  pdf.setFont('helvetica', config.header.title.weight);
+  pdf.text(config.header.title.text, config.pageWidth / 2, config.header.title.y, { align: 'center' });
+  
+  // Date and appointments count - left aligned below title
   const dateStr = selectedDate.toLocaleDateString('en-US', { 
     weekday: 'long', 
     year: 'numeric', 
     month: 'long', 
     day: 'numeric' 
   });
-  
-  // Title (left aligned with calendar table)
-  pdf.setFontSize(config.header.title.fontSize);
-  pdf.setFont('helvetica', config.header.title.weight);
-  pdf.text(config.header.title.text, config.margin + config.grid.timeColumnWidth, config.header.title.y, { align: 'left' });
   
   // Filter events to selected day for subtitle
   const dayEvents = events.filter(event => {
@@ -219,45 +220,44 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
     return eventDay === selectedDay;
   });
   
-  // Date and appointments count (same row as title)
   pdf.setFontSize(config.header.subtitle.fontSize);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(`${dateStr} - ${dayEvents.length} appointments today`, config.margin + config.grid.timeColumnWidth + 400, config.header.title.y, { align: 'left' });
+  pdf.text(`${dateStr}     ${dayEvents.length} appointments today`, config.margin + config.grid.timeColumnWidth, config.header.subtitle.y, { align: 'left' });
   
-  // Legend (styled as badges below header)
+  // Legend as colored badges - horizontally aligned
   const legendStartX = config.margin + config.grid.timeColumnWidth;
   let legendX = legendStartX;
   const legendY = config.header.legend.y;
   
-  // SimplePractice legend
-  pdf.setFillColor(...config.colors.white);
-  pdf.rect(legendX, legendY, config.header.legend.symbolSize, config.header.legend.symbolSize, 'F');
-  pdf.setDrawColor(...config.colors.simplePracticeBlue);
-  pdf.setLineWidth(2);
-  pdf.rect(legendX, legendY, config.header.legend.symbolSize, config.header.legend.symbolSize, 'S');
+  // SimplePractice legend badge
+  pdf.setFillColor(...config.colors.simplePracticeBlue);
+  pdf.rect(legendX, legendY, config.header.legend.symbolSize + 20, config.header.legend.height, 'F');
+  pdf.setDrawColor(...config.colors.black);
+  pdf.setLineWidth(0.5);
+  pdf.rect(legendX, legendY, config.header.legend.symbolSize + 20, config.header.legend.height, 'S');
   pdf.setFontSize(config.header.legend.fontSize);
-  pdf.setTextColor(...config.colors.black);
-  pdf.text('SimplePractice', legendX + 20, legendY + 10);
+  pdf.setTextColor(...config.colors.white);
+  pdf.text('SimplePractice', legendX + 5, legendY + 12);
   
-  // Google Calendar legend
+  // Google Calendar legend badge
   legendX += config.header.legend.spacing;
-  pdf.setFillColor(...config.colors.white);
-  pdf.rect(legendX, legendY, config.header.legend.symbolSize, config.header.legend.symbolSize, 'F');
-  pdf.setDrawColor(...config.colors.googleGreen);
-  pdf.setLineWidth(1);
-  pdf.setLineDash([3, 2]);
-  pdf.rect(legendX, legendY, config.header.legend.symbolSize, config.header.legend.symbolSize, 'S');
-  pdf.setLineDash([]);
-  pdf.text('Google Calendar', legendX + 20, legendY + 10);
+  pdf.setFillColor(...config.colors.googleGreen);
+  pdf.rect(legendX, legendY, config.header.legend.symbolSize + 30, config.header.legend.height, 'F');
+  pdf.setDrawColor(...config.colors.black);
+  pdf.setLineWidth(0.5);
+  pdf.rect(legendX, legendY, config.header.legend.symbolSize + 30, config.header.legend.height, 'S');
+  pdf.setTextColor(...config.colors.white);
+  pdf.text('Google Calendar', legendX + 5, legendY + 12);
   
-  // Holiday legend
+  // Holiday legend badge
   legendX += config.header.legend.spacing;
   pdf.setFillColor(...config.colors.holidayYellow);
-  pdf.rect(legendX, legendY, config.header.legend.symbolSize, config.header.legend.symbolSize, 'F');
+  pdf.rect(legendX, legendY, config.header.legend.symbolSize + 35, config.header.legend.height, 'F');
   pdf.setDrawColor(...config.colors.black);
-  pdf.setLineWidth(1);
-  pdf.rect(legendX, legendY, config.header.legend.symbolSize, config.header.legend.symbolSize, 'S');
-  pdf.text('Holidays in United States', legendX + 20, legendY + 10);
+  pdf.setLineWidth(0.5);
+  pdf.rect(legendX, legendY, config.header.legend.symbolSize + 35, config.header.legend.height, 'S');
+  pdf.setTextColor(...config.colors.black);
+  pdf.text('Holidays in US', legendX + 5, legendY + 12);
 }
 
 // Draw time grid with all 36 time slots
@@ -272,9 +272,9 @@ function drawPixelPerfectTimeGrid(pdf: jsPDF) {
   // Time column left border
   pdf.line(config.margin, config.gridStartY, config.margin, config.gridStartY + (grid.totalRows * grid.rowHeight));
   
-  // Time column right border / main area left border (vertical divider)
-  pdf.setDrawColor(...grid.verticalDivider.color);
-  pdf.setLineWidth(grid.verticalDivider.width);
+  // Time column right border / main area left border (vertical divider) - solid black
+  pdf.setDrawColor(34, 34, 34); // Dark gray/black matching dashboard
+  pdf.setLineWidth(2);
   pdf.line(config.margin + grid.timeColumnWidth, config.gridStartY, 
            config.margin + grid.timeColumnWidth, config.gridStartY + (grid.totalRows * grid.rowHeight));
   
@@ -295,11 +295,11 @@ function drawPixelPerfectTimeGrid(pdf: jsPDF) {
     // Fill entire row width (time column + main area)
     pdf.rect(config.margin, y, grid.timeColumnWidth + grid.mainAreaWidth, grid.rowHeight, 'F');
     
-    // Time text
+    // Time text - right-aligned and vertically centered
     pdf.setFontSize(slot.isHour ? grid.topHourFont : grid.halfHourFont);
-    pdf.setFont('helvetica', slot.isHour ? 'bold' : 'normal');
+    pdf.setFont('helvetica', slot.isHour ? 'normal' : 'normal'); // Don't bold times
     pdf.setTextColor(...config.colors.black);
-    pdf.text(slot.time, config.margin + grid.timeColumnWidth / 2, y + grid.rowHeight / 2 + 8, { align: 'center' });
+    pdf.text(slot.time, config.margin + grid.timeColumnWidth - 10, y + grid.rowHeight / 2 + 8, { align: 'right' });
     
     // Horizontal grid lines
     pdf.setDrawColor(...grid.borderColor);
@@ -460,19 +460,33 @@ function drawPixelPerfectAppointments(pdf: jsPDF, selectedDate: Date, events: Ca
       pdf.setFontSize(appointments.singleColumn.titleFont);
       pdf.setFont('helvetica', 'bold'); // Make font bolder to fill space
       pdf.setTextColor(...config.colors.black);
-      pdf.text(displayTitle, eventX + appointments.singleColumn.leftMargin, eventY + appointments.singleColumn.titleY);
+      
+      // Wrap long titles to fit in cell
+      const titleLines = pdf.splitTextToSize(displayTitle, eventWidth - 30);
+      let currentY = eventY + appointments.singleColumn.titleY;
+      
+      // Draw title lines
+      if (Array.isArray(titleLines)) {
+        titleLines.forEach((line, index) => {
+          pdf.text(line, eventX + appointments.singleColumn.leftMargin, currentY + (index * 35));
+        });
+        currentY += titleLines.length * 35;
+      } else {
+        pdf.text(titleLines, eventX + appointments.singleColumn.leftMargin, currentY);
+        currentY += 35;
+      }
       
       // Source
       const { sourceText } = getEventTypeInfoExtended(event);
       pdf.setFontSize(appointments.singleColumn.sourceFont);
       pdf.setFont('helvetica', 'normal');
-      pdf.text(sourceText, eventX + appointments.singleColumn.leftMargin, eventY + appointments.singleColumn.sourceY);
+      pdf.text(sourceText, eventX + appointments.singleColumn.leftMargin, currentY);
       
       // Time
       const timeRange = `${formatMilitaryTime(eventDate)}-${formatMilitaryTime(endDate)}`;
       pdf.setFontSize(appointments.singleColumn.timeFont);
       pdf.setFont('helvetica', 'bold'); // Make time bold and larger
-      pdf.text(timeRange, eventX + appointments.singleColumn.leftMargin, eventY + appointments.singleColumn.timeY);
+      pdf.text(timeRange, eventX + appointments.singleColumn.leftMargin, currentY + 25);
     }
   });
 }
