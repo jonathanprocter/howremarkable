@@ -97,9 +97,9 @@ const REMARKABLE_DAILY_CONFIG = {
     subtitle: 14,      // 12 * 1.2 = 14.4 ≈ 14
     stats: 12,         // 10 * 1.2 = 12
     timeSlot: 10,      // 8 * 1.2 = 9.6 ≈ 10
-    eventTitle: 16,    // Increased from 12 to 16
-    eventSource: 13,   // Increased from 10 to 13
-    eventTime: 15      // Increased from 11 to 15
+    eventTitle: 22,    // Increased from 16 to 22 for better proportion
+    eventSource: 18,   // Increased from 13 to 18 for better proportion
+    eventTime: 20      // Increased from 15 to 20 for better proportion
   },
   
   colors: {

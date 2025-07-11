@@ -169,13 +169,14 @@ function drawWeeklyOverviewPage(pdf: jsPDF, weekStartDate: Date, weekEndDate: Da
         // Draw event text
         pdf.setTextColor(0, 0, 0);
         pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(14);
+        pdf.setFontSize(18); // Increased from 14 to 18 for better proportion
 
         const eventTitle = event.title || 'Untitled Event';
         const eventTime = `${startTime.getHours()}:${startTime.getMinutes().toString().padStart(2, '0')}`;
 
-        pdf.text(eventTitle, eventX + 4, eventY + 12);
-        pdf.text(eventTime, eventX + 4, eventY + 24);
+        pdf.text(eventTitle, eventX + 4, eventY + 14); // Adjusted Y position
+        pdf.setFontSize(16); // Slightly smaller for time
+        pdf.text(eventTime, eventX + 4, eventY + 32); // Adjusted Y position
       }
     }
   });
