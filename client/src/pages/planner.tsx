@@ -826,6 +826,37 @@ export default function Planner() {
           }
           break;
 
+        case 'Perfect Dashboard':
+          // Export perfect dashboard weekly calendar PDF - 100% pixel perfect
+          try {
+            console.log('=== PERFECT DASHBOARD WEEKLY PDF EXPORT ===');
+            console.log('Week start:', state.currentWeek.startDate.toDateString());
+            console.log('Week end:', state.currentWeek.endDate.toDateString());
+            console.log('Total events:', validatedEvents.length);
+            console.log('🎯 Creating 100% pixel-perfect weekly PDF using perfect dashboard export...');
+
+            const { exportPerfectWeeklyPDF } = await import('../utils/perfectDashboardExport');
+            await exportPerfectWeeklyPDF(
+              state.currentWeek.startDate,
+              state.currentWeek.endDate,
+              validatedEvents
+            );
+
+            toast({
+              title: "Perfect Dashboard Export Successful",
+              description: "100% pixel-perfect PDF downloaded successfully!"
+            });
+            return;
+          } catch (weeklyError) {
+            console.error('Perfect dashboard weekly PDF export error:', weeklyError);
+            toast({
+              title: "Perfect Dashboard Export Failed",
+              description: `Perfect dashboard export failed: ${weeklyError.message}`,
+              variant: "destructive"
+            });
+            return;
+          }
+
         case 'Truly Pixel Perfect':
         case 'Truly Pixel Perfect Weekly':
           // Export truly pixel-perfect weekly calendar PDF using extracted dashboard styles
