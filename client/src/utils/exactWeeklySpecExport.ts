@@ -308,43 +308,60 @@ function drawExactAppointments(pdf: jsPDF, weekStartDate: Date, events: Calendar
       pdf.rect(x, y, width, height, 'F');
     }
     
-    // Event text - sized to utilize ALL cell height proportionally
-    const padding = 6; // Padding from edges
+    // Event text - sized to fit proportionally within the appointment box
+    const padding = 4; // Reduced padding for better text fitting
     
     // Clean title and handle long text
     let title = event.title.replace(' Appointment', '');
     const source = event.source === 'google' ? 'GOOGLE CALENDAR' : 'SIMPLEPRACTICE';
     const timeText = `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}-${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
     
-    // Calculate font sizes based on available height - MUCH LARGER to fill proportionally
+    // Calculate available space for text
     const availableHeight = height - (padding * 2);
-    const titleFontSize = Math.min(36, availableHeight / 2.5); // MUCH LARGER title font
-    const sourceFontSize = Math.min(24, availableHeight / 4); // MUCH LARGER source font
-    const timeFontSize = Math.min(32, availableHeight / 3); // MUCH LARGER time font
-    
-    // Calculate available width for text (with padding)
     const availableWidth = width - (padding * 2);
-    const maxTitleLength = Math.floor(availableWidth / (titleFontSize * 0.5)); // Approximate character width for larger fonts
     
-    // Truncate title if too long to fit within box
-    if (title.length > maxTitleLength) {
-      title = title.substring(0, maxTitleLength - 3) + '...';
-    }
+    // Calculate proportional font sizes that fit within the box
+    // Use smaller base sizes and scale them down if needed
+    const baseHeightRatio = availableHeight / 63; // Based on standard row height
+    const baseWidthRatio = availableWidth / 400; // Based on typical column width
+    const scaleFactor = Math.min(baseHeightRatio, baseWidthRatio, 1.0); // Don't scale up beyond 100%
     
-    // Draw title - much larger and positioned proportionally
+    // Apply proportional sizing with reasonable limits
+    const titleFontSize = Math.max(8, Math.min(18, 14 * scaleFactor)); // Between 8-18pt
+    const sourceFontSize = Math.max(6, Math.min(12, 10 * scaleFactor)); // Between 6-12pt
+    const timeFontSize = Math.max(7, Math.min(14, 12 * scaleFactor)); // Between 7-14pt
+    
+    // Calculate text positioning to fit all three lines within the box
+    const lineHeight = availableHeight / 3; // Divide space into 3 equal parts
+    const titleY = y + padding + (lineHeight * 0.7); // Position in first third
+    const sourceY = y + padding + (lineHeight * 1.5); // Position in second third
+    const timeY = y + padding + (lineHeight * 2.3); // Position in third third
+    
+    // Measure and truncate title if needed to fit width
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(titleFontSize * SCALE);
-    pdf.setTextColor(...SPEC.BLACK);
-    pdf.text(title, x + padding, y + padding + (titleFontSize * 0.8));
+    let truncatedTitle = title;
+    const titleWidth = pdf.getTextWidth(truncatedTitle);
     
-    // Draw source - positioned below title
+    if (titleWidth > availableWidth) {
+      // Truncate title to fit within available width
+      const charRatio = availableWidth / titleWidth;
+      const maxChars = Math.floor(title.length * charRatio * 0.9); // 90% safety margin
+      truncatedTitle = title.substring(0, Math.max(1, maxChars - 3)) + '...';
+    }
+    
+    // Draw title - proportionally sized and positioned
+    pdf.setTextColor(...SPEC.BLACK);
+    pdf.text(truncatedTitle, x + padding, titleY);
+    
+    // Draw source - positioned in middle section
     pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(sourceFontSize * SCALE);
-    pdf.text(source, x + padding, y + padding + (titleFontSize * 0.8) + (sourceFontSize * 1.2));
+    pdf.text(source, x + padding, sourceY);
     
-    // Draw time range - positioned at bottom, much larger
+    // Draw time range - positioned at bottom section
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(timeFontSize * SCALE);
-    pdf.text(timeText, x + padding, y + height - padding - (timeFontSize * 0.2));
+    pdf.text(timeText, x + padding, timeY);
   });
 }

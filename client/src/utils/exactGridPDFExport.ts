@@ -398,7 +398,7 @@ export const exportExactGridPDF = async (
             pdf.rect(eventX, eventY, eventWidth, eventHeight, 'S');
           }
 
-          // Event text - exact dashboard matching
+          // Event text - proportionally sized to fit within the appointment box
           const eventTitle = cleanEventTitle(event.title);
           const startTime = eventDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
           const endTime = eventEndDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -409,24 +409,45 @@ export const exportExactGridPDF = async (
           const textX = isSimplePractice ? eventX + 6 : eventX + 3;
           const maxWidth = eventWidth - (isSimplePractice ? 12 : 6);
           
-          // Clean and truncate event title
-          let displayTitle = eventTitle;
-          const maxChars = Math.floor(maxWidth / 3);
-          if (displayTitle.length > maxChars) {
-            displayTitle = displayTitle.substring(0, maxChars - 3) + '...';
-          }
-
-          // Event name - Sized to match screenshot example
-          pdf.setFont('helvetica', 'bold'); // Use helvetica for exact dashboard match
-          pdf.setFontSize(8);  // Sized to match the screenshot provided
+          // Calculate proportional font sizes that fit within the appointment box
+          const textPadding = 4;
+          const availableHeight = eventHeight - (textPadding * 2);
+          const availableWidth = maxWidth - textPadding;
           
+          // Base font sizes and proportional scaling
+          const baseHeightRatio = availableHeight / 12; // Based on standard slot height
+          const baseWidthRatio = availableWidth / 60; // Based on typical text width
+          const scaleFactor = Math.min(baseHeightRatio, baseWidthRatio, 1.0); // Don't scale up beyond 100%
+          
+          // Apply proportional sizing with reasonable limits
+          const titleFontSize = Math.max(4, Math.min(10, 8 * scaleFactor)); // Between 4-10pt
+          const timeFontSize = Math.max(3, Math.min(8, 6 * scaleFactor)); // Between 3-8pt
+          
+          // Clean and measure title text
+          let displayTitle = eventTitle;
           const cleanTitle = cleanTextForPDF(displayTitle);
           
           // Show title for all events that are tall enough
           if (eventHeight >= 8) {
-            // Handle text wrapping using proper text width measurement
-            const words = cleanTitle.split(' ');
-            const maxLines = Math.floor((eventHeight - 4) / 5);
+            // Set proportional font size for title
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(titleFontSize);
+            
+            // Measure and truncate title if needed to fit width
+            let truncatedTitle = cleanTitle;
+            const titleWidth = pdf.getTextWidth(truncatedTitle);
+            
+            if (titleWidth > availableWidth) {
+              // Truncate title to fit within available width
+              const charRatio = availableWidth / titleWidth;
+              const maxChars = Math.floor(cleanTitle.length * charRatio * 0.9); // 90% safety margin
+              truncatedTitle = cleanTitle.substring(0, Math.max(1, maxChars - 3)) + '...';
+            }
+            
+            // Handle text wrapping using proportional line height
+            const words = truncatedTitle.split(' ');
+            const lineHeight = titleFontSize * 1.2; // Proportional line height
+            const maxLines = Math.floor(availableHeight / lineHeight);
             let currentLine = '';
             let lineCount = 0;
             
@@ -434,11 +455,11 @@ export const exportExactGridPDF = async (
               const testLine = currentLine ? `${currentLine} ${word}` : word;
               const textWidth = pdf.getTextWidth(testLine);
               
-              if (textWidth <= maxWidth - 1) {
+              if (textWidth <= availableWidth) {
                 currentLine = testLine;
               } else {
                 if (lineCount < maxLines && currentLine) {
-                  pdf.text(currentLine, textX, eventY + 6 + (lineCount * 5));
+                  pdf.text(currentLine, textX, eventY + textPadding + (lineCount * lineHeight) + titleFontSize);
                   lineCount++;
                   currentLine = word;
                 } else {
@@ -449,15 +470,18 @@ export const exportExactGridPDF = async (
             
             // Print remaining text if there's space
             if (currentLine && lineCount < maxLines) {
-              pdf.text(currentLine, textX, eventY + 6 + (lineCount * 5));
+              pdf.text(currentLine, textX, eventY + textPadding + (lineCount * lineHeight) + titleFontSize);
             }
           }
 
-          // Event time - Sized to match screenshot example
+          // Event time - proportionally sized and positioned
           if (eventHeight >= 12) {
-            pdf.setFont('helvetica', 'normal'); // Use helvetica for exact dashboard match
-            pdf.setFontSize(7);  // Sized to match the screenshot provided
-            pdf.text(`${startTime}-${endTime}`, textX, eventY + eventHeight - 2);
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(timeFontSize);
+            
+            // Position time at bottom of appointment box
+            const timeY = eventY + eventHeight - textPadding - (timeFontSize * 0.3);
+            pdf.text(`${startTime}-${endTime}`, textX, timeY);
           }
         }
       });
