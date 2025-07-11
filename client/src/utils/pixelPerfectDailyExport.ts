@@ -216,32 +216,27 @@ function formatMilitaryTime(date: Date): string {
 function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
   const config = PIXEL_PERFECT_CONFIG;
 
-  // Draw main border around entire header
+  // Draw main border around entire header - thin black line exactly as in Python
   pdf.setDrawColor(...config.colors.black);
   pdf.setLineWidth(1);
-  const headerWidth = config.pageWidth - (config.margin * 2);
-  const headerHeight = config.header.height;
-  
-  // Validate parameters before calling rect
-  if (headerWidth > 0 && headerHeight > 0) {
-    pdf.rect(config.margin, config.headerStartY, headerWidth, headerHeight, 'S');
-  }
+  pdf.rect(0, 0, config.pageWidth - 1, config.header.height - 1, 'S');
 
   // TOP SECTION - exact positioning from Python code
-  const topY = config.headerStartY + 12;
+  const topY = 12;
 
   // Weekly Overview button (left) - exact dimensions from Python code
   const buttonWidth = 125;
   const buttonHeight = 30;
-  const buttonX = config.margin + 55;
+  const buttonX = 55;
   const buttonY = topY;
 
+  // Draw button with light grey background - exact colors from Python
   pdf.setFillColor(245, 245, 245); // Light grey background
   pdf.setDrawColor(200, 200, 200); // Border grey
   pdf.setLineWidth(1);
   pdf.rect(buttonX, buttonY, buttonWidth, buttonHeight, 'FD');
 
-  // Button text with calendar icon
+  // Button text with calendar icon - exactly as in Python
   pdf.setFontSize(14);
   pdf.setFont('helvetica', 'normal');
   pdf.setTextColor(...config.colors.black);
@@ -279,9 +274,11 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   const legendSpacing = 180;
   const rightMargin = 40;
 
-  // Legend 3: Holidays in United States (rightmost)
+  // Legend 3: Holidays in United States (rightmost) - exact positioning from Python
   const legend3Text = 'Holidays in United States';
-  const legend3TextX = config.pageWidth - rightMargin - 150;
+  // Calculate text width to position from right edge
+  const legend3TextWidth = pdf.getTextWidth(legend3Text);
+  const legend3TextX = config.pageWidth - rightMargin - legend3TextWidth;
   const legend3SquareX = legend3TextX - 20;
 
   // Draw orange square - exact colors from Python code
@@ -293,8 +290,10 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   pdf.setTextColor(...config.colors.black);
   pdf.text(legend3Text, legend3TextX, legendY + 10);
 
-  // Legend 2: Google Calendar
-  const legend2TextX = legend3SquareX - legendSpacing - 120;
+  // Legend 2: Google Calendar - exact positioning from Python
+  const legend2Text = 'Google Calendar';
+  const legend2TextWidth = pdf.getTextWidth(legend2Text);
+  const legend2TextX = legend3SquareX - legendSpacing - legend2TextWidth;
   const legend2SquareX = legend2TextX - 20;
 
   // Draw dashed green square - exact pattern from Python code
@@ -304,10 +303,12 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   pdf.rect(legend2SquareX, legendY, 12, 12, 'S');
   pdf.setLineDashPattern([], 0); // Reset dash pattern
   pdf.setTextColor(...config.colors.black);
-  pdf.text('Google Calendar', legend2TextX, legendY + 10);
+  pdf.text(legend2Text, legend2TextX, legendY + 10);
 
-  // Legend 1: SimplePractice
-  const legend1TextX = legend2SquareX - legendSpacing - 100;
+  // Legend 1: SimplePractice - exact positioning from Python
+  const legend1Text = 'SimplePractice';
+  const legend1TextWidth = pdf.getTextWidth(legend1Text);
+  const legend1TextX = legend2SquareX - legendSpacing - legend1TextWidth;
   const legend1SquareX = legend1TextX - 20;
 
   // Draw solid blue square - exact color from Python code
@@ -316,45 +317,45 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   pdf.setLineWidth(1);
   pdf.rect(legend1SquareX, legendY, 12, 12, 'FD');
   pdf.setTextColor(...config.colors.black);
-  pdf.text('SimplePractice', legend1TextX, legendY + 10);
+  pdf.text(legend1Text, legend1TextX, legendY + 10);
 
   // STATISTICS SECTION (bottom) - exact from Python code
-  const statsY = config.headerStartY + 75;
+  const statsY = 75;
   const statsHeight = 45;
   const statsMargin = 12;
 
-  // Draw horizontal line above stats section
+  // Draw horizontal line above stats section - full width as in Python
   pdf.setDrawColor(...config.colors.black);
   pdf.setLineWidth(1);
-  pdf.line(config.margin, statsY, config.pageWidth - config.margin, statsY);
+  pdf.line(0, statsY, config.pageWidth, statsY);
 
   // Draw stats background - light grey as in Python code
   pdf.setFillColor(240, 240, 240); // Stats grey
   pdf.setDrawColor(...config.colors.black);
   pdf.setLineWidth(1);
-  pdf.rect(config.margin + statsMargin, statsY, config.pageWidth - config.margin * 2 - statsMargin * 2, statsHeight, 'FD');
+  pdf.rect(statsMargin, statsY, config.pageWidth - statsMargin * 2, statsHeight, 'FD');
 
   // Statistics data - exactly as in Python code
   const statsData = [
-    { number: '5', label: 'Appointments' },
+    { number: `${dayEvents.length}`, label: 'Appointments' },
     { number: '4.3h', label: 'Scheduled' },
     { number: '19.7h', label: 'Available' },
     { number: '82%', label: 'Free Time' }
   ];
 
   // Calculate column positions - exactly as in Python code
-  const availableWidth = config.pageWidth - config.margin * 2 - statsMargin * 2;
+  const availableWidth = config.pageWidth - (2 * statsMargin);
   const colWidth = availableWidth / 4;
-  let currentX = config.margin + statsMargin;
+  let currentX = statsMargin;
 
   statsData.forEach((stat) => {
-    // Draw large number (centered in column)
+    // Draw large number (centered in column) - exact positioning from Python
     pdf.setFontSize(24);
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(...config.colors.black);
     pdf.text(stat.number, currentX + colWidth / 2, statsY + 18, { align: 'center' });
 
-    // Draw label below (centered in column)
+    // Draw label below (centered in column) - exact positioning from Python
     pdf.setFontSize(14);
     pdf.setFont('helvetica', 'normal');
     pdf.text(stat.label, currentX + colWidth / 2, statsY + 35, { align: 'center' });
