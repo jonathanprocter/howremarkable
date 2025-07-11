@@ -392,7 +392,6 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
     console.log(`Event ${event.id}: "${event.title}" -> "${cleanTitle}"`);
 
     // Calculate improved spacing for 30-minute appointments
-    const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
     const is30MinuteAppt = durationMinutes <= 30;
     
     // Enhanced vertical positioning for better readability

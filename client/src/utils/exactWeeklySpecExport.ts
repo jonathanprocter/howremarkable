@@ -275,10 +275,19 @@ function drawExactAppointments(pdf: jsPDF, weekStartDate: Date, events: Calendar
     const x = columnPositions[columnIndex].start * SCALE + 2;
     const y = headerY + ((startSlotIndex + 1) * SPEC.ROW_HEIGHT * SCALE) + 2;
     const width = (columnPositions[columnIndex].end - columnPositions[columnIndex].start) * SCALE - 4;
+    
+    // Calculate exact height based on appointment duration
+    const durationInMinutes = (endDate.getTime() - eventDate.getTime()) / (1000 * 60);
+    const durationInSlots = durationInMinutes / 30; // Each slot is 30 minutes
+    
+    // Height should be proportional to the duration
     const height = Math.max(
-      SPEC.ROW_HEIGHT * SCALE - 4,
-      endSlotIndex > startSlotIndex ? (endSlotIndex - startSlotIndex) * SPEC.ROW_HEIGHT * SCALE - 4 : SPEC.ROW_HEIGHT * SCALE - 4
+      SPEC.ROW_HEIGHT * SCALE - 4, // Minimum height (30 minutes)
+      durationInSlots * SPEC.ROW_HEIGHT * SCALE - 4 // Actual duration height
     );
+    
+    // Debug logging for appointment spacing
+    console.log(`📊 Appointment: ${title} | Duration: ${durationInMinutes}min (${durationInSlots} slots) | Height: ${height}px`);
     
     // White background for all appointments
     pdf.setFillColor(...SPEC.WHITE);
@@ -325,22 +334,58 @@ function drawExactAppointments(pdf: jsPDF, weekStartDate: Date, events: Calendar
     const availableHeight = height - (padding * 2);
     const availableWidth = width - (padding * 2);
     
-    // Calculate proportional font sizes that fit within the box
-    // Use much larger base sizes for better visibility
-    const baseHeightRatio = availableHeight / 63; // Based on standard row height
+    // Calculate proportional font sizes based on actual appointment duration
+    const baseHeightRatio = availableHeight / (SPEC.ROW_HEIGHT * SCALE); // Based on actual box height
     const baseWidthRatio = availableWidth / 400; // Based on typical column width
-    const scaleFactor = Math.min(baseHeightRatio, baseWidthRatio, 2.0); // Allow scaling up to 200%
+    const scaleFactor = Math.min(baseHeightRatio, baseWidthRatio, 3.0); // Allow scaling up to 300%
     
-    // Apply proportional sizing with extremely large limits for maximum readability
-    const titleFontSize = Math.max(24, Math.min(48, 36 * scaleFactor)); // Between 24-48pt (extremely large)
-    const sourceFontSize = Math.max(18, Math.min(36, 28 * scaleFactor)); // Between 18-36pt (extremely large)
-    const timeFontSize = Math.max(20, Math.min(40, 32 * scaleFactor)); // Between 20-40pt (extremely large)
+    // Special handling for different appointment durations
+    let baseTitleSize, baseSourceSize, baseTimeSize;
     
-    // Calculate text positioning to fit all three lines within the box
-    const lineHeight = availableHeight / 3; // Divide space into 3 equal parts
-    const titleY = y + padding + (lineHeight * 0.7); // Position in first third
-    const sourceY = y + padding + (lineHeight * 1.5); // Position in second third
-    const timeY = y + padding + (lineHeight * 2.3); // Position in third third
+    if (durationInMinutes <= 30) {
+      // 30-minute appointments: smaller fonts to fit in limited space
+      baseTitleSize = 16;
+      baseSourceSize = 12;
+      baseTimeSize = 14;
+    } else if (durationInMinutes >= 90) {
+      // 90-minute appointments: larger fonts to fill space appropriately
+      baseTitleSize = 28;
+      baseSourceSize = 20;
+      baseTimeSize = 24;
+    } else {
+      // 60-minute appointments: standard sizing
+      baseTitleSize = 22;
+      baseSourceSize = 16;
+      baseTimeSize = 18;
+    }
+    
+    // Apply proportional sizing with duration-appropriate limits
+    const titleFontSize = Math.max(8, Math.min(48, baseTitleSize * scaleFactor));
+    const sourceFontSize = Math.max(6, Math.min(36, baseSourceSize * scaleFactor));
+    const timeFontSize = Math.max(8, Math.min(40, baseTimeSize * scaleFactor));
+    
+    // Calculate text positioning based on appointment duration
+    let titleY, sourceY, timeY;
+    
+    if (durationInMinutes <= 30) {
+      // 30-minute appointments: tight vertical spacing
+      const compactSpacing = Math.max(12, availableHeight / 4);
+      titleY = y + padding + compactSpacing * 0.8;
+      sourceY = y + padding + compactSpacing * 1.8;
+      timeY = y + padding + compactSpacing * 2.8;
+    } else if (durationInMinutes >= 90) {
+      // 90-minute appointments: generous spacing with better distribution
+      const generousSpacing = availableHeight / 3;
+      titleY = y + padding + generousSpacing * 0.4;
+      sourceY = y + padding + generousSpacing * 1.2;
+      timeY = y + padding + generousSpacing * 2.0;
+    } else {
+      // 60-minute appointments: standard spacing
+      const standardSpacing = availableHeight / 3;
+      titleY = y + padding + standardSpacing * 0.6;
+      sourceY = y + padding + standardSpacing * 1.4;
+      timeY = y + padding + standardSpacing * 2.2;
+    }
     
     // Measure and truncate title if needed to fit width
     pdf.setFont('helvetica', 'bold');
