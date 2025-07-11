@@ -164,14 +164,23 @@ function drawExactTable(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent[]
     pdf.setDrawColor(...SPEC.BLACK);
     pdf.rect(x, currentY, width, SPEC.ROW_HEIGHT * SCALE, 'S');
     
-    // Header text (matching Python: font_normal for headers)
+    // Header text - perfectly centered both horizontally and vertically
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(SPEC.TOP_HOUR_FONT * SCALE);
     pdf.setTextColor(...SPEC.BLACK);
+    
+    // Calculate exact center position for both horizontal and vertical alignment
+    const centerX = x + width / 2;
+    const centerY = currentY + SPEC.ROW_HEIGHT * SCALE / 2;
+    
+    // Adjust for font baseline to center the text exactly
+    const fontAdjustment = (SPEC.TOP_HOUR_FONT * SCALE) / 3;
+    const textY = centerY + fontAdjustment;
+    
     pdf.text(
       dayHeaders[col],
-      x + width / 2,
-      currentY + SPEC.ROW_HEIGHT * SCALE / 2 + 5,
+      centerX,
+      textY,
       { align: 'center' }
     );
   }
