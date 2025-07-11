@@ -23,8 +23,9 @@ const PIXEL_PERFECT_CONFIG = {
       height: 32,
       text: 'Back to week',
       fontSize: 14,
-      bgColor: [245, 245, 245],
-      borderColor: [200, 200, 200]
+      bgColor: [255, 255, 255],
+      borderColor: [34, 34, 34],
+      borderRadius: 999 // Pill shape
     },
     title: {
       text: 'DAILY PLANNER',
@@ -185,17 +186,24 @@ function formatMilitaryTime(date: Date): string {
 function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
   const config = PIXEL_PERFECT_CONFIG;
   
-  // Navigation button (top left, distinct and standalone)
+  // Navigation button (top left, distinct pill-shaped button)
   const btn = config.header.navButton;
+  
+  // Create rounded pill button using multiple segments
+  const radius = btn.height / 2;
+  
+  // Fill the button background
   pdf.setFillColor(...btn.bgColor);
-  pdf.rect(btn.x, btn.y, btn.width, btn.height, 'F');
+  pdf.roundedRect(btn.x, btn.y, btn.width, btn.height, radius, radius, 'F');
+  
+  // Draw the border
   pdf.setDrawColor(...btn.borderColor);
-  pdf.setLineWidth(1);
-  pdf.rect(btn.x, btn.y, btn.width, btn.height, 'S');
+  pdf.setLineWidth(1.5);
+  pdf.roundedRect(btn.x, btn.y, btn.width, btn.height, radius, radius, 'S');
   
   // Button text
   pdf.setFontSize(btn.fontSize);
-  pdf.setFont('helvetica', 'normal');
+  pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(...config.colors.black);
   pdf.text(btn.text, btn.x + btn.width / 2, btn.y + btn.height / 2 + 5, { align: 'center' });
   
@@ -224,40 +232,35 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   pdf.setFont('helvetica', 'normal');
   pdf.text(`${dateStr}     ${dayEvents.length} appointments today`, config.margin + config.grid.timeColumnWidth, config.header.subtitle.y, { align: 'left' });
   
-  // Legend as colored badges - horizontally aligned
+  // Legend as colored pill badges - horizontally aligned
   const legendStartX = config.margin + config.grid.timeColumnWidth;
   let legendX = legendStartX;
   const legendY = config.header.legend.y;
+  const badgeRadius = config.header.legend.height / 2;
   
-  // SimplePractice legend badge
+  // SimplePractice legend badge - pill shape
+  const simplePracticeWidth = config.header.legend.symbolSize + 40;
   pdf.setFillColor(...config.colors.simplePracticeBlue);
-  pdf.rect(legendX, legendY, config.header.legend.symbolSize + 20, config.header.legend.height, 'F');
-  pdf.setDrawColor(...config.colors.black);
-  pdf.setLineWidth(0.5);
-  pdf.rect(legendX, legendY, config.header.legend.symbolSize + 20, config.header.legend.height, 'S');
+  pdf.roundedRect(legendX, legendY, simplePracticeWidth, config.header.legend.height, badgeRadius, badgeRadius, 'F');
   pdf.setFontSize(config.header.legend.fontSize);
   pdf.setTextColor(...config.colors.white);
-  pdf.text('SimplePractice', legendX + 5, legendY + 12);
+  pdf.text('SimplePractice', legendX + 8, legendY + 12);
   
-  // Google Calendar legend badge
+  // Google Calendar legend badge - pill shape
   legendX += config.header.legend.spacing;
+  const googleCalendarWidth = config.header.legend.symbolSize + 50;
   pdf.setFillColor(...config.colors.googleGreen);
-  pdf.rect(legendX, legendY, config.header.legend.symbolSize + 30, config.header.legend.height, 'F');
-  pdf.setDrawColor(...config.colors.black);
-  pdf.setLineWidth(0.5);
-  pdf.rect(legendX, legendY, config.header.legend.symbolSize + 30, config.header.legend.height, 'S');
+  pdf.roundedRect(legendX, legendY, googleCalendarWidth, config.header.legend.height, badgeRadius, badgeRadius, 'F');
   pdf.setTextColor(...config.colors.white);
-  pdf.text('Google Calendar', legendX + 5, legendY + 12);
+  pdf.text('Google Calendar', legendX + 8, legendY + 12);
   
-  // Holiday legend badge
+  // Holiday legend badge - pill shape
   legendX += config.header.legend.spacing;
+  const holidayWidth = config.header.legend.symbolSize + 45;
   pdf.setFillColor(...config.colors.holidayYellow);
-  pdf.rect(legendX, legendY, config.header.legend.symbolSize + 35, config.header.legend.height, 'F');
-  pdf.setDrawColor(...config.colors.black);
-  pdf.setLineWidth(0.5);
-  pdf.rect(legendX, legendY, config.header.legend.symbolSize + 35, config.header.legend.height, 'S');
+  pdf.roundedRect(legendX, legendY, holidayWidth, config.header.legend.height, badgeRadius, badgeRadius, 'F');
   pdf.setTextColor(...config.colors.black);
-  pdf.text('Holidays in US', legendX + 5, legendY + 12);
+  pdf.text('Holidays in US', legendX + 8, legendY + 12);
 }
 
 // Draw time grid with all 36 time slots
@@ -428,12 +431,13 @@ function drawPixelPerfectAppointments(pdf: jsPDF, selectedDate: Date, events: Ca
       // Column 2: Event Notes - only if has notes
       if (hasNotes) {
         pdf.setFontSize(appointments.threeColumn.headerFont);
-        pdf.setFont('helvetica', 'normal');
+        pdf.setFont('helvetica', 'bold'); // Make header bold
         pdf.text('Event Notes', eventX + columnWidth + 10, eventY + 20);
         
         // Sample notes for Dan
         if (displayTitle.toLowerCase().includes('dan re:')) {
           pdf.setFontSize(appointments.threeColumn.bulletFont);
+          pdf.setFont('helvetica', 'normal'); // Regular font for content
           pdf.text('• I cancelled supervision due to COVID', eventX + columnWidth + 10, eventY + 40);
           pdf.text('• We didn\'t schedule a follow-up, and will', eventX + columnWidth + 10, eventY + 55);
           pdf.text('  continue next week during our usual time', eventX + columnWidth + 10, eventY + 70);
@@ -443,12 +447,13 @@ function drawPixelPerfectAppointments(pdf: jsPDF, selectedDate: Date, events: Ca
       // Column 3: Action Items - only if has actions
       if (hasActions) {
         pdf.setFontSize(appointments.threeColumn.headerFont);
-        pdf.setFont('helvetica', 'normal');
+        pdf.setFont('helvetica', 'bold'); // Make header bold
         pdf.text('Action Items', eventX + (columnWidth * 2) + 10, eventY + 20);
         
         // Sample action items for Dan
         if (displayTitle.toLowerCase().includes('dan re:')) {
           pdf.setFontSize(appointments.threeColumn.bulletFont);
+          pdf.setFont('helvetica', 'normal'); // Regular font for content
           pdf.text('• Review his supervision notes from last week', eventX + (columnWidth * 2) + 10, eventY + 40);
           pdf.text('• Follow-up to see if there are any pressing', eventX + (columnWidth * 2) + 10, eventY + 55);
           pdf.text('  issues/questions that I can help him navigate', eventX + (columnWidth * 2) + 10, eventY + 70);
