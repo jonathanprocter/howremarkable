@@ -343,45 +343,45 @@ function drawExactAppointments(pdf: jsPDF, weekStartDate: Date, events: Calendar
     const availableHeight = height - (padding * 2);
     const availableWidth = width - (padding * 2);
     
-    // Fixed large font sizes for maximum readability - no scaling applied
-    // These are the actual font sizes that will be used in the PDF
+    // Properly scaled font sizes for PDF format
+    // These need to account for the SCALE factor and be appropriate for the cell size
     let titleFontSize, sourceFontSize, timeFontSize;
     
     if (durationInMinutes <= 30) {
-      // 30-minute appointments: readable fonts for small space
-      titleFontSize = 18;
-      sourceFontSize = 14;
-      timeFontSize = 16;
+      // 30-minute appointments: compact fonts for small space
+      titleFontSize = 7;
+      sourceFontSize = 5;
+      timeFontSize = 6;
     } else if (durationInMinutes >= 90) {
-      // 90-minute appointments: large fonts to fill space
-      titleFontSize = 36;
-      sourceFontSize = 24;
-      timeFontSize = 30;
+      // 90-minute appointments: larger fonts to fill space
+      titleFontSize = 12;
+      sourceFontSize = 8;
+      timeFontSize = 10;
     } else {
-      // 60-minute appointments: standard large sizing
-      titleFontSize = 28;
-      sourceFontSize = 20;
-      timeFontSize = 24;
+      // 60-minute appointments: standard sizing
+      titleFontSize = 9;
+      sourceFontSize = 7;
+      timeFontSize = 8;
     }
     
-    // Calculate text positioning to properly distribute content within cell bounds
+    // Calculate text positioning appropriate for scaled PDF format
     let titleY, sourceY, timeY;
     
     if (durationInMinutes <= 30) {
-      // 30-minute appointments: compact but readable spacing
-      titleY = y + padding + 8;
-      sourceY = y + padding + 18;
-      timeY = y + padding + 28;
+      // 30-minute appointments: compact spacing
+      titleY = y + padding + 4;
+      sourceY = y + padding + 8;
+      timeY = y + padding + 12;
     } else if (durationInMinutes >= 90) {
       // 90-minute appointments: generous spacing using full height
-      titleY = y + padding + 12;
-      sourceY = y + padding + 32;
-      timeY = y + padding + 52;
+      titleY = y + padding + 6;
+      sourceY = y + padding + 20;
+      timeY = y + padding + 34;
     } else {
       // 60-minute appointments: balanced spacing
-      titleY = y + padding + 10;
-      sourceY = y + padding + 25;
-      timeY = y + padding + 40;
+      titleY = y + padding + 5;
+      sourceY = y + padding + 15;
+      timeY = y + padding + 25;
     }
     
     // Measure and truncate title if needed to fit width
