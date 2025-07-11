@@ -88,6 +88,23 @@ export default function Planner() {
     logThreshold: 16
   });
 
+  // Filter events based on selected calendars
+  const getCurrentEvents = () => {
+    return state.events.filter(event => {
+      if (event.source === 'google') {
+        // Use calendarId for Google Calendar events
+        const calendarId = (event as any).calendarId || event.sourceId;
+        // If no calendars are selected, show all events
+        if (selectedCalendars.size === 0) return true;
+        return selectedCalendars.has(calendarId);
+      }
+      // Always show manual and SimplePractice events
+      return true;
+    });
+  };
+  
+  const currentEvents = getCurrentEvents();
+
   // Initialize reMarkable Pro optimizations and simple navigation fix on component mount
   useEffect(() => {
     // Remove complex initialization for debugging
@@ -739,23 +756,6 @@ export default function Planner() {
     }
     setSelectedCalendars(newSelected);
   };
-
-  // Filter events based on selected calendars
-  const getCurrentEvents = () => {
-    return state.events.filter(event => {
-      if (event.source === 'google') {
-        // Use calendarId for Google Calendar events
-        const calendarId = (event as any).calendarId || event.sourceId;
-        // If no calendars are selected, show all events
-        if (selectedCalendars.size === 0) return true;
-        return selectedCalendars.has(calendarId);
-      }
-      // Always show manual and SimplePractice events
-      return true;
-    });
-  };
-  
-  const currentEvents = getCurrentEvents();
 
   const currentDateString = state.selectedDate.toISOString().split('T')[0];
   const currentDailyNotes = state.dailyNotes[currentDateString] || '';
