@@ -90,14 +90,15 @@ function drawExactHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date, SPE
   pdf.setFontSize(SPEC.HEADER_FONT * SCALE);
   pdf.setTextColor(...SPEC.BLACK);
   
-  // "WEEKLY PLANNER" at exact position (matching Python: margin, 30)
-  pdf.text('WEEKLY PLANNER', SPEC.MARGIN * SCALE, 30 * SCALE);
+  // "WEEKLY PLANNER" moved down to be centered in header space
+  pdf.text('WEEKLY PLANNER', SPEC.TOTAL_WIDTH * SCALE / 2, 70 * SCALE, { align: 'center' });
   
-  // "Week 27 — 7/7-7/13" at exact right position (matching Python: width - text_width - 100)
-  const weekText = `Week 27 — 7/7-7/13`;
-  const textWidth = pdf.getTextWidth(weekText);
-  const rightX = (SPEC.TOTAL_WIDTH - 100) * SCALE - textWidth;
-  pdf.text(weekText, rightX, 30 * SCALE);
+  // Week info moved to the left side
+  const weekStart = weekStartDate.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
+  const weekEnd = weekEndDate.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
+  const weekNumber = Math.ceil(((weekStartDate.getTime() - new Date(weekStartDate.getFullYear(), 0, 1).getTime()) / 86400000 + 1) / 7);
+  const weekText = `WEEK ${weekNumber} -- ${weekStart} - ${weekEnd}`;
+  pdf.text(weekText, (SPEC.MARGIN + 40) * SCALE, 70 * SCALE);
   
   // Header line (matching Python: margin to width - margin at header_height + line_spacing)
   pdf.setLineWidth(SPEC.HEADER_BORDER * SCALE);
@@ -125,8 +126,17 @@ function drawExactTable(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent[]
     currentX += SPEC.DAY_COL_WIDTH;
   }
 
-  // Day headers (matching Python exactly)
-  const dayHeaders = ['Time', 'Mon 7/7', 'Tue 7/8', 'Wed 7/9', 'Thu 7/10', 'Fri 7/11', 'Sat 7/12', 'Sun 7/13'];
+  // Day headers with full day names and dates
+  const dayHeaders = ['Time'];
+  const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  
+  // Generate full day headers with dates
+  for (let i = 0; i < 7; i++) {
+    const dayDate = new Date(weekStartDate);
+    dayDate.setDate(weekStartDate.getDate() + i);
+    const formattedDate = `${dayDate.getMonth() + 1}-${dayDate.getDate()}-${dayDate.getFullYear()}`;
+    dayHeaders.push(`${dayNames[i]} ${formattedDate}`);
+  }
   
   // Draw header row (matching Python logic exactly)
   let currentY = SPEC.TABLE_START_Y * SCALE;
@@ -174,7 +184,7 @@ function drawExactTable(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent[]
     const bgColor = slot.isTopHour ? SPEC.GREY_BG : SPEC.WHITE;
     const fontToUse = slot.isTopHour ? SPEC.TOP_HOUR_FONT : SPEC.HALF_HOUR_FONT;
     
-    // Fill background for top of hour rows across ALL columns (matching Python logic)
+    // Fill background for top of hour rows across ALL columns extending to right margin
     if (slot.isTopHour) {
       pdf.setFillColor(...bgColor);
       pdf.rect(
@@ -196,15 +206,17 @@ function drawExactTable(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent[]
       pdf.setDrawColor(...SPEC.BLACK);
       pdf.rect(x, y, width, SPEC.ROW_HEIGHT * SCALE, 'S');
       
-      // Time column text (matching Python: first column only)
+      // Time column text - centered both horizontally and vertically
       if (col === 0) {
         pdf.setFont('helvetica', 'normal');
         pdf.setFontSize(fontToUse * SCALE);
         pdf.setTextColor(...SPEC.BLACK);
+        // Center vertically by using middle of row height
+        const textY = y + (SPEC.ROW_HEIGHT * SCALE / 2) + 6; // Better vertical centering
         pdf.text(
           slot.time,
           x + width / 2,
-          y + SPEC.ROW_HEIGHT * SCALE / 2 + 8,
+          textY,
           { align: 'center' }
         );
       }
@@ -261,8 +273,8 @@ function drawExactAppointments(pdf: jsPDF, weekStartDate: Date, events: Calendar
       pdf.setLineWidth(1 * SCALE);
       pdf.rect(x, y, width, height, 'S');
       
-      // Thick left border
-      pdf.setLineWidth(3 * SCALE);
+      // Thick left border - 2px thicker than before
+      pdf.setLineWidth(5 * SCALE); // Made 2px thicker (was 3, now 5)
       pdf.line(x, y, x, y + height);
       
     } else if (event.source === 'google') {
@@ -279,9 +291,9 @@ function drawExactAppointments(pdf: jsPDF, weekStartDate: Date, events: Calendar
       pdf.rect(x, y, width, height, 'F');
     }
     
-    // Event text
-    pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(8 * SCALE);
+    // Event text - sized to match screenshot
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(8 * SCALE); // Title font size to match screenshot
     pdf.setTextColor(...SPEC.BLACK);
     
     // Clean title
@@ -291,8 +303,9 @@ function drawExactAppointments(pdf: jsPDF, weekStartDate: Date, events: Calendar
     // Draw title
     pdf.text(title, x + 4, y + 15);
     
-    // Draw time
-    pdf.setFontSize(6 * SCALE);
+    // Draw time - sized to match screenshot
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(7 * SCALE); // Time font size to match screenshot
     pdf.text(timeText, x + 4, y + height - 6);
   });
 }

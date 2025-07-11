@@ -116,18 +116,7 @@ export const ExportToPDF = ({
         </div>
       </div>
       <div className="border-t pt-3 mt-3">
-          <p className="text-xs text-gray-600 mb-2">🎯 Custom Weekly Layout</p>
-          <Button 
-            variant="outline" 
-            onClick={() => {
-              console.log('🎯 CUSTOM WEEKLY EXPORT - WITH USER SPECIFICATIONS!');
-              onExportCurrentView('Custom Weekly');
-            }}
-            className="w-full text-xs mb-2 bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100"
-            size="sm"
-          >
-            📋 Custom Weekly (3300x2550px)
-          </Button>
+          <p className="text-xs text-gray-600 mb-2">🎯 Weekly Export</p>
           <Button 
             variant="outline" 
             onClick={() => {
@@ -138,17 +127,6 @@ export const ExportToPDF = ({
             size="sm"
           >
             📐 Exact Weekly Spec (3300x2550px)
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => {
-              console.log('🎯 PIXEL PERFECT WEEKLY EXPORT - FROM CHECKPOINT!');
-              onExportCurrentView('Pixel Perfect Weekly');
-            }}
-            className="w-full text-xs bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 font-bold"
-            size="sm"
-          >
-            🎯 PERFECT Weekly (Checkpoint Version)
           </Button>
         </div>
     </div>
