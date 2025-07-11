@@ -316,15 +316,15 @@ function drawExactAppointments(pdf: jsPDF, weekStartDate: Date, events: Calendar
     const source = event.source === 'google' ? 'GOOGLE CALENDAR' : 'SIMPLEPRACTICE';
     const timeText = `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}-${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
     
-    // Calculate font sizes based on available height - much larger to fill proportionally
+    // Calculate font sizes based on available height - MUCH LARGER to fill proportionally
     const availableHeight = height - (padding * 2);
-    const titleFontSize = Math.min(24, availableHeight / 4); // Much larger title font
-    const sourceFontSize = Math.min(16, availableHeight / 6); // Larger source font
-    const timeFontSize = Math.min(20, availableHeight / 5); // Much larger time font
+    const titleFontSize = Math.min(36, availableHeight / 2.5); // MUCH LARGER title font
+    const sourceFontSize = Math.min(24, availableHeight / 4); // MUCH LARGER source font
+    const timeFontSize = Math.min(32, availableHeight / 3); // MUCH LARGER time font
     
     // Calculate available width for text (with padding)
     const availableWidth = width - (padding * 2);
-    const maxTitleLength = Math.floor(availableWidth / (titleFontSize * 0.6)); // Approximate character width
+    const maxTitleLength = Math.floor(availableWidth / (titleFontSize * 0.5)); // Approximate character width for larger fonts
     
     // Truncate title if too long to fit within box
     if (title.length > maxTitleLength) {
