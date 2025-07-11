@@ -11,28 +11,52 @@ const PIXEL_PERFECT_CONFIG = {
   // Margins and spacing
   margin: 40,        // 40px on all sides
   headerStartY: 20,  // Header start Y position
-  gridStartY: 140,   // Grid start Y position (reduced for smaller header)
-  availableGridHeight: 3120, // Available grid height
+  gridStartY: 170,   // Grid start Y position (increased for stats bar)
+  availableGridHeight: 3090, // Available grid height (adjusted for stats bar)
   
   // Layout structure
   header: {
-    // Removed navButton - moved to bottom
-    title: {
-      text: 'DAILY PLANNER',
-      fontSize: 36,      // H1 size
-      y: 70,
+    // Weekly Overview button (top left)
+    weeklyButton: {
+      x: 50,
+      y: 20,
+      width: 180,
+      height: 35,
+      text: 'Weekly Overview',
+      fontSize: 14,
+      bgColor: [255, 255, 255],
+      borderColor: [34, 34, 34],
+      borderRadius: 8
+    },
+    // Date and appointment count (center)
+    dateInfo: {
+      x: 1275, // Center of page
+      y: 30,
+      fontSize: 18,
       weight: 'bold'
     },
-    subtitle: {
-      y: 95,
-      fontSize: 16
+    appointmentCount: {
+      x: 1275,
+      y: 50,
+      fontSize: 14,
+      weight: 'normal'
     },
+    // Legend (right side)
     legend: {
-      y: 110,
+      x: 2000,
+      y: 25,
       fontSize: 12,
       symbolSize: 14,
       spacing: 120,
       height: 18
+    },
+    // Statistics bar
+    statsBar: {
+      y: 80,
+      height: 40,
+      bgColor: [240, 240, 240],
+      fontSize: 14,
+      labelFontSize: 12
     }
   },
   
@@ -44,8 +68,8 @@ const PIXEL_PERFECT_CONFIG = {
     totalRows: 36,       // All time slots 06:00-23:30
     
     // Time formatting
-    topHourFont: 24,     // Larger font for top of hour
-    halfHourFont: 23,    // 1pt smaller for half hour (bottom of hour)
+    topHourFont: 32,     // Increased to match appointment times
+    halfHourFont: 30,    // 2pt smaller for half hour (bottom of hour)
     topHourBg: [240, 240, 240], // Light grey
     halfHourBg: [255, 255, 255], // White
     
@@ -191,14 +215,20 @@ function formatMilitaryTime(date: Date): string {
 function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
   const config = PIXEL_PERFECT_CONFIG;
   
-  // No navigation button at top - moved to bottom
+  // Weekly Overview button (top left)
+  const weeklyBtn = config.header.weeklyButton;
+  pdf.setFillColor(...weeklyBtn.bgColor);
+  pdf.setDrawColor(...weeklyBtn.borderColor);
+  pdf.setLineWidth(1);
+  pdf.roundedRect(weeklyBtn.x, weeklyBtn.y, weeklyBtn.width, weeklyBtn.height, weeklyBtn.borderRadius, weeklyBtn.borderRadius, 'FD');
   
-  // Title - centered and bold
-  pdf.setFontSize(config.header.title.fontSize);
-  pdf.setFont('helvetica', config.header.title.weight);
-  pdf.text(config.header.title.text, config.pageWidth / 2, config.header.title.y, { align: 'center' });
+  // Button text
+  pdf.setFontSize(weeklyBtn.fontSize);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(...config.colors.black);
+  pdf.text(weeklyBtn.text, weeklyBtn.x + weeklyBtn.width / 2, weeklyBtn.y + weeklyBtn.height / 2 + 5, { align: 'center' });
   
-  // Date and appointments count - left aligned below title
+  // Date info (center top)
   const dateStr = selectedDate.toLocaleDateString('en-US', { 
     weekday: 'long', 
     year: 'numeric', 
@@ -206,7 +236,7 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
     day: 'numeric' 
   });
   
-  // Filter events to selected day for subtitle
+  // Filter events to selected day for count
   const dayEvents = events.filter(event => {
     const eventDate = new Date(event.startTime);
     const eventDay = eventDate.toDateString();
@@ -214,13 +244,16 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
     return eventDay === selectedDay;
   });
   
-  pdf.setFontSize(config.header.subtitle.fontSize);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text(`${dateStr}     ${dayEvents.length} appointments today`, config.margin + config.grid.timeColumnWidth, config.header.subtitle.y, { align: 'left' });
+  pdf.setFontSize(config.header.dateInfo.fontSize);
+  pdf.setFont('helvetica', config.header.dateInfo.weight);
+  pdf.text(dateStr, config.header.dateInfo.x, config.header.dateInfo.y, { align: 'center' });
   
-  // Legend as colored pill badges - horizontally aligned
-  const legendStartX = config.margin + config.grid.timeColumnWidth;
-  let legendX = legendStartX;
+  pdf.setFontSize(config.header.appointmentCount.fontSize);
+  pdf.setFont('helvetica', config.header.appointmentCount.weight);
+  pdf.text(`${dayEvents.length} appointments`, config.header.appointmentCount.x, config.header.appointmentCount.y, { align: 'center' });
+  
+  // Legend badges (right side)
+  let legendX = config.header.legend.x;
   const legendY = config.header.legend.y;
   const badgeRadius = config.header.legend.height / 2;
   
@@ -247,6 +280,27 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   pdf.roundedRect(legendX, legendY, holidayWidth, config.header.legend.height, badgeRadius, badgeRadius, 'F');
   pdf.setTextColor(...config.colors.black);
   pdf.text('Holidays in US', legendX + 8, legendY + 12);
+  
+  // Statistics bar (spanning full width)
+  const statsBar = config.header.statsBar;
+  pdf.setFillColor(...statsBar.bgColor);
+  pdf.rect(config.margin, statsBar.y, config.pageWidth - (config.margin * 2), statsBar.height, 'F');
+  
+  // Statistics content
+  pdf.setFontSize(statsBar.fontSize);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(...config.colors.black);
+  pdf.text('5', 300, statsBar.y + 25);
+  pdf.text('4.3h', 900, statsBar.y + 25);
+  pdf.text('19.7h', 1500, statsBar.y + 25);
+  pdf.text('82%', 2100, statsBar.y + 25);
+  
+  pdf.setFontSize(statsBar.labelFontSize);
+  pdf.setFont('helvetica', 'normal');
+  pdf.text('Appointments', 300, statsBar.y + 12);
+  pdf.text('Scheduled', 900, statsBar.y + 12);
+  pdf.text('Available', 1500, statsBar.y + 12);
+  pdf.text('Free Time', 2100, statsBar.y + 12);
 }
 
 // Draw bottom navigation with arrows
@@ -267,21 +321,8 @@ function drawBottomNavigation(pdf: jsPDF, selectedDate: Date) {
   pdf.setTextColor(...config.colors.black);
   pdf.text('← Sunday', prevX + nav.buttonWidth / 2, nav.y + nav.buttonHeight / 2 + 5, { align: 'center' });
   
-  // Back to week button (center)
-  const backX = nav.centerX - nav.buttonWidth / 2;
-  pdf.setFillColor(...nav.bgColor);
-  pdf.setDrawColor(...nav.borderColor);
-  pdf.setLineWidth(1.5);
-  pdf.roundedRect(backX, nav.y, nav.buttonWidth, nav.buttonHeight, nav.borderRadius, nav.borderRadius, 'FD');
-  
-  // Back to week text
-  pdf.setFontSize(nav.fontSize);
-  pdf.setFont('helvetica', 'bold');
-  pdf.setTextColor(...config.colors.black);
-  pdf.text('Back to week', backX + nav.buttonWidth / 2, nav.y + nav.buttonHeight / 2 + 5, { align: 'center' });
-  
-  // Next day arrow
-  const nextX = nav.centerX + nav.spacing;
+  // Next day arrow (moved closer to center since center button removed)
+  const nextX = nav.centerX + nav.spacing / 2;
   pdf.setFillColor(...nav.bgColor);
   pdf.setDrawColor(...nav.borderColor);
   pdf.setLineWidth(1.5);
@@ -341,6 +382,12 @@ function drawPixelPerfectTimeGrid(pdf: jsPDF) {
     pdf.line(config.margin, y + grid.rowHeight, 
              config.margin + grid.timeColumnWidth + grid.mainAreaWidth, y + grid.rowHeight);
   });
+  
+  // Draw vertical separator line AFTER backgrounds to ensure it's visible
+  pdf.setDrawColor(34, 34, 34); // Dark gray/black matching dashboard
+  pdf.setLineWidth(2);
+  pdf.line(config.margin + grid.timeColumnWidth, config.gridStartY, 
+           config.margin + grid.timeColumnWidth, config.gridStartY + (grid.totalRows * grid.rowHeight));
 }
 
 // Draw appointment blocks with exact styling
