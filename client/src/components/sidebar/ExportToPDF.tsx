@@ -216,6 +216,23 @@ export const ExportToPDF = ({
           <p className="text-xs text-gray-600 mb-2">🎯 Perfect Weekly Layout</p>
           <Button 
             variant="outline" 
+            onClick={async () => {
+              console.log('🔍 RUNNING COMPREHENSIVE EXPORT AUDIT...');
+              try {
+                const { testAuditSystem } = await import('../../utils/findPerfectExport');
+                await testAuditSystem();
+              } catch (error) {
+                console.error('❌ Audit failed:', error);
+              }
+            }}
+            className="w-full text-xs bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 font-bold"
+            size="sm"
+          >
+            🔍 Find Perfect Export (Audit)
+          </Button>
+
+          <Button 
+            variant="outline" 
             onClick={() => {
               console.log('🐍 PYTHON-BASED PERFECT WEEKLY EXPORT BUTTON CLICKED!');
               onExportCurrentView('reMarkable Weekly');
