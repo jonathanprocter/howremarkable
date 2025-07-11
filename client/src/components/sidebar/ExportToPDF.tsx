@@ -91,6 +91,30 @@ export const ExportToPDF = ({
           >
             📄 Export Daily View
           </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => onExportCurrentView('Dynamic Daily Planner')}
+            className="w-full text-xs bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
+            size="sm"
+          >
+            🎯 Dynamic Daily Planner PDF
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => onExportCurrentView('Dynamic Daily HTML')}
+            className="w-full text-xs bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100"
+            size="sm"
+          >
+            🌐 Dynamic Daily HTML
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => onExportCurrentView('Preview Dynamic Daily')}
+            className="w-full text-xs bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100"
+            size="sm"
+          >
+            👁️ Preview Dynamic Daily
+          </Button>
         </div>
       </div>
 

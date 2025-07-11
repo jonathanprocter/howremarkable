@@ -27,6 +27,7 @@ import { exportPerfectWeeklyPDF, exportPerfectDailyPDF } from '../utils/perfectD
 import { exportTrulyPixelPerfectWeeklyPDF } from '../utils/trulyPixelPerfectExport';
 import { exportBrowserMatchingWeeklyPDF, exportBrowserMatchingDailyPDF } from '../utils/browserMatchingPDF';
 import { exportPixelPerfectDailyPlanner } from '../utils/pixelPerfectDailyExport';
+import { exportDynamicDailyPlannerToPDF, exportDynamicDailyPlannerHTML, previewDynamicDailyPlanner } from '../utils/dynamicDailyPlannerPDF';
 
 
 
@@ -520,6 +521,78 @@ export default function Planner() {
             console.log('Events for export:', validatedEvents.length);
 
             // Use the exact daily PDF export function that matches the daily view
+            await exportMatchingDailyPDF(selectedDateForExport, validatedEvents);
+          } catch (dailyError) {
+            console.error('Daily PDF export error:', dailyError);
+            throw dailyError;
+          }
+          break;
+
+        case 'Dynamic Daily Planner':
+          try {
+            console.log('=== DYNAMIC DAILY PLANNER PDF EXPORT ===');
+            console.log('Selected date:', selectedDateForExport.toDateString());
+            console.log('Events for export:', validatedEvents.length);
+
+            await exportDynamicDailyPlannerToPDF(selectedDateForExport, validatedEvents);
+
+            toast({
+              title: "Export Successful",
+              description: "Dynamic daily planner PDF downloaded successfully!"
+            });
+            return;
+          } catch (dynamicError) {
+            console.error('Dynamic daily planner PDF export error:', dynamicError);
+            throw dynamicError;
+          }
+          break;
+
+        case 'Dynamic Daily HTML':
+          try {
+            console.log('=== DYNAMIC DAILY PLANNER HTML EXPORT ===');
+            console.log('Selected date:', selectedDateForExport.toDateString());
+            console.log('Events for export:', validatedEvents.length);
+
+            await exportDynamicDailyPlannerHTML(selectedDateForExport, validatedEvents);
+
+            toast({
+              title: "Export Successful",
+              description: "Dynamic daily planner HTML downloaded successfully!"
+            });
+            return;
+          } catch (htmlError) {
+            console.error('Dynamic daily planner HTML export error:', htmlError);
+            throw htmlError;
+          }
+          break;
+
+        case 'Preview Dynamic Daily':
+          try {
+            console.log('=== DYNAMIC DAILY PLANNER PREVIEW ===');
+            console.log('Selected date:', selectedDateForExport.toDateString());
+            console.log('Events for export:', validatedEvents.length);
+
+            await previewDynamicDailyPlanner(selectedDateForExport, validatedEvents);
+
+            toast({
+              title: "Preview Opened",
+              description: "Dynamic daily planner preview opened in new window!"
+            });
+            return;
+          } catch (previewError) {
+            console.error('Dynamic daily planner preview error:', previewError);
+            throw previewError;
+          }
+          break;
+
+        case 'Old Daily View':
+          // Fallback to the old daily view export
+          try {
+            console.log('=== OLD DAILY VIEW PDF EXPORT ===');
+            console.log('Selected date:', selectedDateForExport.toDateString());
+            console.log('Current view state:', state.viewMode);
+            console.log('Events for export:', validatedEvents.length);
+
             await exportMatchingDailyPDF(selectedDateForExport, validatedEvents);
 
             toast({
