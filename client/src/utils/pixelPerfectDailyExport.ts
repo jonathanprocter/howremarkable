@@ -9,64 +9,67 @@ const PIXEL_PERFECT_CONFIG = {
   dpi: 300,          // Print quality DPI
 
   // Margins and spacing
-  margin: 40,        // 40px on all sides
+  margin: 0,         // No margins for full width
   headerStartY: 20,  // Header start Y position
-  gridStartY: 175,   // Grid start Y position (increased for stats bar)
-  availableGridHeight: 3085, // Available grid height (adjusted for stats bar)
+  gridStartY: 238,   // Grid start Y position (after stats bar: 175 + 63)
+  availableGridHeight: 3022, // Available grid height (adjusted for repositioned stats bar)
 
   // Layout structure
   header: {
-    height: 120, // Add missing header height
+    height: 70, // Reduced header height since stats bar moved down
     // Weekly Overview button (top left)
     weeklyButton: {
-      x: 50,
-      y: 20,
-      width: 180,
-      height: 35,
-      text: 'Weekly Overview',
+      x: 20,
+      y: 12,
+      width: 170,
+      height: 30,
+      text: '📅 Weekly Overview',
       fontSize: 14,
       bgColor: [255, 255, 255],
-      borderColor: [34, 34, 34],
-      borderRadius: 8
+      borderColor: [200, 200, 200],
+      borderRadius: 6
     },
     // Date and appointment count (center)
     dateInfo: {
       x: 1275, // Center of page
-      y: 30,
-      fontSize: 18,
+      y: 15,
+      fontSize: 24,
       weight: 'bold'
     },
     appointmentCount: {
       x: 1275,
-      y: 50,
-      fontSize: 14,
-      weight: 'normal'
+      y: 42,
+      fontSize: 16,
+      weight: 'normal',
+      style: 'italic'
     },
     // Legend (right side)
     legend: {
-      x: 2000,
-      y: 25,
-      fontSize: 12,
-      symbolSize: 14,
-      spacing: 120,
-      height: 18
-    },
-    // Statistics bar
-    statsBar: {
-      y: 80,
-      height: 40,
-      bgColor: [240, 240, 240],
-      fontSize: 14,
-      labelFontSize: 12
+      x: 1600,
+      y: 15,
+      fontSize: 16,
+      symbolSize: 12,
+      spacing: 180,
+      height: 12
     }
+  },
+
+  // Statistics bar - positioned above 06:00 time slot
+  statsBar: {
+    y: 175, // Positioned at grid start, above 06:00
+    height: 63, // 1.5 times 30-minute row height (42px * 1.5)
+    bgColor: [240, 240, 240],
+    fontSize: 24,
+    labelFontSize: 14,
+    margin: 0 // Full width, no margins
   },
 
   // Time grid
   grid: {
-    timeColumnWidth: 100,
-    mainAreaWidth: 2410, // 2550 - 40 - 100 = 2410
-    rowHeight: 84,       // 84px each row
-    totalRows: 36,       // All time slots 06:00-23:30
+    timeColumnWidth: 60,  // Reduced for full-width layout
+    mainAreaWidth: 2490,  // 2550 - 60 = 2490 (full width minus time column)
+    rowHeight: 84,        // 84px each row
+    totalRows: 36,        // All time slots 06:00-23:30
 
     // Time formatting
     topHourFont: 32,     // Increased to match appointment times
@@ -212,37 +215,37 @@ function formatMilitaryTime(date: Date): string {
   });
 }
 
-// Draw header section with exact layout matching user's Python specification
+// Draw header section with exact layout matching user's screenshot specification
 function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
   const config = PIXEL_PERFECT_CONFIG;
 
-  // Draw main border around entire header - thin black line exactly as in Python
+  // Draw main border around entire header - thin black line
   pdf.setDrawColor(...config.colors.black);
   pdf.setLineWidth(1);
-  pdf.rect(0, 0, config.pageWidth - 1, config.header.height - 1, 'S');
+  pdf.rect(0, 0, config.pageWidth, config.header.height, 'S');
 
-  // TOP SECTION - exact positioning from Python code
+  // TOP SECTION - exact positioning matching screenshot
   const topY = 12;
 
-  // Weekly Overview button (left) - exact dimensions from Python code
-  const buttonWidth = 125;
+  // Weekly Overview button (left) - exact dimensions from screenshot
+  const buttonWidth = 170;
   const buttonHeight = 30;
-  const buttonX = 55;
+  const buttonX = 20;
   const buttonY = topY;
 
-  // Draw button with light grey background - exact colors from Python
+  // Draw button with light grey background and border
   pdf.setFillColor(245, 245, 245); // Light grey background
   pdf.setDrawColor(200, 200, 200); // Border grey
   pdf.setLineWidth(1);
-  pdf.rect(buttonX, buttonY, buttonWidth, buttonHeight, 'FD');
+  pdf.roundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 6, 6, 'FD');
 
-  // Button text with calendar icon - exactly as in Python
+  // Button text with calendar icon
   pdf.setFontSize(14);
   pdf.setFont('helvetica', 'normal');
   pdf.setTextColor(...config.colors.black);
   pdf.text('📅 Weekly Overview', buttonX + buttonWidth / 2, buttonY + buttonHeight / 2 + 5, { align: 'center' });
 
-  // Date (perfectly centered) - exact font size from Python code
+  // Date (perfectly centered) - exact font size and positioning from screenshot
   const dateStr = selectedDate.toLocaleDateString('en-US', { 
     weekday: 'long', 
     year: 'numeric', 
@@ -250,9 +253,9 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
     day: 'numeric' 
   });
   pdf.setFontSize(24);
-  pdf.setFont('helvetica', 'normal');
+  pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(...config.colors.black);
-  pdf.text(dateStr, config.pageWidth / 2, topY + 3, { align: 'center' });
+  pdf.text(dateStr, config.pageWidth / 2, topY + 8, { align: 'center' });
 
   // Filter events to selected day for count
   const dayEvents = events.filter(event => {
@@ -262,26 +265,25 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
     return eventDay === selectedDay;
   });
 
-  // Subtitle (centered below date) - exact font size from Python code
+  // Subtitle (centered below date) - exact font size and style from screenshot
   const subtitleText = `${dayEvents.length} appointments`;
   pdf.setFontSize(16);
   pdf.setFont('helvetica', 'normal');
   pdf.setTextColor(...config.colors.black);
-  pdf.text(subtitleText, config.pageWidth / 2, topY + 30, { align: 'center' });
+  pdf.text(subtitleText, config.pageWidth / 2, topY + 35, { align: 'center' });
 
-  // LEGEND (right side) - exact positioning from Python code
-  const legendY = topY + 5;
+  // LEGEND (right side) - exact positioning and spacing from screenshot
+  const legendY = topY + 8;
   const legendSpacing = 180;
-  const rightMargin = 40;
+  const rightMargin = 20;
 
-  // Legend 3: Holidays in United States (rightmost) - exact positioning from Python
+  // Legend 3: Holidays in United States (rightmost)
   const legend3Text = 'Holidays in United States';
-  // Calculate text width to position from right edge
   const legend3TextWidth = pdf.getTextWidth(legend3Text);
   const legend3TextX = config.pageWidth - rightMargin - legend3TextWidth;
   const legend3SquareX = legend3TextX - 20;
 
-  // Draw orange square - exact colors from Python code
+  // Draw orange square
   pdf.setFillColor(255, 165, 0); // Orange
   pdf.setDrawColor(...config.colors.black);
   pdf.setLineWidth(1);
@@ -290,52 +292,56 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   pdf.setTextColor(...config.colors.black);
   pdf.text(legend3Text, legend3TextX, legendY + 10);
 
-  // Legend 2: Google Calendar - exact positioning from Python
+  // Legend 2: Google Calendar
   const legend2Text = 'Google Calendar';
   const legend2TextWidth = pdf.getTextWidth(legend2Text);
   const legend2TextX = legend3SquareX - legendSpacing - legend2TextWidth;
   const legend2SquareX = legend2TextX - 20;
 
-  // Draw dashed green square - exact pattern from Python code
-  pdf.setDrawColor(34, 139, 34); // Green
+  // Draw dashed light blue square
+  pdf.setFillColor(173, 216, 230); // Light blue
+  pdf.setDrawColor(...config.colors.black);
   pdf.setLineWidth(1);
-  pdf.setLineDashPattern([2, 1], 0);
-  pdf.rect(legend2SquareX, legendY, 12, 12, 'S');
-  pdf.setLineDashPattern([], 0); // Reset dash pattern
+  pdf.rect(legend2SquareX, legendY, 12, 12, 'FD');
   pdf.setTextColor(...config.colors.black);
   pdf.text(legend2Text, legend2TextX, legendY + 10);
 
-  // Legend 1: SimplePractice - exact positioning from Python
+  // Legend 1: SimplePractice
   const legend1Text = 'SimplePractice';
   const legend1TextWidth = pdf.getTextWidth(legend1Text);
   const legend1TextX = legend2SquareX - legendSpacing - legend1TextWidth;
   const legend1SquareX = legend1TextX - 20;
 
-  // Draw solid blue square - exact color from Python code
+  // Draw solid blue square
   pdf.setFillColor(100, 149, 237); // SimplePractice blue
   pdf.setDrawColor(...config.colors.black);
   pdf.setLineWidth(1);
   pdf.rect(legend1SquareX, legendY, 12, 12, 'FD');
   pdf.setTextColor(...config.colors.black);
   pdf.text(legend1Text, legend1TextX, legendY + 10);
+}
 
-  // STATISTICS SECTION (bottom) - exact from Python code
-  const statsY = 75;
-  const statsHeight = 45;
-  const statsMargin = 12;
+// Draw statistics bar positioned above 06:00 time slot
+function drawStatisticsBar(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
+  const config = PIXEL_PERFECT_CONFIG;
+  const statsY = config.statsBar.y;
+  const statsHeight = config.statsBar.height;
 
-  // Draw horizontal line above stats section - full width as in Python
+  // Filter events to selected day for count
+  const dayEvents = events.filter(event => {
+    const eventDate = new Date(event.startTime);
+    const eventDay = eventDate.toDateString();
+    const selectedDay = selectedDate.toDateString();
+    return eventDay === selectedDay;
+  });
+
+  // Draw full-width stats background - light grey covering entire width
+  pdf.setFillColor(...config.statsBar.bgColor);
   pdf.setDrawColor(...config.colors.black);
   pdf.setLineWidth(1);
-  pdf.line(0, statsY, config.pageWidth, statsY);
+  pdf.rect(0, statsY, config.pageWidth, statsHeight, 'FD');
 
-  // Draw stats background - light grey as in Python code
-  pdf.setFillColor(240, 240, 240); // Stats grey
-  pdf.setDrawColor(...config.colors.black);
-  pdf.setLineWidth(1);
-  pdf.rect(statsMargin, statsY, config.pageWidth - statsMargin * 2, statsHeight, 'FD');
-
-  // Statistics data - exactly as in Python code
+  // Statistics data matching screenshot
   const statsData = [
     { number: `${dayEvents.length}`, label: 'Appointments' },
     { number: '4.3h', label: 'Scheduled' },
@@ -343,22 +349,21 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
     { number: '82%', label: 'Free Time' }
   ];
 
-  // Calculate column positions - exactly as in Python code
-  const availableWidth = config.pageWidth - (2 * statsMargin);
-  const colWidth = availableWidth / 4;
-  let currentX = statsMargin;
+  // Calculate column positions - equal spacing across full width
+  const colWidth = config.pageWidth / 4;
+  let currentX = 0;
 
   statsData.forEach((stat) => {
-    // Draw large number (centered in column) - exact positioning from Python
-    pdf.setFontSize(24);
+    // Draw large number (centered in column)
+    pdf.setFontSize(config.statsBar.fontSize);
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(...config.colors.black);
-    pdf.text(stat.number, currentX + colWidth / 2, statsY + 18, { align: 'center' });
+    pdf.text(stat.number, currentX + colWidth / 2, statsY + 20, { align: 'center' });
 
-    // Draw label below (centered in column) - exact positioning from Python
-    pdf.setFontSize(14);
+    // Draw label below (centered in column)
+    pdf.setFontSize(config.statsBar.labelFontSize);
     pdf.setFont('helvetica', 'normal');
-    pdf.text(stat.label, currentX + colWidth / 2, statsY + 35, { align: 'center' });
+    pdf.text(stat.label, currentX + colWidth / 2, statsY + 40, { align: 'center' });
 
     currentX += colWidth;
   });
@@ -396,7 +401,7 @@ function drawBottomNavigation(pdf: jsPDF, selectedDate: Date) {
   pdf.text('Tuesday →', nextX + nav.buttonWidth / 2, nav.y + nav.buttonHeight / 2 + 5, { align: 'center' });
 }
 
-// Draw time grid with all 36 time slots
+// Draw time grid with all 36 time slots in full-width layout
 function drawPixelPerfectTimeGrid(pdf: jsPDF) {
   const config = PIXEL_PERFECT_CONFIG;
   const grid = config.grid;
@@ -405,20 +410,20 @@ function drawPixelPerfectTimeGrid(pdf: jsPDF) {
   pdf.setDrawColor(...grid.borderColor);
   pdf.setLineWidth(grid.borderWidth);
 
-  // Time column left border
-  pdf.line(config.margin, config.gridStartY, config.margin, config.gridStartY + (grid.totalRows * grid.rowHeight));
+  // Time column left border (flush with left edge)
+  pdf.line(0, config.gridStartY, 0, config.gridStartY + (grid.totalRows * grid.rowHeight));
 
   // Time column right border / main area left border (vertical divider) - solid black
   pdf.setDrawColor(34, 34, 34); // Dark gray/black matching dashboard
   pdf.setLineWidth(2);
-  pdf.line(config.margin + grid.timeColumnWidth, config.gridStartY, 
-           config.margin + grid.timeColumnWidth, config.gridStartY + (grid.totalRows * grid.rowHeight));
+  pdf.line(grid.timeColumnWidth, config.gridStartY, 
+           grid.timeColumnWidth, config.gridStartY + (grid.totalRows * grid.rowHeight));
 
-  // Main area right border
+  // Main area right border (flush with right edge)
   pdf.setDrawColor(...grid.borderColor);
   pdf.setLineWidth(grid.borderWidth);
-  pdf.line(config.margin + grid.timeColumnWidth + grid.mainAreaWidth, config.gridStartY,
-           config.margin + grid.timeColumnWidth + grid.mainAreaWidth, config.gridStartY + (grid.totalRows * grid.rowHeight));
+  pdf.line(config.pageWidth, config.gridStartY,
+           config.pageWidth, config.gridStartY + (grid.totalRows * grid.rowHeight));
 
   // Draw all time slots
   ALL_TIME_SLOTS.forEach((slot, index) => {
@@ -428,27 +433,26 @@ function drawPixelPerfectTimeGrid(pdf: jsPDF) {
     const bgColor = slot.isHour ? grid.topHourBg : grid.halfHourBg;
     pdf.setFillColor(...bgColor);
 
-    // Fill entire row width (time column + main area)
-    pdf.rect(config.margin, y, grid.timeColumnWidth + grid.mainAreaWidth, grid.rowHeight, 'F');
+    // Fill entire row width (full page width)
+    pdf.rect(0, y, config.pageWidth, grid.rowHeight, 'F');
 
-    // Time text - centered both horizontally and vertically
+    // Time text - centered in time column
     pdf.setFontSize(slot.isHour ? grid.topHourFont : grid.halfHourFont);
     pdf.setFont('helvetica', 'normal'); // Don't bold times
     pdf.setTextColor(...config.colors.black);
-    pdf.text(slot.time, config.margin + grid.timeColumnWidth / 2, y + grid.rowHeight / 2 + 8, { align: 'center' });
+    pdf.text(slot.time, grid.timeColumnWidth / 2, y + grid.rowHeight / 2 + 8, { align: 'center' });
 
     // Horizontal grid lines
     pdf.setDrawColor(...grid.borderColor);
     pdf.setLineWidth(grid.borderWidth);
-    pdf.line(config.margin, y + grid.rowHeight, 
-             config.margin + grid.timeColumnWidth + grid.mainAreaWidth, y + grid.rowHeight);
+    pdf.line(0, y + grid.rowHeight, config.pageWidth, y + grid.rowHeight);
   });
 
   // Draw vertical separator line AFTER backgrounds to ensure it's visible
   pdf.setDrawColor(34, 34, 34); // Dark gray/black matching dashboard
   pdf.setLineWidth(2);
-  pdf.line(config.margin + grid.timeColumnWidth, config.gridStartY, 
-           config.margin + grid.timeColumnWidth, config.gridStartY + (grid.totalRows * grid.rowHeight));
+  pdf.line(grid.timeColumnWidth, config.gridStartY, 
+           grid.timeColumnWidth, config.gridStartY + (grid.totalRows * grid.rowHeight));
 }
 
 // Draw appointment blocks with exact styling
@@ -490,8 +494,8 @@ function drawPixelPerfectAppointments(pdf: jsPDF, selectedDate: Date, events: Ca
     // Calculate position and dimensions - ensure events stay inside grid cells
     const eventY = config.gridStartY + (slotIndex * config.grid.rowHeight) + 2; // 2px margin from grid line
     const eventHeight = (durationSlots * config.grid.rowHeight) - 4; // 4px total margin (2px top + 2px bottom)
-    const eventX = config.margin + config.grid.timeColumnWidth + 2; // 2px margin from vertical divider
-    const eventWidth = appointments.width - 4; // 4px total margin (2px left + 2px right)
+    const eventX = config.grid.timeColumnWidth + 2; // 2px margin from vertical divider
+    const eventWidth = config.grid.mainAreaWidth - 4; // 4px total margin (2px left + 2px right)
 
     console.log(`Event ${event.title}: slot ${slotIndex}, duration ${durationSlots} slots, height ${eventHeight}px`);
 
@@ -683,6 +687,7 @@ export const exportPixelPerfectDailyPlanner = async (
 
   // Draw all sections
   drawPixelPerfectHeader(pdf, selectedDate, events);
+  drawStatisticsBar(pdf, selectedDate, events);
   drawPixelPerfectTimeGrid(pdf);
   drawPixelPerfectAppointments(pdf, selectedDate, events);
   drawBottomNavigation(pdf, selectedDate);
