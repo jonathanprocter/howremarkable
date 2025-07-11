@@ -9,6 +9,18 @@ import { google } from "googleapis";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
+  // Request timeout middleware
+  app.use((req, res, next) => {
+    // Set timeout for all requests (15 seconds)
+    res.setTimeout(15000, () => {
+      console.log('Request timeout for:', req.path);
+      if (!res.headersSent) {
+        res.status(408).json({ error: 'Request timeout' });
+      }
+    });
+    next();
+  });
+  
   // Initialize passport BEFORE configuring strategies
   app.use(passport.initialize());
   app.use(passport.session());
@@ -721,10 +733,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/events/:userId", async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
+      const { startDate, endDate, limit = 100, offset = 0 } = req.query;
       
       // Validate user ID
       if (isNaN(userId) || userId <= 0) {
         return res.status(400).json({ error: "Invalid user ID" });
+      }
+      
+      // Validate pagination parameters
+      const limitNum = parseInt(limit as string);
+      const offsetNum = parseInt(offset as string);
+      if (isNaN(limitNum) || limitNum > 500) {
+        return res.status(400).json({ error: "Invalid limit parameter (max 500)" });
       }
       
       // Debug authentication for events endpoint

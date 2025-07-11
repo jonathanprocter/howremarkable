@@ -30,9 +30,22 @@ const sessionStore = new PgSession({
 sessionStore.on('error', (err) => {
   console.error('Session store error:', err);
   // Log but don't crash the server
+  
   // Try to reconnect if needed
   setTimeout(() => {
     console.log('Attempting session store recovery...');
+    try {
+      // Test the session store connection
+      sessionStore.get('test-session-id', (testErr) => {
+        if (testErr) {
+          console.error('Session store still not responding:', testErr);
+        } else {
+          console.log('✅ Session store recovery successful');
+        }
+      });
+    } catch (recoveryError) {
+      console.error('Session store recovery failed:', recoveryError);
+    }
   }, 5000);
 });
 

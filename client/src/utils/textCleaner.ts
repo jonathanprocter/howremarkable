@@ -3,11 +3,18 @@ export function cleanEventTitle(title: string): string {
 
   return title
     .replace(/🔒\s*/g, '') // Remove lock symbols
-    .replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/gu, '') // Remove emojis
-    .replace(/[\u{2000}-\u{206F}]|[\u{2E00}-\u{2E7F}]|[\u{3000}-\u{303F}]/gu, '') // Remove special punctuation
-    .replace(/[^\x20-\x7E\u00A0-\u00FF]/g, '') // Keep basic ASCII + Latin-1
+    .replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '') // Remove all emojis
+    .replace(/[^\w\s\-\.\,\(\)\&]/g, '') // Remove special characters except basic punctuation and ampersand
     .replace(/\s+/g, ' ') // Normalize whitespace
+    .replace(/\s*Appointment\s*$/i, ' Appointment') // Standardize appointment suffix
     .trim();
+}
+
+export function cleanAllEventTitles(events: any[]): any[] {
+  return events.map(event => ({
+    ...event,
+    title: cleanEventTitle(event.title)
+  }));
 }
 
 export function cleanText(text: string): string {
