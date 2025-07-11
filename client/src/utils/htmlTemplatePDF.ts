@@ -1594,7 +1594,6 @@ function drawRemarkableDailyAppointments_old(pdf: jsPDF, selectedDate: Date, eve
     console.log(`Event ${event.id}: "${event.title}" -> "${displayTitle}"`);
 
     // Calculate vertical spacing based on appointment duration
-    const durationMinutes = (endDate.getTime() - eventDate.getTime()) / (1000 * 60);
     const is30MinuteAppt = durationMinutes <= 30;
 
     // Improved spacing for 30-minute appointments
