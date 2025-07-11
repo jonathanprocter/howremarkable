@@ -215,18 +215,13 @@ function formatMilitaryTime(date: Date): string {
   });
 }
 
-// Draw header section matching EXACT user Python specification
+// Draw header section matching EXACT user specification
 function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
   const config = PIXEL_PERFECT_CONFIG;
 
   // Set white background for entire header first
   pdf.setFillColor(255, 255, 255);
   pdf.rect(0, 0, config.pageWidth, config.header.height, 'F');
-
-  // Draw main border around entire header section
-  pdf.setDrawColor(...config.colors.black);
-  pdf.setLineWidth(1);
-  pdf.rect(0, 0, config.pageWidth, config.header.height, 'S');
 
   // Filter events to selected day for count
   const dayEvents = events.filter(event => {
@@ -236,8 +231,7 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
     return eventDay === selectedDay;
   });
 
-  // TOP SECTION - EXACT Python specification layout
-  // Weekly Overview button (top left)
+  // TOP SECTION - Weekly Overview button (top left)
   const buttonX = 20;
   const buttonY = 12;
   const buttonWidth = 170;
@@ -248,13 +242,14 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   pdf.setLineWidth(1);
   pdf.roundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 6, 6, 'FD');
 
+  // Button text with calendar emoji
   pdf.setFontSize(14);
   pdf.setFont('helvetica', 'normal');
   pdf.setTextColor(0, 0, 0);
   pdf.text('📅 Weekly Overview', buttonX + buttonWidth / 2, buttonY + buttonHeight / 2 + 5, { align: 'center' });
 
-  // DATE (center) - matching Python format exactly
-  const dateText = selectedDate.toLocaleDateString('en-US', { 
+  // Date (perfectly centered) - exact font size and positioning from screenshot
+  const dateStr = selectedDate.toLocaleDateString('en-US', { 
     weekday: 'long', 
     year: 'numeric', 
     month: 'long', 
@@ -264,20 +259,14 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   pdf.setFontSize(24);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(0, 0, 0);
-  pdf.text(dateText, config.pageWidth / 2, 23, { align: 'center' });
+  pdf.text(dateStr, config.pageWidth / 2, 23, { align: 'center' });
 
-  // APPOINTMENT COUNT (center, below date)
-  const countText = `${dayEvents.length} appointments`;
-  pdf.setFontSize(16);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text(countText, config.pageWidth / 2, 47, { align: 'center' });
-
-  // LEGEND (right side) - exact spacing from Python
-  const legendY = 23;
+  // LEGEND (right side) - exact spacing and positioning from screenshot
+  const legendY = 15;
   const legendSpacing = 180;
   const rightMargin = 20;
 
-  // Legend items (right to left positioning)
+  // Legend items (right to left positioning) - exactly as shown
   const legends = [
     { text: 'Holidays in United States', color: [255, 165, 0] },
     { text: 'Google Calendar', color: [173, 216, 230] },
@@ -305,7 +294,7 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
     currentX = squareX - legendSpacing;
   });
 
-  // STATISTICS BAR - full width gray bar matching Python spec
+  // STATISTICS BAR - full width gray bar (as shown in screenshot)
   const statsY = 75;
   const statsHeight = 63;
 
@@ -313,7 +302,7 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   pdf.setFillColor(240, 240, 240);
   pdf.rect(0, statsY, config.pageWidth, statsHeight, 'F');
 
-  // Statistics data - exact from Python specification
+  // Statistics data - exact numbers from screenshot
   const statsData = [
     { number: `${dayEvents.length}`, label: 'Appointments' },
     { number: '4.3h', label: 'Scheduled' },
