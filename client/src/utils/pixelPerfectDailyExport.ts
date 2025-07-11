@@ -7,13 +7,13 @@ const PIXEL_PERFECT_CONFIG = {
   pageWidth: 2550,   // 8.5" × 300 DPI
   pageHeight: 3300,  // 11" × 300 DPI
   dpi: 300,          // Print quality DPI
-  
+
   // Margins and spacing
   margin: 40,        // 40px on all sides
   headerStartY: 20,  // Header start Y position
   gridStartY: 175,   // Grid start Y position (increased for stats bar)
   availableGridHeight: 3085, // Available grid height (adjusted for stats bar)
-  
+
   // Layout structure
   header: {
     // Weekly Overview button (top left)
@@ -59,36 +59,36 @@ const PIXEL_PERFECT_CONFIG = {
       labelFontSize: 12
     }
   },
-  
+
   // Time grid
   grid: {
     timeColumnWidth: 100,
     mainAreaWidth: 2410, // 2550 - 40 - 100 = 2410
     rowHeight: 84,       // 84px each row
     totalRows: 36,       // All time slots 06:00-23:30
-    
+
     // Time formatting
     topHourFont: 32,     // Increased to match appointment times
     halfHourFont: 30,    // 2pt smaller for half hour (bottom of hour)
     topHourBg: [240, 240, 240], // Light grey
     halfHourBg: [255, 255, 255], // White
-    
+
     // Borders
     borderColor: [0, 0, 0],
     borderWidth: 1,
-    
+
     // Vertical divider between time column and events
     verticalDivider: {
       color: [34, 34, 34], // Dark grey matching dashboard
       width: 2
     }
   },
-  
+
   // Appointment styling
   appointments: {
     margin: 5,           // 5px margin from grid edges
     width: 2400,         // Main area width minus 10px
-    
+
     // Content layout
     singleColumn: {
       titleY: 30,        // Moved down to keep within appointment box
@@ -99,32 +99,32 @@ const PIXEL_PERFECT_CONFIG = {
       timeFont: 32,      // Bold time display
       leftMargin: 15
     },
-    
+
     threeColumn: {
       columnWidth: 800,  // 2400 / 3
       headerFont: 28,    // Increased from 24
       bulletFont: 20,    // Increased from 16
       separatorColor: [0, 0, 0]
     },
-    
+
     // Calendar-specific styling
     simplePractice: {
       borderColor: [100, 149, 237], // Cornflower blue
       leftBorderWidth: 4,           // Increased by 1px as requested
       normalBorderWidth: 1
     },
-    
+
     google: {
       borderColor: [34, 139, 34], // Green
       dashPattern: [8, 4]
     },
-    
+
     holiday: {
       bgColor: [255, 255, 0], // Yellow
       borderColor: [245, 158, 11] // Orange
     }
   },
-  
+
   // Bottom navigation
   bottomNav: {
     y: 3240, // Near bottom of page
@@ -214,32 +214,32 @@ function formatMilitaryTime(date: Date): string {
 // Draw header section with exact layout matching user's Python specification
 function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
   const config = PIXEL_PERFECT_CONFIG;
-  
+
   // Draw main border around entire header
   pdf.setDrawColor(...config.colors.black);
   pdf.setLineWidth(1);
   pdf.rect(config.margin, config.headerStartY, config.pageWidth - (config.margin * 2), config.header.height, 'S');
-  
+
   // TOP SECTION - exact positioning from Python code
   const topY = config.headerStartY + 12;
-  
+
   // Weekly Overview button (left) - exact dimensions from Python code
   const buttonWidth = 125;
   const buttonHeight = 30;
   const buttonX = config.margin + 55;
   const buttonY = topY;
-  
+
   pdf.setFillColor(245, 245, 245); // Light grey background
   pdf.setDrawColor(200, 200, 200); // Border grey
   pdf.setLineWidth(1);
   pdf.rect(buttonX, buttonY, buttonWidth, buttonHeight, 'FD');
-  
+
   // Button text with calendar icon
   pdf.setFontSize(14);
   pdf.setFont('helvetica', 'normal');
   pdf.setTextColor(...config.colors.black);
   pdf.text('📅 Weekly Overview', buttonX + buttonWidth / 2, buttonY + buttonHeight / 2 + 5, { align: 'center' });
-  
+
   // Date (perfectly centered) - exact font size from Python code
   const dateStr = selectedDate.toLocaleDateString('en-US', { 
     weekday: 'long', 
@@ -251,7 +251,7 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   pdf.setFont('helvetica', 'normal');
   pdf.setTextColor(...config.colors.black);
   pdf.text(dateStr, config.pageWidth / 2, topY + 3, { align: 'center' });
-  
+
   // Filter events to selected day for count
   const dayEvents = events.filter(event => {
     const eventDate = new Date(event.startTime);
@@ -259,24 +259,24 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
     const selectedDay = selectedDate.toDateString();
     return eventDay === selectedDay;
   });
-  
+
   // Subtitle (centered below date) - exact font size from Python code
   const subtitleText = `${dayEvents.length} appointments`;
   pdf.setFontSize(16);
   pdf.setFont('helvetica', 'normal');
   pdf.setTextColor(...config.colors.black);
   pdf.text(subtitleText, config.pageWidth / 2, topY + 30, { align: 'center' });
-  
+
   // LEGEND (right side) - exact positioning from Python code
   const legendY = topY + 5;
   const legendSpacing = 180;
   const rightMargin = 40;
-  
+
   // Legend 3: Holidays in United States (rightmost)
   const legend3Text = 'Holidays in United States';
   const legend3TextX = config.pageWidth - rightMargin - 150;
   const legend3SquareX = legend3TextX - 20;
-  
+
   // Draw orange square - exact colors from Python code
   pdf.setFillColor(255, 165, 0); // Orange
   pdf.setDrawColor(...config.colors.black);
@@ -285,11 +285,11 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   pdf.setFontSize(16);
   pdf.setTextColor(...config.colors.black);
   pdf.text(legend3Text, legend3TextX, legendY + 10);
-  
+
   // Legend 2: Google Calendar
   const legend2TextX = legend3SquareX - legendSpacing - 120;
   const legend2SquareX = legend2TextX - 20;
-  
+
   // Draw dashed green square - exact pattern from Python code
   pdf.setDrawColor(34, 139, 34); // Green
   pdf.setLineWidth(1);
@@ -298,11 +298,11 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   pdf.setLineDashPattern([], 0); // Reset dash pattern
   pdf.setTextColor(...config.colors.black);
   pdf.text('Google Calendar', legend2TextX, legendY + 10);
-  
+
   // Legend 1: SimplePractice
   const legend1TextX = legend2SquareX - legendSpacing - 100;
   const legend1SquareX = legend1TextX - 20;
-  
+
   // Draw solid blue square - exact color from Python code
   pdf.setFillColor(100, 149, 237); // SimplePractice blue
   pdf.setDrawColor(...config.colors.black);
@@ -310,23 +310,23 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   pdf.rect(legend1SquareX, legendY, 12, 12, 'FD');
   pdf.setTextColor(...config.colors.black);
   pdf.text('SimplePractice', legend1TextX, legendY + 10);
-  
+
   // STATISTICS SECTION (bottom) - exact from Python code
   const statsY = config.headerStartY + 75;
   const statsHeight = 45;
   const statsMargin = 12;
-  
+
   // Draw horizontal line above stats section
   pdf.setDrawColor(...config.colors.black);
   pdf.setLineWidth(1);
   pdf.line(config.margin, statsY, config.pageWidth - config.margin, statsY);
-  
+
   // Draw stats background - light grey as in Python code
   pdf.setFillColor(240, 240, 240); // Stats grey
   pdf.setDrawColor(...config.colors.black);
   pdf.setLineWidth(1);
   pdf.rect(config.margin + statsMargin, statsY, config.pageWidth - config.margin * 2 - statsMargin * 2, statsHeight, 'FD');
-  
+
   // Statistics data - exactly as in Python code
   const statsData = [
     { number: '5', label: 'Appointments' },
@@ -334,24 +334,24 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
     { number: '19.7h', label: 'Available' },
     { number: '82%', label: 'Free Time' }
   ];
-  
+
   // Calculate column positions - exactly as in Python code
   const availableWidth = config.pageWidth - config.margin * 2 - statsMargin * 2;
   const colWidth = availableWidth / 4;
   let currentX = config.margin + statsMargin;
-  
+
   statsData.forEach((stat) => {
     // Draw large number (centered in column)
     pdf.setFontSize(24);
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(...config.colors.black);
     pdf.text(stat.number, currentX + colWidth / 2, statsY + 18, { align: 'center' });
-    
+
     // Draw label below (centered in column)
     pdf.setFontSize(14);
     pdf.setFont('helvetica', 'normal');
     pdf.text(stat.label, currentX + colWidth / 2, statsY + 35, { align: 'center' });
-    
+
     currentX += colWidth;
   });
 }
@@ -360,27 +360,27 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
 function drawBottomNavigation(pdf: jsPDF, selectedDate: Date) {
   const config = PIXEL_PERFECT_CONFIG;
   const nav = config.bottomNav;
-  
+
   // Previous day arrow
   const prevX = nav.centerX - nav.spacing - nav.buttonWidth;
   pdf.setFillColor(...nav.bgColor);
   pdf.setDrawColor(...nav.borderColor);
   pdf.setLineWidth(1.5);
   pdf.roundedRect(prevX, nav.y, nav.buttonWidth, nav.buttonHeight, nav.borderRadius, nav.borderRadius, 'FD');
-  
+
   // Previous day arrow text
   pdf.setFontSize(nav.fontSize);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(...config.colors.black);
   pdf.text('← Sunday', prevX + nav.buttonWidth / 2, nav.y + nav.buttonHeight / 2 + 5, { align: 'center' });
-  
+
   // Next day arrow (moved closer to center since center button removed)
   const nextX = nav.centerX + nav.spacing / 2;
   pdf.setFillColor(...nav.bgColor);
   pdf.setDrawColor(...nav.borderColor);
   pdf.setLineWidth(1.5);
   pdf.roundedRect(nextX, nav.y, nav.buttonWidth, nav.buttonHeight, nav.borderRadius, nav.borderRadius, 'FD');
-  
+
   // Next day arrow text
   pdf.setFontSize(nav.fontSize);
   pdf.setFont('helvetica', 'bold');
@@ -392,50 +392,50 @@ function drawBottomNavigation(pdf: jsPDF, selectedDate: Date) {
 function drawPixelPerfectTimeGrid(pdf: jsPDF) {
   const config = PIXEL_PERFECT_CONFIG;
   const grid = config.grid;
-  
+
   // Draw time column and main area borders
   pdf.setDrawColor(...grid.borderColor);
   pdf.setLineWidth(grid.borderWidth);
-  
+
   // Time column left border
   pdf.line(config.margin, config.gridStartY, config.margin, config.gridStartY + (grid.totalRows * grid.rowHeight));
-  
+
   // Time column right border / main area left border (vertical divider) - solid black
   pdf.setDrawColor(34, 34, 34); // Dark gray/black matching dashboard
   pdf.setLineWidth(2);
   pdf.line(config.margin + grid.timeColumnWidth, config.gridStartY, 
            config.margin + grid.timeColumnWidth, config.gridStartY + (grid.totalRows * grid.rowHeight));
-  
+
   // Main area right border
   pdf.setDrawColor(...grid.borderColor);
   pdf.setLineWidth(grid.borderWidth);
   pdf.line(config.margin + grid.timeColumnWidth + grid.mainAreaWidth, config.gridStartY,
            config.margin + grid.timeColumnWidth + grid.mainAreaWidth, config.gridStartY + (grid.totalRows * grid.rowHeight));
-  
+
   // Draw all time slots
   ALL_TIME_SLOTS.forEach((slot, index) => {
     const y = config.gridStartY + (index * grid.rowHeight);
-    
+
     // Background color based on hour/half-hour - APPLIED TO ENTIRE ROW
     const bgColor = slot.isHour ? grid.topHourBg : grid.halfHourBg;
     pdf.setFillColor(...bgColor);
-    
+
     // Fill entire row width (time column + main area)
     pdf.rect(config.margin, y, grid.timeColumnWidth + grid.mainAreaWidth, grid.rowHeight, 'F');
-    
+
     // Time text - centered both horizontally and vertically
     pdf.setFontSize(slot.isHour ? grid.topHourFont : grid.halfHourFont);
     pdf.setFont('helvetica', 'normal'); // Don't bold times
     pdf.setTextColor(...config.colors.black);
     pdf.text(slot.time, config.margin + grid.timeColumnWidth / 2, y + grid.rowHeight / 2 + 8, { align: 'center' });
-    
+
     // Horizontal grid lines
     pdf.setDrawColor(...grid.borderColor);
     pdf.setLineWidth(grid.borderWidth);
     pdf.line(config.margin, y + grid.rowHeight, 
              config.margin + grid.timeColumnWidth + grid.mainAreaWidth, y + grid.rowHeight);
   });
-  
+
   // Draw vertical separator line AFTER backgrounds to ensure it's visible
   pdf.setDrawColor(34, 34, 34); // Dark gray/black matching dashboard
   pdf.setLineWidth(2);
@@ -447,64 +447,64 @@ function drawPixelPerfectTimeGrid(pdf: jsPDF) {
 function drawPixelPerfectAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
   const config = PIXEL_PERFECT_CONFIG;
   const appointments = config.appointments;
-  
+
   // Filter events for the selected date
   const dayEvents = events.filter(event => {
     const eventDate = new Date(event.startTime);
     return eventDate.toDateString() === selectedDate.toDateString();
   });
-  
+
   console.log(`Drawing ${dayEvents.length} appointments for ${selectedDate.toDateString()}`);
-  
+
   dayEvents.forEach((event, index) => {
     const eventDate = new Date(event.startTime);
     const endDate = new Date(event.endTime);
-    
+
     // Calculate position based on time
     const startHour = eventDate.getHours();
     const startMinute = eventDate.getMinutes();
-    
+
     // Find the slot index
     const slotIndex = ALL_TIME_SLOTS.findIndex(slot => {
       const [slotHour, slotMinute] = slot.time.split(':').map(Number);
       return slotHour === startHour && slotMinute === startMinute;
     });
-    
+
     if (slotIndex === -1) {
       console.log(`Event ${event.title} at ${eventDate.toLocaleTimeString()} is outside time range`);
       return;
     }
-    
+
     // Calculate duration in slots
     const durationMinutes = (endDate.getTime() - eventDate.getTime()) / (1000 * 60);
     const durationSlots = Math.ceil(durationMinutes / 30);
-    
+
     // Calculate position and dimensions - ensure events stay inside grid cells
     const eventY = config.gridStartY + (slotIndex * config.grid.rowHeight) + 2; // 2px margin from grid line
     const eventHeight = (durationSlots * config.grid.rowHeight) - 4; // 4px total margin (2px top + 2px bottom)
     const eventX = config.margin + config.grid.timeColumnWidth + 2; // 2px margin from vertical divider
     const eventWidth = appointments.width - 4; // 4px total margin (2px left + 2px right)
-    
+
     console.log(`Event ${event.title}: slot ${slotIndex}, duration ${durationSlots} slots, height ${eventHeight}px`);
-    
+
     // Get event type
     const { isSimplePractice, isGoogle, isHoliday } = getEventTypeInfoExtended(event);
-    
+
     // Draw background - WHITE for all appointments
     pdf.setFillColor(...config.colors.white);
     pdf.rect(eventX, eventY, eventWidth, eventHeight, 'F');
-    
+
     // Draw borders based on calendar type
     if (isSimplePractice) {
       // SimplePractice: Cornflower blue border with thick left edge
       pdf.setDrawColor(...appointments.simplePractice.borderColor);
       pdf.setLineWidth(appointments.simplePractice.normalBorderWidth);
       pdf.rect(eventX, eventY, eventWidth, eventHeight, 'S');
-      
+
       // Thick left border
       pdf.setLineWidth(appointments.simplePractice.leftBorderWidth);
       pdf.line(eventX, eventY, eventX, eventY + eventHeight);
-      
+
     } else if (isGoogle) {
       // Google Calendar: Dashed green border
       pdf.setDrawColor(...appointments.google.borderColor);
@@ -512,7 +512,7 @@ function drawPixelPerfectAppointments(pdf: jsPDF, selectedDate: Date, events: Ca
       pdf.setLineDash(appointments.google.dashPattern);
       pdf.rect(eventX, eventY, eventWidth, eventHeight, 'S');
       pdf.setLineDash([]);
-      
+
     } else if (isHoliday) {
       // Holiday: Yellow background with orange border
       pdf.setFillColor(...appointments.holiday.bgColor);
@@ -521,34 +521,34 @@ function drawPixelPerfectAppointments(pdf: jsPDF, selectedDate: Date, events: Ca
       pdf.setLineWidth(1);
       pdf.rect(eventX, eventY, eventWidth, eventHeight, 'S');
     }
-    
+
     // Clean title
     const displayTitle = cleanAppointmentTitle(event.title);
-    
+
     // Check if this appointment has notes or actions (only Dan has content)
     const hasNotes = displayTitle.toLowerCase().includes('dan re:');
     const hasActions = displayTitle.toLowerCase().includes('dan re:');
-    
+
     if (hasNotes || hasActions) {
       // Three-column layout for appointments with content
       const columnWidth = appointments.threeColumn.columnWidth;
-      
+
       // Column 1: Appointment details
       pdf.setFontSize(appointments.singleColumn.titleFont);
       pdf.setFont('helvetica', 'bold'); // Make appointment titles bold
       pdf.setTextColor(...config.colors.black);
       pdf.text(displayTitle, eventX + appointments.singleColumn.leftMargin, eventY + appointments.singleColumn.titleY);
-      
+
       // Source
       const { sourceText } = getEventTypeInfoExtended(event);
       pdf.setFontSize(appointments.singleColumn.sourceFont);
       pdf.text(sourceText, eventX + appointments.singleColumn.leftMargin, eventY + appointments.singleColumn.sourceY);
-      
+
       // Time - with additional spacing after source
       const timeRange = `${formatMilitaryTime(eventDate)}-${formatMilitaryTime(endDate)}`;
       pdf.setFontSize(appointments.singleColumn.timeFont);
       pdf.text(timeRange, eventX + appointments.singleColumn.leftMargin, eventY + appointments.singleColumn.timeY + 10); // Added 10px spacing
-      
+
       // Column separators - only draw if we have content
       pdf.setDrawColor(...appointments.threeColumn.separatorColor);
       pdf.setLineWidth(1);
@@ -558,13 +558,13 @@ function drawPixelPerfectAppointments(pdf: jsPDF, selectedDate: Date, events: Ca
       if (hasActions) {
         pdf.line(eventX + (columnWidth * 2), eventY, eventX + (columnWidth * 2), eventY + eventHeight);
       }
-      
+
       // Column 2: Event Notes - only if has notes
       if (hasNotes) {
         pdf.setFontSize(appointments.threeColumn.headerFont);
         pdf.setFont('helvetica', 'bold'); // Make header bold
         pdf.text('Event Notes', eventX + columnWidth + 10, eventY + 20);
-        
+
         // Sample notes for Dan
         if (displayTitle.toLowerCase().includes('dan re:')) {
           pdf.setFontSize(appointments.threeColumn.bulletFont);
@@ -574,13 +574,13 @@ function drawPixelPerfectAppointments(pdf: jsPDF, selectedDate: Date, events: Ca
           pdf.text('  continue next week during our usual time', eventX + columnWidth + 10, eventY + 70);
         }
       }
-      
+
       // Column 3: Action Items - only if has actions
       if (hasActions) {
         pdf.setFontSize(appointments.threeColumn.headerFont);
         pdf.setFont('helvetica', 'bold'); // Make header bold
         pdf.text('Action Items', eventX + (columnWidth * 2) + 10, eventY + 20);
-        
+
         // Sample action items for Dan
         if (displayTitle.toLowerCase().includes('dan re:')) {
           pdf.setFontSize(appointments.threeColumn.bulletFont);
@@ -590,17 +590,17 @@ function drawPixelPerfectAppointments(pdf: jsPDF, selectedDate: Date, events: Ca
           pdf.text('  issues/questions that I can help him navigate', eventX + (columnWidth * 2) + 10, eventY + 70);
         }
       }
-      
+
     } else {
       // Single column layout for appointments without notes/actions
       pdf.setFontSize(appointments.singleColumn.titleFont);
       pdf.setFont('helvetica', 'bold'); // Make font bolder to fill space
       pdf.setTextColor(...config.colors.black);
-      
+
       // Wrap long titles to fit in cell
       const titleLines = pdf.splitTextToSize(displayTitle, eventWidth - 30);
       let currentY = eventY + appointments.singleColumn.titleY;
-      
+
       // Draw title lines
       if (Array.isArray(titleLines)) {
         titleLines.forEach((line, index) => {
@@ -611,13 +611,13 @@ function drawPixelPerfectAppointments(pdf: jsPDF, selectedDate: Date, events: Ca
         pdf.text(titleLines, eventX + appointments.singleColumn.leftMargin, currentY);
         currentY += 35;
       }
-      
+
       // Source
       const { sourceText } = getEventTypeInfoExtended(event);
       pdf.setFontSize(appointments.singleColumn.sourceFont);
       pdf.setFont('helvetica', 'normal');
       pdf.text(sourceText, eventX + appointments.singleColumn.leftMargin, currentY);
-      
+
       // Time - with additional spacing after source
       const timeRange = `${formatMilitaryTime(eventDate)}-${formatMilitaryTime(endDate)}`;
       pdf.setFontSize(appointments.singleColumn.timeFont);
@@ -631,12 +631,12 @@ function drawPixelPerfectAppointments(pdf: jsPDF, selectedDate: Date, events: Ca
 function getEventTypeInfoExtended(event: CalendarEvent): { sourceText: string; isSimplePractice: boolean; isGoogle: boolean; isHoliday: boolean } {
   const isSimplePractice = event.source === 'simplepractice' || 
                            event.title?.toLowerCase().includes('appointment');
-  
+
   const isHoliday = event.title.toLowerCase().includes('holiday') ||
                    event.calendarId === 'en.usa#holiday@group.v.calendar.google.com';
-  
+
   const isGoogle = event.source === 'google' && !isSimplePractice && !isHoliday;
-  
+
   let sourceText = '';
   if (isSimplePractice) {
     sourceText = 'SIMPLEPRACTICE';
@@ -647,7 +647,7 @@ function getEventTypeInfoExtended(event: CalendarEvent): { sourceText: string; i
   } else {
     sourceText = (event.source || 'MANUAL').toUpperCase();
   }
-  
+
   return { sourceText, isSimplePractice, isGoogle, isHoliday };
 }
 
@@ -661,30 +661,246 @@ export const exportPixelPerfectDailyPlanner = async (
   console.log(`Canvas: ${PIXEL_PERFECT_CONFIG.pageWidth} × ${PIXEL_PERFECT_CONFIG.pageHeight} pixels`);
   console.log(`DPI: ${PIXEL_PERFECT_CONFIG.dpi}`);
   console.log(`Total events: ${events.length}`);
-  
+
   // Create PDF with exact specifications
   const pdf = new jsPDF({
     orientation: 'portrait',
     unit: 'px',
     format: [PIXEL_PERFECT_CONFIG.pageWidth, PIXEL_PERFECT_CONFIG.pageHeight]
   });
-  
+
   // Set background to white
   pdf.setFillColor(...PIXEL_PERFECT_CONFIG.colors.white);
   pdf.rect(0, 0, PIXEL_PERFECT_CONFIG.pageWidth, PIXEL_PERFECT_CONFIG.pageHeight, 'F');
-  
+
   // Draw all sections
   drawPixelPerfectHeader(pdf, selectedDate, events);
   drawPixelPerfectTimeGrid(pdf);
   drawPixelPerfectAppointments(pdf, selectedDate, events);
   drawBottomNavigation(pdf, selectedDate);
-  
+
   // Save with descriptive filename
   const filename = `pixel-perfect-daily-planner-${selectedDate.toISOString().split('T')[0]}.pdf`;
+```text
   pdf.save(filename);
-  
+
   console.log(`✅ Pixel Perfect Daily Planner exported: ${filename}`);
   console.log(`📐 Canvas dimensions: ${PIXEL_PERFECT_CONFIG.pageWidth} × ${PIXEL_PERFECT_CONFIG.pageHeight} pixels`);
   console.log(`📊 DPI: ${PIXEL_PERFECT_CONFIG.dpi} (print quality)`);
   console.log(`⏰ Time slots: ${ALL_TIME_SLOTS.length} slots from 06:00 to 23:30`);
+};
+
+export const generatePixelPerfectDailyExport = async (
+  selectedDate: Date,
+  events: CalendarEvent[],
+  dailyNotes: string = ""
+): Promise<void> => {
+  try {
+    console.log("=== PIXEL PERFECT DAILY PLANNER EXPORT ===");
+    console.log("Date:", selectedDate.toDateString());
+    console.log("Canvas: 2550 × 3300 pixels");
+    console.log("DPI: 300");
+    console.log("Total events:", events.length);
+
+    // Filter events for the selected date
+    const dayEvents = events.filter(event => {
+      try {
+        const eventDate = new Date(event.startTime);
+        const selectedDateStr = selectedDate.toDateString();
+        const eventDateStr = eventDate.toDateString();
+        console.log(`Checking event: ${event.title} - Event date: ${eventDateStr}, Selected: ${selectedDateStr}`);
+        return eventDateStr === selectedDateStr;
+      } catch (dateError) {
+        console.error('Error parsing event date:', event, dateError);
+        return false;
+      }
+    });
+
+    console.log("Events for selected date:", dayEvents.length);
+
+    // Validate we have proper canvas support
+    if (!document.createElement || typeof document.createElement !== 'function') {
+      throw new Error('Canvas not supported in this environment');
+    }
+
+    // Create canvas
+    const canvas = document.createElement('canvas');
+    if (!canvas) {
+      throw new Error('Failed to create canvas element');
+    }
+
+    canvas.width = 2550; // 8.5 inches at 300 DPI
+    canvas.height = 3300; // 11 inches at 300 DPI
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      throw new Error('Failed to get 2D rendering context from canvas');
+    }
+
+    // Set high-quality rendering
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+
+    // Fill background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw the daily planner layout
+    try {
+      await drawPixelPerfectDailyLayout(ctx, selectedDate, dayEvents, dailyNotes);
+    } catch (drawError) {
+      console.error('Error drawing daily layout:', drawError);
+      throw new Error(`Failed to draw daily layout: ${drawError.message}`);
+    }
+
+    // Convert to blob and download
+    try {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          console.error('Failed to create blob from canvas');
+          return;
+        }
+
+        try {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `pixel-perfect-daily-${selectedDate.toISOString().split('T')[0]}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+
+          console.log("✅ Pixel perfect daily export completed successfully");
+        } catch (downloadError) {
+          console.error('Error during download:', downloadError);
+          throw downloadError;
+        }
+      }, 'image/png');
+    } catch (blobError) {
+      console.error('Error creating blob:', blobError);
+      throw new Error(`Failed to create downloadable file: ${blobError.message}`);
+    }
+
+  } catch (error) {
+    console.error('Pixel perfect daily export error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+
+    // Show user-friendly error
+    alert(`Export failed: ${error.message || 'Unknown error occurred'}`);
+    throw error;
+  }
+};
+
+const drawPixelPerfectDailyLayout = async (
+  ctx: CanvasRenderingContext2D,
+  date: Date,
+  events: CalendarEvent[],
+  notes: string
+): Promise<void> => {
+  if (!ctx) {
+    throw new Error('Canvas context is null or undefined');
+  }
+
+  if (!date || isNaN(date.getTime())) {
+    throw new Error('Invalid date provided');
+  }
+
+  if (!Array.isArray(events)) {
+    console.warn('Events is not an array, using empty array');
+    events = [];
+  }
+
+  try {
+    // Layout parameters
+    const headerHeight = 100;
+    const timeColumnWidth = 100;
+    const eventColumnWidth = ctx.canvas.width - timeColumnWidth;
+    const timeSlotHeight = 30;
+
+    // Draw header
+    ctx.fillStyle = '#f0f0f0';
+    ctx.fillRect(0, 0, ctx.canvas.width, headerHeight);
+
+    // Date text
+    ctx.fillStyle = '#000000';
+    ctx.font = '36px Arial';
+    ctx.fillText(date.toDateString(), 20, 30);
+
+    // Draw time slots
+    for (let i = 7; i < 24; i++) {
+      const y = headerHeight + (i - 7) * timeSlotHeight;
+
+      // Time text
+      ctx.fillStyle = '#888888';
+      ctx.font = '20px Arial';
+      ctx.fillText(`${i}:00`, 20, y);
+
+      // Slot line
+      ctx.strokeStyle = '#cccccc';
+      ctx.beginPath();
+      ctx.moveTo(timeColumnWidth, y);
+      ctx.lineTo(ctx.canvas.width, y);
+      ctx.stroke();
+    }
+
+    // Draw events in time slots
+    events.forEach((event, index) => {
+      try {
+        if (!event || !event.startTime || !event.endTime) {
+          console.warn(`Skipping invalid event at index ${index}:`, event);
+          return;
+        }
+
+        const startTime = new Date(event.startTime);
+        const endTime = new Date(event.endTime);
+
+        if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+          console.warn(`Skipping event with invalid dates at index ${index}:`, event);
+          return;
+        }
+
+        const startHour = startTime.getHours();
+        const startMinute = startTime.getMinutes();
+        const endHour = endTime.getHours();
+        const endMinute = endTime.getMinutes();
+
+        // Calculate position
+        const startY = headerHeight + (startHour - 7) * timeSlotHeight + (startMinute / 60) * timeSlotHeight;
+        const duration = (endHour - startHour) + (endMinute - startMinute) / 60;
+        const eventHeight = Math.max(duration * timeSlotHeight - 4, 20); // Minimum height
+
+        // Validate positions
+        if (startY < headerHeight || startY > ctx.canvas.height) {
+          console.warn(`Event ${event.title} is outside visible time range`);
+          return;
+        }
+
+        // Draw event
+        ctx.fillStyle = event.color || '#6495ED';
+        ctx.fillRect(timeColumnWidth + 8, startY, eventColumnWidth - 16, eventHeight);
+
+        // Draw event text
+        ctx.fillStyle = '#000000';
+        ctx.font = '24px Arial';
+        const title = event.title || 'Untitled Event';
+        ctx.fillText(title, timeColumnWidth + 16, startY + 8);
+      } catch (eventError) {
+        console.error(`Error drawing event at index ${index}:`, eventError, event);
+        // Continue with next event instead of failing completely
+      }
+    });
+
+    console.log(`✅ Successfully drew ${events.length} events`);
+
+  } catch (error) {
+    console.error('Error in drawPixelPerfectDailyLayout:', error);
+    throw new Error(`Layout drawing failed: ${error.message}`);
+  }
 };
