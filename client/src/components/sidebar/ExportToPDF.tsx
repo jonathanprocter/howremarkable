@@ -234,13 +234,13 @@ export const ExportToPDF = ({
           <Button 
             variant="outline" 
             onClick={() => {
-              console.log('🎯 PIXEL PERFECT DASHBOARD EXPORT - LATEST VERSION!');
-              onExportCurrentView('Pixel Perfect Dashboard');
+              console.log('🎯 PIXEL PERFECT WEEKLY EXPORT - FROM CHECKPOINT!');
+              onExportCurrentView('Pixel Perfect Weekly');
             }}
             className="w-full text-xs bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 font-bold"
             size="sm"
           >
-            🎯 PERFECT Weekly (Latest Version)
+            🎯 PERFECT Weekly (Checkpoint Version)
           </Button>
 
           <p className="text-xs text-gray-600 mb-2 mt-3">📦 Multi-Page Export</p>
