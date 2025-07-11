@@ -69,6 +69,17 @@ export const useAuthenticatedUser = (): UseAuthenticatedUserReturn => {
 
   const performAutoLogin = async () => {
     try {
+      // Check if we've already attempted auto-login recently
+      const lastAutoLogin = localStorage.getItem('lastAutoLogin');
+      const now = Date.now();
+      
+      if (lastAutoLogin && now - parseInt(lastAutoLogin) < 30000) { // 30 seconds
+        setUser(null);
+        return;
+      }
+      
+      localStorage.setItem('lastAutoLogin', now.toString());
+      
       const devLoginResponse = await fetch('/api/auth/dev-login', { 
         method: 'POST',
         credentials: 'include'
@@ -76,13 +87,12 @@ export const useAuthenticatedUser = (): UseAuthenticatedUserReturn => {
       if (devLoginResponse.ok) {
         const devResult = await devLoginResponse.json();
         if (devResult.success) {
-          console.log('Auto-login successful');
           setUser(devResult.user);
           return;
         }
       }
     } catch (autoLoginError) {
-      console.log('Auto-login failed:', autoLoginError);
+      // Silent fail for auto-login attempts
     }
     setUser(null);
   };

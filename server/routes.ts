@@ -73,7 +73,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }));
 
   passport.serializeUser((user: any, done) => {
-    console.log("✅ Serializing user:", { id: user.id, email: user.email });
+    // Only log serialization on first occurrence or errors
+    if (!user.serializationLogged) {
+      console.log("✅ Serializing user:", { id: user.id, email: user.email });
+      user.serializationLogged = true;
+    }
     done(null, user.id); // Store only user ID in session for security
   });
 
@@ -227,13 +231,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/auth/status", (req, res) => {
-    console.log("=== AUTH STATUS DEBUG ===");
-    console.log("Session ID:", req.sessionID);
-    console.log("Session exists:", !!req.session);
-    console.log("User in request:", !!req.user);
-    console.log("User details:", req.user ? { id: req.user.id, email: req.user.email } : null);
-    console.log("Session passport:", req.session.passport);
-    console.log("Session cookie:", req.session.cookie);
+    // Only log when there are authentication issues
+    if (!req.user && req.query.debug === 'true') {
+      console.log("=== AUTH STATUS DEBUG ===");
+      console.log("Session ID:", req.sessionID);
+      console.log("Session exists:", !!req.session);
+      console.log("User in request:", !!req.user);
+      console.log("Session passport:", req.session.passport);
+      console.log("Session cookie:", req.session.cookie);
+    }
     
     res.json({ 
       authenticated: !!req.user,
@@ -296,11 +302,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Development authentication bypass
   app.post("/api/auth/dev-login", async (req, res) => {
     try {
-      console.log("🔧 DEV LOGIN: Creating development user session...");
-      
-      // Use hardcoded user ID 1 for development (known to exist)
-      console.log("Using existing user ID 1 for development login");
-      
       // Create user object for session without database lookup
       const user = {
         id: '1',
@@ -318,10 +319,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(500).json({ error: "Failed to log in development user" });
         }
         
-        console.log("✅ DEV LOGIN: User logged in successfully");
-        console.log("Session ID:", req.sessionID);
-        console.log("User in session:", !!req.user);
-        
         // Force session save
         req.session.save((saveErr) => {
           if (saveErr) {
@@ -329,7 +326,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             return res.status(500).json({ error: "Failed to save session" });
           }
           
-          console.log("✅ DEV LOGIN: Session saved successfully");
+          // Only log success on first login or errors
+          if (!req.session.devLoginCompleted) {
+            console.log("✅ DEV LOGIN: Development user authenticated successfully");
+            req.session.devLoginCompleted = true;
+          }
+          
           res.json({ 
             success: true, 
             user: { id: user.id, email: user.email, name: user.name },
@@ -346,12 +348,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Google Calendar API - Fetch Events
   app.get("/api/calendar/events", async (req, res) => {
     try {
-      // Since API usage stats show authentication is working, try to fetch with stored credentials
-      console.log("Calendar events requested - checking authentication...");
-      console.log("Session user:", !!req.user);
-      
       if (!req.user) {
-        console.log("No session user found, but API calls are working based on usage stats");
         return res.status(401).json({ 
           error: "Session authentication required",
           message: "Please authenticate with Google first"

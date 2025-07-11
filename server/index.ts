@@ -26,10 +26,10 @@ const sessionStore = new PgSession({
   schemaName: 'public' // Explicitly set schema name
 });
 
-// Handle session store errors
+// Handle session store errors with better error handling
 sessionStore.on('error', (err) => {
   console.error('Session store error:', err);
-  // Don't crash the server on session store errors
+  // Log but don't crash the server
 });
 
 // Add connection error handling
@@ -44,8 +44,8 @@ sessionStore.on('disconnect', () => {
 app.use(session({
   store: sessionStore,
   secret: process.env.SESSION_SECRET || 'remarkable-planner-secret-key-2025',
-  resave: true, // Force session save on each request to ensure persistence
-  saveUninitialized: true, // Create sessions for anonymous users to enable consistent session IDs
+  resave: false, // Don't force session save on each request
+  saveUninitialized: false, // Don't create sessions for anonymous users
   rolling: false, // Don't reset expiration on each request
   name: 'connect.sid', // Use standard session name for better compatibility
   cookie: {
@@ -146,6 +146,7 @@ app.use((req, res, next) => {
   
   server.listen(port, "0.0.0.0", () => {
     log(`serving on port ${port}`);
+    console.log(`✅ Server is ready and accepting connections on http://0.0.0.0:${port}`);
   });
   
   } catch (error) {
