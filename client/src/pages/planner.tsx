@@ -511,21 +511,15 @@ export default function Planner() {
           break;
 
         case 'Daily View':
-          // Export current daily view
+          // Export current daily view using the exact daily PDF export function
           try {
             console.log('=== DAILY VIEW PDF EXPORT ===');
             console.log('Selected date:', selectedDateForExport.toDateString());
-            console.log('Current view state:', state.currentView);
+            console.log('Current view state:', state.viewMode);
             console.log('Events for export:', validatedEvents.length);
 
-            // Use HTML template PDF for daily view
-            const { exportHTMLTemplatePDF } = await import('../utils/htmlTemplatePDF');
-            await exportHTMLTemplatePDF(
-              selectedDateForExport,
-              selectedDateForExport, // Same date for start and end for daily view
-              validatedEvents,
-              true // isDailyView = true
-            );
+            // Use the exact daily PDF export function that matches the daily view
+            await exportExactDailyPDF(selectedDateForExport, validatedEvents);
 
             toast({
               title: "Daily View Export Successful",
