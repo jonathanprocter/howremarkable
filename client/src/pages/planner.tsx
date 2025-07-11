@@ -919,6 +919,37 @@ export default function Planner() {
             return;
           }
 
+        case 'Exact Weekly Spec':
+          // Export with EXACT weekly planner specifications - 3300x2550 pixels
+          try {
+            console.log('=== EXACT WEEKLY SPEC PDF EXPORT ===');
+            console.log('Week start:', state.currentWeek.startDate.toDateString());
+            console.log('Week end:', state.currentWeek.endDate.toDateString());
+            console.log('Total events:', validatedEvents.length);
+            console.log('🎯 Creating EXACT weekly PDF with precise specifications...');
+
+            const { exportExactWeeklySpec } = await import('../utils/exactWeeklySpecExport');
+            await exportExactWeeklySpec(
+              state.currentWeek.startDate,
+              state.currentWeek.endDate,
+              validatedEvents
+            );
+
+            toast({
+              title: "Exact Weekly Spec Export Successful",
+              description: "Weekly planner with EXACT 3300x2550 pixel specifications downloaded!"
+            });
+            return;
+          } catch (weeklyError) {
+            console.error('Exact weekly spec PDF export error:', weeklyError);
+            toast({
+              title: "Exact Weekly Spec Export Failed",
+              description: `Exact weekly spec export failed: ${weeklyError.message}`,
+              variant: "destructive"
+            });
+            return;
+          }
+
         case 'Pixel Perfect Weekly':
           // Export pixel-perfect weekly view matching dashboard exactly
           try {

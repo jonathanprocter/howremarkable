@@ -131,6 +131,17 @@ export const ExportToPDF = ({
           <Button 
             variant="outline" 
             onClick={() => {
+              console.log('🎯 EXACT WEEKLY SPEC EXPORT - PRECISE SPECIFICATIONS!');
+              onExportCurrentView('Exact Weekly Spec');
+            }}
+            className="w-full text-xs mb-2 bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
+            size="sm"
+          >
+            📐 Exact Weekly Spec (3300x2550px)
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => {
               console.log('🎯 PIXEL PERFECT WEEKLY EXPORT - FROM CHECKPOINT!');
               onExportCurrentView('Pixel Perfect Weekly');
             }}
