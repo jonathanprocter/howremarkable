@@ -144,24 +144,6 @@ export const ExportToPDF = ({
           </Button>
           <Button 
             variant="outline" 
-            onClick={() => {
-              console.log('🔥 DAILY VIEW BUTTON CLICKED!');
-              console.log('🔥 About to call onExportCurrentView with "Daily View"');
-              console.log('🔥 Function type:', typeof onExportCurrentView);
-              try {
-                onExportCurrentView('Daily View');
-                console.log('🔥 onExportCurrentView called successfully');
-              } catch (error) {
-                console.error('🔥 Error calling onExportCurrentView:', error);
-              }
-            }}
-            className="w-full text-xs"
-            size="sm"
-          >
-            📅 Export Daily View
-          </Button>
-          <Button 
-            variant="outline" 
             onClick={() => onExportCurrentView('Weekly Package')}
             className="w-full text-xs"
             size="sm"
@@ -188,27 +170,11 @@ export const ExportToPDF = ({
           </Button>
           <Button 
             variant="outline" 
-            onClick={() => onExportCurrentView('Dashboard Perfect Daily')}
-            className="w-full text-xs bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 font-bold"
-            size="sm"
-          >
-            🎯 Perfect Daily (Live Styles)
-          </Button>
-          <Button 
-            variant="outline" 
             onClick={() => onExportCurrentView('Pixel Perfect Daily')}
             className="w-full text-xs bg-red-50 border-red-200 text-red-700 hover:bg-red-100 font-bold"
             size="sm"
           >
             📐 Pixel Perfect Daily (300 DPI)
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => onExportCurrentView('Browser Matching')}
-            className="w-full text-xs bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 font-bold"
-            size="sm"
-          >
-            🔍 Browser Matching
           </Button>
           <Button 
             variant="outline" 
@@ -232,14 +198,7 @@ export const ExportToPDF = ({
           >
             ✨ Perfect Weekly
           </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => onExportCurrentView('Perfect Daily')}
-            className="w-full text-xs bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 font-medium"
-            size="sm"
-          >
-            ✨ Perfect Daily
-          </Button>
+          
         </div>
       </div>
 
@@ -247,14 +206,6 @@ export const ExportToPDF = ({
       <div className="mb-4">
         <h4 className="text-xs font-medium text-gray-700 mb-2">📱 reMarkable Pro</h4>
         <div className="space-y-1">
-          <Button 
-            variant="outline" 
-            onClick={() => onExportCurrentView('reMarkable Daily')}
-            className="w-full text-xs bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
-            size="sm"
-          >
-            📅 Daily (reMarkable)
-          </Button>
           <Button 
             variant="outline" 
             onClick={() => onExportCurrentView('reMarkable Weekly')}
@@ -322,14 +273,6 @@ export const ExportToPDF = ({
             size="sm"
           >
             Legacy Weekly PDF
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={onExportDailyView}
-            className="w-full text-xs opacity-60"
-            size="sm"
-          >
-            Legacy Daily PDF
           </Button>
           <Button 
             variant="outline" 
