@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { AccessibilityProvider } from "@/components/common/AccessibilityProvider";
-import Planner from "@/pages/planner";
+import Planner from "@/pages/planner-minimal";
 import NotFound from "@/pages/not-found";
 
 function Router() {

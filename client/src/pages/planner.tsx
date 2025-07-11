@@ -102,6 +102,18 @@ export default function Planner() {
   const handleExportAction = async (type: string = 'Current View') => {
     console.log('🚀 EXPORT BUTTON CLICKED! Type:', type);
     try {
+      // Get current events by filtering based on selected calendars
+      const currentEvents = state.events.filter(event => {
+        if (event.source === 'google') {
+          // Use calendarId for Google Calendar events (not sourceId which is the event ID)
+          const calendarId = (event as any).calendarId || event.sourceId;
+          const isSelected = selectedCalendars.has(calendarId);
+          return isSelected;
+        }
+        // Always show manual and SimplePractice events since there are no toggles for them
+        return true;
+      });
+
       console.log('=== STARTING EXPORT ===');
       console.log('Export type:', type);
       console.log('Current view mode:', state.viewMode);
@@ -144,7 +156,7 @@ export default function Planner() {
 
         // Run comprehensive pixel-perfect audit
         const exportType = state.viewMode === 'daily' ? 'daily' : 'weekly';
-        const pixelPerfectAudit = runPixelPerfectAudit(
+        const pixelPerfectAuditResult = runPixelPerfectAudit(
           state.events,
           currentEvents,
           state.viewMode === 'daily' ? state.selectedDate : undefined,
@@ -152,34 +164,34 @@ export default function Planner() {
         );
 
         // Log detailed audit results
-        logExportAudit(pixelPerfectAudit.auditReport, type);
+        logExportAudit(pixelPerfectAuditResult.auditReport, type);
 
         // Show pixel-perfect analysis
         console.log('🎯 PIXEL-PERFECT ANALYSIS:');
-        console.log(`   - Overall Score: ${pixelPerfectAudit.pixelPerfectScore}/100`);
-        console.log(`   - Data Integrity: ${pixelPerfectAudit.auditReport.dataIntegrityScore.toFixed(1)}%`);
-        console.log(`   - Grid Alignment: ${pixelPerfectAudit.gridValidation.isValid ? 'VALID' : 'INVALID'}`);
-        console.log(`   - Event Count Match: ${pixelPerfectAudit.auditReport.missingEvents.length === 0 ? 'PERFECT' : 'MISMATCH'}`);
+        console.log(`   - Overall Score: ${pixelPerfectAuditResult.pixelPerfectScore}/100`);
+        console.log(`   - Data Integrity: ${pixelPerfectAuditResult.auditReport.dataIntegrityScore.toFixed(1)}%`);
+        console.log(`   - Grid Alignment: ${pixelPerfectAuditResult.gridValidation.isValid ? 'VALID' : 'INVALID'}`);
+        console.log(`   - Event Count Match: ${pixelPerfectAuditResult.auditReport.missingEvents.length === 0 ? 'PERFECT' : 'MISMATCH'}`);
 
         // Show grid validation issues if any
-        if (pixelPerfectAudit.gridValidation.issues.length > 0) {
+        if (pixelPerfectAuditResult.gridValidation.issues.length > 0) {
           console.log('⚠️ GRID ALIGNMENT ISSUES:');
-          pixelPerfectAudit.gridValidation.issues.forEach(issue => {
+          pixelPerfectAuditResult.gridValidation.issues.forEach(issue => {
             console.log(`   - ${issue}`);
           });
         }
 
         // Show unified event data summary
         console.log('📋 UNIFIED EVENT DATA SUMMARY:');
-        console.log(`   - Total unified events: ${pixelPerfectAudit.unifiedData.length}`);
-        console.log(`   - Events with notes: ${pixelPerfectAudit.unifiedData.filter(e => e.hasNotes).length}`);
-        console.log(`   - Events with action items: ${pixelPerfectAudit.unifiedData.filter(e => e.hasActionItems).length}`);
-        console.log(`   - SimplePractice events: ${pixelPerfectAudit.unifiedData.filter(e => e.source === 'SimplePractice').length}`);
-        console.log(`   - Google Calendar events: ${pixelPerfectAudit.unifiedData.filter(e => e.source === 'Google Calendar').length}`);
+        console.log(`   - Total unified events: ${pixelPerfectAuditResult.unifiedData.length}`);
+        console.log(`   - Events with notes: ${pixelPerfectAuditResult.unifiedData.filter(e => e.hasNotes).length}`);
+        console.log(`   - Events with action items: ${pixelPerfectAuditResult.unifiedData.filter(e => e.hasActionItems).length}`);
+        console.log(`   - SimplePractice events: ${pixelPerfectAuditResult.unifiedData.filter(e => e.source === 'SimplePractice').length}`);
+        console.log(`   - Google Calendar events: ${pixelPerfectAuditResult.unifiedData.filter(e => e.source === 'Google Calendar').length}`);
 
         // Use validated and enhanced event data
-        validatedEvents = pixelPerfectAudit.unifiedData;
-        exportData = pixelPerfectAudit.exportData;
+        validatedEvents = pixelPerfectAuditResult.unifiedData;
+        exportData = pixelPerfectAuditResult.exportConfig;
 
         console.log('✅ AUDIT COMPLETE - Using validated and enhanced event data');
         console.log('='.repeat(80));
@@ -853,17 +865,21 @@ export default function Planner() {
     setSelectedCalendars(newSelected);
   };
 
-  // Filter events based on selected calendars
-  const currentEvents = state.events.filter(event => {
-    if (event.source === 'google') {
-      // Use calendarId for Google Calendar events (not sourceId which is the event ID)
-      const calendarId = (event as any).calendarId || event.sourceId;
-      const isSelected = selectedCalendars.has(calendarId);
-      return isSelected;
-    }
-    // Always show manual and SimplePractice events since there are no toggles for them
-    return true;
-  });
+  // Filter events based on selected calendars - moved to handleExportAction function
+  const getCurrentEvents = () => {
+    return state.events.filter(event => {
+      if (event.source === 'google') {
+        // Use calendarId for Google Calendar events (not sourceId which is the event ID)
+        const calendarId = (event as any).calendarId || event.sourceId;
+        const isSelected = selectedCalendars.has(calendarId);
+        return isSelected;
+      }
+      // Always show manual and SimplePractice events since there are no toggles for them
+      return true;
+    });
+  };
+  
+  const currentEvents = getCurrentEvents();
 
   const currentDateString = state.selectedDate.toISOString().split('T')[0];
   const currentDailyNotes = state.dailyNotes[currentDateString] || '';
