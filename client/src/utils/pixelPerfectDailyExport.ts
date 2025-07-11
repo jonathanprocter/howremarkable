@@ -66,8 +66,8 @@ const PIXEL_PERFECT_CONFIG = {
 
   // Time grid
   grid: {
-    timeColumnWidth: 120,  // Doubled from 60 to 120 for more space
-    mainAreaWidth: 2430,  // 2550 - 120 = 2430 (full width minus time column)
+    timeColumnWidth: 240,  // Doubled again from 120 to 240 for more space
+    mainAreaWidth: 2310,  // 2550 - 240 = 2310 (full width minus time column)
     rowHeight: 84,        // 84px each row
     totalRows: 36,        // All time slots 06:00-23:30
 
@@ -91,7 +91,7 @@ const PIXEL_PERFECT_CONFIG = {
   // Appointment styling
   appointments: {
     margin: 5,           // 5px margin from grid edges
-    width: 2340,         // Main area width minus 10px (2430 - 90)
+    width: 2220,         // Main area width minus 90px (2310 - 90)
 
     // Content layout
     singleColumn: {
@@ -105,7 +105,7 @@ const PIXEL_PERFECT_CONFIG = {
     },
 
     threeColumn: {
-      columnWidth: 780,  // 2340 / 3
+      columnWidth: 770,  // 2310 / 3
       headerFont: 28,    // Increased from 24
       bulletFont: 20,    // Increased from 16
       separatorColor: [0, 0, 0]
@@ -234,8 +234,8 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   const buttonX = 20;
   const buttonY = topRowY;
 
-  // Draw button with light grey background and border
-  pdf.setFillColor(245, 245, 245); // Light grey background
+  // Draw button with exact styling from specification
+  pdf.setFillColor(255, 255, 255); // White background
   pdf.setDrawColor(200, 200, 200); // Border grey
   pdf.setLineWidth(1);
   pdf.roundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 6, 6, 'FD');
@@ -325,11 +325,9 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   const statsY = topRowY + topRowHeight + 10; // Position below top row
   const statsHeight = 63;
 
-  // Draw full-width stats background - light grey covering entire width
+  // Draw full-width stats background - light grey covering entire width (NO BORDER)
   pdf.setFillColor(240, 240, 240);
-  pdf.setDrawColor(...config.colors.black);
-  pdf.setLineWidth(1);
-  pdf.rect(0, statsY, config.pageWidth, statsHeight, 'FD');
+  pdf.rect(0, statsY, config.pageWidth, statsHeight, 'F');
 
   // Statistics data matching screenshot
   const statsData = [
