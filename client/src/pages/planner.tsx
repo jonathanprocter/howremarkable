@@ -888,6 +888,37 @@ export default function Planner() {
             return;
           }
 
+        case 'Custom Weekly':
+          // Export custom weekly view with exact user specifications
+          try {
+            console.log('=== CUSTOM WEEKLY PDF EXPORT ===');
+            console.log('Week start:', state.currentWeek.startDate.toDateString());
+            console.log('Week end:', state.currentWeek.endDate.toDateString());
+            console.log('Total events:', validatedEvents.length);
+            console.log('🎯 Creating custom weekly PDF with user specifications...');
+
+            const { exportCustomWeeklyCalendar } = await import('../utils/customWeeklyExport');
+            await exportCustomWeeklyCalendar(
+              state.currentWeek.startDate,
+              state.currentWeek.endDate,
+              validatedEvents
+            );
+
+            toast({
+              title: "Custom Weekly Export Successful",
+              description: "Weekly calendar with your exact specifications downloaded!"
+            });
+            return;
+          } catch (weeklyError) {
+            console.error('Custom weekly PDF export error:', weeklyError);
+            toast({
+              title: "Custom Weekly Export Failed",
+              description: `Custom weekly export failed: ${weeklyError.message}`,
+              variant: "destructive"
+            });
+            return;
+          }
+
         case 'Pixel Perfect Weekly':
           // Export pixel-perfect weekly view matching dashboard exactly
           try {
