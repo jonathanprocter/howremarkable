@@ -9,7 +9,7 @@ import { generateTimeSlots } from './timeSlots';
 import { cleanEventTitle } from './textCleaner';
 import { extractDashboardStyles, logStyleComparison, DashboardStyles } from './dashboardStyleExtractor';
 import { performVisualComparison, extractPrintOptimizedStyles, logDetailedStyleComparison } from './pixelPerfectComparison';
-import { performPixelPerfectAudit, exportAuditResults } from './pixelPerfectAudit';
+import { runPixelPerfectAudit } from './pixelPerfectAudit';
 
 // Get source of truth styles from dashboard DOM
 const getDashboardStyles = (): DashboardStyles => {
@@ -579,14 +579,18 @@ export const exportTrulyPixelPerfectWeeklyPDF = async (
     // STEP 5: COMPREHENSIVE PIXEL-PERFECT AUDIT
     console.log('\n🔍 PERFORMING COMPREHENSIVE PIXEL-PERFECT AUDIT...');
     try {
-      const auditResults = await performPixelPerfectAudit(exactConfig);
-      exportAuditResults(auditResults);
+      const currentDate = new Date();
+      const currentEvents = (window as any).currentEvents || [];
+      const auditResults = await runPixelPerfectAudit(currentDate, currentEvents);
       
       console.log('\n📊 AUDIT SUMMARY:');
-      console.log(`   - Pixel-perfect score: ${auditResults.pixelDiffScore}%`);
-      console.log(`   - Elements measured: ${auditResults.measurements.length}`);
-      console.log(`   - Known compromises: ${auditResults.compromises.length}`);
+      console.log(`   - Pixel-perfect score: ${auditResults.percentage}%`);
+      console.log(`   - Issues found: ${auditResults.issues.length}`);
+      console.log(`   - Recommendations: ${auditResults.recommendations.length}`);
       console.log('   - Full audit results saved to localStorage');
+      
+      // Save audit results to localStorage
+      localStorage.setItem('pixelPerfectAuditResults', JSON.stringify(auditResults));
       
     } catch (auditError) {
       console.warn('⚠️ Pixel-perfect audit failed:', auditError);

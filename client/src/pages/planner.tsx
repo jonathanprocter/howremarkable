@@ -81,6 +81,64 @@ export default function Planner() {
     (window as any).selectedDate = state.selectedDate;
   }, [state.selectedDate]);
 
+  // Expose audit function to window context
+  useEffect(() => {
+    const initializeAudit = async () => {
+      try {
+        const { runPixelPerfectAudit } = await import('../utils/pixelPerfectAudit');
+        (window as any).testPixelPerfectAudit = async () => {
+          console.log('🔍 STARTING PIXEL-PERFECT AUDIT TEST FROM CONSOLE');
+          console.log('='.repeat(80));
+          
+          const currentDate = (window as any).selectedDate || new Date();
+          const currentEvents = (window as any).currentEvents || [];
+          
+          console.log(`📅 Auditing date: ${currentDate.toDateString()}`);
+          console.log(`📊 Total events: ${currentEvents.length}`);
+          
+          const result = await runPixelPerfectAudit(currentDate, currentEvents);
+          
+          console.log(`✅ Audit Complete - Score: ${result.score}/${result.maxScore} (${result.percentage}%)`);
+          console.log(`🔧 Issues Found: ${result.issues.length}`);
+          console.log(`📋 Recommendations: ${result.recommendations.length}`);
+          
+          // Show detailed results
+          console.log('\n🎯 PIXEL-PERFECT AUDIT RESULTS:');
+          console.log('='.repeat(50));
+          console.log(`📊 Overall Score: ${result.score}/${result.maxScore} (${result.percentage}%)`);
+          
+          if (result.issues.length > 0) {
+            console.log('\n⚠️ ISSUES FOUND:');
+            result.issues.forEach((issue, index) => {
+              console.log(`${index + 1}. [${issue.severity.toUpperCase()}] ${issue.description}`);
+              console.log(`   Expected: ${issue.expected}`);
+              console.log(`   Actual: ${issue.actual}`);
+            });
+          }
+          
+          if (result.recommendations.length > 0) {
+            console.log('\n💡 RECOMMENDATIONS:');
+            result.recommendations.forEach((rec, index) => {
+              console.log(`${index + 1}. ${rec}`);
+            });
+          }
+          
+          // Save results to localStorage
+          localStorage.setItem('pixelPerfectAuditResults', JSON.stringify(result));
+          
+          console.log('\n✅ Pixel-perfect audit completed! Results saved to localStorage.');
+          return result;
+        };
+        
+        console.log('🔍 Pixel-perfect audit function initialized');
+      } catch (error) {
+        console.error('❌ Failed to initialize audit function:', error);
+      }
+    };
+    
+    initializeAudit();
+  }, []);
+
   // Performance monitoring
   const {
     startRenderTiming,

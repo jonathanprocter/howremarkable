@@ -97,12 +97,13 @@ export const ExportToPDF = ({
       console.log('🔍 RUNNING STANDALONE PIXEL-PERFECT AUDIT...');
       console.log('='.repeat(50));
 
-      const { performPixelPerfectAudit, exportAuditResults } = await import('../../utils/pixelPerfectAudit');
-      const auditResults = await performPixelPerfectAudit();
-      exportAuditResults(auditResults);
+      const { runPixelPerfectAudit } = await import('../../utils/pixelPerfectAudit');
+      const currentDate = (window as any).selectedDate || new Date();
+      const currentEvents = (window as any).currentEvents || [];
+      const auditResults = await runPixelPerfectAudit(currentDate, currentEvents);
 
       // Display key results in an alert
-      alert(`Pixel-Perfect Audit Complete!\n\nScore: ${auditResults.pixelDiffScore}%\nElements measured: ${auditResults.measurements.length}\nKnown compromises: ${auditResults.compromises.length}\n\nFull results logged to console and saved to localStorage.`);
+      alert(`Pixel-Perfect Audit Complete!\n\nScore: ${auditResults.percentage}%\nIssues Found: ${auditResults.issues.length}\nRecommendations: ${auditResults.recommendations.length}\n\nFull results logged to console and saved to localStorage.`);
 
     } catch (error) {
       console.error('❌ Standalone audit failed:', error);
@@ -199,14 +200,91 @@ export const ExportToPDF = ({
           <p className="text-xs text-gray-600 mb-2">🔍 Quality Audit</p>
           <Button 
             variant="outline" 
-            onClick={() => {
-              console.log('🔍 RUNNING PIXEL-PERFECT AUDIT FROM UI...');
-              (window as any).testPixelPerfectAudit();
+            onClick={async () => {
+              console.log('🔍 RUNNING COMPREHENSIVE AUDIT WITH REAL EVENTS...');
+              
+              // Check for existing events first
+              const currentEvents = (window as any).currentEvents || [];
+              console.log(`📊 Current events count: ${currentEvents.length}`);
+              
+              // If no events, create sample data for comprehensive testing
+              if (currentEvents.length === 0) {
+                console.log('📊 Creating sample events for comprehensive audit test...');
+                
+                const sampleEvents = [
+                  {
+                    id: 'audit-test-1',
+                    title: 'Dan re: Supervision',
+                    startTime: new Date('2025-07-11T10:00:00'),
+                    endTime: new Date('2025-07-11T11:00:00'),
+                    source: 'google',
+                    notes: 'Review client progress\nDiscuss treatment goals',
+                    actionItems: 'Update treatment plan\nSchedule follow-up',
+                    calendarId: 'primary'
+                  },
+                  {
+                    id: 'audit-test-2',
+                    title: 'Nancy Grossman Appointment',
+                    startTime: new Date('2025-07-11T14:30:00'),
+                    endTime: new Date('2025-07-11T15:30:00'),
+                    source: 'simplepractice',
+                    notes: 'Initial consultation',
+                    actionItems: 'Complete intake forms',
+                    calendarId: 'simplepractice'
+                  },
+                  {
+                    id: 'audit-test-3',
+                    title: 'Team Meeting',
+                    startTime: new Date('2025-07-11T16:00:00'),
+                    endTime: new Date('2025-07-11T17:00:00'),
+                    source: 'google',
+                    notes: 'Weekly team sync',
+                    actionItems: 'Prepare presentation',
+                    calendarId: 'primary'
+                  }
+                ];
+                
+                (window as any).currentEvents = sampleEvents;
+                console.log(`✅ Created ${sampleEvents.length} sample events for testing`);
+              }
+              
+              // Run comprehensive audit
+              console.log('🔍 Running comprehensive audit with events...');
+              const result = await (window as any).testPixelPerfectAudit();
+              
+              // Analyze results
+              console.log('\n🎯 COMPREHENSIVE AUDIT ANALYSIS:');
+              console.log('=====================================');
+              
+              if (result) {
+                console.log(`📊 Overall Score: ${result.percentage}%`);
+                console.log(`🔧 Issues Found: ${result.issues.length}`);
+                console.log(`📋 Recommendations: ${result.recommendations.length}`);
+                
+                if (result.issues.length > 0) {
+                  console.log('\n⚠️ ISSUES FOUND:');
+                  result.issues.forEach((issue, index) => {
+                    console.log(`${index + 1}. [${issue.severity.toUpperCase()}] ${issue.description}`);
+                    console.log(`   Expected: ${issue.expected}`);
+                    console.log(`   Actual: ${issue.actual}`);
+                    console.log(`   Fix: ${issue.fixRecommendation}`);
+                  });
+                }
+                
+                if (result.recommendations.length > 0) {
+                  console.log('\n💡 RECOMMENDATIONS:');
+                  result.recommendations.forEach((rec, index) => {
+                    console.log(`${index + 1}. ${rec}`);
+                  });
+                }
+              }
+              
+              console.log('\n🎯 COMPREHENSIVE AUDIT COMPLETE!');
             }}
             className="w-full text-xs mb-2 bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
             size="sm"
           >
-            🔍 Run Pixel-Perfect Audit
+            🔍 Run Comprehensive Audit
           </Button>
         </div>
     </div>
