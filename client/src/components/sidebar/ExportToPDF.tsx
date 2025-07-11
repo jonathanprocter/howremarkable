@@ -116,17 +116,17 @@ export const ExportToPDF = ({
         </div>
       </div>
       <div className="border-t pt-3 mt-3">
-          <p className="text-xs text-gray-600 mb-2">🎯 Weekly Export</p>
+          <p className="text-xs text-gray-600 mb-2">📅 Weekly Export</p>
           <Button 
             variant="outline" 
             onClick={() => {
-              console.log('🎯 EXACT WEEKLY SPEC EXPORT - PRECISE SPECIFICATIONS!');
+              console.log('🎯 PERFECT WEEKLY EXPORT - OPTIMIZED TYPOGRAPHY!');
               onExportCurrentView('Exact Weekly Spec');
             }}
-            className="w-full text-xs mb-2 bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
+            className="w-full text-xs mb-2 bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
             size="sm"
           >
-            📐 Exact Weekly Spec (3300x2550px)
+            📅 Export Weekly Calendar
           </Button>
         </div>
     </div>

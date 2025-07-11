@@ -769,17 +769,18 @@ The application uses three main entities:
   - **Proportional Scaling**: Implemented intelligent scaling up to 300% for appointment boxes
   - **Text Fitting**: Enhanced text measurement and truncation for optimal box utilization
   - **RESULT**: Highly visible, proportionally-sized appointment text that maximizes readability within appointment boxes
-- July 11, 2025. **MAXIMUM FONT SIZE INCREASE AND EMOJI REMOVAL**: Further enhanced font sizes and cleaned up appointment titles:
-  - **exactWeeklySpecExport.ts**: Further increased font ranges for maximum readability:
-    - Title fonts: 24-48pt (extremely large increase from 18-36pt)
-    - Source fonts: 18-36pt (extremely large increase from 14-28pt)
-    - Time fonts: 20-40pt (extremely large increase from 16-32pt)
-  - **exactGridPDFExport.ts**: Further increased font ranges for maximum visibility:
-    - Title fonts: 20-40pt (extremely large increase from 16-32pt)
-    - Time fonts: 18-36pt (extremely large increase from 14-28pt)
-  - **Emoji Removal**: Integrated cleanEventTitle function to remove lock emojis and problematic characters from all appointment titles
-  - **Clean Text Processing**: Added comprehensive text cleaning to remove 🔒 symbols, corrupted characters, and other problematic elements
-  - **RESULT**: Extremely large, clean appointment text without emojis or corrupted characters for maximum readability
+- July 11, 2025. **FINAL PERFECT WEEKLY EXPORT CONFIGURATION**: Achieved optimal font sizing and typography for weekly PDF exports:
+  - **Compact Font Sizes**: Optimized for space efficiency while maintaining readability:
+    - 30-minute appointments: 6pt/4pt/5pt (title/source/time)
+    - 60-minute appointments: 7pt/5pt/6pt (title/source/time)
+    - 90-minute appointments: 8pt/6pt/7pt (title/source/time)
+  - **Enhanced Visual Hierarchy**: Bold top-of-hour time labels (06:00, 07:00, etc.) with normal half-hour labels
+  - **Optimized Spacing**: Tight line spacing (10%) and minimal section gaps (1px) for maximum content density
+  - **Text Wrapping Preservation**: All appointment information displayed without truncation
+  - **Professional Typography**: Bold titles, normal source labels, bold time ranges for clear hierarchy
+  - **Dashboard Simplification**: Made "Exact Weekly Spec" the single weekly export option with user-friendly naming
+  - **USER CONFIRMED PERFECT**: Final configuration approved for optimal readability and space utilization
+  - **RESULT**: Perfect weekly export system with balanced, readable fonts that fit properly in appointment boxes
 
 ## User Preferences
 
