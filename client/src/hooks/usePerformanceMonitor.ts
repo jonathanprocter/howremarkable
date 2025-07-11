@@ -79,7 +79,7 @@ export const usePerformanceMonitor = (
     }
 
     // Log detailed metrics in development
-    if (import.meta.env.DEV && renderCount.current % 10 === 0) {
+    if (process.env.NODE_ENV === 'development' && renderCount.current % 10 === 0) {
       console.log(`Performance Metrics for ${componentName}:`, newMetrics);
     }
 

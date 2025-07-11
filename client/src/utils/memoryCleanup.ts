@@ -1,51 +1,33 @@
-export function performMemoryCleanup() {
+
+export const performMemoryCleanup = () => {
   try {
-    // Clear PDF export caches
-    if ('caches' in window) {
-      caches.keys().then(names => {
-        names.forEach(name => {
-          if (name.includes('pdf') || name.includes('export') || name.includes('calendar')) {
-            caches.delete(name);
-          }
-        });
-      });
-    }
-
-    // Clear large objects from memory
-    const largeDivs = document.querySelectorAll('div[style*="display: none"]');
-    largeDivs.forEach(div => {
-      if (div.innerHTML.length > 5000) { // More aggressive threshold
-        div.innerHTML = '';
-      }
-    });
-
-    // Clear any temporary canvas elements
-    const tempCanvases = document.querySelectorAll('canvas[data-temp="true"]');
-    tempCanvases.forEach(canvas => canvas.remove());
-
-    // Clear event listener cache if it exists
-    if (window.eventListenerCache) {
-      window.eventListenerCache.clear();
-    }
-
-    // Force garbage collection if available
-    if (window.gc) {
+    // Clean up any lingering event listeners
+    const oldElements = document.querySelectorAll('[data-cleanup]');
+    oldElements.forEach(el => el.remove());
+    
+    // Force garbage collection if available (development only)
+    if (window.gc && process.env.NODE_ENV === 'development') {
       window.gc();
     }
-
-    // Clean up any lingering PDF blobs
-    if (window.pdfBlobCache) {
-      window.pdfBlobCache.forEach(url => URL.revokeObjectURL(url));
-      window.pdfBlobCache.clear();
-    }
-
-    console.log('✅ Enhanced memory cleanup completed');
+    
+    // Clear any cached blob URLs
+    const blobUrls = (window as any).__blobUrls || [];
+    blobUrls.forEach((url: string) => {
+      try {
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        // Ignore errors
+      }
+    });
+    (window as any).__blobUrls = [];
+    
+    console.log('✅ Memory cleanup completed');
   } catch (error) {
-    console.warn('Memory cleanup failed:', error);
+    console.warn('Memory cleanup warning:', error);
   }
-}
+};
 
-// Auto cleanup every 5 minutes
+// Run cleanup periodically
 if (typeof window !== 'undefined') {
-  setInterval(performMemoryCleanup, 5 * 60 * 1000);
+  setInterval(performMemoryCleanup, 5 * 60 * 1000); // Every 5 minutes
 }

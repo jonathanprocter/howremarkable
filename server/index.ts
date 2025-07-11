@@ -26,27 +26,10 @@ const sessionStore = new PgSession({
   schemaName: 'public' // Explicitly set schema name
 });
 
-// Handle session store errors with better error handling
+// Handle session store errors
 sessionStore.on('error', (err) => {
   console.error('Session store error:', err);
-  // Log but don't crash the server
-  
-  // Try to reconnect if needed
-  setTimeout(() => {
-    console.log('Attempting session store recovery...');
-    try {
-      // Test the session store connection
-      sessionStore.get('test-session-id', (testErr) => {
-        if (testErr) {
-          console.error('Session store still not responding:', testErr);
-        } else {
-          console.log('✅ Session store recovery successful');
-        }
-      });
-    } catch (recoveryError) {
-      console.error('Session store recovery failed:', recoveryError);
-    }
-  }, 5000);
+  // Don't crash the server on session store errors
 });
 
 // Add connection error handling
@@ -61,8 +44,8 @@ sessionStore.on('disconnect', () => {
 app.use(session({
   store: sessionStore,
   secret: process.env.SESSION_SECRET || 'remarkable-planner-secret-key-2025',
-  resave: false, // Don't force session save on each request
-  saveUninitialized: false, // Don't create sessions for anonymous users
+  resave: false, // Don't save session if unmodified
+  saveUninitialized: true, // Create sessions for anonymous users to enable consistent session IDs
   rolling: false, // Don't reset expiration on each request
   name: 'connect.sid', // Use standard session name for better compatibility
   cookie: {
@@ -133,25 +116,7 @@ app.use((req, res, next) => {
   // Handle uncaught exceptions
   process.on('uncaughtException', (error) => {
     console.error('Uncaught Exception:', error);
-    console.error('Stack:', error.stack);
     // Don't exit the process, just log the error
-  });
-
-  // Handle graceful shutdown
-  process.on('SIGTERM', () => {
-    console.log('SIGTERM received, shutting down gracefully...');
-    server.close(() => {
-      console.log('Server closed');
-      process.exit(0);
-    });
-  });
-
-  process.on('SIGINT', () => {
-    console.log('SIGINT received, shutting down gracefully...');
-    server.close(() => {
-      console.log('Server closed');
-      process.exit(0);
-    });
   });
 
   // importantly only setup vite in development and after
@@ -179,17 +144,8 @@ app.use((req, res, next) => {
     }
   });
   
-  server.on('listening', () => {
-    console.log(`✅ Server is actually listening on port ${port}`);
-  });
-  
-  server.listen(port, "0.0.0.0", (err?: any) => {
-    if (err) {
-      console.error('Failed to start server:', err);
-      process.exit(1);
-    }
+  server.listen(port, "0.0.0.0", () => {
     log(`serving on port ${port}`);
-    console.log(`✅ Server is ready and accepting connections on http://0.0.0.0:${port}`);
   });
   
   } catch (error) {

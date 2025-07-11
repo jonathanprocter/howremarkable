@@ -9,18 +9,6 @@ import { google } from "googleapis";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
-  // Request timeout middleware
-  app.use((req, res, next) => {
-    // Set timeout for all requests (15 seconds)
-    res.setTimeout(15000, () => {
-      console.log('Request timeout for:', req.path);
-      if (!res.headersSent) {
-        res.status(408).json({ error: 'Request timeout' });
-      }
-    });
-    next();
-  });
-  
   // Initialize passport BEFORE configuring strategies
   app.use(passport.initialize());
   app.use(passport.session());
@@ -85,83 +73,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }));
 
   passport.serializeUser((user: any, done) => {
-    // Only log serialization on first occurrence or errors
-    if (!user.serializationLogged) {
-      console.log("✅ Serializing user:", { id: user.id, email: user.email });
-      user.serializationLogged = true;
-    }
-    done(null, user.id); // Store only user ID in session for security
+    console.log("✅ Serializing user:", { id: user.id, email: user.email });
+    done(null, user); // Store entire user object in session
   });
 
-  // Cache for user sessions to reduce database calls
-  const userCache = new Map();
-  const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-
-  passport.deserializeUser(async (id: string, done) => {
-    // Validate ID first
-    if (!id || id === 'undefined' || id === 'null' || id === 'NaN') {
-      console.error("❌ Invalid user ID for deserialization:", id);
-      return done(null, false);
-    }
-
-    // Check cache first
-    const cached = userCache.get(id);
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      return done(null, cached.user);
-    }
-
-    try {
-      // For development, always return user object for ID 1
-      if (id === '1') {
-        const user = {
-          id: '1',
-          googleId: '116610633375195855574',
-          email: 'jonathan.procter@gmail.com',
-          name: 'Jonathan Procter',
-          accessToken: 'dev-access-token',
-          refreshToken: 'dev-refresh-token'
-        };
-        
-        // Cache the user
-        userCache.set(id, { user, timestamp: Date.now() });
-        done(null, user);
-      } else {
-        // For production, fetch user from database
-        const parsedId = parseInt(id);
-        if (isNaN(parsedId)) {
-          console.error("❌ Cannot parse user ID:", id);
-          return done(null, false);
-        }
-        
-        const dbUser = await storage.getUserById(parsedId);
-        if (dbUser) {
-          const user = {
-            id: dbUser.id.toString(),
-            googleId: dbUser.googleId,
-            email: dbUser.email,
-            name: dbUser.name,
-            accessToken: 'stored-access-token',
-            refreshToken: 'stored-refresh-token'
-          };
-          
-          // Cache the user
-          userCache.set(id, { user, timestamp: Date.now() });
-          done(null, user);
-        } else {
-          done(null, false);
-        }
-      }
-    } catch (error) {
-      console.error("❌ Error deserializing user:", error);
-      done(null, false);
-    }
+  passport.deserializeUser((user: any, done) => {
+    console.log("✅ Deserializing user:", { id: user.id, email: user.email });
+    done(null, user); // Return entire user object from session
   });
 
-  // Session debugging middleware (minimal logging)
+  // Session debugging middleware (reduced logging)
   app.use((req, res, next) => {
-    // Only log critical session issues, not every request
-    if (req.path.startsWith('/api/') && !req.user && req.path !== '/api/auth/status') {
-      console.log(`⚠️ Unauthenticated API call: ${req.method} ${req.path}`);
+    // Only log session debug for non-status endpoints to reduce spam
+    if (req.path.startsWith('/api/') && !req.path.includes('/auth/status')) {
+      console.log(`🔍 Session Debug [${req.method} ${req.path}]: User=${!!req.user}, Session=${req.sessionID.slice(0,8)}...`);
     }
     next();
   });
@@ -243,15 +168,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/auth/status", (req, res) => {
-    // Only log when there are authentication issues
-    if (!req.user && req.query.debug === 'true') {
-      console.log("=== AUTH STATUS DEBUG ===");
-      console.log("Session ID:", req.sessionID);
-      console.log("Session exists:", !!req.session);
-      console.log("User in request:", !!req.user);
-      console.log("Session passport:", req.session.passport);
-      console.log("Session cookie:", req.session.cookie);
-    }
+    console.log("=== AUTH STATUS DEBUG ===");
+    console.log("Session ID:", req.sessionID);
+    console.log("Session exists:", !!req.session);
+    console.log("User in request:", !!req.user);
+    console.log("User details:", req.user ? { id: req.user.id, email: req.user.email } : null);
+    console.log("Session passport:", req.session.passport);
+    console.log("Session cookie:", req.session.cookie);
     
     res.json({ 
       authenticated: !!req.user,
@@ -279,33 +202,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       domain: process.env.REPLIT_DEV_DOMAIN,
       callbackUrl: `https://${process.env.REPLIT_DEV_DOMAIN}/api/auth/google/callback`
     });
-  });
-
-  // Health check endpoint
-  app.get("/api/health", (req, res) => {
-    const memUsage = process.memoryUsage();
-    const healthData = {
-      status: "healthy", 
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      memory: {
-        rss: `${Math.round(memUsage.rss / 1024 / 1024)}MB`,
-        heapUsed: `${Math.round(memUsage.heapUsed / 1024 / 1024)}MB`,
-        heapTotal: `${Math.round(memUsage.heapTotal / 1024 / 1024)}MB`,
-        external: `${Math.round(memUsage.external / 1024 / 1024)}MB`
-      },
-      nodeVersion: process.version,
-      platform: process.platform,
-      pid: process.pid
-    };
-    
-    // Check if memory usage is getting high
-    if (memUsage.heapUsed > 500 * 1024 * 1024) { // 500MB
-      healthData.status = "warning";
-      healthData.warning = "High memory usage detected";
-    }
-    
-    res.json(healthData);
   });
 
   // Test session persistence endpoint
@@ -341,6 +237,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Development authentication bypass
   app.post("/api/auth/dev-login", async (req, res) => {
     try {
+      console.log("🔧 DEV LOGIN: Creating development user session...");
+      
+      // Use hardcoded user ID 1 for development (known to exist)
+      console.log("Using existing user ID 1 for development login");
+      
       // Create user object for session without database lookup
       const user = {
         id: '1',
@@ -358,6 +259,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(500).json({ error: "Failed to log in development user" });
         }
         
+        console.log("✅ DEV LOGIN: User logged in successfully");
+        console.log("Session ID:", req.sessionID);
+        console.log("User in session:", !!req.user);
+        
         // Force session save
         req.session.save((saveErr) => {
           if (saveErr) {
@@ -365,12 +270,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             return res.status(500).json({ error: "Failed to save session" });
           }
           
-          // Only log success on first login or errors
-          if (!req.session.devLoginCompleted) {
-            console.log("✅ DEV LOGIN: Development user authenticated successfully");
-            req.session.devLoginCompleted = true;
-          }
-          
+          console.log("✅ DEV LOGIN: Session saved successfully");
           res.json({ 
             success: true, 
             user: { id: user.id, email: user.email, name: user.name },
@@ -387,7 +287,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Google Calendar API - Fetch Events
   app.get("/api/calendar/events", async (req, res) => {
     try {
+      // Since API usage stats show authentication is working, try to fetch with stored credentials
+      console.log("Calendar events requested - checking authentication...");
+      console.log("Session user:", !!req.user);
+      
       if (!req.user) {
+        console.log("No session user found, but API calls are working based on usage stats");
         return res.status(401).json({ 
           error: "Session authentication required",
           message: "Please authenticate with Google first"
@@ -733,18 +638,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/events/:userId", async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
-      const { startDate, endDate, limit = 100, offset = 0 } = req.query;
       
       // Validate user ID
       if (isNaN(userId) || userId <= 0) {
         return res.status(400).json({ error: "Invalid user ID" });
-      }
-      
-      // Validate pagination parameters
-      const limitNum = parseInt(limit as string);
-      const offsetNum = parseInt(offset as string);
-      if (isNaN(limitNum) || limitNum > 500) {
-        return res.status(400).json({ error: "Invalid limit parameter (max 500)" });
       }
       
       // Debug authentication for events endpoint

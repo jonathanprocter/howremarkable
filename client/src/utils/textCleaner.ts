@@ -1,45 +1,38 @@
-export const cleanEventTitle = (title: string): string => {
-  if (!title) return '';
+export const cleanText = (text: string): string => {
+  if (!text) return '';
 
-  return title
-    .replace(/🔒\s*/g, '') // Remove lock symbols
-    .replace(/[\u{1F500}-\u{1F6FF}]/gu, '') // Remove transport and map symbols
-    .replace(/[\u{1F300}-\u{1F5FF}]/gu, '') // Remove misc symbols and pictographs
-    .replace(/[\u{1F600}-\u{1F64F}]/gu, '') // Remove emoticons
-    .replace(/[\u{1F680}-\u{1F6FF}]/gu, '') // Remove transport symbols
-    .replace(/[\u{2600}-\u{26FF}]/gu, '') // Remove miscellaneous symbols
-    .replace(/[\u{1F1E0}-\u{1F1FF}]/gu, '') // Remove flags
+  return text
+    .replace(/🔒\s*/g, '') // Remove lock symbol and following space
+    .replace(/[\u{1F500}-\u{1F6FF}]/gu, '') // Remove emoji symbols
+    .replace(/[\u{2600}-\u{26FF}]/gu, '') // Remove misc symbols
+    .replace(/[\u{2700}-\u{27BF}]/gu, '') // Remove dingbats
+    .replace(/[\u{1F300}-\u{1F5FF}]/gu, '') // Remove more emoji ranges
     .replace(/Ø=ÜÅ/g, '') // Remove corrupted symbols
-    .replace(/Ø=Ý/g, '') // Remove corrupted symbols
-    .replace(/!•/g, '') // Remove broken navigation symbols
-    .replace(/!•\s*/g, '') // Remove broken navigation symbols with spaces
-    .replace(/Page \d+ of \d+/g, '') // Remove page numbers
-    .replace(/Back to Weekly Overview/g, '') // Remove navigation text
-    .replace(/Weekly Overview/g, '') // Remove navigation text
-    .replace(/Sunday Tuesday/g, '') // Remove broken day text
-    .replace(/[\u{2022}\u{2023}\u{2024}\u{2025}\u{25E6}\u{2043}\u{2219}]/gu, '') // Remove all bullet points
-    .replace(/[^\x20-\x7E\u00A0-\u00FF\u2013\u2014\u2018\u2019\u201C\u201D]/g, '') // Keep ASCII, Latin-1, and common punctuation
+    .replace(/Ø=Ý/g, '') // Remove more corrupted symbols
+    .replace(/[!•]/g, '') // Remove exclamation and bullet points
     .replace(/\s+/g, ' ') // Normalize spaces
     .trim();
 };
 
-export function cleanAllEventTitles(events: any[]): any[] {
-  return events.map(event => ({
-    ...event,
-    title: cleanEventTitle(event.title)
-  }));
-}
+export const cleanEventTitle = (title: string): string => {
+  if (!title) return '';
 
-export function cleanText(text: string): string {
-  if (!text) return '';
-
-  return text
-    .replace(/🔒\s*/g, '')
-    .replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/gu, '')
-    .replace(/[^\x20-\x7E\u00A0-\u00FF\n\r]/g, '')
-    .replace(/\s+/g, ' ')
+  // Remove lock symbols and other problematic characters
+  return title
+    .replace(/🔒\s*/g, '') // Remove lock emoji
+    .replace(/Ø=[\w\s]*/g, '') // Remove corrupted text patterns
+    .replace(/!•/g, '') // Remove corrupted symbols
+    .replace(/[^\x00-\x7F]/g, (char) => {
+      // Keep common unicode characters but remove problematic ones
+      const code = char.charCodeAt(0);
+      if (code >= 0x2600 && code <= 0x26FF) return ''; // Remove misc symbols
+      if (code >= 0x1F600 && code <= 0x1F64F) return ''; // Remove emoticons
+      if (code >= 0x1F300 && code <= 0x1F5FF) return ''; // Remove misc symbols
+      if (code >= 0x1F680 && code <= 0x1F6FF) return ''; // Remove transport symbols
+      return char; // Keep other unicode characters
+    })
     .trim();
-}
+};
 
 // Clean all text content in the DOM
 export const cleanAllTextContent = () => {

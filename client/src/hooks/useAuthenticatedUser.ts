@@ -30,7 +30,6 @@ export const useAuthenticatedUser = (): UseAuthenticatedUserReturn => {
 
       const response = await fetch('/api/auth/status', {
         signal: controller.signal,
-        credentials: 'include', // Include cookies for session
         headers: {
           'Content-Type': 'application/json',
         },
@@ -39,10 +38,7 @@ export const useAuthenticatedUser = (): UseAuthenticatedUserReturn => {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        // If status check fails, try auto-login immediately
-        console.log('Auth status check failed, attempting auto-login...');
-        await performAutoLogin();
-        return;
+        throw new Error(`Authentication check failed: ${response.status}`);
       }
 
       const authData = await response.json();
@@ -52,7 +48,23 @@ export const useAuthenticatedUser = (): UseAuthenticatedUserReturn => {
       } else {
         // If not authenticated, try development auto-login
         console.log('Not authenticated, attempting auto-login...');
-        await performAutoLogin();
+        try {
+          const devLoginResponse = await fetch('/api/auth/dev-login', { 
+            method: 'POST',
+            credentials: 'include'
+          });
+          if (devLoginResponse.ok) {
+            const devResult = await devLoginResponse.json();
+            if (devResult.success) {
+              console.log('Auto-login successful');
+              setUser(devResult.user);
+              return; // Successfully logged in
+            }
+          }
+        } catch (autoLoginError) {
+          console.log('Auto-login failed:', autoLoginError);
+        }
+        setUser(null);
       }
     } catch (err) {
       if (err.name === 'AbortError') {
@@ -60,41 +72,10 @@ export const useAuthenticatedUser = (): UseAuthenticatedUserReturn => {
       } else {
         setError(err instanceof Error ? err.message : 'Failed to check authentication');
       }
-      // Even on error, try auto-login
-      await performAutoLogin();
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const performAutoLogin = async () => {
-    try {
-      // Check if we've already attempted auto-login recently
-      const lastAutoLogin = localStorage.getItem('lastAutoLogin');
-      const now = Date.now();
-      
-      if (lastAutoLogin && now - parseInt(lastAutoLogin) < 30000) { // 30 seconds
-        setUser(null);
-        return;
-      }
-      
-      localStorage.setItem('lastAutoLogin', now.toString());
-      
-      const devLoginResponse = await fetch('/api/auth/dev-login', { 
-        method: 'POST',
-        credentials: 'include'
-      });
-      if (devLoginResponse.ok) {
-        const devResult = await devLoginResponse.json();
-        if (devResult.success) {
-          setUser(devResult.user);
-          return;
-        }
-      }
-    } catch (autoLoginError) {
-      // Silent fail for auto-login attempts
-    }
-    setUser(null);
   };
 
   useEffect(() => {

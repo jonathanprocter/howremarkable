@@ -82,7 +82,6 @@ export const useCalendar = () => {
   useEffect(() => {
     const targetDate = new Date(2025, 6, 7); // July 7, 2025
     setCurrentDate(targetDate);
-    updateCurrentWeek(targetDate, state.events);
   }, []);
 
   // Persist manual events to localStorage whenever they change

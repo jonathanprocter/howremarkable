@@ -25,14 +25,6 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   componentDidCatch(error: Error, errorInfo: any) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
 
-    // Clean up any problematic DOM elements
-    try {
-      const problematicElements = document.querySelectorAll('[data-error="true"]');
-      problematicElements.forEach(el => el.remove());
-    } catch (cleanupError) {
-      console.warn('Error cleanup failed:', cleanupError);
-    }
-
     this.setState({
       error,
       errorInfo
@@ -44,7 +36,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     }
 
     // Report to error tracking service in production
-    if (import.meta.env.PROD) {
+    if (process.env.NODE_ENV === 'production') {
       // Example: reportError(error, errorInfo);
     }
   }
@@ -76,7 +68,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               An unexpected error occurred. Please try refreshing the page or contact support if the problem persists.
             </p>
 
-            {import.meta.env.DEV && this.state.error && (
+            {process.env.NODE_ENV === 'development' && this.state.error && (
               <details className="mb-4 p-3 bg-gray-100 rounded text-sm">
                 <summary className="cursor-pointer font-medium text-gray-700 mb-2">
                   Error Details (Development)
