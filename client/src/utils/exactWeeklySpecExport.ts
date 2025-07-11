@@ -343,24 +343,24 @@ function drawExactAppointments(pdf: jsPDF, weekStartDate: Date, events: Calendar
     const availableHeight = height - (padding * 2);
     const availableWidth = width - (padding * 2);
     
-    // Significantly increased font sizes for better readability
+    // Balanced font sizes for optimal readability and space utilization
     let titleFontSize, sourceFontSize, timeFontSize;
     
     if (durationInMinutes <= 30) {
-      // 30-minute appointments: readable fonts even in small spaces
-      titleFontSize = 8;  // Much larger for title visibility
-      sourceFontSize = 6; // Readable source labels
+      // 30-minute appointments: smaller but readable fonts for compact spaces
+      titleFontSize = 9;  // Readable titles in small spaces
+      sourceFontSize = 6; // Compact source labels
       timeFontSize = 7;   // Clear time display
     } else if (durationInMinutes >= 90) {
-      // 90-minute appointments: large fonts with plenty of space
-      titleFontSize = 14; // Very large and bold titles
-      sourceFontSize = 10; // Clear source identification
-      timeFontSize = 12;  // Prominent time display
+      // 90-minute appointments: larger fonts with ample space
+      titleFontSize = 12; // Prominent titles as requested
+      sourceFontSize = 8; // Clear source identification as requested
+      timeFontSize = 9;   // Time ranges as requested
     } else {
-      // 60-minute appointments: well-sized fonts with text wrapping
-      titleFontSize = 11; // Large, readable titles
-      sourceFontSize = 8;  // Good source visibility
-      timeFontSize = 10;  // Clear time ranges
+      // 60-minute appointments: balanced fonts with text wrapping
+      titleFontSize = 12; // Standard title size as requested
+      sourceFontSize = 8; // Standard source size as requested
+      timeFontSize = 9;   // Standard time size as requested
     }
     
     // Calculate starting position for text with better spacing for wrapped lines
@@ -413,10 +413,10 @@ function drawExactAppointments(pdf: jsPDF, weekStartDate: Date, events: Calendar
     pdf.setFontSize(titleFontSize);
     const titleLines = wrapText(title, titleFontSize, availableWidth);
     
-    // Draw title lines with proper spacing for larger fonts
+    // Draw title lines with optimized spacing
     pdf.setTextColor(...SPEC.BLACK);
     let currentY = titleY;
-    const lineHeight = titleFontSize * 1.3; // 30% line spacing for readability
+    const lineHeight = titleFontSize * 1.2; // 20% line spacing for balanced readability
     
     for (let i = 0; i < titleLines.length && currentY < y + height - padding; i++) {
       pdf.text(titleLines[i], x + padding, currentY);
@@ -428,9 +428,9 @@ function drawExactAppointments(pdf: jsPDF, weekStartDate: Date, events: Calendar
     pdf.setFontSize(sourceFontSize);
     const sourceLines = wrapText(source, sourceFontSize, availableWidth);
     
-    // Calculate dynamic sourceY based on title lines with better spacing
-    let dynamicSourceY = titleY + (titleLines.length * lineHeight) + 3;
-    const sourceLineHeight = sourceFontSize * 1.3; // Improved spacing for readability
+    // Calculate dynamic sourceY based on title lines with balanced spacing
+    let dynamicSourceY = titleY + (titleLines.length * lineHeight) + 2;
+    const sourceLineHeight = sourceFontSize * 1.2; // Balanced spacing for readability
     
     for (let i = 0; i < sourceLines.length && dynamicSourceY < y + height - padding; i++) {
       pdf.text(sourceLines[i], x + padding, dynamicSourceY);
@@ -442,9 +442,9 @@ function drawExactAppointments(pdf: jsPDF, weekStartDate: Date, events: Calendar
     pdf.setFontSize(timeFontSize);
     const timeLines = wrapText(timeText, timeFontSize, availableWidth);
     
-    // Calculate dynamic timeY based on source lines with better spacing
-    let dynamicTimeY = dynamicSourceY + 3;
-    const timeLineHeight = timeFontSize * 1.3; // Improved spacing for readability
+    // Calculate dynamic timeY based on source lines with balanced spacing
+    let dynamicTimeY = dynamicSourceY + 2;
+    const timeLineHeight = timeFontSize * 1.2; // Balanced spacing for readability
     
     for (let i = 0; i < timeLines.length && dynamicTimeY < y + height - padding; i++) {
       pdf.text(timeLines[i], x + padding, dynamicTimeY);
