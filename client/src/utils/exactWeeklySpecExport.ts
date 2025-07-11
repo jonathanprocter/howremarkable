@@ -228,7 +228,8 @@ function drawExactTable(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent[]
       
       // Time column text - perfectly centered both horizontally and vertically
       if (col === 0) {
-        pdf.setFont('helvetica', 'normal');
+        // Bold font for top-of-hour times, normal for half-hour times
+        pdf.setFont('helvetica', slot.isTopHour ? 'bold' : 'normal');
         pdf.setFontSize(fontToUse * SCALE);
         pdf.setTextColor(...SPEC.BLACK);
         
