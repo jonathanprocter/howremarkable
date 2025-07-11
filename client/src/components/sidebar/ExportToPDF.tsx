@@ -79,99 +79,17 @@ export const ExportToPDF = ({
     <div className="sidebar-section">
       <h3 className="text-sm font-semibold mb-3 text-gray-900">Export Options</h3>
 
-      {/* Debug Export Section */}
+      {/* Daily View Export */}
       <div className="mb-4">
-        <h4 className="text-xs font-medium text-red-700 mb-2">🐛 Debug Exports</h4>
-        <div className="space-y-1">
-          <button
-            onClick={() => {
-              console.log('🔍 ENHANCED PIXEL-PERFECT AUDIT TEST BUTTON CLICKED!');
-              onExportCurrentView('Enhanced Pixel Perfect Audit Test');
-            }}
-            className="w-full text-xs bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 border rounded px-2 py-1 font-medium"
-            style={{ pointerEvents: 'auto', zIndex: 9999 }}
-          >
-            🔍 Export + Audit
-          </button>
-          <button
-            onClick={runStandaloneAudit}
-            className="w-full text-xs bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 border rounded px-2 py-1 font-medium"
-            style={{ pointerEvents: 'auto', zIndex: 9999 }}
-          >
-            📊 Audit Only (No Export)
-          </button>
-          <button
-            onClick={() => {
-              console.log('🟢 HTML BUTTON CLICKED!');
-              alert('Button clicked!');
-              testExport();
-            }}
-            className="w-full text-xs bg-red-50 border-red-200 text-red-700 hover:bg-red-100 border rounded px-2 py-1"
-            style={{ pointerEvents: 'auto', zIndex: 9999 }}
-          >
-            🔍 Test Export (Debug)
-          </button>
-          <Button 
-            variant="outline" 
-            onClick={() => onExportCurrentView('JSON Export')}
-            className="w-full text-xs bg-yellow-50 border-yellow-200 text-yellow-700 hover:bg-yellow-100"
-            size="sm"
-          >
-            📄 JSON Export
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => onExportCurrentView('CSV Export')}
-            className="w-full text-xs bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
-            size="sm"
-          >
-            📊 CSV Export
-          </Button>
-        </div>
-      </div>
-
-      {/* Standard Text Exports */}
-      <div className="mb-4">
-        <h4 className="text-xs font-medium text-gray-700 mb-2">📝 Text Exports</h4>
+        <h4 className="text-xs font-medium text-gray-700 mb-2">📅 Daily View</h4>
         <div className="space-y-1">
           <Button 
             variant="outline" 
-            onClick={() => onExportCurrentView('Current View')}
-            className="w-full text-xs"
-            size="sm"
-          >
-            📄 Export Current View
-          </Button>
-        </div>
-      </div>
-
-      {/* Perfect Dashboard Exports */}
-      <div className="mb-4">
-        <h4 className="text-xs font-medium text-emerald-700 mb-2">🎯 Dashboard Perfect Match</h4>
-        <div className="space-y-1">
-          <Button 
-            variant="outline" 
-            onClick={() => onExportCurrentView('Pixel Perfect Daily')}
-            className="w-full text-xs bg-red-50 border-red-200 text-red-700 hover:bg-red-100 font-bold"
-            size="sm"
-          >
-            📐 Pixel Perfect Daily (300 DPI)
-          </Button>
-
-        </div>
-      </div>
-
-      {/* reMarkable Pro Optimized Exports */}
-      <div className="mb-4">
-        <h4 className="text-xs font-medium text-gray-700 mb-2">📱 reMarkable Pro</h4>
-        <div className="space-y-1">
-          <Button 
-            variant="outline" 
-            onClick={() => onExportCurrentView('reMarkable Monthly')}
+            onClick={() => onExportCurrentView('Daily View')}
             className="w-full text-xs bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
             size="sm"
           >
-            📊 Monthly (reMarkable)
+            📄 Export Daily View
           </Button>
         </div>
       </div>
@@ -197,40 +115,8 @@ export const ExportToPDF = ({
           </Button>
         </div>
       </div>
-
-      {/* Legacy PDF Exports (for compatibility) */}
-      <div>
-        <h4 className="text-xs font-medium text-gray-500 mb-2">📄 Legacy PDF (May Have Issues)</h4>
-        <div className="space-y-1">
-          <Button 
-            variant="outline" 
-            onClick={onExportFullMonth}
-            className="w-full text-xs opacity-60"
-            size="sm"
-          >
-            Legacy Full Month
-          </Button>
-        </div>
-      </div>
       <div className="border-t pt-3 mt-3">
           <p className="text-xs text-gray-600 mb-2">🎯 Perfect Weekly Layout</p>
-          <Button 
-            variant="outline" 
-            onClick={async () => {
-              console.log('🔍 RUNNING COMPREHENSIVE EXPORT AUDIT...');
-              try {
-                const { testAuditSystem } = await import('../../utils/findPerfectExport');
-                await testAuditSystem();
-              } catch (error) {
-                console.error('❌ Audit failed:', error);
-              }
-            }}
-            className="w-full text-xs bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 font-bold"
-            size="sm"
-          >
-            🔍 Find Perfect Export (Audit)
-          </Button>
-
           <Button 
             variant="outline" 
             onClick={() => {
@@ -241,16 +127,6 @@ export const ExportToPDF = ({
             size="sm"
           >
             🎯 PERFECT Weekly (Checkpoint Version)
-          </Button>
-
-          <p className="text-xs text-gray-600 mb-2 mt-3">📦 Multi-Page Export</p>
-          <Button 
-            variant="outline" 
-            onClick={() => onExportCurrentView('Weekly Package')}
-            className="w-full text-xs bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
-            size="sm"
-          >
-            📦 Weekly Package (8 Pages)
           </Button>
         </div>
     </div>
