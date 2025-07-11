@@ -215,7 +215,7 @@ function formatMilitaryTime(date: Date): string {
   });
 }
 
-// Draw header section with exact layout matching user's screenshot specification
+// Draw header section matching EXACT user Python specification
 function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
   const config = PIXEL_PERFECT_CONFIG;
 
@@ -223,44 +223,10 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   pdf.setFillColor(255, 255, 255);
   pdf.rect(0, 0, config.pageWidth, config.header.height, 'F');
 
-  // Draw main border around entire header section - thin black line
+  // Draw main border around entire header section
   pdf.setDrawColor(...config.colors.black);
   pdf.setLineWidth(1);
   pdf.rect(0, 0, config.pageWidth, config.header.height, 'S');
-
-  // TOP ROW - Weekly Overview button, Date, and Legend (exact positioning from screenshot)
-  const topRowY = 12;
-  const topRowHeight = 55;
-
-  // Weekly Overview button (left) - exact dimensions from screenshot
-  const buttonWidth = 170;
-  const buttonHeight = 30;
-  const buttonX = 20;
-  const buttonY = topRowY;
-
-  // Draw button with exact styling from specification
-  pdf.setFillColor(255, 255, 255); // White background
-  pdf.setDrawColor(200, 200, 200); // Border grey
-  pdf.setLineWidth(1);
-  pdf.roundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 6, 6, 'FD');
-
-  // Button text with calendar emoji
-  pdf.setFontSize(14);
-  pdf.setFont('helvetica', 'normal');
-  pdf.setTextColor(0, 0, 0);
-  pdf.text('📅 Weekly Overview', buttonX + buttonWidth / 2, buttonY + buttonHeight / 2 + 5, { align: 'center' });
-
-  // Date (perfectly centered) - exact font size and positioning from screenshot
-  const dateStr = selectedDate.toLocaleDateString('en-US', { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  });
-  pdf.setFontSize(24);
-  pdf.setFont('helvetica', 'bold');
-  pdf.setTextColor(...config.colors.black);
-  pdf.text(dateStr, config.pageWidth / 2, topRowY + 8, { align: 'center' });
 
   // Filter events to selected day for count
   const dayEvents = events.filter(event => {
@@ -270,70 +236,84 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
     return eventDay === selectedDay;
   });
 
-  // Subtitle (centered below date) - exact font size and style from screenshot
-  const subtitleText = `${dayEvents.length} appointments`;
+  // TOP SECTION - EXACT Python specification layout
+  // Weekly Overview button (top left)
+  const buttonX = 20;
+  const buttonY = 12;
+  const buttonWidth = 170;
+  const buttonHeight = 30;
+
+  pdf.setFillColor(255, 255, 255);
+  pdf.setDrawColor(200, 200, 200);
+  pdf.setLineWidth(1);
+  pdf.roundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 6, 6, 'FD');
+
+  pdf.setFontSize(14);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('📅 Weekly Overview', buttonX + buttonWidth / 2, buttonY + buttonHeight / 2 + 5, { align: 'center' });
+
+  // DATE (center) - matching Python format exactly
+  const dateText = selectedDate.toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+  
+  pdf.setFontSize(24);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(0, 0, 0);
+  pdf.text(dateText, config.pageWidth / 2, 23, { align: 'center' });
+
+  // APPOINTMENT COUNT (center, below date)
+  const countText = `${dayEvents.length} appointments`;
   pdf.setFontSize(16);
   pdf.setFont('helvetica', 'normal');
-  pdf.setTextColor(...config.colors.black);
-  pdf.text(subtitleText, config.pageWidth / 2, topRowY + 35, { align: 'center' });
+  pdf.text(countText, config.pageWidth / 2, 47, { align: 'center' });
 
-  // LEGEND (right side) - exact positioning and spacing from screenshot
-  const legendY = topRowY + 8;
+  // LEGEND (right side) - exact spacing from Python
+  const legendY = 23;
   const legendSpacing = 180;
   const rightMargin = 20;
 
-  // Legend 3: Holidays in United States (rightmost)
-  const legend3Text = 'Holidays in United States';
-  const legend3TextWidth = pdf.getTextWidth(legend3Text);
-  const legend3TextX = config.pageWidth - rightMargin - legend3TextWidth;
-  const legend3SquareX = legend3TextX - 20;
+  // Legend items (right to left positioning)
+  const legends = [
+    { text: 'Holidays in United States', color: [255, 165, 0] },
+    { text: 'Google Calendar', color: [173, 216, 230] },
+    { text: 'SimplePractice', color: [100, 149, 237] }
+  ];
 
-  // Draw orange square
-  pdf.setFillColor(255, 165, 0); // Orange
-  pdf.setDrawColor(...config.colors.black);
-  pdf.setLineWidth(1);
-  pdf.rect(legend3SquareX, legendY, 12, 12, 'FD');
-  pdf.setFontSize(16);
-  pdf.setTextColor(...config.colors.black);
-  pdf.text(legend3Text, legend3TextX, legendY + 10);
+  let currentX = config.pageWidth - rightMargin;
+  
+  legends.forEach((legend) => {
+    const textWidth = pdf.getTextWidth(legend.text);
+    const textX = currentX - textWidth;
+    const squareX = textX - 20;
 
-  // Legend 2: Google Calendar
-  const legend2Text = 'Google Calendar';
-  const legend2TextWidth = pdf.getTextWidth(legend2Text);
-  const legend2TextX = legend3SquareX - legendSpacing - legend2TextWidth;
-  const legend2SquareX = legend2TextX - 20;
+    // Draw colored square
+    pdf.setFillColor(...legend.color);
+    pdf.setDrawColor(0, 0, 0);
+    pdf.setLineWidth(1);
+    pdf.rect(squareX, legendY - 6, 12, 12, 'FD');
 
-  // Draw dashed light blue square
-  pdf.setFillColor(173, 216, 230); // Light blue
-  pdf.setDrawColor(...config.colors.black);
-  pdf.setLineWidth(1);
-  pdf.rect(legend2SquareX, legendY, 12, 12, 'FD');
-  pdf.setTextColor(...config.colors.black);
-  pdf.text(legend2Text, legend2TextX, legendY + 10);
+    // Draw text
+    pdf.setFontSize(16);
+    pdf.setTextColor(0, 0, 0);
+    pdf.text(legend.text, textX, legendY + 4);
 
-  // Legend 1: SimplePractice
-  const legend1Text = 'SimplePractice';
-  const legend1TextWidth = pdf.getTextWidth(legend1Text);
-  const legend1TextX = legend2SquareX - legendSpacing - legend1TextWidth;
-  const legend1SquareX = legend1TextX - 20;
+    currentX = squareX - legendSpacing;
+  });
 
-  // Draw solid blue square
-  pdf.setFillColor(100, 149, 237); // SimplePractice blue
-  pdf.setDrawColor(...config.colors.black);
-  pdf.setLineWidth(1);
-  pdf.rect(legend1SquareX, legendY, 12, 12, 'FD');
-  pdf.setTextColor(...config.colors.black);
-  pdf.text(legend1Text, legend1TextX, legendY + 10);
-
-  // BOTTOM ROW - Statistics bar (matching screenshot exactly)
-  const statsY = topRowY + topRowHeight + 10; // Position below top row
+  // STATISTICS BAR - full width gray bar matching Python spec
+  const statsY = 75;
   const statsHeight = 63;
 
-  // Draw full-width stats background - light grey covering entire width (NO BORDER)
+  // Full width gray background
   pdf.setFillColor(240, 240, 240);
   pdf.rect(0, statsY, config.pageWidth, statsHeight, 'F');
 
-  // Statistics data matching screenshot
+  // Statistics data - exact from Python specification
   const statsData = [
     { number: `${dayEvents.length}`, label: 'Appointments' },
     { number: '4.3h', label: 'Scheduled' },
@@ -341,23 +321,22 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
     { number: '82%', label: 'Free Time' }
   ];
 
-  // Calculate column positions - equal spacing across full width
+  // Four equal columns across full width
   const colWidth = config.pageWidth / 4;
-  let currentX = 0;
-
-  statsData.forEach((stat) => {
-    // Draw large number (centered in column)
+  
+  statsData.forEach((stat, index) => {
+    const centerX = (index * colWidth) + (colWidth / 2);
+    
+    // Large number
     pdf.setFontSize(24);
     pdf.setFont('helvetica', 'bold');
-    pdf.setTextColor(...config.colors.black);
-    pdf.text(stat.number, currentX + colWidth / 2, statsY + 20, { align: 'center' });
-
-    // Draw label below (centered in column)
+    pdf.setTextColor(0, 0, 0);
+    pdf.text(stat.number, centerX, statsY + 20, { align: 'center' });
+    
+    // Label
     pdf.setFontSize(14);
     pdf.setFont('helvetica', 'normal');
-    pdf.text(stat.label, currentX + colWidth / 2, statsY + 40, { align: 'center' });
-
-    currentX += colWidth;
+    pdf.text(stat.label, centerX, statsY + 40, { align: 'center' });
   });
 }
 
