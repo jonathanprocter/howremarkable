@@ -25,6 +25,12 @@ export interface DailyStatistics {
   utilization: number;
   total_scheduled_minutes: number;
   total_free_minutes: number;
+  daily_utilization: number;
+  weekly_appointments: number;
+  weekly_scheduled_hours: number;
+  daily_utilization: number;
+  weekly_appointments: number;
+  weekly_scheduled_hours: number;
 }
 
 export class DynamicDailyPlannerGenerator {
@@ -92,20 +98,63 @@ export class DynamicDailyPlannerGenerator {
     return this.timeSlots.filter(slot => !occupiedSlots.has(slot));
   }
   
-  private calculateStatistics(appointments: AppointmentData[]): DailyStatistics {
+  private calculateStatistics(appointments: AppointmentData[], currentDate: Date, allEvents: CalendarEvent[]): DailyStatistics {
+    // Calculate weekly statistics (reset every Monday)
+    const currentWeekStart = this.getWeekStart(currentDate);
+    const currentWeekEnd = this.getWeekEnd(currentDate);
+    
+    // Filter events for the current week
+    const weeklyEvents = allEvents.filter(event => {
+      const eventDate = new Date(event.startTime);
+      return eventDate >= currentWeekStart && eventDate <= currentWeekEnd;
+    });
+    
+    // Convert weekly events to weekly statistics
+    const weeklyScheduledEvents = weeklyEvents.filter(event => 
+      !event.title.toLowerCase().includes('canceled') && 
+      !event.title.toLowerCase().includes('cancelled')
+    );
+    
+    const weeklyTotalMinutes = weeklyScheduledEvents.reduce((sum, event) => {
+      const duration = (event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60);
+      return sum + duration;
+    }, 0);
+    
+    // Calculate weekly available time (5 working days × 17.5 hours = 87.5 hours)
+    const weeklyAvailableMinutes = 5 * 17.5 * 60; // 5250 minutes
+    const weeklyUtilization = Math.round((weeklyTotalMinutes / weeklyAvailableMinutes) * 100);
+    
+    // Daily statistics for the current day
     const scheduledAppointments = appointments.filter(apt => apt.status === 'scheduled');
     const totalScheduledMinutes = scheduledAppointments.reduce((sum, apt) => sum + apt.duration_minutes, 0);
     const totalAvailableMinutes = this.timeSlots.length * 30;
-    const utilization = Math.round((totalScheduledMinutes / totalAvailableMinutes) * 100);
+    const dailyUtilization = Math.round((totalScheduledMinutes / totalAvailableMinutes) * 100);
     
     return {
       total_appointments: appointments.length,
       scheduled_count: scheduledAppointments.length,
       canceled_count: appointments.filter(apt => apt.status === 'canceled').length,
-      utilization,
-      total_scheduled_minutes: totalScheduledMinutes,
-      total_free_minutes: totalAvailableMinutes - totalScheduledMinutes
+      utilization: weeklyUtilization, // Use weekly utilization
+      total_scheduled_minutes: weeklyTotalMinutes, // Use weekly total
+      total_free_minutes: weeklyAvailableMinutes - weeklyTotalMinutes, // Use weekly free time
+      daily_utilization: dailyUtilization,
+      weekly_appointments: weeklyEvents.length,
+      weekly_scheduled_hours: Math.round(weeklyTotalMinutes / 60 * 10) / 10
     };
+  }
+  
+  private getWeekStart(date: Date): Date {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+    return new Date(d.setDate(diff));
+  }
+  
+  private getWeekEnd(date: Date): Date {
+    const weekStart = this.getWeekStart(date);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    return weekEnd;
   }
   
   private getAppointmentHeight(durationMinutes: number): number {
@@ -215,7 +264,7 @@ export class DynamicDailyPlannerGenerator {
   public generateCompleteDailyPlannerHTML(date: Date, events: CalendarEvent[]): string {
     const appointments = this.convertCalendarEventsToAppointments(events);
     const freeTimeSlots = this.calculateFreeTimeSlots(appointments);
-    const statistics = this.calculateStatistics(appointments);
+    const statistics = this.calculateStatistics(appointments, date, events);
     const dateString = format(date, 'EEEE, MMMM d, yyyy');
     
     const timeColumnHTML = this.generateTimeColumnHTML(freeTimeSlots);
@@ -561,8 +610,10 @@ export class DynamicDailyPlannerGenerator {
             <h1>Daily Planner</h1>
             <div class="day-stats">
                 <span>📅 ${dateString}</span>
-                <span>📊 ${statistics.total_appointments} appointments</span>
-                <span>⏰ ${statistics.utilization}% utilization</span>
+                <span>📊 ${statistics.total_appointments} appointments today</span>
+                <span>📈 ${statistics.weekly_appointments} appointments this week</span>
+                <span>⏰ ${statistics.utilization}% weekly utilization</span>
+                <span>🕐 ${statistics.weekly_scheduled_hours}h scheduled this week</span>
             </div>
         </div>
         
@@ -590,19 +641,19 @@ export class DynamicDailyPlannerGenerator {
             <div class="summary-stats">
                 <div class="stat-item">
                     <div class="stat-value">${statistics.total_appointments}</div>
-                    <div class="stat-label">Total Appointments</div>
+                    <div class="stat-label">Today's Appointments</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-value">${statistics.scheduled_count}</div>
-                    <div class="stat-label">Scheduled</div>
+                    <div class="stat-value">${statistics.weekly_appointments}</div>
+                    <div class="stat-label">Weekly Appointments</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-value">${statistics.canceled_count}</div>
-                    <div class="stat-label">Canceled</div>
+                    <div class="stat-value">${statistics.weekly_scheduled_hours}h</div>
+                    <div class="stat-label">Weekly Scheduled Hours</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-value">${statistics.utilization}%</div>
-                    <div class="stat-label">Utilization</div>
+                    <div class="stat-label">Weekly Utilization</div>
                 </div>
             </div>
             

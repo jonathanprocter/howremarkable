@@ -30,44 +30,76 @@ export async function exportDynamicDailyPlannerToPDF(
     container.style.position = 'absolute';
     container.style.left = '-9999px';
     container.style.top = '-9999px';
-    container.style.width = '8.5in';
-    container.style.background = 'white';
+    container.style.width = '8.5in'; // 816px at 96dpi
+    container.style.minHeight = '11in'; // 1056px at 96dpi
+    container.style.background = '#FAFAF7';
     container.style.padding = '0.75in';
+    container.style.fontSize = '14px';
+    container.style.fontFamily = 'Georgia, serif';
     
     // Add to DOM temporarily
     document.body.appendChild(container);
     
-    // Wait for fonts and rendering
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Wait for fonts and all content to render
+    await new Promise(resolve => setTimeout(resolve, 1500));
     
-    // Capture the HTML as canvas
+    // Capture the HTML as canvas with high quality settings
     const canvas = await html2canvas(container, {
-      scale: 2,
+      scale: 3, // Higher scale for better quality
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#FAFAF7',
       width: 816, // 8.5in at 96dpi
       height: 1056, // 11in at 96dpi
-      logging: false
+      logging: false,
+      foreignObjectRendering: true,
+      removeContainer: false,
+      imageTimeout: 30000,
+      onclone: (clonedDoc) => {
+        // Ensure proper styling in cloned document
+        const style = clonedDoc.createElement('style');
+        style.textContent = `
+          * { box-sizing: border-box; }
+          body { font-family: Georgia, serif; }
+        `;
+        clonedDoc.head.appendChild(style);
+      }
     });
     
     // Remove temporary container
     document.body.removeChild(container);
     
-    // Create PDF
+    // Create PDF with high quality settings
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'pt',
-      format: [612, 792] // US Letter in points
+      format: [612, 792], // US Letter in points
+      compress: false,
+      precision: 2
     });
     
-    // Calculate dimensions to fit the page
-    const imgWidth = 612;
+    // Calculate dimensions to fit the page properly
+    const pageWidth = 612;
+    const pageHeight = 792;
+    const imgWidth = pageWidth;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
     
-    // Add the canvas image to PDF
-    const imgData = canvas.toDataURL('image/png');
-    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+    // If the image is too tall, scale it down to fit
+    let finalWidth = imgWidth;
+    let finalHeight = imgHeight;
+    
+    if (imgHeight > pageHeight) {
+      finalHeight = pageHeight;
+      finalWidth = (canvas.width * finalHeight) / canvas.height;
+    }
+    
+    // Center the image on the page
+    const x = (pageWidth - finalWidth) / 2;
+    const y = (pageHeight - finalHeight) / 2;
+    
+    // Add the canvas image to PDF with high quality
+    const imgData = canvas.toDataURL('image/png', 1.0);
+    pdf.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight, '', 'FAST');
     
     // Generate filename
     const filename = `Daily_Planner_${format(date, 'yyyy-MM-dd')}.pdf`;
