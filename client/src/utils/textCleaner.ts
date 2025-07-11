@@ -1,38 +1,25 @@
-export const cleanText = (text: string): string => {
+export function cleanEventTitle(title: string): string {
+  if (!title) return '';
+
+  return title
+    .replace(/🔒\s*/g, '') // Remove lock symbols
+    .replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/gu, '') // Remove emojis
+    .replace(/[\u{2000}-\u{206F}]|[\u{2E00}-\u{2E7F}]|[\u{3000}-\u{303F}]/gu, '') // Remove special punctuation
+    .replace(/[^\x20-\x7E\u00A0-\u00FF]/g, '') // Keep basic ASCII + Latin-1
+    .replace(/\s+/g, ' ') // Normalize whitespace
+    .trim();
+}
+
+export function cleanText(text: string): string {
   if (!text) return '';
 
   return text
-    .replace(/🔒\s*/g, '') // Remove lock symbol and following space
-    .replace(/[\u{1F500}-\u{1F6FF}]/gu, '') // Remove emoji symbols
-    .replace(/[\u{2600}-\u{26FF}]/gu, '') // Remove misc symbols
-    .replace(/[\u{2700}-\u{27BF}]/gu, '') // Remove dingbats
-    .replace(/[\u{1F300}-\u{1F5FF}]/gu, '') // Remove more emoji ranges
-    .replace(/Ø=ÜÅ/g, '') // Remove corrupted symbols
-    .replace(/Ø=Ý/g, '') // Remove more corrupted symbols
-    .replace(/[!•]/g, '') // Remove exclamation and bullet points
-    .replace(/\s+/g, ' ') // Normalize spaces
+    .replace(/🔒\s*/g, '')
+    .replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/gu, '')
+    .replace(/[^\x20-\x7E\u00A0-\u00FF\n\r]/g, '')
+    .replace(/\s+/g, ' ')
     .trim();
-};
-
-export const cleanEventTitle = (title: string): string => {
-  if (!title) return '';
-
-  // Remove lock symbols and other problematic characters
-  return title
-    .replace(/🔒\s*/g, '') // Remove lock emoji
-    .replace(/Ø=[\w\s]*/g, '') // Remove corrupted text patterns
-    .replace(/!•/g, '') // Remove corrupted symbols
-    .replace(/[^\x00-\x7F]/g, (char) => {
-      // Keep common unicode characters but remove problematic ones
-      const code = char.charCodeAt(0);
-      if (code >= 0x2600 && code <= 0x26FF) return ''; // Remove misc symbols
-      if (code >= 0x1F600 && code <= 0x1F64F) return ''; // Remove emoticons
-      if (code >= 0x1F300 && code <= 0x1F5FF) return ''; // Remove misc symbols
-      if (code >= 0x1F680 && code <= 0x1F6FF) return ''; // Remove transport symbols
-      return char; // Keep other unicode characters
-    })
-    .trim();
-};
+}
 
 // Clean all text content in the DOM
 export const cleanAllTextContent = () => {

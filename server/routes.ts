@@ -271,12 +271,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Health check endpoint
   app.get("/api/health", (req, res) => {
-    res.json({ 
+    const memUsage = process.memoryUsage();
+    const healthData = {
       status: "healthy", 
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
-      memory: process.memoryUsage()
-    });
+      memory: {
+        rss: `${Math.round(memUsage.rss / 1024 / 1024)}MB`,
+        heapUsed: `${Math.round(memUsage.heapUsed / 1024 / 1024)}MB`,
+        heapTotal: `${Math.round(memUsage.heapTotal / 1024 / 1024)}MB`,
+        external: `${Math.round(memUsage.external / 1024 / 1024)}MB`
+      },
+      nodeVersion: process.version,
+      platform: process.platform,
+      pid: process.pid
+    };
+    
+    // Check if memory usage is getting high
+    if (memUsage.heapUsed > 500 * 1024 * 1024) { // 500MB
+      healthData.status = "warning";
+      healthData.warning = "High memory usage detected";
+    }
+    
+    res.json(healthData);
   });
 
   // Test session persistence endpoint

@@ -124,18 +124,21 @@ app.use((req, res, next) => {
     // Don't exit the process, just log the error
   });
 
-  // Keep the process alive
+  // Handle graceful shutdown
   process.on('SIGTERM', () => {
-    console.log('SIGTERM received, keeping server running...');
+    console.log('SIGTERM received, shutting down gracefully...');
+    server.close(() => {
+      console.log('Server closed');
+      process.exit(0);
+    });
   });
 
   process.on('SIGINT', () => {
-    console.log('SIGINT received, keeping server running...');
-  });
-
-  // Add process debugging
-  process.on('exit', (code) => {
-    console.log(`Process exiting with code: ${code}`);
+    console.log('SIGINT received, shutting down gracefully...');
+    server.close(() => {
+      console.log('Server closed');
+      process.exit(0);
+    });
   });
 
   // importantly only setup vite in development and after

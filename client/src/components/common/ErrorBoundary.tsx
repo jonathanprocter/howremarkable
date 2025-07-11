@@ -25,6 +25,14 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   componentDidCatch(error: Error, errorInfo: any) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
 
+    // Clean up any problematic DOM elements
+    try {
+      const problematicElements = document.querySelectorAll('[data-error="true"]');
+      problematicElements.forEach(el => el.remove());
+    } catch (cleanupError) {
+      console.warn('Error cleanup failed:', cleanupError);
+    }
+
     this.setState({
       error,
       errorInfo
