@@ -190,8 +190,8 @@ function drawExactTable(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent[]
   // Generate time slots exactly like Python (6 AM to 11 PM with 30-minute increments)
   const timeSlots = [];
   for (let hour = 6; hour < 24; hour++) {
-    timeSlots.push({ time: `${hour.toString().padStart(2, '0')}00`, isTopHour: true });
-    timeSlots.push({ time: `${hour.toString().padStart(2, '0')}30`, isTopHour: false });
+    timeSlots.push({ time: `${hour.toString().padStart(2, '0')}:00`, isTopHour: true });
+    timeSlots.push({ time: `${hour.toString().padStart(2, '0')}:30`, isTopHour: false });
   }
 
   // Draw all time slot rows (matching Python logic exactly)
@@ -271,9 +271,9 @@ function drawExactAppointments(pdf: jsPDF, weekStartDate: Date, events: Calendar
     const endHour = endDate.getHours();
     const endMinute = endDate.getMinutes();
     
-    // Convert to 24-hour format strings
-    const startTimeStr = `${startHour.toString().padStart(2, '0')}${startMinute >= 30 ? '30' : '00'}`;
-    const endTimeStr = `${endHour.toString().padStart(2, '0')}${endMinute >= 30 ? '30' : '00'}`;
+    // Convert to 24-hour format strings with colons
+    const startTimeStr = `${startHour.toString().padStart(2, '0')}:${startMinute >= 30 ? '30' : '00'}`;
+    const endTimeStr = `${endHour.toString().padStart(2, '0')}:${endMinute >= 30 ? '30' : '00'}`;
     
     const startSlotIndex = timeSlots.findIndex(slot => slot.time === startTimeStr);
     const endSlotIndex = timeSlots.findIndex(slot => slot.time === endTimeStr);
