@@ -296,7 +296,7 @@ function drawExactAppointments(pdf: jsPDF, weekStartDate: Date, events: Calendar
     );
     
     // Debug logging for appointment spacing
-    console.log(`📊 Appointment: ${title} | Duration: ${durationInMinutes}min (${durationInSlots} slots) | Height: ${height}px`);
+    console.log(`📊 Appointment: ${event.title} | Duration: ${durationInMinutes}min (${durationInSlots} slots) | Height: ${height}px`);
     
     // White background for all appointments
     pdf.setFillColor(...SPEC.WHITE);
