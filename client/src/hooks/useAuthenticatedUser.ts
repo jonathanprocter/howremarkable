@@ -57,9 +57,24 @@ export const useAuthenticatedUser = (): UseAuthenticatedUserReturn => {
           if (devLoginResponse.ok) {
             const devResult = await devLoginResponse.json();
             if (devResult.success) {
-              console.log('Auto-login successful');
+              console.log('Auto-login successful, checking status again...');
+              // After successful dev login, check auth status again
+              const statusCheckResponse = await fetch('/api/auth/status', {
+                credentials: 'include',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+              });
+              if (statusCheckResponse.ok) {
+                const statusData = await statusCheckResponse.json();
+                if (statusData.authenticated && statusData.user) {
+                  setUser(statusData.user);
+                  return; // Successfully logged in
+                }
+              }
+              // Fallback to dev result if status check fails
               setUser(devResult.user);
-              return; // Successfully logged in
+              return;
             }
           }
         } catch (autoLoginError) {
