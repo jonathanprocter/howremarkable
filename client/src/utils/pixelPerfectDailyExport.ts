@@ -240,11 +240,18 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   pdf.setLineWidth(1);
   pdf.roundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 6, 6, 'FD');
 
-  // Button text with calendar emoji
+  // Button text with calendar emoji - use Unicode fallback for better PDF compatibility
   pdf.setFontSize(14);
   pdf.setFont('helvetica', 'normal');
   pdf.setTextColor(...config.colors.black);
-  pdf.text('📅 Weekly Overview', buttonX + buttonWidth / 2, buttonY + buttonHeight / 2 + 5, { align: 'center' });
+  
+  // Try emoji first, fallback to calendar symbol
+  try {
+    pdf.text('📅 Weekly Overview', buttonX + buttonWidth / 2, buttonY + buttonHeight / 2 + 5, { align: 'center' });
+  } catch (e) {
+    // Fallback to calendar symbol if emoji fails
+    pdf.text('Cal Weekly Overview', buttonX + buttonWidth / 2, buttonY + buttonHeight / 2 + 5, { align: 'center' });
+  }
 
   // Date (perfectly centered) - exact font size and positioning from screenshot
   const dateStr = selectedDate.toLocaleDateString('en-US', { 
