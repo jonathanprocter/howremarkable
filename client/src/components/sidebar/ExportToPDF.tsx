@@ -177,7 +177,10 @@ export const ExportToPDF = ({
         <div className="space-y-1">
           <Button 
             variant="outline" 
-            onClick={() => onExportCurrentView('Dashboard Perfect Weekly')}
+            onClick={() => {
+              console.log('🎯 DASHBOARD PERFECT WEEKLY BUTTON CLICKED!');
+              onExportCurrentView('Dashboard Perfect Weekly');
+            }}
             className="w-full text-xs bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 font-bold"
             size="sm"
           >
@@ -209,7 +212,10 @@ export const ExportToPDF = ({
           </Button>
           <Button 
             variant="outline" 
-            onClick={() => onExportCurrentView('Truly Pixel Perfect Weekly')}
+            onClick={() => {
+              console.log('📐 PIXEL PERFECT WEEKLY BUTTON CLICKED!');
+              onExportCurrentView('Truly Pixel Perfect Weekly');
+            }}
             className="w-full text-xs bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100"
             size="sm"
           >
@@ -217,7 +223,10 @@ export const ExportToPDF = ({
           </Button>
           <Button 
             variant="outline" 
-            onClick={() => onExportCurrentView('Perfect Weekly')}
+            onClick={() => {
+              console.log('✨ PERFECT WEEKLY BUTTON CLICKED!');
+              onExportCurrentView('Perfect Weekly');
+            }}
             className="w-full text-xs bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 font-medium"
             size="sm"
           >
