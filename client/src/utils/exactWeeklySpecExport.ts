@@ -343,45 +343,44 @@ function drawExactAppointments(pdf: jsPDF, weekStartDate: Date, events: Calendar
     const availableHeight = height - (padding * 2);
     const availableWidth = width - (padding * 2);
     
-    // Properly scaled font sizes for PDF format
-    // These need to account for the SCALE factor and be appropriate for the cell size
+    // Ultra-small font sizes to guarantee all content fits within appointment boxes
     let titleFontSize, sourceFontSize, timeFontSize;
     
     if (durationInMinutes <= 30) {
-      // 30-minute appointments: compact fonts for small space
-      titleFontSize = 7;
-      sourceFontSize = 5;
-      timeFontSize = 6;
+      // 30-minute appointments: ultra-small fonts for cramped space
+      titleFontSize = 3;
+      sourceFontSize = 2.5;
+      timeFontSize = 2.5;
     } else if (durationInMinutes >= 90) {
-      // 90-minute appointments: larger fonts to fill space
-      titleFontSize = 12;
-      sourceFontSize = 8;
-      timeFontSize = 10;
+      // 90-minute appointments: small but readable in taller boxes
+      titleFontSize = 4.5;
+      sourceFontSize = 3.5;
+      timeFontSize = 3.5;
     } else {
-      // 60-minute appointments: standard sizing
-      titleFontSize = 9;
-      sourceFontSize = 7;
-      timeFontSize = 8;
+      // 60-minute appointments: very small to ensure no overflow
+      titleFontSize = 3.5;
+      sourceFontSize = 3;
+      timeFontSize = 3;
     }
     
-    // Calculate text positioning appropriate for scaled PDF format
+    // Calculate text positioning to fit within appointment box bounds with minimal spacing
     let titleY, sourceY, timeY;
     
     if (durationInMinutes <= 30) {
-      // 30-minute appointments: compact spacing
-      titleY = y + padding + 4;
-      sourceY = y + padding + 8;
-      timeY = y + padding + 12;
+      // 30-minute appointments: ultra-tight spacing for minimal boxes
+      titleY = y + padding + 2;
+      sourceY = y + padding + 4.5;
+      timeY = y + padding + 7;
     } else if (durationInMinutes >= 90) {
-      // 90-minute appointments: generous spacing using full height
-      titleY = y + padding + 6;
-      sourceY = y + padding + 20;
-      timeY = y + padding + 34;
+      // 90-minute appointments: better distributed spacing in taller boxes
+      titleY = y + padding + 3;
+      sourceY = y + padding + 8;
+      timeY = y + padding + 13;
     } else {
-      // 60-minute appointments: balanced spacing
-      titleY = y + padding + 5;
-      sourceY = y + padding + 15;
-      timeY = y + padding + 25;
+      // 60-minute appointments: minimal spacing to prevent overflow
+      titleY = y + padding + 2.5;
+      sourceY = y + padding + 6;
+      timeY = y + padding + 9.5;
     }
     
     // Measure and truncate title if needed to fit width
@@ -391,10 +390,17 @@ function drawExactAppointments(pdf: jsPDF, weekStartDate: Date, events: Calendar
     const titleWidth = pdf.getTextWidth(truncatedTitle);
     
     if (titleWidth > availableWidth) {
-      // Truncate title to fit within available width
+      // Aggressively truncate title to fit within available width
       const charRatio = availableWidth / titleWidth;
-      const maxChars = Math.floor(title.length * charRatio * 0.9); // 90% safety margin
+      const maxChars = Math.floor(title.length * charRatio * 0.8); // 80% safety margin for smaller fonts
       truncatedTitle = title.substring(0, Math.max(1, maxChars - 3)) + '...';
+    }
+    
+    // Additional truncation for very small boxes
+    if (durationInMinutes <= 30 && truncatedTitle.length > 12) {
+      truncatedTitle = truncatedTitle.substring(0, 9) + '...';
+    } else if (durationInMinutes <= 60 && truncatedTitle.length > 15) {
+      truncatedTitle = truncatedTitle.substring(0, 12) + '...';
     }
     
     // Draw title - large and bold for maximum readability
