@@ -758,6 +758,17 @@ The application uses three main entities:
   - **Intelligent Text Fitting**: Implemented smart text truncation and scaling to ensure all text stays within cell boundaries
   - **Removed Other Weekly Exports**: Cleaned up export interface to show only "Exact Weekly Spec" option for focused user experience
   - **RESULT**: Perfect weekly planner export with exact user specifications for layout, typography, and visual hierarchy
+- July 11, 2025. **DRAMATIC FONT SIZE ENHANCEMENT**: Significantly increased font sizes for maximum visibility in weekly PDF exports:
+  - **exactWeeklySpecExport.ts**: Enhanced font ranges for better readability:
+    - Title fonts: 18-36pt (dramatically larger from 14-28pt)
+    - Source fonts: 14-28pt (dramatically larger from 10-20pt)
+    - Time fonts: 16-32pt (dramatically larger from 12-24pt)
+  - **exactGridPDFExport.ts**: Enhanced font ranges for maximum visibility:
+    - Title fonts: 16-32pt (dramatically larger from 12-24pt)
+    - Time fonts: 14-28pt (dramatically larger from 10-20pt)
+  - **Proportional Scaling**: Implemented intelligent scaling up to 300% for appointment boxes
+  - **Text Fitting**: Enhanced text measurement and truncation for optimal box utilization
+  - **RESULT**: Highly visible, proportionally-sized appointment text that maximizes readability within appointment boxes
 
 ## User Preferences
 

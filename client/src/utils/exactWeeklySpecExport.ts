@@ -321,15 +321,15 @@ function drawExactAppointments(pdf: jsPDF, weekStartDate: Date, events: Calendar
     const availableWidth = width - (padding * 2);
     
     // Calculate proportional font sizes that fit within the box
-    // Use smaller base sizes and scale them down if needed
+    // Use much larger base sizes for better visibility
     const baseHeightRatio = availableHeight / 63; // Based on standard row height
     const baseWidthRatio = availableWidth / 400; // Based on typical column width
-    const scaleFactor = Math.min(baseHeightRatio, baseWidthRatio, 1.0); // Don't scale up beyond 100%
+    const scaleFactor = Math.min(baseHeightRatio, baseWidthRatio, 2.0); // Allow scaling up to 200%
     
-    // Apply proportional sizing with reasonable limits
-    const titleFontSize = Math.max(8, Math.min(18, 14 * scaleFactor)); // Between 8-18pt
-    const sourceFontSize = Math.max(6, Math.min(12, 10 * scaleFactor)); // Between 6-12pt
-    const timeFontSize = Math.max(7, Math.min(14, 12 * scaleFactor)); // Between 7-14pt
+    // Apply proportional sizing with dramatically larger limits for maximum readability
+    const titleFontSize = Math.max(18, Math.min(36, 28 * scaleFactor)); // Between 18-36pt (dramatically larger)
+    const sourceFontSize = Math.max(14, Math.min(28, 22 * scaleFactor)); // Between 14-28pt (dramatically larger)
+    const timeFontSize = Math.max(16, Math.min(32, 24 * scaleFactor)); // Between 16-32pt (dramatically larger)
     
     // Calculate text positioning to fit all three lines within the box
     const lineHeight = availableHeight / 3; // Divide space into 3 equal parts
