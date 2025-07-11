@@ -11,8 +11,8 @@ const PIXEL_PERFECT_CONFIG = {
   // Margins and spacing
   margin: 40,        // 40px on all sides
   headerStartY: 20,  // Header start Y position
-  gridStartY: 210,   // Grid start Y position (adjusted for improved header)
-  availableGridHeight: 3050, // Available grid height
+  gridStartY: 140,   // Grid start Y position (reduced for smaller header)
+  availableGridHeight: 3120, // Available grid height
   
   // Layout structure
   header: {
@@ -20,40 +20,28 @@ const PIXEL_PERFECT_CONFIG = {
       x: 50,
       y: 20,
       width: 180,
-      height: 40,
-      text: '← Weekly',
-      fontSize: 16,
+      height: 35,
+      text: '← Back to week',
+      fontSize: 14,
       bgColor: [250, 250, 250],
       borderColor: [150, 150, 150]
     },
     title: {
       text: 'DAILY PLANNER',
-      fontSize: 48,
+      fontSize: 32,
       y: 45,
       weight: 'bold'
     },
     subtitle: {
-      y: 85,
-      fontSize: 26
+      y: 75,
+      fontSize: 18
     },
     legend: {
-      y: 25,
-      fontSize: 16,
-      symbolSize: 16,
-      spacing: 160
+      y: 95,
+      fontSize: 14,
+      symbolSize: 12,
+      spacing: 140
     }
-  },
-  
-  // Statistics section
-  stats: {
-    y: 115,
-    height: 70,
-    bgColor: [248, 248, 248],
-    numbersFont: 30,
-    labelsFont: 20,
-    numbersY: 140,
-    labelsY: 170,
-    marginLR: 70
   },
   
   // Time grid
@@ -71,7 +59,13 @@ const PIXEL_PERFECT_CONFIG = {
     
     // Borders
     borderColor: [0, 0, 0],
-    borderWidth: 1
+    borderWidth: 1,
+    
+    // Vertical divider between time column and events
+    verticalDivider: {
+      color: [34, 34, 34], // Dark grey matching dashboard
+      width: 2
+    }
   },
   
   // Appointment styling
@@ -186,7 +180,7 @@ function formatMilitaryTime(date: Date): string {
   });
 }
 
-// Draw header section with navigation, date, legend, and statistics
+// Draw header section with navigation, date, and legend
 function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
   const config = PIXEL_PERFECT_CONFIG;
   
@@ -202,60 +196,47 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   pdf.setFontSize(btn.fontSize);
   pdf.setFont('helvetica', 'normal');
   pdf.setTextColor(...config.colors.black);
-  pdf.text(btn.text, btn.x + btn.width / 2, btn.y + btn.height / 2 + 6, { align: 'center' });
+  pdf.text(btn.text, btn.x + btn.width / 2, btn.y + btn.height / 2 + 5, { align: 'center' });
   
-  // Date (centered)
+  // Title and date in single row
   const dateStr = selectedDate.toLocaleDateString('en-US', { 
     weekday: 'long', 
     year: 'numeric', 
     month: 'long', 
     day: 'numeric' 
   });
+  
+  // Title (left aligned with calendar table)
   pdf.setFontSize(config.header.title.fontSize);
   pdf.setFont('helvetica', config.header.title.weight);
-  pdf.text(dateStr, config.pageWidth / 2, config.header.title.y, { align: 'center' });
-  
-  // Calculate the week range (Sunday to Saturday)
-  const weekStart = new Date(selectedDate);
-  weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Go to Sunday
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekEnd.getDate() + 6); // Go to Saturday
-  
-  // Set to start/end of day for proper comparison
-  weekStart.setHours(0, 0, 0, 0);
-  weekEnd.setHours(23, 59, 59, 999);
-  
-  // Filter events to current week only (matching WeeklyPlannerView logic)
-  const weekEvents = events.filter(event => {
-    const eventDate = new Date(event.startTime);
-    return eventDate >= weekStart && eventDate <= weekEnd;
-  });
+  pdf.text(config.header.title.text, config.margin + config.grid.timeColumnWidth, config.header.title.y, { align: 'left' });
   
   // Filter events to selected day for subtitle
-  const dayEvents = weekEvents.filter(event => {
+  const dayEvents = events.filter(event => {
     const eventDate = new Date(event.startTime);
     const eventDay = eventDate.toDateString();
     const selectedDay = selectedDate.toDateString();
     return eventDay === selectedDay;
   });
   
-  // Subtitle (centered) - showing today's appointments
+  // Date and appointments count (same row as title)
   pdf.setFontSize(config.header.subtitle.fontSize);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(`${dayEvents.length} appointments today`, config.pageWidth / 2, config.header.subtitle.y, { align: 'center' });
+  pdf.text(`${dateStr} - ${dayEvents.length} appointments today`, config.margin + config.grid.timeColumnWidth + 400, config.header.title.y, { align: 'left' });
   
-  // Legend (right-center) - positioned after date
-  const legendStartX = config.pageWidth / 2 + 300; // Start after date area
+  // Legend (styled as badges below header)
+  const legendStartX = config.margin + config.grid.timeColumnWidth;
   let legendX = legendStartX;
   const legendY = config.header.legend.y;
   
   // SimplePractice legend
-  pdf.setFillColor(...config.colors.simplePracticeBlue);
+  pdf.setFillColor(...config.colors.white);
   pdf.rect(legendX, legendY, config.header.legend.symbolSize, config.header.legend.symbolSize, 'F');
-  pdf.setDrawColor(...config.colors.black);
-  pdf.setLineWidth(1);
+  pdf.setDrawColor(...config.colors.simplePracticeBlue);
+  pdf.setLineWidth(2);
   pdf.rect(legendX, legendY, config.header.legend.symbolSize, config.header.legend.symbolSize, 'S');
   pdf.setFontSize(config.header.legend.fontSize);
+  pdf.setTextColor(...config.colors.black);
   pdf.text('SimplePractice', legendX + 20, legendY + 10);
   
   // Google Calendar legend
@@ -277,45 +258,6 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   pdf.setLineWidth(1);
   pdf.rect(legendX, legendY, config.header.legend.symbolSize, config.header.legend.symbolSize, 'S');
   pdf.text('Holidays in United States', legendX + 20, legendY + 10);
-  
-  // Statistics section - using WEEKLY statistics that reset each week
-  const stats = config.stats;
-  pdf.setFillColor(...stats.bgColor);
-  pdf.rect(stats.marginLR, stats.y, config.pageWidth - (stats.marginLR * 2), stats.height, 'F');
-  pdf.setDrawColor(...config.colors.black);
-  pdf.setLineWidth(1);
-  pdf.rect(stats.marginLR, stats.y, config.pageWidth - (stats.marginLR * 2), stats.height, 'S');
-  
-  // Calculate WEEKLY statistics (matching WeeklyPlannerView logic)
-  const totalEvents = weekEvents.length;
-  const totalHours = weekEvents.reduce((sum, event) => {
-    return sum + (new Date(event.endTime).getTime() - new Date(event.startTime).getTime()) / (1000 * 60 * 60);
-  }, 0);
-  const dailyAverage = totalHours / 7; // Average hours per day
-  const availableHours = 168 - totalHours; // 168 hours in a week
-  
-  // Four columns with weekly statistics
-  const statColumns = [
-    { number: totalEvents.toString(), label: 'Total Appointments' },
-    { number: totalHours.toFixed(1) + 'h', label: 'Scheduled Time' },
-    { number: dailyAverage.toFixed(1) + 'h', label: 'Daily Average' },
-    { number: availableHours.toFixed(0) + 'h', label: 'Available Time' }
-  ];
-  
-  const columnWidth = (config.pageWidth - (stats.marginLR * 2)) / 4;
-  statColumns.forEach((stat, index) => {
-    const x = stats.marginLR + (index * columnWidth) + (columnWidth / 2);
-    
-    // Numbers (bold)
-    pdf.setFontSize(stats.numbersFont);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text(stat.number, x, stats.numbersY, { align: 'center' });
-    
-    // Labels (regular)
-    pdf.setFontSize(stats.labelsFont);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text(stat.label, x, stats.labelsY, { align: 'center' });
-  });
 }
 
 // Draw time grid with all 36 time slots
@@ -330,11 +272,15 @@ function drawPixelPerfectTimeGrid(pdf: jsPDF) {
   // Time column left border
   pdf.line(config.margin, config.gridStartY, config.margin, config.gridStartY + (grid.totalRows * grid.rowHeight));
   
-  // Time column right border / main area left border
+  // Time column right border / main area left border (vertical divider)
+  pdf.setDrawColor(...grid.verticalDivider.color);
+  pdf.setLineWidth(grid.verticalDivider.width);
   pdf.line(config.margin + grid.timeColumnWidth, config.gridStartY, 
            config.margin + grid.timeColumnWidth, config.gridStartY + (grid.totalRows * grid.rowHeight));
   
   // Main area right border
+  pdf.setDrawColor(...grid.borderColor);
+  pdf.setLineWidth(grid.borderWidth);
   pdf.line(config.margin + grid.timeColumnWidth + grid.mainAreaWidth, config.gridStartY,
            config.margin + grid.timeColumnWidth + grid.mainAreaWidth, config.gridStartY + (grid.totalRows * grid.rowHeight));
   
@@ -399,11 +345,11 @@ function drawPixelPerfectAppointments(pdf: jsPDF, selectedDate: Date, events: Ca
     const durationMinutes = (endDate.getTime() - eventDate.getTime()) / (1000 * 60);
     const durationSlots = Math.ceil(durationMinutes / 30);
     
-    // Calculate position and dimensions
-    const eventY = config.gridStartY + (slotIndex * config.grid.rowHeight) + appointments.margin;
-    const eventHeight = (durationSlots * config.grid.rowHeight) - (appointments.margin * 2);
-    const eventX = config.margin + config.grid.timeColumnWidth + appointments.margin;
-    const eventWidth = appointments.width;
+    // Calculate position and dimensions - ensure events stay inside grid cells
+    const eventY = config.gridStartY + (slotIndex * config.grid.rowHeight) + 2; // 2px margin from grid line
+    const eventHeight = (durationSlots * config.grid.rowHeight) - 4; // 4px total margin (2px top + 2px bottom)
+    const eventX = config.margin + config.grid.timeColumnWidth + 2; // 2px margin from vertical divider
+    const eventWidth = appointments.width - 4; // 4px total margin (2px left + 2px right)
     
     console.log(`Event ${event.title}: slot ${slotIndex}, duration ${durationSlots} slots, height ${eventHeight}px`);
     
@@ -445,12 +391,12 @@ function drawPixelPerfectAppointments(pdf: jsPDF, selectedDate: Date, events: Ca
     // Clean title
     const displayTitle = cleanAppointmentTitle(event.title);
     
-    // Check if this is an expanded appointment (Dan or Sherrifa)
-    const isExpanded = displayTitle.toLowerCase().includes('dan re:') || 
-                      displayTitle.toLowerCase().includes('sherrifa');
+    // Check if this appointment has notes or actions (only Dan has content)
+    const hasNotes = displayTitle.toLowerCase().includes('dan re:');
+    const hasActions = displayTitle.toLowerCase().includes('dan re:');
     
-    if (isExpanded) {
-      // Three-column layout for expanded appointments
+    if (hasNotes || hasActions) {
+      // Three-column layout for appointments with content
       const columnWidth = appointments.threeColumn.columnWidth;
       
       // Column 1: Appointment details
@@ -469,53 +415,63 @@ function drawPixelPerfectAppointments(pdf: jsPDF, selectedDate: Date, events: Ca
       pdf.setFontSize(appointments.singleColumn.timeFont);
       pdf.text(timeRange, eventX + appointments.singleColumn.leftMargin, eventY + appointments.singleColumn.timeY);
       
-      // Column separators
+      // Column separators - only draw if we have content
       pdf.setDrawColor(...appointments.threeColumn.separatorColor);
       pdf.setLineWidth(1);
-      pdf.line(eventX + columnWidth, eventY, eventX + columnWidth, eventY + eventHeight);
-      pdf.line(eventX + (columnWidth * 2), eventY, eventX + (columnWidth * 2), eventY + eventHeight);
-      
-      // Column 2: Event Notes
-      pdf.setFontSize(appointments.threeColumn.headerFont);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('Event Notes', eventX + columnWidth + 10, eventY + 20);
-      
-      // Sample notes for Dan
-      if (displayTitle.toLowerCase().includes('dan re:')) {
-        pdf.setFontSize(appointments.threeColumn.bulletFont);
-        pdf.text('• I cancelled supervision due to COVID', eventX + columnWidth + 10, eventY + 40);
-        pdf.text('• We didn\'t schedule a follow-up, and will', eventX + columnWidth + 10, eventY + 55);
-        pdf.text('  continue next week during our usual time', eventX + columnWidth + 10, eventY + 70);
+      if (hasNotes) {
+        pdf.line(eventX + columnWidth, eventY, eventX + columnWidth, eventY + eventHeight);
+      }
+      if (hasActions) {
+        pdf.line(eventX + (columnWidth * 2), eventY, eventX + (columnWidth * 2), eventY + eventHeight);
       }
       
-      // Column 3: Action Items
-      pdf.setFontSize(appointments.threeColumn.headerFont);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('Action Items', eventX + (columnWidth * 2) + 10, eventY + 20);
+      // Column 2: Event Notes - only if has notes
+      if (hasNotes) {
+        pdf.setFontSize(appointments.threeColumn.headerFont);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text('Event Notes', eventX + columnWidth + 10, eventY + 20);
+        
+        // Sample notes for Dan
+        if (displayTitle.toLowerCase().includes('dan re:')) {
+          pdf.setFontSize(appointments.threeColumn.bulletFont);
+          pdf.text('• I cancelled supervision due to COVID', eventX + columnWidth + 10, eventY + 40);
+          pdf.text('• We didn\'t schedule a follow-up, and will', eventX + columnWidth + 10, eventY + 55);
+          pdf.text('  continue next week during our usual time', eventX + columnWidth + 10, eventY + 70);
+        }
+      }
       
-      // Sample action items for Dan
-      if (displayTitle.toLowerCase().includes('dan re:')) {
-        pdf.setFontSize(appointments.threeColumn.bulletFont);
-        pdf.text('• Review his supervision notes from last week', eventX + (columnWidth * 2) + 10, eventY + 40);
-        pdf.text('• Follow-up to see if there are any pressing', eventX + (columnWidth * 2) + 10, eventY + 55);
-        pdf.text('  issues/questions that I can help him navigate', eventX + (columnWidth * 2) + 10, eventY + 70);
+      // Column 3: Action Items - only if has actions
+      if (hasActions) {
+        pdf.setFontSize(appointments.threeColumn.headerFont);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text('Action Items', eventX + (columnWidth * 2) + 10, eventY + 20);
+        
+        // Sample action items for Dan
+        if (displayTitle.toLowerCase().includes('dan re:')) {
+          pdf.setFontSize(appointments.threeColumn.bulletFont);
+          pdf.text('• Review his supervision notes from last week', eventX + (columnWidth * 2) + 10, eventY + 40);
+          pdf.text('• Follow-up to see if there are any pressing', eventX + (columnWidth * 2) + 10, eventY + 55);
+          pdf.text('  issues/questions that I can help him navigate', eventX + (columnWidth * 2) + 10, eventY + 70);
+        }
       }
       
     } else {
-      // Single column layout for non-expanded appointments
+      // Single column layout for appointments without notes/actions
       pdf.setFontSize(appointments.singleColumn.titleFont);
-      pdf.setFont('helvetica', 'normal');
+      pdf.setFont('helvetica', 'bold'); // Make font bolder to fill space
       pdf.setTextColor(...config.colors.black);
       pdf.text(displayTitle, eventX + appointments.singleColumn.leftMargin, eventY + appointments.singleColumn.titleY);
       
       // Source
       const { sourceText } = getEventTypeInfoExtended(event);
       pdf.setFontSize(appointments.singleColumn.sourceFont);
+      pdf.setFont('helvetica', 'normal');
       pdf.text(sourceText, eventX + appointments.singleColumn.leftMargin, eventY + appointments.singleColumn.sourceY);
       
       // Time
       const timeRange = `${formatMilitaryTime(eventDate)}-${formatMilitaryTime(endDate)}`;
       pdf.setFontSize(appointments.singleColumn.timeFont);
+      pdf.setFont('helvetica', 'bold'); // Make time bold and larger
       pdf.text(timeRange, eventX + appointments.singleColumn.leftMargin, eventY + appointments.singleColumn.timeY);
     }
   });
