@@ -219,6 +219,10 @@ function formatMilitaryTime(date: Date): string {
 function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
   const config = PIXEL_PERFECT_CONFIG;
 
+  // Set white background for entire header first
+  pdf.setFillColor(255, 255, 255);
+  pdf.rect(0, 0, config.pageWidth, config.header.height, 'F');
+
   // Draw main border around entire header section - thin black line
   pdf.setDrawColor(...config.colors.black);
   pdf.setLineWidth(1);
@@ -240,18 +244,11 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   pdf.setLineWidth(1);
   pdf.roundedRect(buttonX, buttonY, buttonWidth, buttonHeight, 6, 6, 'FD');
 
-  // Button text with calendar emoji - use Unicode fallback for better PDF compatibility
+  // Button text with calendar emoji
   pdf.setFontSize(14);
   pdf.setFont('helvetica', 'normal');
-  pdf.setTextColor(...config.colors.black);
-  
-  // Try emoji first, fallback to calendar symbol
-  try {
-    pdf.text('📅 Weekly Overview', buttonX + buttonWidth / 2, buttonY + buttonHeight / 2 + 5, { align: 'center' });
-  } catch (e) {
-    // Fallback to calendar symbol if emoji fails
-    pdf.text('Cal Weekly Overview', buttonX + buttonWidth / 2, buttonY + buttonHeight / 2 + 5, { align: 'center' });
-  }
+  pdf.setTextColor(0, 0, 0);
+  pdf.text('📅 Weekly Overview', buttonX + buttonWidth / 2, buttonY + buttonHeight / 2 + 5, { align: 'center' });
 
   // Date (perfectly centered) - exact font size and positioning from screenshot
   const dateStr = selectedDate.toLocaleDateString('en-US', { 
