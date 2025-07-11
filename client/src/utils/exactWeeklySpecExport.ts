@@ -343,62 +343,50 @@ function drawExactAppointments(pdf: jsPDF, weekStartDate: Date, events: Calendar
     const availableHeight = height - (padding * 2);
     const availableWidth = width - (padding * 2);
     
-    // Calculate proportional font sizes based on actual appointment duration
-    const baseHeightRatio = availableHeight / (SPEC.ROW_HEIGHT * SCALE); // Based on actual box height
-    const baseWidthRatio = availableWidth / 400; // Based on typical column width
-    const scaleFactor = Math.min(baseHeightRatio, baseWidthRatio, 3.0); // Allow scaling up to 300%
-    
-    // Special handling for different appointment durations
-    let baseTitleSize, baseSourceSize, baseTimeSize;
+    // Fixed large font sizes for maximum readability - no scaling applied
+    // These are the actual font sizes that will be used in the PDF
+    let titleFontSize, sourceFontSize, timeFontSize;
     
     if (durationInMinutes <= 30) {
-      // 30-minute appointments: smaller fonts to fit in limited space
-      baseTitleSize = 16;
-      baseSourceSize = 12;
-      baseTimeSize = 14;
+      // 30-minute appointments: readable fonts for small space
+      titleFontSize = 18;
+      sourceFontSize = 14;
+      timeFontSize = 16;
     } else if (durationInMinutes >= 90) {
-      // 90-minute appointments: larger fonts to fill space appropriately
-      baseTitleSize = 28;
-      baseSourceSize = 20;
-      baseTimeSize = 24;
+      // 90-minute appointments: large fonts to fill space
+      titleFontSize = 36;
+      sourceFontSize = 24;
+      timeFontSize = 30;
     } else {
-      // 60-minute appointments: standard sizing
-      baseTitleSize = 22;
-      baseSourceSize = 16;
-      baseTimeSize = 18;
+      // 60-minute appointments: standard large sizing
+      titleFontSize = 28;
+      sourceFontSize = 20;
+      timeFontSize = 24;
     }
     
-    // Apply proportional sizing with duration-appropriate limits
-    const titleFontSize = Math.max(8, Math.min(48, baseTitleSize * scaleFactor));
-    const sourceFontSize = Math.max(6, Math.min(36, baseSourceSize * scaleFactor));
-    const timeFontSize = Math.max(8, Math.min(40, baseTimeSize * scaleFactor));
-    
-    // Calculate text positioning based on appointment duration
+    // Calculate text positioning to properly distribute content within cell bounds
     let titleY, sourceY, timeY;
     
     if (durationInMinutes <= 30) {
-      // 30-minute appointments: tight vertical spacing
-      const compactSpacing = Math.max(12, availableHeight / 4);
-      titleY = y + padding + compactSpacing * 0.8;
-      sourceY = y + padding + compactSpacing * 1.8;
-      timeY = y + padding + compactSpacing * 2.8;
+      // 30-minute appointments: compact but readable spacing
+      titleY = y + padding + 8;
+      sourceY = y + padding + 18;
+      timeY = y + padding + 28;
     } else if (durationInMinutes >= 90) {
-      // 90-minute appointments: generous spacing with better distribution
-      const generousSpacing = availableHeight / 3;
-      titleY = y + padding + generousSpacing * 0.4;
-      sourceY = y + padding + generousSpacing * 1.2;
-      timeY = y + padding + generousSpacing * 2.0;
+      // 90-minute appointments: generous spacing using full height
+      titleY = y + padding + 12;
+      sourceY = y + padding + 32;
+      timeY = y + padding + 52;
     } else {
-      // 60-minute appointments: standard spacing
-      const standardSpacing = availableHeight / 3;
-      titleY = y + padding + standardSpacing * 0.6;
-      sourceY = y + padding + standardSpacing * 1.4;
-      timeY = y + padding + standardSpacing * 2.2;
+      // 60-minute appointments: balanced spacing
+      titleY = y + padding + 10;
+      sourceY = y + padding + 25;
+      timeY = y + padding + 40;
     }
     
     // Measure and truncate title if needed to fit width
     pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(titleFontSize * SCALE);
+    pdf.setFontSize(titleFontSize); // Remove SCALE factor for proper sizing
     let truncatedTitle = title;
     const titleWidth = pdf.getTextWidth(truncatedTitle);
     
@@ -409,18 +397,18 @@ function drawExactAppointments(pdf: jsPDF, weekStartDate: Date, events: Calendar
       truncatedTitle = title.substring(0, Math.max(1, maxChars - 3)) + '...';
     }
     
-    // Draw title - proportionally sized and positioned
+    // Draw title - large and bold for maximum readability
     pdf.setTextColor(...SPEC.BLACK);
     pdf.text(truncatedTitle, x + padding, titleY);
     
     // Draw source - positioned in middle section
     pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(sourceFontSize * SCALE);
+    pdf.setFontSize(sourceFontSize); // Remove SCALE factor for proper sizing
     pdf.text(source, x + padding, sourceY);
     
     // Draw time range - positioned at bottom section
     pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(timeFontSize * SCALE);
+    pdf.setFontSize(timeFontSize); // Remove SCALE factor for proper sizing
     pdf.text(timeText, x + padding, timeY);
   });
 }
