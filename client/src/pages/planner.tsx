@@ -263,7 +263,13 @@ export default function Planner() {
   // Load events from database when authenticated user is available
   useEffect(() => {
     // Only proceed if we have an authenticated user and are not already loading
-    if (!authenticatedUser?.id || eventsLoading || state.events.length > 0) {
+    if (!authenticatedUser?.id || eventsLoading) {
+      return;
+    }
+
+    // Skip if we already have Google sample events loaded
+    const hasGoogleSamples = state.events.some(e => e.id?.startsWith('google-sample'));
+    if (hasGoogleSamples && state.events.length >= 310) {
       return;
     }
 
@@ -325,6 +331,12 @@ export default function Planner() {
         });
 
         updateEvents(convertedEvents);
+
+        // Force calendar week update with new events
+        setTimeout(() => {
+          console.log('Forcing calendar week update with loaded events');
+          setCurrentDate(new Date(2025, 6, 7)); // Force update to July 7, 2025
+        }, 100);
 
         // Auto-select calendars from database events
         const googleEvents = convertedEvents.filter(event => event.source === 'google' && event.calendarId);
@@ -965,6 +977,25 @@ export default function Planner() {
             </div>
           </div>
         </div>
+      </MainLayout>
+    );
+  }
+
+  // Show loading state while events are being fetched
+  if (eventsLoading) {
+    return (
+      <MainLayout>
+        <LoadingState 
+          isLoading={true} 
+          loadingText="Loading calendar events..." 
+        >
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="text-center">
+              <div className="text-lg font-medium mb-2">Loading your calendar...</div>
+              <div className="text-sm text-gray-600">Please wait while we fetch your events</div>
+            </div>
+          </div>
+        </LoadingState>
       </MainLayout>
     );
   }
