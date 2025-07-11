@@ -11,49 +11,49 @@ const PIXEL_PERFECT_CONFIG = {
   // Margins and spacing
   margin: 40,        // 40px on all sides
   headerStartY: 25,  // Header start Y position
-  gridStartY: 225,   // Grid start Y position
-  availableGridHeight: 3035, // Available grid height
+  gridStartY: 240,   // Grid start Y position (adjusted for improved header)
+  availableGridHeight: 3020, // Available grid height
   
   // Layout structure
   header: {
     navButton: {
       x: 40,
-      y: 35,
-      width: 200,
-      height: 45,
-      text: 'Weekly Overview',
-      fontSize: 18,
-      bgColor: [245, 245, 245],
-      borderColor: [180, 180, 180]
+      y: 30,
+      width: 220,
+      height: 50,
+      text: '← Back to Weekly',
+      fontSize: 20,
+      bgColor: [248, 248, 248],
+      borderColor: [160, 160, 160]
     },
     title: {
       text: 'DAILY PLANNER',
-      fontSize: 36,
-      y: 30,
+      fontSize: 42,
+      y: 65,
       weight: 'bold'
     },
     subtitle: {
-      y: 70,
-      fontSize: 20
+      y: 100,
+      fontSize: 24
     },
     legend: {
-      y: 35,
-      fontSize: 20,
-      symbolSize: 15,
-      spacing: 200
+      y: 30,
+      fontSize: 18,
+      symbolSize: 18,
+      spacing: 180
     }
   },
   
   // Statistics section
   stats: {
-    y: 115,
-    height: 75,
-    bgColor: [240, 240, 240],
-    numbersFont: 28,
-    labelsFont: 20,
-    numbersY: 127,
-    labelsY: 160,
-    marginLR: 60
+    y: 130,
+    height: 80,
+    bgColor: [248, 248, 248],
+    numbersFont: 32,
+    labelsFont: 22,
+    numbersY: 155,
+    labelsY: 190,
+    marginLR: 80
   },
   
   // Time grid
@@ -338,20 +338,18 @@ function drawPixelPerfectTimeGrid(pdf: jsPDF) {
   ALL_TIME_SLOTS.forEach((slot, index) => {
     const y = config.gridStartY + (index * grid.rowHeight);
     
-    // Background color based on hour/half-hour
+    // Background color based on hour/half-hour - APPLIED TO ENTIRE ROW
     const bgColor = slot.isHour ? grid.topHourBg : grid.halfHourBg;
     pdf.setFillColor(...bgColor);
-    pdf.rect(config.margin, y, grid.timeColumnWidth, grid.rowHeight, 'F');
+    
+    // Fill entire row width (time column + main area)
+    pdf.rect(config.margin, y, grid.timeColumnWidth + grid.mainAreaWidth, grid.rowHeight, 'F');
     
     // Time text
     pdf.setFontSize(slot.isHour ? grid.topHourFont : grid.halfHourFont);
     pdf.setFont('helvetica', slot.isHour ? 'bold' : 'normal');
     pdf.setTextColor(...config.colors.black);
     pdf.text(slot.time, config.margin + grid.timeColumnWidth / 2, y + grid.rowHeight / 2 + 8, { align: 'center' });
-    
-    // Main area background (white)
-    pdf.setFillColor(...config.colors.white);
-    pdf.rect(config.margin + grid.timeColumnWidth, y, grid.mainAreaWidth, grid.rowHeight, 'F');
     
     // Horizontal grid lines
     pdf.setDrawColor(...grid.borderColor);
