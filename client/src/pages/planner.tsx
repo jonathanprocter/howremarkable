@@ -46,6 +46,7 @@ const generateFilename = (type: string, date: Date): string => {
 import { getWeekNumber } from '../utils/dateUtils';
 import { initializeRemarkableOptimizations } from '../utils/remarkableDisplayOptimizer';
 import { simpleNavigationFix } from '../utils/simpleNavigationFix';
+import { optimizeForReMarkable, debounce } from '../utils/performanceOptimizer';
 
 export default function Planner() {
   const {
@@ -89,14 +90,20 @@ export default function Planner() {
   // Initialize reMarkable Pro optimizations and simple navigation fix on component mount
   useEffect(() => {
     initializeRemarkableOptimizations();
-    // Run simple navigation fix after component mounts
-    setTimeout(simpleNavigationFix, 500);
+    optimizeForReMarkable();
+    
+    // Run simple navigation fix only once after initial load
+    const timer = setTimeout(simpleNavigationFix, 1000);
+    return () => clearTimeout(timer);
   }, []);
+
+  // Debounce export actions to prevent multiple rapid calls
+  const debouncedExportAction = debounce(handleExportAction, 1000);
 
   // Load events from database when authenticated user is available
   useEffect(() => {
     // Only proceed if we have an authenticated user and are not already loading
-    if (!authenticatedUser?.id || eventsLoading) {
+    if (!authenticatedUser?.id || eventsLoading || state.events.length > 0) {
       return;
     }
 
@@ -105,7 +112,7 @@ export default function Planner() {
       setEventsError(null);
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
 
       try {
         const response = await fetch(`/api/events/${authenticatedUser.id}`, {
@@ -208,7 +215,7 @@ export default function Planner() {
       setEventsError('Unexpected error occurred');
       setEventsLoading(false);
     });
-  }, [authenticatedUser?.id]); // Re-run when authenticated user changes
+  }, [authenticatedUser?.id, state.events.length]); // Re-run when authenticated user changes or events are empty
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);

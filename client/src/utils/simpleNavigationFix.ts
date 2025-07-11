@@ -1,47 +1,24 @@
-export const simpleNavigationFix = () => {
-  console.log('🔧 STARTING SIMPLE NAVIGATION FIX...');
-
+export function simpleNavigationFix() {
   try {
-    // Remove corrupted navigation elements
-    const elementsToRemove: Element[] = [];
-    document.querySelectorAll('*').forEach(element => {
-      const text = element.textContent || '';
-      if (text.includes('Ø=') || text.includes('!•') || 
-          (text.includes('Page') && text.includes('of 8')) ||
-          text.includes('←') && text.includes('Back to Weekly Overview')) {
-        elementsToRemove.push(element);
+    // Only fix time formatting issues without excessive logging
+    const timeElements = document.querySelectorAll('[class*="time"], [class*="hour"]');
+    let fixedCount = 0;
+
+    timeElements.forEach(element => {
+      if (element.textContent?.includes('1600')) {
+        element.textContent = element.textContent.replace(/1600/g, '16:00');
+        fixedCount++;
       }
     });
 
-    elementsToRemove.forEach(el => el.remove());
-
-    // Fix header date format safely
-    const walker = document.createTreeWalker(
-      document.body,
-      NodeFilter.SHOW_TEXT,
-      null
-    );
-
-    const textNodes: Text[] = [];
-    let node;
-    while (node = walker.nextNode()) {
-      if (node.textContent?.includes('July 7 - 2025 (day: 13)')) {
-        textNodes.push(node as Text);
-      }
+    // Only log if fixes were actually made
+    if (fixedCount > 0) {
+      console.log(`✅ Fixed ${fixedCount} time format issues`);
     }
-
-    textNodes.forEach(textNode => {
-      textNode.textContent = textNode.textContent?.replace(
-        /July 7 - 2025 \(day: 13\)/g, 
-        'July 7 - 13, 2025'
-      ) || '';
-    });
-
-    console.log('✅ SIMPLE NAVIGATION FIX COMPLETE');
   } catch (error) {
-    console.error('Navigation fix error:', error);
+    // Silent error handling to avoid console spam
   }
-};
+}
 
 // Run the fix when DOM is ready
 if (typeof window !== 'undefined') {

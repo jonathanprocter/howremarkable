@@ -77,8 +77,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     done(null, user.id); // Store only user ID in session for security
   });
 
+  // Cache for user sessions to reduce database calls
+  const userCache = new Map();
+  const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
   passport.deserializeUser(async (id: string, done) => {
-    console.log("✅ Deserializing user ID:", id);
+    // Check cache first
+    const cached = userCache.get(id);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      return done(null, cached.user);
+    }
+
     try {
       // For development, always return user object for ID 1
       if (id === '1') {
@@ -90,7 +99,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           accessToken: 'dev-access-token',
           refreshToken: 'dev-refresh-token'
         };
-        console.log("✅ Deserializing development user:", { id: user.id, email: user.email });
+        
+        // Cache the user
+        userCache.set(id, { user, timestamp: Date.now() });
         done(null, user);
       } else {
         // For production, fetch user from database
@@ -104,10 +115,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             accessToken: 'stored-access-token',
             refreshToken: 'stored-refresh-token'
           };
-          console.log("✅ Deserializing database user:", { id: user.id, email: user.email });
+          
+          // Cache the user
+          userCache.set(id, { user, timestamp: Date.now() });
           done(null, user);
         } else {
-          console.log("❌ User not found for ID:", id);
           done(null, false);
         }
       }
@@ -117,11 +129,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Session debugging middleware (reduced logging)
+  // Session debugging middleware (minimal logging)
   app.use((req, res, next) => {
-    // Only log session debug for non-status endpoints to reduce spam
-    if (req.path.startsWith('/api/') && !req.path.includes('/auth/status')) {
-      console.log(`🔍 Session Debug [${req.method} ${req.path}]: User=${!!req.user}, Session=${req.sessionID.slice(0,8)}...`);
+    // Only log critical session issues, not every request
+    if (req.path.startsWith('/api/') && !req.user && req.path !== '/api/auth/status') {
+      console.log(`⚠️ Unauthenticated API call: ${req.method} ${req.path}`);
     }
     next();
   });
