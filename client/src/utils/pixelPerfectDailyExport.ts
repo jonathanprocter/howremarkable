@@ -211,11 +211,34 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   pdf.setFont('helvetica', config.header.title.weight);
   pdf.text(dateStr, config.pageWidth / 2, config.header.title.y, { align: 'center' });
   
-  // Subtitle (centered)
-  const appointmentCount = events.length;
+  // Calculate the week range (Sunday to Saturday)
+  const weekStart = new Date(selectedDate);
+  weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Go to Sunday
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6); // Go to Saturday
+  
+  // Set to start/end of day for proper comparison
+  weekStart.setHours(0, 0, 0, 0);
+  weekEnd.setHours(23, 59, 59, 999);
+  
+  // Filter events to current week only (matching WeeklyPlannerView logic)
+  const weekEvents = events.filter(event => {
+    const eventDate = new Date(event.startTime);
+    return eventDate >= weekStart && eventDate <= weekEnd;
+  });
+  
+  // Filter events to selected day for subtitle
+  const dayEvents = weekEvents.filter(event => {
+    const eventDate = new Date(event.startTime);
+    const eventDay = eventDate.toDateString();
+    const selectedDay = selectedDate.toDateString();
+    return eventDay === selectedDay;
+  });
+  
+  // Subtitle (centered) - showing today's appointments
   pdf.setFontSize(config.header.subtitle.fontSize);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(`${appointmentCount} appointments`, config.pageWidth / 2, config.header.subtitle.y, { align: 'center' });
+  pdf.text(`${dayEvents.length} appointments today`, config.pageWidth / 2, config.header.subtitle.y, { align: 'center' });
   
   // Legend (right-center) - positioned after date
   const legendStartX = config.pageWidth / 2 + 300; // Start after date area
@@ -251,7 +274,7 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   pdf.rect(legendX, legendY, config.header.legend.symbolSize, config.header.legend.symbolSize, 'S');
   pdf.text('Holidays in United States', legendX + 20, legendY + 10);
   
-  // Statistics section
+  // Statistics section - using WEEKLY statistics that reset each week
   const stats = config.stats;
   pdf.setFillColor(...stats.bgColor);
   pdf.rect(stats.marginLR, stats.y, config.pageWidth - (stats.marginLR * 2), stats.height, 'F');
@@ -259,20 +282,20 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   pdf.setLineWidth(1);
   pdf.rect(stats.marginLR, stats.y, config.pageWidth - (stats.marginLR * 2), stats.height, 'S');
   
-  // Calculate statistics
-  const totalEvents = events.length;
-  const totalHours = events.reduce((sum, event) => {
+  // Calculate WEEKLY statistics (matching WeeklyPlannerView logic)
+  const totalEvents = weekEvents.length;
+  const totalHours = weekEvents.reduce((sum, event) => {
     return sum + (new Date(event.endTime).getTime() - new Date(event.startTime).getTime()) / (1000 * 60 * 60);
   }, 0);
-  const availableHours = 24 - totalHours;
-  const freeTimePercentage = Math.round((availableHours / 24) * 100);
+  const dailyAverage = totalHours / 7; // Average hours per day
+  const availableHours = 168 - totalHours; // 168 hours in a week
   
-  // Four columns with statistics
+  // Four columns with weekly statistics
   const statColumns = [
-    { number: totalEvents.toString(), label: 'Appointments' },
-    { number: totalHours.toFixed(1) + 'h', label: 'Scheduled' },
-    { number: availableHours.toFixed(1) + 'h', label: 'Available' },
-    { number: freeTimePercentage + '%', label: 'Free Time' }
+    { number: totalEvents.toString(), label: 'Total Appointments' },
+    { number: totalHours.toFixed(1) + 'h', label: 'Scheduled Time' },
+    { number: dailyAverage.toFixed(1) + 'h', label: 'Daily Average' },
+    { number: availableHours.toFixed(0) + 'h', label: 'Available Time' }
   ];
   
   const columnWidth = (config.pageWidth - (stats.marginLR * 2)) / 4;
