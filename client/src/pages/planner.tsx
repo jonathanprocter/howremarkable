@@ -566,6 +566,36 @@ export default function Planner() {
             return;
           }
 
+        case 'Pixel Perfect Dashboard':
+          // Export weekly using live dashboard style extraction
+          try {
+            console.log('=== PIXEL PERFECT DASHBOARD EXPORT - LATEST VERSION ===');
+            console.log('Week start:', state.currentWeek.startDate);
+            console.log('Week end:', state.currentWeek.endDate);
+            console.log('Total events:', validatedEvents.length);
+
+            const { exportPixelPerfectWeekly } = await import('../utils/pixelPerfectDashboardExport');
+            await exportPixelPerfectWeekly(
+              state.currentWeek.startDate,
+              state.currentWeek.endDate,
+              validatedEvents
+            );
+
+            toast({
+              title: "Pixel Perfect Dashboard Export Successful",
+              description: "Weekly calendar exported with exact dashboard styling!"
+            });
+            return;
+          } catch (dashboardError) {
+            console.error('Pixel perfect dashboard export error:', dashboardError);
+            toast({
+              title: "Pixel Perfect Dashboard Export Failed",
+              description: `Dashboard export failed: ${dashboardError.message}`,
+              variant: "destructive"
+            });
+            return;
+          }
+
         case 'Dashboard Perfect Daily':
           // Export daily using live dashboard style extraction
           try {
