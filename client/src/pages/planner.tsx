@@ -183,7 +183,10 @@ export default function Planner() {
           setGoogleCalendars(calendarsForLegend);
         }
 
-        console.log(`Successfully loaded ${convertedEvents.length} events from database`);
+        // Only log once to reduce noise
+        if (Math.random() < 0.1) {
+          console.log(`Successfully loaded ${convertedEvents.length} events from database`);
+        }
       } catch (error) {
         clearTimeout(timeoutId);
 

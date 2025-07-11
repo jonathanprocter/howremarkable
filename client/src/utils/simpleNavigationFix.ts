@@ -1,5 +1,12 @@
+let lastFixTime = 0;
+const FIX_INTERVAL = 5000; // Only run every 5 seconds
+
 export const simpleNavigationFix = () => {
-  console.log('🔧 STARTING SIMPLE NAVIGATION FIX...');
+  const now = Date.now();
+  if (now - lastFixTime < FIX_INTERVAL) {
+    return; // Skip if run too recently
+  }
+  lastFixTime = now;
 
   try {
     // Remove corrupted navigation elements
@@ -13,7 +20,10 @@ export const simpleNavigationFix = () => {
       }
     });
 
-    elementsToRemove.forEach(el => el.remove());
+    if (elementsToRemove.length > 0) {
+      elementsToRemove.forEach(el => el.remove());
+      console.log('🔧 Cleaned up navigation elements');
+    }
 
     // Fix header date format safely
     const walker = document.createTreeWalker(
@@ -30,14 +40,15 @@ export const simpleNavigationFix = () => {
       }
     }
 
-    textNodes.forEach(textNode => {
-      textNode.textContent = textNode.textContent?.replace(
-        /July 7 - 2025 \(day: 13\)/g, 
-        'July 7 - 13, 2025'
-      ) || '';
-    });
-
-    console.log('✅ SIMPLE NAVIGATION FIX COMPLETE');
+    if (textNodes.length > 0) {
+      textNodes.forEach(textNode => {
+        textNode.textContent = textNode.textContent?.replace(
+          /July 7 - 2025 \(day: 13\)/g, 
+          'July 7 - 13, 2025'
+        ) || '';
+      });
+      console.log('✅ Fixed date format');
+    }
   } catch (error) {
     console.error('Navigation fix error:', error);
   }

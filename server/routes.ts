@@ -89,7 +89,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         accessToken: 'dev-access-token',
         refreshToken: 'dev-refresh-token'
       };
-      console.log("✅ Deserializing user (ID only):", { id: userObj.id, email: userObj.email });
+      // Only log occasionally to reduce spam
+      if (Math.random() < 0.01) {
+        console.log("✅ Deserializing user (ID only):", { id: userObj.id, email: userObj.email });
+      }
       done(null, userObj);
     } else if (user && typeof user === 'object') {
       // New format - full user object, ensure all fields are present
@@ -101,7 +104,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         accessToken: user.accessToken || 'dev-access-token',
         refreshToken: user.refreshToken || 'dev-refresh-token'
       };
-      console.log("✅ Deserializing user (full object):", { id: userObj.id, email: userObj.email });
+      // Only log occasionally to reduce spam
+      if (Math.random() < 0.01) {
+        console.log("✅ Deserializing user (full object):", { id: userObj.id, email: userObj.email });
+      }
       done(null, userObj);
     } else {
       console.log("❌ Invalid user data in session:", user);
@@ -109,10 +115,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Session debugging middleware (reduced logging)
+  // Session debugging middleware (minimal logging)
   app.use((req, res, next) => {
-    // Only log session debug for non-status endpoints to reduce spam
-    if (req.path.startsWith('/api/') && !req.path.includes('/auth/status')) {
+    // Only log session debug for specific endpoints and occasionally to reduce spam
+    if (req.path.startsWith('/api/') && !req.path.includes('/auth/status') && Math.random() < 0.1) {
       console.log(`🔍 Session Debug [${req.method} ${req.path}]: User=${!!req.user}, Session=${req.sessionID.slice(0,8)}...`);
     }
     next();

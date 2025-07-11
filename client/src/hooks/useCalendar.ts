@@ -60,14 +60,14 @@ export const useCalendar = () => {
     // Load persisted events from localStorage
     const savedEvents = localStorage.getItem('calendar_events');
     const persistedEvents = savedEvents ? JSON.parse(savedEvents) : [];
-    
+
     // Convert string dates back to Date objects
     const convertedEvents = persistedEvents.map((event: any) => ({
       ...event,
       startTime: new Date(event.startTime),
       endTime: new Date(event.endTime)
     }));
-    
+
     return {
       ...initialState,
       events: [...sampleGoogleEvents, ...convertedEvents]
@@ -93,14 +93,14 @@ export const useCalendar = () => {
   const updateCurrentWeek = (date: Date, events = state.events) => {
     const startDate = getWeekStartDate(date);
     const endDate = getWeekEndDate(date);
-    
+
     console.log(`Updating week for date: ${date.toDateString()}, week: ${startDate.toDateString()} to ${endDate.toDateString()}`);
-    
+
     const days: CalendarDay[] = [];
     for (let i = 0; i < 7; i++) {
       const currentDate = new Date(startDate);
       currentDate.setDate(startDate.getDate() + i);
-      
+
       days.push({
         date: currentDate,
         dayOfWeek: currentDate.toLocaleDateString('en-US', { weekday: 'short' }),
@@ -109,12 +109,12 @@ export const useCalendar = () => {
           const eventDate = new Date(event.startTime);
           const eventDateStr = eventDate.toDateString();
           const currentDateStr = currentDate.toDateString();
-          
+
           // Debug for Monday July 7th specifically
           if (eventDateStr === 'Mon Jul 07 2025' && currentDateStr.includes('Jul 07')) {
             console.log(`✅ MONDAY MATCH: ${event.title} matched with day ${currentDateStr}`);
           }
-          
+
           return eventDateStr === currentDateStr;
         })
       });
@@ -174,16 +174,16 @@ export const useCalendar = () => {
   const addEvent = (event: CalendarEvent) => {
     setState(prev => {
       const newEvents = [...prev.events, event];
-      
+
       // Recalculate current week with new event
       const startDate = getWeekStartDate(prev.currentDate);
       const endDate = getWeekEndDate(prev.currentDate);
-      
+
       const days: CalendarDay[] = [];
       for (let i = 0; i < 7; i++) {
         const currentDate = new Date(startDate);
         currentDate.setDate(startDate.getDate() + i);
-        
+
         days.push({
           date: currentDate,
           dayOfWeek: currentDate.toLocaleDateString('en-US', { weekday: 'short' }),
@@ -214,19 +214,19 @@ export const useCalendar = () => {
         ...prev,
         events: events
       };
-      
+
       // Immediately update current week with new events
       console.log('Updating current week with events:', events.length);
-      
+
       // Recalculate current week with new events
       const startDate = getWeekStartDate(prev.currentDate);
       const endDate = getWeekEndDate(prev.currentDate);
-      
+
       const days: CalendarDay[] = [];
       for (let i = 0; i < 7; i++) {
         const currentDate = new Date(startDate);
         currentDate.setDate(startDate.getDate() + i);
-        
+
         days.push({
           date: currentDate,
           dayOfWeek: currentDate.toLocaleDateString('en-US', { weekday: 'short' }),
@@ -235,12 +235,12 @@ export const useCalendar = () => {
             const eventDate = new Date(event.startTime);
             const eventDateStr = eventDate.toDateString();
             const currentDateStr = currentDate.toDateString();
-            
+
             // Debug for Monday July 7th specifically
             if (eventDateStr === 'Mon Jul 07 2025' && currentDateStr.includes('Jul 07')) {
               console.log(`✅ MONDAY MATCH: ${event.title} matched with day ${currentDateStr}`);
             }
-            
+
             return eventDateStr === currentDateStr;
           })
         });
@@ -252,7 +252,7 @@ export const useCalendar = () => {
         endDate,
         days
       };
-      
+
       return newState;
     });
   };
@@ -262,16 +262,16 @@ export const useCalendar = () => {
       const updatedEvents = prev.events.map(event => 
         event.id === eventId ? { ...event, ...updates } : event
       );
-      
+
       // Recalculate current week with updated events
       const startDate = getWeekStartDate(prev.currentDate);
       const endDate = getWeekEndDate(prev.currentDate);
-      
+
       const days: CalendarDay[] = [];
       for (let i = 0; i < 7; i++) {
         const currentDate = new Date(startDate);
         currentDate.setDate(startDate.getDate() + i);
-        
+
         days.push({
           date: currentDate,
           dayOfWeek: currentDate.toLocaleDateString('en-US', { weekday: 'short' }),
@@ -299,16 +299,16 @@ export const useCalendar = () => {
   const deleteEvent = (eventId: string) => {
     setState(prev => {
       const filteredEvents = prev.events.filter(event => event.id !== eventId);
-      
+
       // Recalculate current week with filtered events
       const startDate = getWeekStartDate(prev.currentDate);
       const endDate = getWeekEndDate(prev.currentDate);
-      
+
       const days: CalendarDay[] = [];
       for (let i = 0; i < 7; i++) {
         const currentDate = new Date(startDate);
         currentDate.setDate(startDate.getDate() + i);
-        
+
         days.push({
           date: currentDate,
           dayOfWeek: currentDate.toLocaleDateString('en-US', { weekday: 'short' }),
