@@ -3,11 +3,9 @@ export const cleanEventTitle = (title: string): string => {
 
   return title
     .replace(/🔒\s*/g, '') // Remove lock symbols
-    .replace(/[\u{1F500}-\u{1F6FF}]/gu, '') // Remove emoji symbols
-    .replace(/[\u{1F300}-\u{1F5FF}]/gu, '') // Remove misc symbols
-    .replace(/[\u{1F600}-\u{1F64F}]/gu, '') // Remove emoticons
-    .replace(/[\u{1F680}-\u{1F6FF}]/gu, '') // Remove transport symbols
-    .replace(/[\u{2600}-\u{26FF}]/gu, '') // Remove misc symbols
+    .replace(/[\u{1F000}-\u{1F9FF}]/gu, '') // Remove all emoji ranges
+    .replace(/[\u{2600}-\u{27BF}]/gu, '') // Remove miscellaneous symbols
+    .replace(/[\u{1F300}-\u{1F6FF}]/gu, '') // Remove misc symbols and pictographs
     .replace(/Ø=ÜÅ/g, '') // Remove corrupted symbols
     .replace(/Ø=Ý/g, '') // Remove corrupted symbols
     .replace(/!•/g, '') // Remove broken navigation symbols
@@ -16,7 +14,8 @@ export const cleanEventTitle = (title: string): string => {
     .replace(/Back to Weekly Overview/g, '') // Remove navigation text
     .replace(/Weekly Overview/g, '') // Remove navigation text
     .replace(/Sunday Tuesday/g, '') // Remove broken day text
-    .replace(/[\u{2022}\u{2023}\u{2024}\u{2025}]/gu, '') // Remove bullet points
+    .replace(/[\u{2022}\u{2023}\u{2024}\u{2025}\u{25E6}\u{2043}\u{2219}]/gu, '') // Remove all bullet points
+    .replace(/[^\x20-\x7E\u00A0-\u00FF]/g, '') // Keep only basic ASCII and Latin-1 supplement
     .replace(/\s+/g, ' ') // Normalize spaces
     .trim();
 };

@@ -94,13 +94,25 @@ export default function Planner() {
     console.log('Component mounted');
   }, []);
 
-  // Define handleExportAction first before it's used in debounce
+  // Define handleExportAction with proper error handling
   const handleExportAction = async (type: string = 'Current View') => {
     console.log('Export button clicked:', type);
-    toast({
-      title: "Export Successful",
-      description: `${type} has been exported successfully.`
-    });
+    
+    try {
+      // The actual export logic is handled by the utility functions
+      // This is just a confirmation that the export was triggered
+      toast({
+        title: "Export Initiated",
+        description: `${type} export has been started successfully.`
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: "Export Error",
+        description: `Failed to export ${type}. Please try again.`,
+        variant: "destructive"
+      });
+    }
   };
 
   // Simplified export action without debounce for debugging
@@ -723,16 +735,17 @@ export default function Planner() {
     setSelectedCalendars(newSelected);
   };
 
-  // Filter events based on selected calendars - moved to handleExportAction function
+  // Filter events based on selected calendars
   const getCurrentEvents = () => {
     return state.events.filter(event => {
       if (event.source === 'google') {
-        // Use calendarId for Google Calendar events (not sourceId which is the event ID)
+        // Use calendarId for Google Calendar events
         const calendarId = (event as any).calendarId || event.sourceId;
-        const isSelected = selectedCalendars.has(calendarId);
-        return isSelected;
+        // If no calendars are selected, show all events
+        if (selectedCalendars.size === 0) return true;
+        return selectedCalendars.has(calendarId);
       }
-      // Always show manual and SimplePractice events since there are no toggles for them
+      // Always show manual and SimplePractice events
       return true;
     });
   };

@@ -191,7 +191,7 @@ export const WeeklyCalendarGrid = ({
                   onEventClick(event);
                 }}
               >
-                {cleanEventTitleLocal(event.title)}
+                {cleanEventTitle(event.title)}
               </div>
             ))}
           </div>
@@ -264,7 +264,7 @@ export const WeeklyCalendarGrid = ({
                       }}
                     >
                       <div className="appointment-name">
-                        {cleanEventTitleLocal(event.title)}
+                        {cleanEventTitle(event.title)}
                       </div>
                       <div className="appointment-time">
                         {event.startTime.toLocaleTimeString('en-US', { 
