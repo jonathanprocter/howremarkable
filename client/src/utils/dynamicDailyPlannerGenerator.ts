@@ -231,19 +231,40 @@ export class DynamicDailyPlannerGenerator {
   
   private generateAppointmentsColumnHTML(appointments: AppointmentData[]): string {
     let html = '';
+    const processedSlots = new Set<number>();
     
     for (let i = 0; i < this.timeSlots.length; i++) {
-      const slot = this.timeSlots[i];
-      const appointment = appointments.find(apt => apt.start_time === slot);
+      if (processedSlots.has(i)) {
+        continue; // Skip already processed slots
+      }
       
-      if (appointment) {
-        html += `<div class="time-block">\n${this.renderAppointmentHTML(appointment)}</div>\n`;
+      const slot = this.timeSlots[i];
+      // Find ALL appointments that start at this time slot
+      const overlappingAppointments = appointments.filter(apt => apt.start_time === slot);
+      
+      if (overlappingAppointments.length > 0) {
+        // Handle overlapping appointments - render side by side
+        const maxDuration = Math.max(...overlappingAppointments.map(apt => apt.duration_minutes));
+        const slotsToSkip = Math.ceil(maxDuration / 30);
         
-        // Skip slots covered by this appointment
-        const duration = Math.ceil(appointment.duration_minutes / 30);
-        for (let j = 1; j < duration && i + j < this.timeSlots.length; j++) {
-          i++; // Skip the next slot
-          html += `<div class="time-block"></div> <!-- Covered by ${appointment.title} -->\n`;
+        // Create container for overlapping appointments
+        html += `<div class="time-block overlapping-container" style="height: ${slotsToSkip * 40}px;">\n`;
+        
+        // Render each overlapping appointment with horizontal offset
+        overlappingAppointments.forEach((appointment, index) => {
+          const horizontalOffset = index * 33; // 33% width for each appointment
+          const appointmentWidth = Math.min(100 / overlappingAppointments.length, 30); // Max 30% width
+          
+          html += `<div class="overlapping-appointment" style="left: ${horizontalOffset}%; width: ${appointmentWidth}%;">\n`;
+          html += this.renderAppointmentHTML(appointment);
+          html += `</div>\n`;
+        });
+        
+        html += `</div>\n`;
+        
+        // Mark covered slots as processed
+        for (let j = 1; j < slotsToSkip && i + j < this.timeSlots.length; j++) {
+          processedSlots.add(i + j);
         }
       } else {
         html += `<div class="time-block"></div> <!-- ${slot} -->\n`;
@@ -376,11 +397,13 @@ export class DynamicDailyPlannerGenerator {
             }
         }
         
-        /* Main Content Layout */
+        /* Main Content Layout - Exact measurements for pixel-perfect audit */
         .main-content {
             display: grid;
             grid-template-columns: 90px 1fr 120px;
             gap: 1.5rem;
+            max-width: 100%;
+            width: 100%;
         }
         
         /* Time Column */
@@ -436,9 +459,10 @@ export class DynamicDailyPlannerGenerator {
             border-radius: 4px;
             padding: 0.5rem;
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-columns: 2fr 1.5fr 1.5fr;
             gap: 0.5rem;
             page-break-inside: avoid;
+            min-height: 40px;
         }
         
         .appointment.scheduled {
@@ -448,6 +472,27 @@ export class DynamicDailyPlannerGenerator {
         .appointment.canceled {
             border-left: 4px solid var(--coral);
             background: #FFF5F5;
+        }
+        
+        /* Overlapping Appointments Styles */
+        .overlapping-container {
+            position: relative;
+            display: flex;
+            flex-direction: row;
+            gap: 0.25rem;
+        }
+        
+        .overlapping-appointment {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            z-index: 1;
+            opacity: 0.95;
+        }
+        
+        .overlapping-appointment:hover {
+            z-index: 2;
+            opacity: 1;
         }
         
         .appointment-left {
