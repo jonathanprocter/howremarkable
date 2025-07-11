@@ -221,6 +221,11 @@ export default function Planner() {
         }
 
         console.log(`Successfully loaded ${convertedEvents.length} events from database`);
+        
+        toast({
+          title: "Calendar Loaded",
+          description: `Loaded ${convertedEvents.length} events successfully`
+        });
       } catch (error) {
         clearTimeout(timeoutId);
 
@@ -784,7 +789,7 @@ export default function Planner() {
               Welcome to reMarkable Pro Digital Planner
             </h1>
             <p className="text-gray-600 mb-6">
-              Please sign in with Google to access your calendar and start planning.
+              Please sign in to access your calendar and start planning.
             </p>
             <div className="space-y-4">
               <button

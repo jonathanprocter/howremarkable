@@ -135,27 +135,7 @@ export const WeeklyCalendarGrid = ({
     }
   };
 
-  const cleanEventTitleLocal = (title: string) => {
-    // Remove lock symbols and other problematic characters
-    return title
-      .replace(/🔒\s*/g, '') // Remove lock symbol and following space
-      .replace(/[\u{1F500}-\u{1F6FF}]/gu, '') // Remove emoji symbols
-      .replace(/[\u{1F300}-\u{1F5FF}]/gu, '') // Remove misc symbols
-      .replace(/[\u{1F600}-\u{1F64F}]/gu, '') // Remove emoticons
-      .replace(/[\u{1F680}-\u{1F6FF}]/gu, '') // Remove transport symbols
-      .replace(/[\u{2600}-\u{26FF}]/gu, '') // Remove misc symbols
-      .replace(/Ø=ÜÅ/g, '') // Remove corrupted symbols
-      .replace(/Ø=Ý/g, '') // Remove corrupted symbols
-      .replace(/!•/g, '') // Remove broken navigation symbols
-      .replace(/!•\s*/g, '') // Remove broken navigation symbols with spaces
-      .replace(/Page \d+ of \d+/g, '') // Remove page numbers
-      .replace(/Back to Weekly Overview/g, '') // Remove navigation text
-      .replace(/Weekly Overview/g, '') // Remove navigation text
-      .replace(/Sunday Tuesday/g, '') // Remove broken day text
-      .replace(/[\u{2022}\u{2023}\u{2024}\u{2025}]/gu, '') // Remove bullet points
-      .replace(/\s+/g, ' ') // Normalize spaces
-      .trim();
-  };
+  
 
 
   return (

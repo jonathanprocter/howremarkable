@@ -15,7 +15,7 @@ export const cleanEventTitle = (title: string): string => {
     .replace(/Weekly Overview/g, '') // Remove navigation text
     .replace(/Sunday Tuesday/g, '') // Remove broken day text
     .replace(/[\u{2022}\u{2023}\u{2024}\u{2025}\u{25E6}\u{2043}\u{2219}]/gu, '') // Remove all bullet points
-    .replace(/[^\x20-\x7E\u00A0-\u00FF]/g, '') // Keep only basic ASCII and Latin-1 supplement
+    .replace(/[^\x20-\x7E\u00A0-\u00FF\u2013\u2014\u2018\u2019\u201C\u201D]/g, '') // Keep ASCII, Latin-1, and common punctuation
     .replace(/\s+/g, ' ') // Normalize spaces
     .trim();
 };
