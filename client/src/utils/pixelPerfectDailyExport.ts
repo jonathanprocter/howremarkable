@@ -10,50 +10,50 @@ const PIXEL_PERFECT_CONFIG = {
   
   // Margins and spacing
   margin: 40,        // 40px on all sides
-  headerStartY: 25,  // Header start Y position
-  gridStartY: 240,   // Grid start Y position (adjusted for improved header)
-  availableGridHeight: 3020, // Available grid height
+  headerStartY: 20,  // Header start Y position
+  gridStartY: 210,   // Grid start Y position (adjusted for improved header)
+  availableGridHeight: 3050, // Available grid height
   
   // Layout structure
   header: {
     navButton: {
-      x: 40,
-      y: 30,
-      width: 220,
-      height: 50,
-      text: '← Back to Weekly',
-      fontSize: 20,
-      bgColor: [248, 248, 248],
-      borderColor: [160, 160, 160]
+      x: 50,
+      y: 20,
+      width: 180,
+      height: 40,
+      text: '← Weekly',
+      fontSize: 16,
+      bgColor: [250, 250, 250],
+      borderColor: [150, 150, 150]
     },
     title: {
       text: 'DAILY PLANNER',
-      fontSize: 42,
-      y: 65,
+      fontSize: 48,
+      y: 45,
       weight: 'bold'
     },
     subtitle: {
-      y: 100,
-      fontSize: 24
+      y: 85,
+      fontSize: 26
     },
     legend: {
-      y: 30,
-      fontSize: 18,
-      symbolSize: 18,
-      spacing: 180
+      y: 25,
+      fontSize: 16,
+      symbolSize: 16,
+      spacing: 160
     }
   },
   
   // Statistics section
   stats: {
-    y: 130,
-    height: 80,
+    y: 115,
+    height: 70,
     bgColor: [248, 248, 248],
-    numbersFont: 32,
-    labelsFont: 22,
-    numbersY: 155,
-    labelsY: 190,
-    marginLR: 80
+    numbersFont: 30,
+    labelsFont: 20,
+    numbersY: 140,
+    labelsY: 170,
+    marginLR: 70
   },
   
   // Time grid
@@ -82,18 +82,18 @@ const PIXEL_PERFECT_CONFIG = {
     // Content layout
     singleColumn: {
       titleY: 8,
-      titleFont: 24,
-      sourceY: 32,
-      sourceFont: 20,
-      timeY: 52,
-      timeFont: 24,
+      titleFont: 32,     // Increased from 24 to better utilize space
+      sourceY: 38,
+      sourceFont: 26,    // Increased from 20
+      timeY: 64,
+      timeFont: 28,      // Increased from 24
       leftMargin: 10
     },
     
     threeColumn: {
       columnWidth: 800,  // 2400 / 3
-      headerFont: 24,
-      bulletFont: 16,
+      headerFont: 28,    // Increased from 24
+      bulletFont: 20,    // Increased from 16
       separatorColor: [0, 0, 0]
     },
     
@@ -170,8 +170,12 @@ const ALL_TIME_SLOTS = [
 
 // Helper function to clean appointment title
 function cleanAppointmentTitle(title: string): string {
-  return title.endsWith(' Appointment') ? title.slice(0, -12) : title;
+  // Remove emoji and lock symbols, then remove "Appointment" suffix
+  let cleanTitle = title.replace(/[🔒🔓]/g, '').trim(); // Remove lock symbols
+  cleanTitle = cleanTitle.replace(/[\u{1F000}-\u{1F9FF}]/gu, '').trim(); // Remove emojis
+  return cleanTitle.endsWith(' Appointment') ? cleanTitle.slice(0, -12) : cleanTitle;
 }
+
 
 // Helper function to format time in 24-hour format
 function formatMilitaryTime(date: Date): string {
