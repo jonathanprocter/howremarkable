@@ -11,12 +11,12 @@ const PIXEL_PERFECT_CONFIG = {
   // Margins and spacing
   margin: 0,         // No margins for full width
   headerStartY: 20,  // Header start Y position
-  gridStartY: 238,   // Grid start Y position (after stats bar: 175 + 63)
+  gridStartY: 175,   // Grid start Y position (directly after header)
   availableGridHeight: 3022, // Available grid height (adjusted for repositioned stats bar)
 
   // Layout structure
   header: {
-    height: 70, // Reduced header height since stats bar moved down
+    height: 175, // Increased header height to accommodate full header section
     // Weekly Overview button (top left)
     weeklyButton: {
       x: 20,
@@ -66,8 +66,8 @@ const PIXEL_PERFECT_CONFIG = {
 
   // Time grid
   grid: {
-    timeColumnWidth: 60,  // Reduced for full-width layout
-    mainAreaWidth: 2490,  // 2550 - 60 = 2490 (full width minus time column)
+    timeColumnWidth: 120,  // Doubled from 60 to 120 for more space
+    mainAreaWidth: 2430,  // 2550 - 120 = 2430 (full width minus time column)
     rowHeight: 84,        // 84px each row
     totalRows: 36,        // All time slots 06:00-23:30
 
@@ -91,7 +91,7 @@ const PIXEL_PERFECT_CONFIG = {
   // Appointment styling
   appointments: {
     margin: 5,           // 5px margin from grid edges
-    width: 2400,         // Main area width minus 10px
+    width: 2340,         // Main area width minus 10px (2430 - 90)
 
     // Content layout
     singleColumn: {
@@ -105,7 +105,7 @@ const PIXEL_PERFECT_CONFIG = {
     },
 
     threeColumn: {
-      columnWidth: 800,  // 2400 / 3
+      columnWidth: 780,  // 2340 / 3
       headerFont: 28,    // Increased from 24
       bulletFont: 20,    // Increased from 16
       separatorColor: [0, 0, 0]
@@ -219,19 +219,20 @@ function formatMilitaryTime(date: Date): string {
 function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
   const config = PIXEL_PERFECT_CONFIG;
 
-  // Draw main border around entire header - thin black line
+  // Draw main border around entire header section - thin black line
   pdf.setDrawColor(...config.colors.black);
   pdf.setLineWidth(1);
   pdf.rect(0, 0, config.pageWidth, config.header.height, 'S');
 
-  // TOP SECTION - exact positioning matching screenshot
-  const topY = 12;
+  // TOP ROW - Weekly Overview button, Date, and Legend (exact positioning from screenshot)
+  const topRowY = 12;
+  const topRowHeight = 55;
 
   // Weekly Overview button (left) - exact dimensions from screenshot
   const buttonWidth = 170;
   const buttonHeight = 30;
   const buttonX = 20;
-  const buttonY = topY;
+  const buttonY = topRowY;
 
   // Draw button with light grey background and border
   pdf.setFillColor(245, 245, 245); // Light grey background
@@ -255,7 +256,7 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   pdf.setFontSize(24);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(...config.colors.black);
-  pdf.text(dateStr, config.pageWidth / 2, topY + 8, { align: 'center' });
+  pdf.text(dateStr, config.pageWidth / 2, topRowY + 8, { align: 'center' });
 
   // Filter events to selected day for count
   const dayEvents = events.filter(event => {
@@ -270,10 +271,10 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   pdf.setFontSize(16);
   pdf.setFont('helvetica', 'normal');
   pdf.setTextColor(...config.colors.black);
-  pdf.text(subtitleText, config.pageWidth / 2, topY + 35, { align: 'center' });
+  pdf.text(subtitleText, config.pageWidth / 2, topRowY + 35, { align: 'center' });
 
   // LEGEND (right side) - exact positioning and spacing from screenshot
-  const legendY = topY + 8;
+  const legendY = topRowY + 8;
   const legendSpacing = 180;
   const rightMargin = 20;
 
@@ -319,24 +320,13 @@ function drawPixelPerfectHeader(pdf: jsPDF, selectedDate: Date, events: Calendar
   pdf.rect(legend1SquareX, legendY, 12, 12, 'FD');
   pdf.setTextColor(...config.colors.black);
   pdf.text(legend1Text, legend1TextX, legendY + 10);
-}
 
-// Draw statistics bar positioned above 06:00 time slot
-function drawStatisticsBar(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
-  const config = PIXEL_PERFECT_CONFIG;
-  const statsY = config.statsBar.y;
-  const statsHeight = config.statsBar.height;
-
-  // Filter events to selected day for count
-  const dayEvents = events.filter(event => {
-    const eventDate = new Date(event.startTime);
-    const eventDay = eventDate.toDateString();
-    const selectedDay = selectedDate.toDateString();
-    return eventDay === selectedDay;
-  });
+  // BOTTOM ROW - Statistics bar (matching screenshot exactly)
+  const statsY = topRowY + topRowHeight + 10; // Position below top row
+  const statsHeight = 63;
 
   // Draw full-width stats background - light grey covering entire width
-  pdf.setFillColor(...config.statsBar.bgColor);
+  pdf.setFillColor(240, 240, 240);
   pdf.setDrawColor(...config.colors.black);
   pdf.setLineWidth(1);
   pdf.rect(0, statsY, config.pageWidth, statsHeight, 'FD');
@@ -355,19 +345,21 @@ function drawStatisticsBar(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
 
   statsData.forEach((stat) => {
     // Draw large number (centered in column)
-    pdf.setFontSize(config.statsBar.fontSize);
+    pdf.setFontSize(24);
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(...config.colors.black);
     pdf.text(stat.number, currentX + colWidth / 2, statsY + 20, { align: 'center' });
 
     // Draw label below (centered in column)
-    pdf.setFontSize(config.statsBar.labelFontSize);
+    pdf.setFontSize(14);
     pdf.setFont('helvetica', 'normal');
     pdf.text(stat.label, currentX + colWidth / 2, statsY + 40, { align: 'center' });
 
     currentX += colWidth;
   });
 }
+
+
 
 // Draw bottom navigation with arrows
 function drawBottomNavigation(pdf: jsPDF, selectedDate: Date) {
@@ -687,7 +679,6 @@ export const exportPixelPerfectDailyPlanner = async (
 
   // Draw all sections
   drawPixelPerfectHeader(pdf, selectedDate, events);
-  drawStatisticsBar(pdf, selectedDate, events);
   drawPixelPerfectTimeGrid(pdf);
   drawPixelPerfectAppointments(pdf, selectedDate, events);
   drawBottomNavigation(pdf, selectedDate);
