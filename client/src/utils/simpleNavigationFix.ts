@@ -9,12 +9,20 @@ export function simpleNavigationFix() {
         let originalText = element.textContent;
         let newText = originalText
           .replace(/1600/g, '16:00')
-          .replace(/(\d{4})/g, (match) => {
-            const hour = parseInt(match.substring(0, 2));
-            const minute = match.substring(2);
-            return `${hour}:${minute}`;
+          .replace(/(\d{4})(?!\d)/g, (match) => {
+            if (match.length === 4 && parseInt(match) >= 0000 && parseInt(match) <= 2359) {
+              const hour = parseInt(match.substring(0, 2));
+              const minute = match.substring(2);
+              if (hour <= 23 && minute <= 59) {
+                return `${hour.toString().padStart(2, '0')}:${minute}`;
+              }
+            }
+            return match;
           })
-          .replace(/🔒\s*/g, ''); // Remove lock symbols
+          .replace(/🔒\s*/g, '') // Remove lock symbols
+          .replace(/[\u{1F500}-\u{1F6FF}]/gu, '') // Remove transport symbols
+          .replace(/Ø=ÜÅ/g, '') // Remove corrupted symbols
+          .replace(/Ø=Ý/g, '') // Remove corrupted symbols
         
         if (newText !== originalText) {
           element.textContent = newText;

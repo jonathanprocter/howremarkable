@@ -3,9 +3,12 @@ export const cleanEventTitle = (title: string): string => {
 
   return title
     .replace(/🔒\s*/g, '') // Remove lock symbols
-    .replace(/[\u{1F000}-\u{1F9FF}]/gu, '') // Remove all emoji ranges
-    .replace(/[\u{2600}-\u{27BF}]/gu, '') // Remove miscellaneous symbols
-    .replace(/[\u{1F300}-\u{1F6FF}]/gu, '') // Remove misc symbols and pictographs
+    .replace(/[\u{1F500}-\u{1F6FF}]/gu, '') // Remove transport and map symbols
+    .replace(/[\u{1F300}-\u{1F5FF}]/gu, '') // Remove misc symbols and pictographs
+    .replace(/[\u{1F600}-\u{1F64F}]/gu, '') // Remove emoticons
+    .replace(/[\u{1F680}-\u{1F6FF}]/gu, '') // Remove transport symbols
+    .replace(/[\u{2600}-\u{26FF}]/gu, '') // Remove miscellaneous symbols
+    .replace(/[\u{1F1E0}-\u{1F1FF}]/gu, '') // Remove flags
     .replace(/Ø=ÜÅ/g, '') // Remove corrupted symbols
     .replace(/Ø=Ý/g, '') // Remove corrupted symbols
     .replace(/!•/g, '') // Remove broken navigation symbols
