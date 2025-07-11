@@ -76,6 +76,11 @@ export default function Planner() {
   const [eventsLoading, setEventsLoading] = useState(false);
   const [eventsError, setEventsError] = useState<string | null>(null);
 
+  // Update window context when selected date changes
+  useEffect(() => {
+    (window as any).selectedDate = state.selectedDate;
+  }, [state.selectedDate]);
+
   // Performance monitoring
   const {
     startRenderTiming,
@@ -160,6 +165,14 @@ export default function Planner() {
         });
 
         updateEvents(convertedEvents);
+
+        // Expose events to window context for audit system
+        (window as any).currentEvents = convertedEvents;
+        (window as any).selectedDate = state.selectedDate;
+        console.log('📊 Exposed to window context:', {
+          eventCount: convertedEvents.length,
+          selectedDate: state.selectedDate?.toDateString()
+        });
 
         // Auto-select calendars from database events
         const googleEvents = convertedEvents.filter(event => event.source === 'google' && event.calendarId);

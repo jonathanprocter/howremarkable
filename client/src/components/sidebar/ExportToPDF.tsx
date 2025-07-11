@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { runPixelPerfectAudit } from '@/utils/pixelPerfectAudit';
 
 interface ExportToPDFProps {
   isGoogleConnected: boolean;
@@ -39,15 +40,54 @@ export const ExportToPDF = ({
       console.log('🔍 STARTING PIXEL-PERFECT AUDIT TEST FROM CONSOLE');
       console.log('='.repeat(80));
 
-      // Import and run audit directly
-      const { performPixelPerfectAudit, exportAuditResults } = await import('../../utils/pixelPerfectAudit');
-      const auditResults = await performPixelPerfectAudit();
-      exportAuditResults(auditResults);
+      // Get current date and events from window context
+      const selectedDate = new Date(); // Default to today
+      const events = (window as any).currentEvents || [];
+      
+      console.log(`📅 Auditing date: ${selectedDate.toDateString()}`);
+      console.log(`📊 Total events: ${events.length}`);
 
-      console.log('✅ Pixel-perfect audit completed! Check localStorage for results.');
+      // Run comprehensive audit
+      const auditResults = await runPixelPerfectAudit(selectedDate, events);
+      
+      // Display results
+      console.log('\n🎯 PIXEL-PERFECT AUDIT RESULTS:');
+      console.log('='.repeat(50));
+      console.log(`📊 Overall Score: ${auditResults.score}/${auditResults.maxScore} (${auditResults.percentage}%)`);
+      console.log(`🔧 Issues Found: ${auditResults.issues.length}`);
+      console.log(`📋 Recommendations: ${auditResults.recommendations.length}`);
+      
+      // Log detailed results
+      if (auditResults.issues.length > 0) {
+        console.log('\n❌ ISSUES FOUND:');
+        auditResults.issues.forEach((issue, index) => {
+          console.log(`${index + 1}. [${issue.severity.toUpperCase()}] ${issue.description}`);
+          console.log(`   Expected: ${issue.expected}`);
+          console.log(`   Actual: ${issue.actual}`);
+          console.log(`   Fix: ${issue.fixRecommendation}`);
+          console.log('');
+        });
+      }
+
+      // Log recommendations
+      if (auditResults.recommendations.length > 0) {
+        console.log('\n💡 RECOMMENDATIONS:');
+        auditResults.recommendations.forEach((rec, index) => {
+          console.log(`${index + 1}. ${rec}`);
+        });
+      }
+
+      // Store results in localStorage
+      localStorage.setItem('pixelPerfectAuditResults', JSON.stringify(auditResults));
+      
+      console.log('\n✅ Pixel-perfect audit completed! Results saved to localStorage.');
+      
+      // Show summary alert
+      alert(`Pixel-Perfect Audit Complete!\n\nScore: ${auditResults.percentage}%\nIssues: ${auditResults.issues.length}\nRecommendations: ${auditResults.recommendations.length}\n\nCheck console for detailed results.`);
 
     } catch (error) {
       console.error('❌ Pixel-perfect audit test failed:', error);
+      alert('Audit failed. Check console for details.');
     }
   };
 
@@ -151,6 +191,22 @@ export const ExportToPDF = ({
             size="sm"
           >
             📅 Export Weekly Calendar
+          </Button>
+        </div>
+
+        {/* Pixel-Perfect Audit Section */}
+        <div className="border-t pt-3 mt-3">
+          <p className="text-xs text-gray-600 mb-2">🔍 Quality Audit</p>
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              console.log('🔍 RUNNING PIXEL-PERFECT AUDIT FROM UI...');
+              (window as any).testPixelPerfectAudit();
+            }}
+            className="w-full text-xs mb-2 bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+            size="sm"
+          >
+            🔍 Run Pixel-Perfect Audit
           </Button>
         </div>
     </div>
