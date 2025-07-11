@@ -343,38 +343,38 @@ function drawExactAppointments(pdf: jsPDF, weekStartDate: Date, events: Calendar
     const availableHeight = height - (padding * 2);
     const availableWidth = width - (padding * 2);
     
-    // Balanced font sizes for optimal readability and space utilization
+    // Compact font sizes optimized for space efficiency while maintaining readability
     let titleFontSize, sourceFontSize, timeFontSize;
     
     if (durationInMinutes <= 30) {
-      // 30-minute appointments: smaller but readable fonts for compact spaces
-      titleFontSize = 9;  // Readable titles in small spaces
-      sourceFontSize = 6; // Compact source labels
-      timeFontSize = 7;   // Clear time display
+      // 30-minute appointments: very compact fonts for small spaces
+      titleFontSize = 6;  // Small but readable titles
+      sourceFontSize = 4; // Compact source labels
+      timeFontSize = 5;   // Clear time display
     } else if (durationInMinutes >= 90) {
-      // 90-minute appointments: larger fonts with ample space
-      titleFontSize = 12; // Prominent titles as requested
-      sourceFontSize = 8; // Clear source identification as requested
-      timeFontSize = 9;   // Time ranges as requested
+      // 90-minute appointments: moderate fonts with room for wrapping
+      titleFontSize = 8;  // Readable titles in larger spaces
+      sourceFontSize = 6; // Clear source identification
+      timeFontSize = 7;   // Time ranges
     } else {
-      // 60-minute appointments: balanced fonts with text wrapping
-      titleFontSize = 12; // Standard title size as requested
-      sourceFontSize = 8; // Standard source size as requested
-      timeFontSize = 9;   // Standard time size as requested
+      // 60-minute appointments: balanced compact fonts with text wrapping
+      titleFontSize = 7;  // Moderate title size
+      sourceFontSize = 5; // Readable source size
+      timeFontSize = 6;   // Clear time size
     }
     
-    // Calculate starting position for text with better spacing for wrapped lines
+    // Calculate starting position for text with compact spacing
     let titleY;
     
     if (durationInMinutes <= 30) {
-      // 30-minute appointments: start near top with minimal padding
-      titleY = y + padding + 1.5;
+      // 30-minute appointments: start very close to top for maximum space usage
+      titleY = y + padding + 1;
     } else if (durationInMinutes >= 90) {
-      // 90-minute appointments: start with more spacing in taller boxes
-      titleY = y + padding + 2.5;
+      // 90-minute appointments: start with moderate spacing
+      titleY = y + padding + 1.5;
     } else {
-      // 60-minute appointments: balanced starting position
-      titleY = y + padding + 2;
+      // 60-minute appointments: balanced compact starting position
+      titleY = y + padding + 1.2;
     }
     
     // Helper function to wrap text to fit within available width
@@ -413,10 +413,10 @@ function drawExactAppointments(pdf: jsPDF, weekStartDate: Date, events: Calendar
     pdf.setFontSize(titleFontSize);
     const titleLines = wrapText(title, titleFontSize, availableWidth);
     
-    // Draw title lines with optimized spacing
+    // Draw title lines with tight spacing
     pdf.setTextColor(...SPEC.BLACK);
     let currentY = titleY;
-    const lineHeight = titleFontSize * 1.2; // 20% line spacing for balanced readability
+    const lineHeight = titleFontSize * 1.1; // 10% line spacing for compact layout
     
     for (let i = 0; i < titleLines.length && currentY < y + height - padding; i++) {
       pdf.text(titleLines[i], x + padding, currentY);
@@ -428,9 +428,9 @@ function drawExactAppointments(pdf: jsPDF, weekStartDate: Date, events: Calendar
     pdf.setFontSize(sourceFontSize);
     const sourceLines = wrapText(source, sourceFontSize, availableWidth);
     
-    // Calculate dynamic sourceY based on title lines with balanced spacing
-    let dynamicSourceY = titleY + (titleLines.length * lineHeight) + 2;
-    const sourceLineHeight = sourceFontSize * 1.2; // Balanced spacing for readability
+    // Calculate dynamic sourceY based on title lines with tight spacing
+    let dynamicSourceY = titleY + (titleLines.length * lineHeight) + 1;
+    const sourceLineHeight = sourceFontSize * 1.1; // Tighter spacing for compact layout
     
     for (let i = 0; i < sourceLines.length && dynamicSourceY < y + height - padding; i++) {
       pdf.text(sourceLines[i], x + padding, dynamicSourceY);
@@ -442,9 +442,9 @@ function drawExactAppointments(pdf: jsPDF, weekStartDate: Date, events: Calendar
     pdf.setFontSize(timeFontSize);
     const timeLines = wrapText(timeText, timeFontSize, availableWidth);
     
-    // Calculate dynamic timeY based on source lines with balanced spacing
-    let dynamicTimeY = dynamicSourceY + 2;
-    const timeLineHeight = timeFontSize * 1.2; // Balanced spacing for readability
+    // Calculate dynamic timeY based on source lines with tight spacing
+    let dynamicTimeY = dynamicSourceY + 1;
+    const timeLineHeight = timeFontSize * 1.1; // Tighter spacing for compact layout
     
     for (let i = 0; i < timeLines.length && dynamicTimeY < y + height - padding; i++) {
       pdf.text(timeLines[i], x + padding, dynamicTimeY);
