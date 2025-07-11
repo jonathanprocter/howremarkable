@@ -681,8 +681,7 @@ export const exportPixelPerfectDailyPlanner = async (
 
   // Save with descriptive filename
   const filename = `pixel-perfect-daily-planner-${selectedDate.toISOString().split('T')[0]}.pdf`;
-```text
-  pdf.save(filename);
+pdf.save(filename);
 
   console.log(`Pixel Perfect Daily Planner exported: ${filename}`);
   console.log(`Canvas dimensions: ${PIXEL_PERFECT_CONFIG.pageWidth} × ${PIXEL_PERFECT_CONFIG.pageHeight} pixels`);
