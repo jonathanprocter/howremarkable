@@ -391,21 +391,30 @@ function drawDashboardGrid(pdf: jsPDF, selectedDate: Date, events: CalendarEvent
 
     console.log(`Event ${event.id}: "${event.title}" -> "${cleanTitle}"`);
 
-    // Appointment name at the very top
-    pdf.text(cleanTitle, eventX, eventY + 8);
+    // Calculate improved spacing for 30-minute appointments
+    const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
+    const is30MinuteAppt = durationMinutes <= 30;
+    
+    // Enhanced vertical positioning for better readability
+    const titleYOffset = is30MinuteAppt ? 14 : 8;
+    const sourceYOffset = is30MinuteAppt ? 28 : 16;
+    const timeYOffset = is30MinuteAppt ? 42 : 24;
 
-    // Source line below the name with small spacing
+    // Appointment name with optimized positioning
+    pdf.text(cleanTitle, eventX, eventY + titleYOffset);
+
+    // Source line with improved spacing
     pdf.setFontSize(DAILY_CONFIG.fonts.eventSource.size);
     pdf.setFont('helvetica', DAILY_CONFIG.fonts.eventSource.weight);
     pdf.setTextColor(...DAILY_CONFIG.colors.black);
-    pdf.text(eventType.source, eventX, eventY + 16);
+    pdf.text(eventType.source, eventX, eventY + sourceYOffset);
 
-    // Time range below the source with small spacing
+    // Time range positioned below with enhanced spacing
     pdf.setFontSize(DAILY_CONFIG.fonts.eventTime.size);
     pdf.setFont('helvetica', DAILY_CONFIG.fonts.eventTime.weight);
     pdf.setTextColor(...DAILY_CONFIG.colors.black);
     const timeRange = `${formatMilitaryTime(eventStart)} - ${formatMilitaryTime(eventEnd)}`;
-    pdf.text(timeRange, eventX, eventY + 24);
+    pdf.text(timeRange, eventX, eventY + timeYOffset);
 
     // Center column: Event Notes (if they exist)
     if (event.notes && event.notes.trim()) {

@@ -166,17 +166,29 @@ function drawWeeklyOverviewPage(pdf: jsPDF, weekStartDate: Date, weekEndDate: Da
         pdf.setLineWidth(1);
         pdf.rect(eventX + 1, eventY + 1, eventWidth - 2, eventHeight - 2, 'S');
 
-        // Draw event text
+        // Draw event text with improved spacing for 30-minute appointments
         pdf.setTextColor(0, 0, 0);
         pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(24); // Increased from 18 to 24 for much better visibility
-
+        
         const eventTitle = event.title || 'Untitled Event';
         const eventTime = `${startTime.getHours()}:${startTime.getMinutes().toString().padStart(2, '0')}`;
+        
+        // Determine if this is a 30-minute appointment
+        const durationMinutes = (endTime.getTime() - startTime.getTime()) / (1000 * 60);
+        const is30MinuteAppt = durationMinutes <= 30;
+        
+        // Enhanced font sizing and positioning for 30-minute appointments
+        const titleFontSize = is30MinuteAppt ? 20 : 24; // Slightly smaller for 30-min to fit better
+        const timeFontSize = is30MinuteAppt ? 16 : 20;
+        
+        const titleY = is30MinuteAppt ? eventY + 12 : eventY + 16; // Higher positioning for 30-min
+        const timeY = is30MinuteAppt ? eventY + 28 : eventY + 40; // Better spacing below title
 
-        pdf.text(eventTitle, eventX + 4, eventY + 16); // Adjusted Y position for larger text
-        pdf.setFontSize(20); // Increased from 16 to 20 for better visibility
-        pdf.text(eventTime, eventX + 4, eventY + 40); // Adjusted Y position for larger text
+        pdf.setFontSize(titleFontSize);
+        pdf.text(eventTitle, eventX + 4, titleY);
+        
+        pdf.setFontSize(timeFontSize);
+        pdf.text(eventTime, eventX + 4, timeY);
       }
     }
   });

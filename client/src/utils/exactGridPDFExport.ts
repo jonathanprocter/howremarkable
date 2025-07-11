@@ -409,19 +409,23 @@ export const exportExactGridPDF = async (
           const textX = isSimplePractice ? eventX + 6 : eventX + 3;
           const maxWidth = eventWidth - (isSimplePractice ? 12 : 6);
 
+          // Determine if this is a 30-minute appointment for better spacing
+          const durationMinutes = (eventEndDate.getTime() - eventDate.getTime()) / (1000 * 60);
+          const is30MinuteAppt = durationMinutes <= 30;
+
           // Calculate proportional font sizes that fit within the appointment box
-          const textPadding = 4;
+          const textPadding = is30MinuteAppt ? 6 : 4; // Extra padding for 30-min appointments
           const availableHeight = eventHeight - (textPadding * 2);
           const availableWidth = maxWidth - textPadding;
 
-          // Base font sizes and proportional scaling - DRAMATICALLY INCREASED for maximum visibility
-          const baseHeightRatio = availableHeight / 12; // Based on standard slot height
-          const baseWidthRatio = availableWidth / 60; // Based on typical text width
-          const scaleFactor = Math.min(baseHeightRatio, baseWidthRatio, 3.0); // Allow scaling up to 300%
+          // Base font sizes and proportional scaling - optimized for 30-minute appointments
+          const baseHeightRatio = availableHeight / (is30MinuteAppt ? 8 : 12);
+          const baseWidthRatio = availableWidth / 60;
+          const scaleFactor = Math.min(baseHeightRatio, baseWidthRatio, 3.0);
 
-          // Apply proportional sizing with extremely large limits for maximum visibility
-          const titleFontSize = Math.max(20, Math.min(40, 32 * scaleFactor)); // Between 20-40pt (extremely large)
-          const timeFontSize = Math.max(18, Math.min(36, 28 * scaleFactor)); // Between 18-36pt (extremely large)
+          // Apply proportional sizing with enhanced spacing for 30-minute appointments
+          const titleFontSize = Math.max(is30MinuteAppt ? 16 : 20, Math.min(40, 32 * scaleFactor));
+          const timeFontSize = Math.max(is30MinuteAppt ? 14 : 18, Math.min(36, 28 * scaleFactor));
 
           // Clean and measure title text
           let displayTitle = eventTitle;
@@ -444,10 +448,13 @@ export const exportExactGridPDF = async (
               truncatedTitle = cleanTitle.substring(0, Math.max(1, maxChars - 3)) + '...';
             }
 
+            // Enhanced positioning for 30-minute appointments
+            const titleStartY = is30MinuteAppt ? eventY + textPadding + 8 : eventY + textPadding + titleFontSize;
+
             // Handle text wrapping using proportional line height
             const words = truncatedTitle.split(' ');
-            const lineHeight = titleFontSize * 1.2; // Proportional line height
-            const maxLines = Math.floor(availableHeight / lineHeight);
+            const lineHeight = is30MinuteAppt ? titleFontSize * 1.1 : titleFontSize * 1.2;
+            const maxLines = Math.floor((availableHeight * 0.6) / lineHeight); // Use 60% of height for title
             let currentLine = '';
             let lineCount = 0;
 
@@ -459,7 +466,7 @@ export const exportExactGridPDF = async (
                 currentLine = testLine;
               } else {
                 if (lineCount < maxLines && currentLine) {
-                  pdf.text(currentLine, textX, eventY + textPadding + (lineCount * lineHeight) + titleFontSize);
+                  pdf.text(currentLine, textX, titleStartY + (lineCount * lineHeight));
                   lineCount++;
                   currentLine = word;
                 } else {
@@ -470,17 +477,20 @@ export const exportExactGridPDF = async (
 
             // Print remaining text if there's space
             if (currentLine && lineCount < maxLines) {
-              pdf.text(currentLine, textX, eventY + textPadding + (lineCount * lineHeight) + titleFontSize);
+              pdf.text(currentLine, textX, titleStartY + (lineCount * lineHeight));
             }
           }
 
-          // Event time - proportionally sized and positioned
+          // Event time - enhanced positioning for 30-minute appointments
           if (eventHeight >= 12) {
             pdf.setFont('helvetica', 'normal');
             pdf.setFontSize(timeFontSize);
 
-            // Position time at bottom of appointment box
-            const timeY = eventY + eventHeight - textPadding - (timeFontSize * 0.3);
+            // Better time positioning for 30-minute appointments
+            const timeY = is30MinuteAppt ? 
+              eventY + eventHeight - textPadding - 4 : // Position higher in 30-min appointments
+              eventY + eventHeight - textPadding - (timeFontSize * 0.3);
+            
             pdf.text(`${startTime}-${endTime}`, textX, timeY);
           }
         }
