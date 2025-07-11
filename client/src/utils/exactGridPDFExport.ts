@@ -419,9 +419,9 @@ export const exportExactGridPDF = async (
           const baseWidthRatio = availableWidth / 60; // Based on typical text width
           const scaleFactor = Math.min(baseHeightRatio, baseWidthRatio, 1.5); // Allow scaling up to 150%
 
-          // Apply proportional sizing with increased limits for better visibility
-          const titleFontSize = Math.max(8, Math.min(16, 12 * scaleFactor)); // Between 8-16pt (increased from 4-10pt)
-          const timeFontSize = Math.max(6, Math.min(14, 10 * scaleFactor)); // Between 6-14pt (increased from 3-8pt)
+          // Apply proportional sizing with much larger limits for better visibility
+          const titleFontSize = Math.max(12, Math.min(24, 16 * scaleFactor)); // Between 12-24pt (significantly increased)
+          const timeFontSize = Math.max(10, Math.min(20, 14 * scaleFactor)); // Between 10-20pt (significantly increased)
 
           // Clean and measure title text
           let displayTitle = eventTitle;
