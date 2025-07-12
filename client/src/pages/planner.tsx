@@ -459,29 +459,8 @@ export default function Planner() {
                 <CardTitle className="text-sm">Calendar Filters</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="personal"
-                      checked={calendarFilters.personal}
-                      onChange={(e) => setCalendarFilters(prev => ({ ...prev, personal: e.target.checked }))}
-                      className="rounded"
-                    />
-                    <div className="w-3 h-3 bg-blue-500 rounded"></div>
-                    <label htmlFor="personal" className="text-sm">Personal Events ({events.filter(e => e.source === 'manual').length})</label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="google"
-                      checked={calendarFilters.google}
-                      onChange={(e) => setCalendarFilters(prev => ({ ...prev, google: e.target.checked }))}
-                      className="rounded"
-                    />
-                    <div className="w-3 h-3 bg-green-500 rounded"></div>
-                    <label htmlFor="google" className="text-sm">Google Calendar ({googleEvents.length})</label>
-                  </div>
+                <div className="space-y-3">
+                  {/* SimplePractice - Cornflower Blue with left flag */}
                   <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
@@ -490,19 +469,57 @@ export default function Planner() {
                       onChange={(e) => setCalendarFilters(prev => ({ ...prev, simplepractice: e.target.checked }))}
                       className="rounded"
                     />
-                    <div className="w-3 h-3 bg-purple-500 rounded"></div>
-                    <label htmlFor="simplepractice" className="text-sm">SimplePractice (0)</label>
+                    <div className="relative w-4 h-3 bg-white border border-cornflower-blue" style={{ borderColor: '#6495ED' }}>
+                      <div className="absolute left-0 top-0 w-1 h-full bg-cornflower-blue" style={{ backgroundColor: '#6495ED' }}></div>
+                    </div>
+                    <label htmlFor="simplepractice" className="text-sm font-medium" style={{ color: '#6495ED' }}>
+                      SimplePractice ({events.filter(e => e.source === 'simplepractice').length})
+                    </label>
                   </div>
-                </div>
-                <div className="mt-3 pt-2 border-t">
-                  <p className="text-xs text-gray-500">
-                    Total events: {allEvents.length} | Displayed: {allEvents.length}
-                  </p>
-                  {googleCalendarError && (
-                    <p className="text-xs text-red-500 mt-1">
-                      Google Calendar error: Authentication required
-                    </p>
-                  )}
+
+                  {/* Google Calendar - Green with dashed border */}
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="google"
+                      checked={calendarFilters.google}
+                      onChange={(e) => setCalendarFilters(prev => ({ ...prev, google: e.target.checked }))}
+                      className="rounded"
+                    />
+                    <div 
+                      className="w-4 h-3 bg-white border-2" 
+                      style={{ 
+                        borderColor: '#34a853', 
+                        borderStyle: 'dashed',
+                        borderWidth: '2px'
+                      }}
+                    ></div>
+                    <label htmlFor="google" className="text-sm font-medium" style={{ color: '#34a853' }}>
+                      Google Calendar ({googleEvents.length})
+                    </label>
+                  </div>
+
+                  {/* US Holidays - Solid Yellow */}
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="personal"
+                      checked={calendarFilters.personal}
+                      onChange={(e) => setCalendarFilters(prev => ({ ...prev, personal: e.target.checked }))}
+                      className="rounded"
+                    />
+                    <div 
+                      className="w-4 h-3 border-2" 
+                      style={{ 
+                        backgroundColor: '#FFF3CD',
+                        borderColor: '#FFC107',
+                        borderStyle: 'solid'
+                      }}
+                    ></div>
+                    <label htmlFor="personal" className="text-sm font-medium" style={{ color: '#B8860B' }}>
+                      US Holidays ({events.filter(e => e.source === 'manual' || e.title?.toLowerCase().includes('holiday')).length})
+                    </label>
+                  </div>
                 </div>
               </CardContent>
             </Card>
