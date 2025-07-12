@@ -120,14 +120,19 @@ export const GoogleCalendarIntegration = ({
               )}
             </>
           ) : (
-            <Button 
-              onClick={onReconnect || (() => window.location.href = '/api/auth/google')}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-              size="sm"
-            >
-              Connect Google Calendar
-            </Button>
-          )}
+            <>
+              <Button 
+                onClick={() => window.location.href = '/api/auth/google'}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                size="sm"
+              >
+                Connect Google Calendar
+              </Button>
+              <div className="text-xs text-gray-500 text-center">
+                Click above to authenticate with Google
+              </div>
+            </>
+          )}</div>
         </div>
 
         {/* Debug Info */}
