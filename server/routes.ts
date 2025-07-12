@@ -328,7 +328,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get SimplePractice events
   app.get("/api/simplepractice/events", requireAuth, async (req, res) => {
     console.log('🔍 SimplePractice events requested');
-    
+
     try {
       const user = req.user as any;
       const { start, end } = req.query;
@@ -337,9 +337,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Start and end dates are required' });
       }
 
-      // TODO: In production, this would integrate with SimplePractice API
-      // For now, return empty array until real SimplePractice integration
-      const simplePracticeEvents = [];
+      // TODO: Implement actual SimplePractice API integration
+      // This requires SimplePractice API credentials and proper authentication
+      const simplePracticeEvents = await fetchSimplePracticeEvents(start, end);
+
+      async function fetchSimplePracticeEvents(start: Date, end: Date) {
+        try {
+          // TODO: Replace with actual SimplePractice API call
+          // Example structure:
+          // const response = await fetch('https://api.simplepractice.com/v1/appointments', {
+          //   headers: {
+          //     'Authorization': `Bearer ${process.env.SIMPLEPRACTICE_API_TOKEN}`,
+          //     'Content-Type': 'application/json'
+          //   },
+          //   params: {
+          //     start_date: start.toISOString(),
+          //     end_date: end.toISOString()
+          //   }
+          // });
+          // const data = await response.json();
+          // return data.appointments.map(appointment => ({
+          //   id: appointment.id,
+          //   title: `${appointment.client.name} Appointment`,
+          //   startTime: appointment.start_time,
+          //   endTime: appointment.end_time,
+          //   description: appointment.notes || '',
+          //   location: appointment.location || 'Office',
+          //   source: 'simplepractice',
+          //   calendarId: 'simplepractice'
+          // }));
+
+          console.warn('SimplePractice API integration not implemented yet');
+          return [];
+        } catch (error) {
+          console.error('Failed to fetch SimplePractice events:', error);
+          return [];
+        }
+      }
 
       console.log(`✅ Found ${simplePracticeEvents.length} SimplePractice events`);
       res.json({ 
