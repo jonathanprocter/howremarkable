@@ -63,7 +63,7 @@ const createPDFConfig = (dashboardStyles: DashboardStyles) => {
 
   // Calculate content area based on dashboard proportions
   const contentWidth = pageWidth - (2 * margin);
-  const timeColumnWidth = Math.min((dashboardStyles?.timeColumnWidth || 80) * 0.8, 80); // Scale for PDF
+  const timeColumnWidth = dashboardStyles?.timeColumnWidth || 80; // Use exact dashboard value
   const availableForDays = contentWidth - timeColumnWidth;
   const dayColumnWidth = Math.floor(availableForDays / 7);
 
@@ -74,11 +74,11 @@ const createPDFConfig = (dashboardStyles: DashboardStyles) => {
     margin,
     contentWidth,
 
-    // Grid dimensions (exact ratios from dashboard)
+    // Grid dimensions (exact dashboard values - no scaling)
     timeColumnWidth,
     dayColumnWidth,
-    slotHeight: Math.max((dashboardStyles?.timeSlotHeight || 40) * 0.6, 12), // Scale for PDF density
-    headerHeight: Math.max((dashboardStyles?.headerHeight || 60) * 0.5, 20),
+    slotHeight: dashboardStyles?.timeSlotHeight || 40, // Use exact dashboard value
+    headerHeight: dashboardStyles?.headerHeight || 60, // Use exact dashboard value
     legendHeight: 35,
 
     // Typography (improved font detection and sizing)

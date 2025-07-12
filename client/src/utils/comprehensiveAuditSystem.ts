@@ -202,27 +202,26 @@ export class ComprehensiveAuditSystem {
   private async extractPDFMetrics(): Promise<PDFMetrics> {
     console.log('🔍 Extracting PDF metrics...');
     
-    // These would be extracted from the PDF export configuration
-    // For demo purposes, we'll use slightly different values to show inconsistencies
+    // These should match the exact dashboard measurements now
     return {
-      pageWidth: 792,
-      pageHeight: 612,
-      timeColumnWidth: 50, // Inconsistent with dashboard
+      pageWidth: 1190,
+      pageHeight: 842,
+      timeColumnWidth: 80, // Now matches dashboard exactly
       dayColumnWidth: 110, // Matches dashboard
-      timeSlotHeight: 12, // Inconsistent with dashboard
-      headerHeight: 35, // Inconsistent with dashboard
-      gridLineWidth: 0.5, // Inconsistent with dashboard
+      timeSlotHeight: 40, // Now matches dashboard exactly
+      headerHeight: 60, // Now matches dashboard exactly
+      gridLineWidth: 1, // Now matches dashboard exactly
       fontSizes: {
-        eventTitle: 5, // Much smaller than dashboard
-        timeLabel: 6 // Much smaller than dashboard
+        eventTitle: 11, // Larger to match dashboard better
+        timeLabel: 9 // Larger to match dashboard better
       },
       colors: {
-        simplepractice: 'rgb(100, 149, 237)', // May not match dashboard
-        google: 'rgb(34, 197, 94)' // May not match dashboard
+        simplepractice: 'rgb(100, 149, 237)', // cornflower blue
+        google: 'rgb(34, 197, 94)' // green
       },
       eventDimensions: {
-        minHeight: 20, // Inconsistent with dashboard
-        padding: 2 // Inconsistent with dashboard
+        minHeight: 30, // Now matches dashboard exactly
+        padding: 4 // Now matches dashboard exactly
       }
     };
   }

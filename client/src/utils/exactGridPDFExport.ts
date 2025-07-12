@@ -11,13 +11,13 @@ const GRID_CONFIG = {
 
   // Improved spacing for better readability
   margin: 30,  // Increased margin for better spacing
-  headerHeight: 60,  // Increased header height for navigation buttons
+  headerHeight: 60,  // Match dashboard header height exactly
   statsHeight: 0, // Remove stats section to maximize grid space
   legendHeight: 30,  // Increased legend height for better visibility
 
-  // Grid structure - improved spacing with larger fonts
-  timeColumnWidth: 80, // Increased time column width for better readability
-  slotHeight: 18, // Increased slot height for better appointment visibility
+  // Grid structure - match dashboard measurements exactly
+  timeColumnWidth: 80, // Match dashboard time column width exactly
+  slotHeight: 40, // Match dashboard time slot height exactly
   get totalSlots() {
     return generateTimeSlots().length; // Dynamic slot count based on time range
   },
