@@ -21,11 +21,11 @@ const createPDFConfig = (dashboardStyles: DashboardStyles) => {
   // A3 Landscape dimensions (matching user preference)
   const pageWidth = 1190;
   const pageHeight = 842;
-  const margin = Math.max(dashboardStyles.spacing.margin, 20);
+  const margin = Math.max(dashboardStyles?.spacing?.margin || 20, 20);
 
   // Calculate content area based on dashboard proportions
   const contentWidth = pageWidth - (2 * margin);
-  const timeColumnWidth = Math.min(dashboardStyles.timeColumnWidth * 0.8, 80); // Scale for PDF
+  const timeColumnWidth = Math.min((dashboardStyles?.timeColumnWidth || 80) * 0.8, 80); // Scale for PDF
   const availableForDays = contentWidth - timeColumnWidth;
   const dayColumnWidth = Math.floor(availableForDays / 7);
 
@@ -39,19 +39,19 @@ const createPDFConfig = (dashboardStyles: DashboardStyles) => {
     // Grid dimensions (exact ratios from dashboard)
     timeColumnWidth,
     dayColumnWidth,
-    slotHeight: Math.max(dashboardStyles.timeSlotHeight * 0.6, 12), // Scale for PDF density
-    headerHeight: Math.max(dashboardStyles.headerHeight * 0.5, 20),
+    slotHeight: Math.max((dashboardStyles?.timeSlotHeight || 40) * 0.6, 12), // Scale for PDF density
+    headerHeight: Math.max((dashboardStyles?.headerHeight || 60) * 0.5, 20),
     legendHeight: 35,
 
     // Typography (extracted from dashboard)
     fonts: {
-      family: dashboardStyles.fonts.family.includes('Times') ? 'times' : 'helvetica',
+      family: (dashboardStyles?.fonts?.family || 'helvetica').includes('Times') ? 'times' : 'helvetica',
       title: { 
-        size: Math.min(dashboardStyles.fonts.headerTitle.size * 0.8, 20), 
+        size: Math.min((dashboardStyles?.fonts?.headerTitle?.size || 20) * 0.8, 20), 
         weight: 'bold' as const 
       },
       weekInfo: { 
-        size: Math.min(dashboardStyles.fonts.headerTitle.size * 0.6, 14), 
+        size: Math.min((dashboardStyles?.fonts?.headerTitle?.size || 20) * 0.6, 14), 
         weight: 'normal' as const 
       },
       dayHeader: { 
@@ -75,26 +75,26 @@ const createPDFConfig = (dashboardStyles: DashboardStyles) => {
         weight: 'normal' as const 
       },
       legend: { 
-        size: Math.min(dashboardStyles.fonts.eventTitle.size * 0.8, 11), 
+        size: Math.min((dashboardStyles?.fonts?.eventTitle?.size || 11) * 0.8, 11), 
         weight: 'normal' as const 
       }
     },
 
     // Colors (exact from dashboard)
     colors: {
-      white: dashboardStyles.colors.white,
-      black: dashboardStyles.colors.black,
-      lightGray: dashboardStyles.colors.lightGray,
-      veryLightGray: dashboardStyles.colors.veryLightGray,
-      borderGray: dashboardStyles.colors.borderGray,
-      simplePracticeBlue: dashboardStyles.colors.simplePracticeBlue,
-      googleGreen: dashboardStyles.colors.googleGreen,
-      holidayOrange: dashboardStyles.colors.holidayOrange
+      white: dashboardStyles?.colors?.white || [255, 255, 255],
+      black: dashboardStyles?.colors?.black || [0, 0, 0],
+      lightGray: dashboardStyles?.colors?.lightGray || [248, 249, 250],
+      veryLightGray: dashboardStyles?.colors?.veryLightGray || [251, 252, 253],
+      borderGray: dashboardStyles?.colors?.borderGray || [229, 231, 235],
+      simplePracticeBlue: dashboardStyles?.colors?.simplePracticeBlue || [59, 130, 246],
+      googleGreen: dashboardStyles?.colors?.googleGreen || [34, 197, 94],
+      holidayOrange: dashboardStyles?.colors?.holidayOrange || [249, 115, 22]
     },
 
     // Spacing (FINAL FIX: optimal padding for 100% pixel-perfect match)
     spacing: {
-      borderRadius: dashboardStyles.spacing.borderRadius,
+      borderRadius: dashboardStyles?.spacing?.borderRadius || 6,
       eventPadding: 4, // AUDIT FIX: Increased from 3px to 4px to match browser
       textPadding: 2,  // AUDIT FIX: Reduced from 4px to 2px for better fit
       borderWidth: 1,  // AUDIT FIX: Consistent 1px borders
