@@ -41,9 +41,17 @@ export const DailyView = ({
 
   // Get events for the selected date with null checks
   const dayEvents = events.filter(event => {
-    if (!event || !event.startTime || !selectedDate) return false;
+    if (!event || !event.startTime || !event.endTime || !selectedDate) return false;
     try {
       const eventDate = new Date(event.startTime);
+      const endDate = new Date(event.endTime);
+      
+      // Validate that dates are valid
+      if (isNaN(eventDate.getTime()) || isNaN(endDate.getTime()) || isNaN(selectedDate.getTime())) {
+        console.warn('Invalid date detected:', { event: event.title, startTime: event.startTime, endTime: event.endTime });
+        return false;
+      }
+      
       const selectedDateString = selectedDate.toDateString();
       const eventDateString = eventDate.toDateString();
       const matches = eventDateString === selectedDateString;
@@ -52,7 +60,7 @@ export const DailyView = ({
 
       return matches;
     } catch (error) {
-      console.warn('Invalid date in event:', event);
+      console.warn('Invalid date in event:', event, error);
       return false;
     }
   });
@@ -73,10 +81,18 @@ export const DailyView = ({
   console.log(`Daily View - Total events: ${events.length}`);
   console.log(`Daily View - Day events: ${dayEvents.length}`);
 
-  // Calculate daily statistics
+  // Calculate daily statistics with error handling
   const totalEvents = dayEvents.length;
   const totalHours = dayEvents.reduce((sum, event) => {
-    return sum + (new Date(event.endTime).getTime() - new Date(event.startTime).getTime()) / (1000 * 60 * 60);
+    try {
+      const startTime = new Date(event.startTime);
+      const endTime = new Date(event.endTime);
+      if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) return sum;
+      return sum + (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+    } catch (error) {
+      console.warn('Error calculating event duration:', event.title, error);
+      return sum;
+    }
   }, 0);
   const availableHours = 24 - totalHours;
   const freeTimePercentage = Math.round((availableHours / 24) * 100);
@@ -94,7 +110,7 @@ export const DailyView = ({
 
     // Check if this is an all-day event
     const isMarkedAllDay = (event as any).isAllDay;
-    const duration = event.endTime.getTime() - event.startTime.getTime();
+    const duration = eventEnd.getTime() - eventStart.getTime();
     const hours = duration / (1000 * 60 * 60);
     const startHour = eventStart.getHours();
     const startMinute = eventStart.getMinutes();
