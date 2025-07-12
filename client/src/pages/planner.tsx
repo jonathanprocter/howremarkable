@@ -30,7 +30,14 @@ export default function Planner() {
 
   // State management
   const [viewMode, setViewMode] = useState<ViewMode>('weekly');
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(() => {
+    try {
+      return new Date();
+    } catch (error) {
+      console.warn('Failed to create initial date, using fallback');
+      return new Date(Date.now());
+    }
+  });
   const [currentWeek, setCurrentWeek] = useState<CalendarDay[]>([]);
   const [calendarFilters, setCalendarFilters] = useState({
     simplepractice: true,
@@ -118,7 +125,7 @@ export default function Planner() {
     const [hours, minutes] = time.split(':').map(Number);
     const startTime = new Date(date);
     startTime.setHours(hours, minutes, 0, 0);
-    
+
     const endTime = new Date(startTime);
     endTime.setHours(hours + 1, minutes, 0, 0);
 
@@ -151,7 +158,7 @@ export default function Planner() {
   const handleExportPDF = async (exportType: string) => {
     try {
       toast({ title: 'Generating PDF export...' });
-      
+
       switch (exportType) {
         case 'weekly':
           await exportExactGridPDF(currentWeek, allEvents);
@@ -174,7 +181,7 @@ export default function Planner() {
         default:
           throw new Error('Unknown export type');
       }
-      
+
       toast({ title: 'PDF export completed successfully' });
     } catch (error) {
       console.error('Export failed:', error);
@@ -241,7 +248,7 @@ export default function Planner() {
               {viewMode === 'weekly' ? 'Weekly View' : 'Daily View'}
             </Badge>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Button
               variant={viewMode === 'weekly' ? 'default' : 'outline'}
@@ -280,7 +287,7 @@ export default function Planner() {
               Next →
             </Button>
           </div>
-          
+
           <div className="text-lg font-semibold">
             {viewMode === 'weekly' 
               ? `Week of ${currentWeek[0]?.date.toLocaleDateString()} - ${currentWeek[6]?.date.toLocaleDateString()}`

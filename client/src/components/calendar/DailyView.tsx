@@ -41,14 +41,20 @@ export const DailyView = ({
 
   // Get events for the selected date
   const dayEvents = events.filter(event => {
-    const eventDate = new Date(event.startTime);
-    const selectedDateString = selectedDate.toDateString();
-    const eventDateString = eventDate.toDateString();
-    const matches = eventDateString === selectedDateString;
-    
-    console.log(`Event: ${event.title} on ${eventDateString}, Selected: ${selectedDateString}, Matches: ${matches}`);
-    
-    return matches;
+    if (!event || !event.startTime || !selectedDate) return false;
+    try {
+      const eventDate = new Date(event.startTime);
+      const selectedDateString = selectedDate.toDateString();
+      const eventDateString = eventDate.toDateString();
+      const matches = eventDateString === selectedDateString;
+
+      console.log(`Event: ${event.title} on ${eventDateString}, Selected: ${selectedDateString}, Matches: ${matches}`);
+
+      return matches;
+    } catch (error) {
+      console.warn('Invalid date in event:', event);
+      return false;
+    }
   });
 
   console.log(`Daily View - Selected date: ${selectedDate.toDateString()}`);
@@ -73,7 +79,7 @@ export const DailyView = ({
     const eventStart = new Date(event.startTime);
     const eventEnd = new Date(event.endTime);
     const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
-    
+
     // Check if this is an all-day event
     const isMarkedAllDay = (event as any).isAllDay;
     const duration = event.endTime.getTime() - event.startTime.getTime();
@@ -82,7 +88,7 @@ export const DailyView = ({
     const startMinute = eventStart.getMinutes();
     const isFullDay = startHour === 0 && startMinute === 0 && (hours === 24 || hours % 24 === 0);
     const isAllDayEvent = isMarkedAllDay || isFullDay || hours >= 20;
-    
+
     if (isAllDayEvent) {
       // All-day events should be positioned at the top, not in the timeline
       return {
@@ -95,16 +101,16 @@ export const DailyView = ({
         }
       };
     }
-    
+
     // Calculate position based on start time - aligned to time slots exactly
     // Timeline starts at 6:00, so we calculate 30-minute slots since 6:00
     const minutesSince6am = (startHour - 6) * 60 + startMinute;
     const slotsFromStart = minutesSince6am / 30;
     const topPosition = Math.max(0, slotsFromStart * 60);
-    
+
     // Calculate height based on duration
     let height = Math.max(56, (durationMinutes / 30) * 60 - 4); // 60px per 30min slot, minus padding
-    
+
     // Source-specific styling - check if it's a SimplePractice appointment
     let className = 'appointment ';
     const isSimplePractice = event.source === 'simplepractice' || 
@@ -112,7 +118,7 @@ export const DailyView = ({
                            event.title?.toLowerCase().includes('simple practice') ||
                            event.description?.toLowerCase().includes('simple practice') ||
                            event.title?.toLowerCase().includes('appointment'); // SimplePractice appointments sync as "X Appointment"
-    
+
     if (isSimplePractice) {
       className += 'simplepractice ';
     } else if (event.source === 'google') {
@@ -120,7 +126,7 @@ export const DailyView = ({
     } else {
       className += 'personal ';
     }
-    
+
     return {
       className,
       style: {
@@ -148,20 +154,20 @@ export const DailyView = ({
     try {
       const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
       const { eventId, startTime, endTime } = dragData;
-      
+
       // Calculate new start time based on slot position
       const slotHour = Math.floor(slotIndex / 2) + 6; // 6:00 AM start, 2 slots per hour
       const slotMinute = (slotIndex % 2) * 30;
-      
+
       const originalStart = new Date(startTime);
       const originalEnd = new Date(endTime);
       const duration = originalEnd.getTime() - originalStart.getTime();
-      
+
       const newStartTime = new Date(selectedDate);
       newStartTime.setHours(slotHour, slotMinute, 0, 0);
-      
+
       const newEndTime = new Date(newStartTime.getTime() + duration);
-      
+
       if (onEventMove) {
         onEventMove(eventId, newStartTime, newEndTime);
       }
@@ -178,13 +184,13 @@ export const DailyView = ({
     if (onCreateEvent) {
       const slotHour = Math.floor(slotIndex / 2) + 6; // 6:00 AM start, 2 slots per hour
       const slotMinute = (slotIndex % 2) * 30;
-      
+
       const startTime = new Date(selectedDate);
       startTime.setHours(slotHour, slotMinute, 0, 0);
-      
+
       const endTime = new Date(startTime);
       endTime.setHours(slotHour, slotMinute + 30, 0, 0); // Default 30-minute duration
-      
+
       onCreateEvent(startTime, endTime);
     }
   };
@@ -210,13 +216,13 @@ export const DailyView = ({
   const getDayNavigationName = (date: Date) => {
     return date.toLocaleDateString('en-US', { weekday: 'long' });
   };
-  
+
   const getPreviousDay = () => {
     const prevDay = new Date(selectedDate);
     prevDay.setDate(prevDay.getDate() - 1);
     return prevDay;
   };
-  
+
   const getNextDay = () => {
     const nextDay = new Date(selectedDate);
     nextDay.setDate(nextDay.getDate() + 1);
@@ -369,7 +375,7 @@ export const DailyView = ({
                   onClick={() => toggleEventExpansion(event.id)}
                 >
                   <div className="appointment-layout" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', padding: '4px' }}>
-                    
+
                     {/* Left: Event title, calendar, and time */}
                     <div className="appointment-left">
                       <div className="appointment-title-bold">{event.title}</div>
@@ -380,7 +386,7 @@ export const DailyView = ({
                       </div>
                       <div className="appointment-time">{formatEventTime(event)}</div>
                     </div>
-                    
+
                     {/* Center: Event Notes (bulleted) - only if they exist */}
                     <div className="appointment-center">
                       {event.notes && (
@@ -396,7 +402,7 @@ export const DailyView = ({
                         </div>
                       )}
                     </div>
-                    
+
                     {/* Right: Action Items - only if they exist */}
                     <div className="appointment-right">
                       {event.actionItems && (
@@ -414,7 +420,7 @@ export const DailyView = ({
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Expanded event details */}
                 {expandedEventId === event.id && (
                   <div 
@@ -488,7 +494,7 @@ export const DailyView = ({
           })}
         </div>
       </div>
-      
+
       {/* Footer Navigation Bar - styled buttons implementation */}
       <div className="nav-footer">
         <Button
