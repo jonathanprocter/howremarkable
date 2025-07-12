@@ -545,7 +545,7 @@ export default function Planner() {
                 console.log(`Event ${i+1}: "${event.title}" - Duration: ${duration} minutes`);
               });
 
-              await exportMatchingDailyPDF(selectedDateForExport, validatedEvents);
+              await exportDynamicDailyPlannerToPDF(selectedDateForExport, validatedEvents);
 
               toast({
                 title: "Export Successful",
@@ -585,15 +585,15 @@ export default function Planner() {
           break;
 
         case 'Daily View':
-          // Export current daily view using the exact daily PDF export function
+          // Export current daily view using the Python-based dynamic daily planner
           try {
             console.log('=== DAILY VIEW PDF EXPORT ===');
             console.log('Selected date:', selectedDateForExport.toDateString());
             console.log('Current view state:', state.viewMode);
             console.log('Events for export:', validatedEvents.length);
 
-            // Use the exact daily PDF export function that matches the daily view
-            await exportMatchingDailyPDF(selectedDateForExport, validatedEvents);
+            // Use the Python-based dynamic daily planner export
+            await exportDynamicDailyPlannerToPDF(selectedDateForExport, validatedEvents);
             
             console.log('=== DAILY VIEW PDF EXPORT COMPLETE ===');
             
