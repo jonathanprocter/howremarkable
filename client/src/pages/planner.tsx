@@ -202,6 +202,33 @@ export default function Planner() {
     }
   };
 
+  // Sync handlers
+  const handleSyncCalendarEvents = async () => {
+    try {
+      toast({ title: 'Syncing calendar events...' });
+      
+      // Force refresh both event sources
+      await queryClient.invalidateQueries({ queryKey: ['/api/events'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/calendar/events'] });
+      
+      // Refetch both queries
+      await queryClient.refetchQueries({ queryKey: ['/api/events'] });
+      await queryClient.refetchQueries({ queryKey: ['/api/calendar/events'] });
+      
+      toast({ 
+        title: 'Calendar events synced successfully',
+        description: `Found ${allEvents.length} total events`
+      });
+    } catch (error) {
+      console.error('Failed to sync calendar events:', error);
+      toast({ 
+        title: 'Failed to sync calendar events', 
+        variant: 'destructive',
+        description: 'Please check your Google Calendar connection'
+      });
+    }
+  };
+
   // Navigation
   const navigateWeek = (direction: 'prev' | 'next') => {
     const newDate = new Date(selectedDate);
@@ -357,6 +384,43 @@ export default function Planner() {
 
           {/* Sidebar */}
           <div className="space-y-4">
+            {/* Quick Actions */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setSelectedDate(new Date())}
+                    className="w-full"
+                    size="sm"
+                  >
+                    Go to Today
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      queryClient.invalidateQueries({ queryKey: ['/api/events'] });
+                      queryClient.invalidateQueries({ queryKey: ['/api/calendar/events'] });
+                    }}
+                    className="w-full"
+                    size="sm"
+                  >
+                    Refresh Events
+                  </Button>
+                  <Button 
+                    onClick={handleSyncCalendarEvents}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white"
+                    size="sm"
+                  >
+                    Sync Calendar Events
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Calendar Legend */}
             <Card>
               <CardHeader>
