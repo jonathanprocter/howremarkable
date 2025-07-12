@@ -12,14 +12,14 @@ const DAILY_CONFIG = {
   headerHeight: 100,
 
   fonts: {
-    title: { size: 18, weight: 'bold' },
-    date: { size: 14, weight: 'normal' },
-    stats: { size: 10, weight: 'normal' },
-    timeLabels: { size: 9, weight: 'normal' },
-    eventTitle: { size: 11, weight: 'bold' },
-    eventSource: { size: 8, weight: 'normal' },
-    eventTime: { size: 9, weight: 'normal' },
-    eventNotes: { size: 8, weight: 'normal' }
+    title: { size: 20, weight: 'bold' },
+    date: { size: 16, weight: 'normal' },
+    stats: { size: 12, weight: 'normal' },
+    timeLabels: { size: 10, weight: 'normal' },
+    eventTitle: { size: 14, weight: 'bold' },
+    eventSource: { size: 10, weight: 'normal' },
+    eventTime: { size: 12, weight: 'bold' },
+    eventNotes: { size: 10, weight: 'normal' }
   },
 
   colors: {
@@ -250,7 +250,7 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
 
     // Calculate duration
     const durationMinutes = (endDate.getTime() - eventDate.getTime()) / (1000 * 60);
-    const eventHeight = Math.max(40, (durationMinutes / 30) * timeSlotHeight - 2);
+    const eventHeight = Math.max(50, (durationMinutes / 30) * timeSlotHeight);
 
     // Skip if outside range
     if (minutesSince6am < 0 || minutesSince6am > (17.5 * 60)) {
@@ -273,18 +273,22 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
 
     // Draw borders based on type
     if (eventType.isSimplePractice) {
-      pdf.setDrawColor(...DAILY_CONFIG.colors.simplePracticeBlue);
+      // SimplePractice: cornflower blue border with thick left flag
+      pdf.setDrawColor(100, 149, 237); // Cornflower blue RGB
       pdf.setLineWidth(1);
       pdf.rect(eventX, eventY, eventWidth, eventHeight);
-      pdf.setLineWidth(4);
+      // Thick left border flag
+      pdf.setLineWidth(5);
       pdf.line(eventX, eventY, eventX, eventY + eventHeight);
     } else if (eventType.isGoogle) {
-      pdf.setDrawColor(...DAILY_CONFIG.colors.googleGreen);
+      // Google Calendar: dashed green border
+      pdf.setDrawColor(34, 197, 94); // Green RGB
       pdf.setLineWidth(1);
       pdf.setLineDash([3, 2]);
       pdf.rect(eventX, eventY, eventWidth, eventHeight);
       pdf.setLineDash([]);
     } else if (eventType.isHoliday) {
+      // Holiday: yellow background with orange border
       pdf.setFillColor(...DAILY_CONFIG.colors.holidayYellow);
       pdf.rect(eventX, eventY, eventWidth, eventHeight, 'F');
       pdf.setDrawColor(...DAILY_CONFIG.colors.holidayOrange);
@@ -410,14 +414,12 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
       pdf.text(eventType.sourceText, eventX + padding, currentY);
       currentY += 12;
 
-      // Time
-      if (currentY + 10 <= eventY + eventHeight - 5) {
-        pdf.setFontSize(DAILY_CONFIG.fonts.eventTime.size);
-        pdf.setFont('helvetica', 'bold');
-        pdf.setTextColor(...DAILY_CONFIG.colors.black);
-        const timeRange = `${eventDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}-${endDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}`;
-        pdf.text(timeRange, eventX + padding, currentY);
-      }
+      // Time - ALWAYS DISPLAY THE TIME
+      pdf.setFontSize(DAILY_CONFIG.fonts.eventTime.size);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...DAILY_CONFIG.colors.black);
+      const timeRange = `${eventDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}-${endDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}`;
+      pdf.text(timeRange, eventX + padding, currentY);
     }
   });
 }
