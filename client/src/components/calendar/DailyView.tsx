@@ -39,21 +39,22 @@ export const DailyView = ({
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
   const [noteTimers, setNoteTimers] = useState<{[key: string]: NodeJS.Timeout}>({});
 
-  // Get events for the selected date with null checks
+  // Get events for the selected date with null checks and proper date conversion
   const dayEvents = events.filter(event => {
     if (!event || !event.startTime || !event.endTime || !selectedDate) return false;
     try {
-      const eventDate = new Date(event.startTime);
-      const endDate = new Date(event.endTime);
+      // Convert startTime and endTime to Date objects if they aren't already
+      const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+      const endTime = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
       
       // Validate that dates are valid
-      if (isNaN(eventDate.getTime()) || isNaN(endDate.getTime()) || isNaN(selectedDate.getTime())) {
+      if (isNaN(startTime.getTime()) || isNaN(endTime.getTime()) || isNaN(selectedDate.getTime())) {
         console.warn('Invalid date detected:', { event: event.title, startTime: event.startTime, endTime: event.endTime });
         return false;
       }
       
       const selectedDateString = selectedDate.toDateString();
-      const eventDateString = eventDate.toDateString();
+      const eventDateString = startTime.toDateString();
       const matches = eventDateString === selectedDateString;
 
       console.log(`Event: ${event.title} on ${eventDateString}, Selected: ${selectedDateString}, Matches: ${matches}`);
@@ -85,8 +86,9 @@ export const DailyView = ({
   const totalEvents = dayEvents.length;
   const totalHours = dayEvents.reduce((sum, event) => {
     try {
-      const startTime = new Date(event.startTime);
-      const endTime = new Date(event.endTime);
+      // Convert startTime and endTime to Date objects if they aren't already
+      const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+      const endTime = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
       if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) return sum;
       return sum + (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
     } catch (error) {
@@ -104,8 +106,9 @@ export const DailyView = ({
   }));
 
   const getEventStyle = (event: CalendarEvent) => {
-    const eventStart = new Date(event.startTime);
-    const eventEnd = new Date(event.endTime);
+    // Convert startTime and endTime to Date objects if they aren't already
+    const eventStart = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+    const eventEnd = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
     const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
 
     // Check if this is an all-day event
@@ -228,8 +231,9 @@ export const DailyView = ({
   };
 
   const formatEventTime = (event: CalendarEvent) => {
-    const start = new Date(event.startTime);
-    const end = new Date(event.endTime);
+    // Convert startTime and endTime to Date objects if they aren't already
+    const start = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+    const end = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
     return `${start.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}-${end.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}`;
   };
 
@@ -313,8 +317,9 @@ export const DailyView = ({
       {/* All-Day Events Section */}
       {dayEvents.filter(event => {
         const isMarkedAllDay = (event as any).isAllDay;
-        const startTime = new Date(event.startTime);
-        const endTime = new Date(event.endTime);
+        // Convert startTime and endTime to Date objects if they aren't already
+        const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+        const endTime = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
         const duration = endTime.getTime() - startTime.getTime();
         const hours = duration / (1000 * 60 * 60);
         const startHour = startTime.getHours();
@@ -327,8 +332,9 @@ export const DailyView = ({
           <div className="all-day-events">
             {dayEvents.filter(event => {
               const isMarkedAllDay = (event as any).isAllDay;
-              const startTime = new Date(event.startTime);
-              const endTime = new Date(event.endTime);
+              // Convert startTime and endTime to Date objects if they aren't already
+              const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+              const endTime = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
               const duration = endTime.getTime() - startTime.getTime();
               const hours = duration / (1000 * 60 * 60);
               const startHour = startTime.getHours();
@@ -382,8 +388,9 @@ export const DailyView = ({
           {dayEvents.filter(event => {
             // Filter out all-day events from the timeline
             const isMarkedAllDay = (event as any).isAllDay;
-            const startTime = new Date(event.startTime);
-            const endTime = new Date(event.endTime);
+            // Convert startTime and endTime to Date objects if they aren't already
+            const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+            const endTime = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
             const duration = endTime.getTime() - startTime.getTime();
             const hours = duration / (1000 * 60 * 60);
             const startHour = startTime.getHours();
