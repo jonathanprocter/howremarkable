@@ -297,10 +297,12 @@ export const DailyView = ({
       {/* All-Day Events Section */}
       {dayEvents.filter(event => {
         const isMarkedAllDay = (event as any).isAllDay;
-        const duration = event.endTime.getTime() - event.startTime.getTime();
+        const startTime = new Date(event.startTime);
+        const endTime = new Date(event.endTime);
+        const duration = endTime.getTime() - startTime.getTime();
         const hours = duration / (1000 * 60 * 60);
-        const startHour = event.startTime.getHours();
-        const startMinute = event.startTime.getMinutes();
+        const startHour = startTime.getHours();
+        const startMinute = startTime.getMinutes();
         const isFullDay = startHour === 0 && startMinute === 0 && (hours === 24 || hours % 24 === 0);
         return isMarkedAllDay || isFullDay || hours >= 20;
       }).length > 0 && (
@@ -309,10 +311,12 @@ export const DailyView = ({
           <div className="all-day-events">
             {dayEvents.filter(event => {
               const isMarkedAllDay = (event as any).isAllDay;
-              const duration = event.endTime.getTime() - event.startTime.getTime();
+              const startTime = new Date(event.startTime);
+              const endTime = new Date(event.endTime);
+              const duration = endTime.getTime() - startTime.getTime();
               const hours = duration / (1000 * 60 * 60);
-              const startHour = event.startTime.getHours();
-              const startMinute = event.startTime.getMinutes();
+              const startHour = startTime.getHours();
+              const startMinute = startTime.getMinutes();
               const isFullDay = startHour === 0 && startMinute === 0 && (hours === 24 || hours % 24 === 0);
               return isMarkedAllDay || isFullDay || hours >= 20;
             }).map((event) => (
@@ -362,10 +366,12 @@ export const DailyView = ({
           {dayEvents.filter(event => {
             // Filter out all-day events from the timeline
             const isMarkedAllDay = (event as any).isAllDay;
-            const duration = event.endTime.getTime() - event.startTime.getTime();
+            const startTime = new Date(event.startTime);
+            const endTime = new Date(event.endTime);
+            const duration = endTime.getTime() - startTime.getTime();
             const hours = duration / (1000 * 60 * 60);
-            const startHour = event.startTime.getHours();
-            const startMinute = event.startTime.getMinutes();
+            const startHour = startTime.getHours();
+            const startMinute = startTime.getMinutes();
             const isFullDay = startHour === 0 && startMinute === 0 && (hours === 24 || hours % 24 === 0);
             return !(isMarkedAllDay || isFullDay || hours >= 20);
           }).map((event) => {
