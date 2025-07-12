@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { GoogleCalendarIntegration } from '@/components/sidebar/GoogleCalendarIntegration';
 import { Loader2, Calendar, FileText, Download, Upload, Eye, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
@@ -59,15 +60,24 @@ export default function Planner() {
     refetchInterval: 30 * 60 * 1000, // 30 minutes
   });
 
-  // Fetch Google Calendar events
-  const { data: googleEventsResponse = { events: [] }, isLoading: googleEventsLoading } = useQuery({
+  // Google Calendar data with error handling
+  const { data: googleCalendarData, isLoading: isLoadingGoogleEvents, error: googleCalendarError } = useQuery({
     queryKey: ['/api/calendar/events'],
-    enabled: !!user,
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    queryFn: async () => {
+      const response = await fetch('/api/calendar/events');
+      if (!response.ok) {
+        throw new Error('Failed to fetch Google Calendar events');
+      }
+      return response.json();
+    },
+    retry: 1,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Extract events from the response
-  const googleEvents = Array.isArray(googleEventsResponse?.events) ? googleEventsResponse.events : [];
+  const googleEvents = googleCalendarData?.events || [];
+  const googleCalendars = googleCalendarData?.calendars || [];
+  const isGoogleCalendarConnected = !googleCalendarError && googleEvents.length > 0;
 
   // Combine and filter events
   const allEvents = [...events, ...googleEvents].filter(event => {
@@ -206,15 +216,15 @@ export default function Planner() {
   const handleSyncCalendarEvents = async () => {
     try {
       toast({ title: 'Syncing calendar events...' });
-      
+
       // Force refresh both event sources
       await queryClient.invalidateQueries({ queryKey: ['/api/events'] });
       await queryClient.invalidateQueries({ queryKey: ['/api/calendar/events'] });
-      
+
       // Refetch both queries
       await queryClient.refetchQueries({ queryKey: ['/api/events'] });
       await queryClient.refetchQueries({ queryKey: ['/api/calendar/events'] });
-      
+
       toast({ 
         title: 'Calendar events synced successfully',
         description: `Found ${allEvents.length} total events`
@@ -227,6 +237,17 @@ export default function Planner() {
         description: 'Please check your Google Calendar connection'
       });
     }
+  };
+
+  // Additional handlers for Google Calendar integration
+  const handleReconnectGoogle = () => {
+    // Implement the logic to reconnect to Google Calendar
+    console.log("Reconnecting to Google Calendar...");
+  };
+
+  const handleRefreshCalendars = () => {
+    // Implement the logic to refresh Google Calendars
+    console.log("Refreshing Google Calendars...");
   };
 
   // Navigation
@@ -421,16 +442,68 @@ export default function Planner() {
               </CardContent>
             </Card>
 
+            {/* Google Calendar Integration */}
+            <GoogleCalendarIntegration
+              isConnected={isGoogleCalendarConnected}
+              calendars={googleCalendars}
+              isLoading={isLoadingGoogleEvents}
+              onSelectAll={() => setCalendarFilters(prev => ({ ...prev, google: true, personal: true, simplepractice: true }))}
+              onDeselectAll={() => setCalendarFilters(prev => ({ ...prev, google: false, personal: false, simplepractice: false }))}
+              onReconnect={handleReconnectGoogle}
+              onRefreshCalendars={handleRefreshCalendars}
+            />
+
             {/* Calendar Legend */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Calendar Sources</CardTitle>
+                <CardTitle className="text-sm">Calendar Filters</CardTitle>
               </CardHeader>
               <CardContent>
-                <CalendarLegend
-                  filters={calendarFilters}
-                  onFilterChange={setCalendarFilters}
-                />
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="personal"
+                      checked={calendarFilters.personal}
+                      onChange={(e) => setCalendarFilters(prev => ({ ...prev, personal: e.target.checked }))}
+                      className="rounded"
+                    />
+                    <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                    <label htmlFor="personal" className="text-sm">Personal Events ({events.filter(e => e.source === 'manual').length})</label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="google"
+                      checked={calendarFilters.google}
+                      onChange={(e) => setCalendarFilters(prev => ({ ...prev, google: e.target.checked }))}
+                      className="rounded"
+                    />
+                    <div className="w-3 h-3 bg-green-500 rounded"></div>
+                    <label htmlFor="google" className="text-sm">Google Calendar ({googleEvents.length})</label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="simplepractice"
+                      checked={calendarFilters.simplepractice}
+                      onChange={(e) => setCalendarFilters(prev => ({ ...prev, simplepractice: e.target.checked }))}
+                      className="rounded"
+                    />
+                    <div className="w-3 h-3 bg-purple-500 rounded"></div>
+                    <label htmlFor="simplepractice" className="text-sm">SimplePractice (0)</label>
+                  </div>
+                </div>
+                <div className="mt-3 pt-2 border-t">
+                  <p className="text-xs text-gray-500">
+                    Total events: {allEvents.length} | Displayed: {allEvents.length}
+                  </p>
+                  {googleCalendarError && (
+                    <p className="text-xs text-red-500 mt-1">
+                      Google Calendar error: Authentication required
+                    </p>
+                  )}
+                </div>
               </CardContent>
             </Card>
 
