@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import { CalendarEvent } from '../types/calendar';
 
@@ -98,7 +97,7 @@ function drawDailyHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]
   // Navigation buttons matching dashboard .nav-btn styling exactly
   const buttonHeight = 24;
   const buttonWidth = 120;
-  
+
   // Previous day button
   const prevButtonX = margin + 20;
   const prevButtonY = margin + 15;
@@ -110,7 +109,7 @@ function drawDailyHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]
   pdf.setFontSize(10);
   pdf.setTextColor(0, 0, 0);
   pdf.text('← Previous Day', prevButtonX + buttonWidth/2, prevButtonY + 15, { align: 'center' });
-  
+
   // Next day button
   const nextButtonX = pageWidth - margin - 20 - buttonWidth;
   const nextButtonY = margin + 15;
@@ -122,7 +121,7 @@ function drawDailyHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]
   pdf.setFontSize(10);
   pdf.setTextColor(0, 0, 0);
   pdf.text('Next Day →', nextButtonX + buttonWidth/2, nextButtonY + 15, { align: 'center' });
-  
+
   // Back to weekly view button
   const backButtonX = (pageWidth - buttonWidth) / 2;
   const backButtonY = margin + 62;
@@ -134,7 +133,7 @@ function drawDailyHeader(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]
   pdf.setFontSize(10);
   pdf.setTextColor(0, 0, 0);
   pdf.text('← Back to Weekly', backButtonX + buttonWidth/2, backButtonY + 15, { align: 'center' });
-  
+
 
 
   // Statistics
@@ -280,7 +279,7 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
 
   // Track used time slots for precise overlap detection like dashboard
   const usedSlots: Set<number> = new Set();
-  
+
   console.log(`📅 Rendering ${sortedEvents.length} events for daily PDF export`);
 
   sortedEvents.forEach((event, index) => {
@@ -309,11 +308,11 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
     // Calculate precise slot positioning for overlap detection
     const startSlot = Math.floor(slotsFromStart);
     const endSlot = Math.ceil((minutesSince6am + durationMinutes) / 30);
-    
+
     // Find available horizontal position for overlapping events - exact dashboard behavior
     let horizontalOffset = 0;
     const maxOverlaps = 3; // Limit to 3 overlapping events
-    
+
     // Check for overlaps and find available position
     while (horizontalOffset < maxOverlaps) {
       let hasOverlap = false;
@@ -323,7 +322,7 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
           break;
         }
       }
-      
+
       if (!hasOverlap) {
         // Mark slots as used
         for (let slot = startSlot; slot < endSlot; slot++) {
@@ -331,7 +330,7 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
         }
         break;
       }
-      
+
       horizontalOffset++;
     }
 
@@ -340,7 +339,7 @@ function drawAppointments(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[
     const eventWidth = horizontalOffset > 0 ? Math.max(baseEventWidth * 0.7, 150) : baseEventWidth;
     const eventX = margin + timeColumnWidth + 4 + (horizontalOffset * (eventWidth * 0.25));
     const eventY = gridStartY + topPosition;
-    
+
     console.log(`  📍 Event positioned at slot ${startSlot}-${endSlot}, offset ${horizontalOffset}, dimensions ${eventWidth}x${eventHeight}`);
 
     // Ensure event stays within page bounds
