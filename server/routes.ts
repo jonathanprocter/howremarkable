@@ -356,26 +356,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allEvents: any[] = [];
       const allCalendarEvents: any[] = [];
       
-      console.log(`Starting calendar sync from January 1, 2025 for ${calendars.length} calendars...`);
+      console.log(`Starting calendar sync for full year 2025 from ${calendars.length} calendars...`);
       
       for (const cal of calendars) {
         try {
           if (!cal.id) continue;
           
-          // Fetch events from January 1, 2025 to now for comprehensive sync
+          // Fetch events from January 1, 2025 to end of 2025 for comprehensive sync
           const startOfYear = new Date('2025-01-01T00:00:00Z').toISOString();
-          const currentDate = new Date().toISOString();
+          const endOfYear = new Date('2025-12-31T23:59:59Z').toISOString();
           
           const events = await calendar.events.list({
             calendarId: cal.id,
             timeMin: (timeMin as string) || startOfYear,
-            timeMax: (timeMax as string) || currentDate,
+            timeMax: (timeMax as string) || endOfYear,
             singleEvents: true,
             orderBy: 'startTime',
             maxResults: 2500 // Increase max results to handle full year
           });
 
-          console.log(`Calendar ${cal.summary}: Found ${events.data.items?.length || 0} events from Jan 1, 2025 to now`);
+          console.log(`Calendar ${cal.summary}: Found ${events.data.items?.length || 0} events from Jan 1, 2025 to Dec 31, 2025`);
           
           const calendarEvents = (events.data.items || []).map((event: any) => {
             // Detect all-day events - Google Calendar uses 'date' for all-day, 'dateTime' for timed
