@@ -55,7 +55,7 @@ export const GoogleCalendarIntegration = ({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-gray-700">
-                Calendars ({calendars.length})
+                Calendars ({Array.isArray(calendars) ? calendars.length : 0})
               </span>
               {onRefreshCalendars && (
                 <Button
@@ -70,20 +70,24 @@ export const GoogleCalendarIntegration = ({
               )}
             </div>
 
-            {calendars.length > 0 ? (
+            {Array.isArray(calendars) && calendars.length > 0 ? (
               <div className="max-h-32 overflow-y-auto space-y-1">
                 {calendars.map((calendar) => (
                   <div key={calendar.id} className="flex items-center gap-2 text-xs">
                     <div 
                       className="w-3 h-3 rounded-full border"
-                      style={{ backgroundColor: calendar.color }}
+                      style={{ backgroundColor: calendar.color || '#4285f4' }}
                     />
-                    <span className="truncate text-gray-700">{calendar.name}</span>
+                    <span className="truncate text-gray-700" title={calendar.name}>
+                      {calendar.name || 'Unnamed Calendar'}
+                    </span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-gray-500 italic">No calendars found</p>
+              <p className="text-xs text-gray-500 italic">
+                {isLoading ? 'Loading calendars...' : 'No calendars found'}
+              </p>
             )}
           </div>
         )}

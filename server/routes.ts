@@ -393,10 +393,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         calendarId: event.organizer?.email || 'primary'
       }));
 
-      // Return in the expected format with events array
+      // Get the calendar list to show actual calendars
+      const calendarListResponse = await calendar.calendarList.list({
+        access_token: user.accessToken
+      });
+
+      const calendars = (calendarListResponse.data.items || []).map(cal => ({
+        id: cal.id || 'primary',
+        name: cal.summary || 'Calendar',
+        color: cal.backgroundColor || '#4285f4'
+      }));
+
+      // Return in the expected format with events array and actual calendars
       res.json({ 
         events: formattedEvents,
-        calendars: [{
+        calendars: calendars.length > 0 ? calendars : [{
           id: 'primary',
           name: 'Primary Calendar',
           color: '#4285f4'

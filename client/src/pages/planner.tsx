@@ -78,9 +78,9 @@ export default function Planner() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  const googleEvents = googleCalendarData?.events || [];
-  const googleCalendars = googleCalendarData?.calendars || [];
-  const isGoogleCalendarConnected = !googleCalendarError && googleEvents.length > 0;
+  const googleEvents = Array.isArray(googleCalendarData?.events) ? googleCalendarData.events : [];
+  const googleCalendars = Array.isArray(googleCalendarData?.calendars) ? googleCalendarData.calendars : [];
+  const isGoogleCalendarConnected = !googleCalendarError && (googleEvents.length > 0 || googleCalendars.length > 0);
 
   // Combine and filter events
   const allEvents = [...events, ...googleEvents].filter(event => {
