@@ -96,9 +96,32 @@ export async function exportPixelPerfectPDF(
       compress: false
     });
     
-    // Add image at exact 1:1 scale
+    // Add image with proper scaling compensation
     const imgData = canvas.toDataURL('image/png', 1.0);
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfConfig.pageWidth, pdfConfig.pageHeight);
+    const actualWidth = canvas.width;
+    const actualHeight = canvas.height;
+    
+    // Calculate scaling to fit PDF page exactly
+    const scaleX = pdfConfig.pageWidth / actualWidth;
+    const scaleY = pdfConfig.pageHeight / actualHeight;
+    const scale = Math.min(scaleX, scaleY);
+    
+    const finalWidth = actualWidth * scale;
+    const finalHeight = actualHeight * scale;
+    
+    // Center the image on the page
+    const x = (pdfConfig.pageWidth - finalWidth) / 2;
+    const y = (pdfConfig.pageHeight - finalHeight) / 2;
+    
+    console.log('📐 PDF image scaling:', {
+      canvasSize: `${actualWidth}x${actualHeight}`,
+      pdfPageSize: `${pdfConfig.pageWidth}x${pdfConfig.pageHeight}`,
+      scale,
+      finalSize: `${finalWidth}x${finalHeight}`,
+      position: `${x}, ${y}`
+    });
+    
+    pdf.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight);
     
     // Save PDF
     const filename = `Pixel_Perfect_Daily_${format(date, 'yyyy-MM-dd')}.pdf`;
