@@ -13,7 +13,7 @@ app.set('trust proxy', 1);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Configure PostgreSQL session store  
+// Configure PostgreSQL session store with proper connection pooling
 const PgSession = ConnectPgSimple(session);
 
 // Session configuration with PostgreSQL store
@@ -23,10 +23,15 @@ const sessionStore = new PgSession({
   createTableIfMissing: true,
   pruneSessionInterval: 60 * 15, // Prune expired sessions every 15 minutes
   ttl: 24 * 60 * 60, // 24 hours session TTL
-  schemaName: 'public' // Explicitly set schema name
+  schemaName: 'public', // Explicitly set schema name
+  pool: {
+    max: 3, // Limit session store connections
+    min: 1,
+    idleTimeoutMillis: 30000
+  }
 });
 
-// Handle session store errors
+// Handle session store errors gracefully
 sessionStore.on('error', (err) => {
   console.error('Session store error:', err);
   // Don't crash the server on session store errors
@@ -142,6 +147,29 @@ app.use((req, res, next) => {
       console.error(`Port ${port} is already in use`);
       process.exit(1);
     }
+  });
+  
+  // Graceful shutdown
+  process.on('SIGTERM', () => {
+    console.log('SIGTERM signal received: closing HTTP server');
+    server.close(() => {
+      console.log('HTTP server closed');
+      pool.end(() => {
+        console.log('Database pool closed');
+        process.exit(0);
+      });
+    });
+  });
+
+  process.on('SIGINT', () => {
+    console.log('SIGINT signal received: closing HTTP server');
+    server.close(() => {
+      console.log('HTTP server closed');
+      pool.end(() => {
+        console.log('Database pool closed');
+        process.exit(0);
+      });
+    });
   });
   
   server.listen(port, "0.0.0.0", () => {
