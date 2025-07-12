@@ -18,6 +18,22 @@ export async function exportDynamicDailyPlannerPDF(
     console.log('📅 Date:', format(date, 'yyyy-MM-dd'));
     console.log('📋 Events:', events.length);
 
+    // Run comprehensive audit first
+    console.log('🔍 Running pre-export audit...');
+    try {
+      const { runDynamicDailyAudit } = await import('./dynamicDailyAudit');
+      const auditResult = await runDynamicDailyAudit(date, events);
+      
+      if (auditResult.overallScore < 70) {
+        console.warn('⚠️  AUDIT WARNING: Score below 70% (' + auditResult.overallScore + '%)');
+        console.warn('⚠️  Critical issues found:', auditResult.issues.filter(i => i.severity === 'critical').length);
+      } else {
+        console.log('✅ AUDIT PASSED: Score ' + auditResult.overallScore + '%');
+      }
+    } catch (auditError) {
+      console.warn('⚠️  Audit system not available, continuing with export...');
+    }
+
     // Create the planner generator
     const generator = new DynamicDailyPlannerGenerator();
     
@@ -64,18 +80,30 @@ export async function exportDynamicDailyPlannerPDF(
     const content = popupWindow.document.body;
     console.log('✅ Content element found in popup:', content.tagName);
     
-    // Capture the content as canvas
+    // Calculate proper height for 36 time slots (06:00 to 23:30)
+    const headerHeight = 200; // Header section height
+    const timeSlotHeight = 40; // Each time slot height
+    const totalTimeSlots = 36; // 06:00 to 23:30
+    const calculatedHeight = headerHeight + (totalTimeSlots * timeSlotHeight) + 100; // Extra padding
+    
+    console.log('🔧 PDF SCALING CALCULATION:');
+    console.log('🔧 Header height:', headerHeight);
+    console.log('🔧 Time slot height:', timeSlotHeight);
+    console.log('🔧 Total time slots:', totalTimeSlots);
+    console.log('🔧 Calculated height:', calculatedHeight);
+    
+    // Capture the content as canvas with proper scaling
     const canvas = await html2canvas(content, {
-      scale: 2,
+      scale: 3, // Increased scale for better quality
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#FAFAF7',
       width: 816,
-      height: 1056,
+      height: calculatedHeight,
       logging: true,
       foreignObjectRendering: true,
       removeContainer: false,
-      imageTimeout: 10000,
+      imageTimeout: 15000,
       onclone: (clonedDoc) => {
         // Ensure styling is preserved in cloned document
         const style = clonedDoc.createElement('style');
