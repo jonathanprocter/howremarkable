@@ -44,26 +44,10 @@ export const useAuthenticatedUser = (): UseAuthenticatedUserReturn => {
       const authData = await response.json();
 
       if (authData.authenticated && authData.user) {
+        console.log('✅ User authenticated:', authData.user.email);
         setUser(authData.user);
       } else {
-        // If not authenticated, try development auto-login
-        console.log('Not authenticated, attempting auto-login...');
-        try {
-          const devLoginResponse = await fetch('/api/auth/dev-login', { 
-            method: 'POST',
-            credentials: 'include'
-          });
-          if (devLoginResponse.ok) {
-            const devResult = await devLoginResponse.json();
-            if (devResult.success) {
-              console.log('Auto-login successful');
-              setUser(devResult.user);
-              return; // Successfully logged in
-            }
-          }
-        } catch (autoLoginError) {
-          console.log('Auto-login failed:', autoLoginError);
-        }
+        console.log('❌ User not authenticated');
         setUser(null);
       }
     } catch (err) {

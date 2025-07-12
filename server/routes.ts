@@ -797,39 +797,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Events API
-  app.get("/api/events/:userId", async (req, res) => {
+  app.get("/api/events", async (req, res) => {
+    console.log('🔍 Session Debug [GET /api/events]: User=' + (req.user ? 'true' : 'false') + ', Session=' + req.sessionID?.substring(0, 8) + '...');
+    
     try {
-      const userId = parseInt(req.params.userId);
+      // Get user from session
+      const user = req.user || req.session?.passport?.user;
+      
+      if (!user) {
+        console.log('❌ No authenticated user found for events endpoint');
+        return res.status(401).json({ 
+          error: "Authentication required", 
+          message: "Please authenticate to access events",
+          authUrl: "/api/auth/google"
+        });
+      }
 
+      const userId = parseInt(user.id);
+      
       // Validate user ID
       if (isNaN(userId) || userId <= 0) {
         return res.status(400).json({ error: "Invalid user ID" });
       }
 
       // Debug authentication for events endpoint
-      console.log("Events endpoint - User authenticated:", !!req.user);
-      console.log("Events endpoint - Requested user ID:", userId);
-      if (req.user) {
-        console.log("Events endpoint - Session user ID:", req.user.id);
-
-        // If user is authenticated, ensure they can only access their own events
-        if (req.user.id !== userId.toString()) {
-          return res.status(403).json({ 
-            error: "Access denied", 
-            message: "You can only access your own events" 
-          });
-        }
-      } else {
-        // For development: allow access to user 1 when not authenticated
-        if (userId !== 1) {
-          return res.status(401).json({ 
-            error: "Authentication required", 
-            message: "Please authenticate to access events",
-            authUrl: "/api/auth/google"
-          });
-        }
-        console.log("Allowing unauthenticated access to user 1 for development");
-      }
+      console.log("✅ Events endpoint - User authenticated:", user.email);
+      console.log("📅 Events endpoint - User ID:", userId);
 
       const events = await storage.getEvents(userId);
 
@@ -844,8 +837,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         acc[source] = (acc[source] || 0) + 1;
         return acc;
       }, {}));
-
-      // Don't add any sample events - only use real calendar data
 
       // Map database events to the expected format with validation
       const eventsFormatted = events.map(e => {
