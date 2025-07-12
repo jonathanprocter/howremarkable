@@ -43,38 +43,67 @@ export interface StyleExtractionResult {
 export function extractDashboardStyles(): StyleExtractionResult {
   const startTime = Date.now();
   const errors: string[] = [];
-  
+
   console.log('🔍 Starting dashboard style extraction...');
-  
-  try {
-    // Find calendar container
-    const calendarContainer = document.querySelector('.calendar-container, .weekly-calendar, .planner-container');
-    if (!calendarContainer) {
-      errors.push('Calendar container not found');
+  console.log('📋 Available IDs:', Array.from(document.querySelectorAll('[id]')).map(el => el.id));
+
+  // Try multiple selectors to find the calendar grid
+  const gridSelectors = [
+    '.weekly-grid',
+    '.calendar-grid',
+    '.time-grid',
+    '[class*="grid"]',
+    '[class*="calendar"]',
+    '[class*="planner"]',
+    '.main-content',
+    '#calendar-container',
+    '#planner-container'
+  ];
+
+  let calendarContainer = null;
+  for (const selector of gridSelectors) {
+    calendarContainer = document.querySelector(selector);
+    if (calendarContainer) {
+      console.log(`✅ Found calendar grid with selector: ${selector}`);
+      break;
+    }
+  }
+
+  if (!calendarContainer) {
+    console.warn('❌ Calendar grid not found with any selector');
+    // Try to find any main container as fallback
+    calendarContainer = document.querySelector('main, .main, #root > div, [role="main"]');
+    if (calendarContainer) {
+      console.log('📦 Using fallback container');
+    } else {
+      console.error('❌ No suitable container found');
       return { measurements: getDefaultMeasurements(), extractionTime: Date.now() - startTime, success: false, errors };
     }
-    
+  }
+
+  try {
+
     // Extract time column measurements
     const timeColumn = calendarContainer.querySelector('.time-column, .time-labels');
     const timeColumnWidth = timeColumn ? timeColumn.getBoundingClientRect().width : 80;
-    
+
     // Extract day column measurements
     const dayColumns = calendarContainer.querySelectorAll('.day-column, .calendar-day');
     const dayColumnWidth = dayColumns.length > 0 ? dayColumns[0].getBoundingClientRect().width : 110;
-    
+
     // Extract time slot measurements
     const timeSlots = calendarContainer.querySelectorAll('.time-slot, .calendar-row');
     const timeSlotHeight = timeSlots.length > 0 ? timeSlots[0].getBoundingClientRect().height : 40;
-    
+
     // Extract header measurements
     const header = calendarContainer.querySelector('.calendar-header, .week-header');
     const headerHeight = header ? header.getBoundingClientRect().height : 60;
-    
+
     // Extract container measurements
     const containerRect = calendarContainer.getBoundingClientRect();
     const containerWidth = containerRect.width;
     const containerHeight = containerRect.height;
-    
+
     // Extract computed styles
     const containerStyle = window.getComputedStyle(calendarContainer);
     const margins = {
@@ -83,19 +112,19 @@ export function extractDashboardStyles(): StyleExtractionResult {
       bottom: parseInt(containerStyle.marginBottom) || 0,
       left: parseInt(containerStyle.marginLeft) || 0
     };
-    
+
     // Extract font information
     const timeLabelElement = calendarContainer.querySelector('.time-label, .hour-label');
     const dayHeaderElement = calendarContainer.querySelector('.day-header, .calendar-day-header');
     const eventElement = calendarContainer.querySelector('.event, .appointment');
-    
+
     const fonts = {
       timeLabel: timeLabelElement ? window.getComputedStyle(timeLabelElement).fontFamily : 'Arial, sans-serif',
       dayHeader: dayHeaderElement ? window.getComputedStyle(dayHeaderElement).fontFamily : 'Arial, sans-serif',
       eventTitle: eventElement ? window.getComputedStyle(eventElement).fontFamily : 'Arial, sans-serif',
       eventTime: eventElement ? window.getComputedStyle(eventElement).fontFamily : 'Arial, sans-serif'
     };
-    
+
     // Extract color information
     const colors = {
       background: containerStyle.backgroundColor || '#ffffff',
@@ -103,7 +132,7 @@ export function extractDashboardStyles(): StyleExtractionResult {
       timeLabels: timeLabelElement ? window.getComputedStyle(timeLabelElement).color : '#333333',
       eventText: eventElement ? window.getComputedStyle(eventElement).color : '#000000'
     };
-    
+
     const measurements: DashboardMeasurements = {
       timeColumnWidth,
       dayColumnWidth,
@@ -115,19 +144,19 @@ export function extractDashboardStyles(): StyleExtractionResult {
       fonts,
       colors
     };
-    
+
     console.log('✅ Dashboard measurements extracted:', measurements);
-    
+
     return {
       measurements,
       extractionTime: Date.now() - startTime,
       success: true
     };
-    
+
   } catch (error) {
     console.error('❌ Dashboard style extraction failed:', error);
     errors.push(error instanceof Error ? error.message : 'Unknown error');
-    
+
     return {
       measurements: getDefaultMeasurements(),
       extractionTime: Date.now() - startTime,
@@ -145,13 +174,13 @@ export function getDashboardMeasurements(): DashboardMeasurements {
 export async function captureScreenshot(): Promise<string | null> {
   try {
     console.log('📸 Capturing dashboard screenshot...');
-    
+
     const calendarContainer = document.querySelector('.calendar-container, .weekly-calendar, .planner-container');
     if (!calendarContainer) {
       console.error('❌ Calendar container not found for screenshot');
       return null;
     }
-    
+
     const canvas = await html2canvas(calendarContainer as HTMLElement, {
       scale: 1,
       useCORS: true,
@@ -159,12 +188,12 @@ export async function captureScreenshot(): Promise<string | null> {
       backgroundColor: '#ffffff',
       logging: false
     });
-    
+
     const dataUrl = canvas.toDataURL('image/png');
     console.log('✅ Screenshot captured successfully');
-    
+
     return dataUrl;
-    
+
   } catch (error) {
     console.error('❌ Screenshot capture failed:', error);
     return null;

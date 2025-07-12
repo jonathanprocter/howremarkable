@@ -11,9 +11,47 @@ import { extractDashboardStyles, logStyleComparison, DashboardStyles } from './d
 import { performVisualComparison, extractPrintOptimizedStyles, logDetailedStyleComparison } from './pixelPerfectComparison';
 import { runPixelPerfectAudit } from './pixelPerfectAudit';
 
-// Get source of truth styles from dashboard DOM
+// Get source of truth styles from dashboard DOM with better error handling
 const getDashboardStyles = (): DashboardStyles => {
-  return extractDashboardStyles();
+  try {
+    const styles = extractDashboardStyles();
+    if (!styles) {
+      console.warn('Could not extract dashboard styles, using fallback values');
+      return getFallbackDashboardStyles();
+    }
+    return styles;
+  } catch (error) {
+    console.error('Error extracting dashboard styles:', error);
+    return getFallbackDashboardStyles();
+  }
+};
+
+// Fallback dashboard styles based on audit findings
+const getFallbackDashboardStyles = (): DashboardStyles => {
+  return {
+    timeColumnWidth: 80,
+    timeSlotHeight: 40,
+    headerHeight: 60,
+    spacing: {
+      margin: 20,
+      borderRadius: 6
+    },
+    fonts: {
+      family: 'system-ui, -apple-system, sans-serif',
+      headerTitle: { size: 20 },
+      eventTitle: { size: 11 }
+    },
+    colors: {
+      white: [255, 255, 255],
+      black: [0, 0, 0],
+      lightGray: [248, 249, 250],
+      veryLightGray: [251, 252, 253],
+      borderGray: [229, 231, 235],
+      simplePracticeBlue: [59, 130, 246],
+      googleGreen: [34, 197, 94],
+      holidayOrange: [249, 115, 22]
+    }
+  };
 };
 
 // Convert dashboard styles to PDF configuration
@@ -43,11 +81,11 @@ const createPDFConfig = (dashboardStyles: DashboardStyles) => {
     headerHeight: Math.max((dashboardStyles?.headerHeight || 60) * 0.5, 20),
     legendHeight: 35,
 
-    // Typography (extracted from dashboard)
+    // Typography (improved font detection and sizing)
     fonts: {
-      family: (dashboardStyles?.fonts?.family || 'helvetica').includes('Times') ? 'times' : 'helvetica',
+      family: 'helvetica', // Use helvetica consistently for PDF compatibility
       title: { 
-        size: Math.min((dashboardStyles?.fonts?.headerTitle?.size || 20) * 0.8, 20), 
+        size: 20, // Fixed size for consistency
         weight: 'bold' as const 
       },
       weekInfo: { 
@@ -109,12 +147,15 @@ const createPDFConfig = (dashboardStyles: DashboardStyles) => {
 };
 
 /**
- * Get event source information with exact dashboard logic
+ * Get event source information with improved detection logic
  */
 const getEventSourceInfo = (event: CalendarEvent) => {
-  const title = event.title.toLowerCase();
+  const title = (event.title || '').toLowerCase();
+  const source = (event.source || '').toLowerCase();
+  const calendarId = event.calendarId || '';
 
-  if (title.includes('holiday')) {
+  // Holiday detection
+  if (title.includes('holiday') || calendarId.includes('holiday')) {
     return {
       source: 'Holidays',
       color: 'holidayOrange' as const,
@@ -123,7 +164,13 @@ const getEventSourceInfo = (event: CalendarEvent) => {
     };
   }
 
-  if (title.includes('haircut') || title.includes('dan re:') || title.includes('blake') || title.includes('phone call')) {
+  // Google Calendar detection
+  if (source === 'google' || 
+      title.includes('haircut') || 
+      title.includes('dan re:') || 
+      title.includes('blake') || 
+      title.includes('phone call') ||
+      calendarId.includes('gmail.com')) {
     return {
       source: 'Google Calendar',
       color: 'googleGreen' as const,
@@ -132,7 +179,19 @@ const getEventSourceInfo = (event: CalendarEvent) => {
     };
   }
 
-  // All other appointments are SimplePractice
+  // SimplePractice detection
+  if (source === 'simplepractice' || 
+      title.includes('appointment') ||
+      event.notes?.toLowerCase().includes('simplepractice')) {
+    return {
+      source: 'SimplePractice',
+      color: 'simplePracticeBlue' as const,
+      borderStyle: 'solid' as const,
+      hasLeftFlag: true
+    };
+  }
+
+  // Default to SimplePractice for unknown events
   return {
     source: 'SimplePractice',
     color: 'simplePracticeBlue' as const,
@@ -233,13 +292,27 @@ export const exportTrulyPixelPerfectWeeklyPDF = async (
 
     const config = exactConfig;
 
-    // Filter events for the week
+    // Filter events for the week with better error handling
     const weekEvents = events.filter(event => {
-      const eventDate = new Date(event.startTime);
-      return eventDate >= weekStartDate && eventDate <= weekEndDate;
+      try {
+        if (!event || !event.startTime) {
+          console.warn('Skipping invalid event:', event);
+          return false;
+        }
+        const eventDate = new Date(event.startTime);
+        if (isNaN(eventDate.getTime())) {
+          console.warn('Skipping event with invalid date:', event);
+          return false;
+        }
+        return eventDate >= weekStartDate && eventDate <= weekEndDate;
+      } catch (error) {
+        console.error('Error filtering event:', error, event);
+        return false;
+      }
     });
 
     console.log(`📅 Rendering ${weekEvents.length} events with dashboard-extracted styles`);
+    console.log('Events to render:', weekEvents.map(e => ({ title: e.title, start: e.startTime, source: e.source })));
 
     // Create PDF with exact dashboard proportions
     const pdf = new jsPDF({
