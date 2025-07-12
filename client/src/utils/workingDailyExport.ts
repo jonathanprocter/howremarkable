@@ -9,8 +9,8 @@ const DAILY_CONFIG = {
   margin: 40,
   timeColumnWidth: 100,
   eventColumnWidth: 472, // pageWidth - timeColumnWidth - margins
-  timeSlotHeight: 30,
-  headerHeight: 120,
+  timeSlotHeight: 40,    // Increased from 30 to 40 for better readability
+  headerHeight: 200,     // Increased from 120 to 200 for proper scaling
   
   colors: {
     black: [0, 0, 0],
@@ -216,9 +216,9 @@ function drawEvents(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
     const startMinute = eventStart.getMinutes();
     const totalMinutesFrom6AM = (startHour - 6) * 60 + startMinute;
     
-    // Skip events outside our time range
+    // Skip events outside our time range (6:00 AM to 11:30 PM)
     if (totalMinutesFrom6AM < 0 || totalMinutesFrom6AM > (17.5 * 60)) {
-      console.log(`Event ${event.title} outside time range, skipping`);
+      console.log(`Event ${event.title} outside time range (6:00-23:30), skipping`);
       return;
     }
     
@@ -226,9 +226,9 @@ function drawEvents(pdf: jsPDF, selectedDate: Date, events: CalendarEvent[]) {
     const slotIndex = totalMinutesFrom6AM / 30;
     const eventY = gridStartY + (slotIndex * timeSlotHeight) + 2;
     
-    // Calculate duration and height
+    // Calculate duration and height with improved scaling
     const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
-    const eventHeight = Math.max(24, (durationMinutes / 30) * timeSlotHeight - 4);
+    const eventHeight = Math.max(36, (durationMinutes / 30) * timeSlotHeight - 4);
     
     const eventX = margin + timeColumnWidth + 4;
     const eventWidth = eventColumnWidth - 8;
