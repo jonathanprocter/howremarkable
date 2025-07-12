@@ -22,7 +22,8 @@ import { exportDailyToPDF } from '@/utils/dailyPDFExport';
 import { exportWeeklyPackage } from '@/utils/weeklyPackageExport';
 import { exportTrulyPixelPerfectWeeklyPDF } from '@/utils/trulyPixelPerfectExport';
 import { exportExactWeeklySpec } from '@/utils/exactWeeklySpecExport';
-import { exportDynamicDailyPlannerPDF } from '@/utils/dynamicDailyPlannerPDF';
+import { exportDynamicDailyPlannerPDF } from '@/utils/fixedDynamicDailyPlannerPDF';
+import { exportBidirectionalWeeklyPackage } from '@/utils/bidirectionalWeeklyPackage';
 import { DevLoginButton } from '../components/DevLoginButton';
 
 export default function Planner() {
@@ -235,6 +236,9 @@ export default function Planner() {
           break;
         case 'weekly-package':
           await exportWeeklyPackage(currentWeek, allEvents);
+          break;
+        case 'bidirectional-weekly-package':
+          await exportBidirectionalWeeklyPackage(currentWeek[0]?.date || new Date(), currentWeek[6]?.date || new Date(), allEvents);
           break;
         case 'pixel-perfect':
           await exportTrulyPixelPerfectWeeklyPDF(currentWeek, allEvents);
@@ -666,6 +670,15 @@ export default function Planner() {
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Dynamic Daily
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleExportPDF('bidirectional-weekly-package')}
+                  className="w-full justify-start bg-blue-50 hover:bg-blue-100"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Bidirectional Weekly Package
                 </Button>
               </CardContent>
             </Card>
