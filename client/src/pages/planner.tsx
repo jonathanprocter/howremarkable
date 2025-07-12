@@ -91,6 +91,14 @@ export default function Planner() {
     return true;
   });
 
+  // Debug logging for event sources
+  console.log('📊 Event breakdown:', {
+    total: allEvents.length,
+    simplepractice: allEvents.filter(e => e.source === 'simplepractice').length,
+    google: allEvents.filter(e => e.source === 'google').length,
+    manual: allEvents.filter(e => e.source === 'manual' || !e.source).length
+  });
+
   // Event mutations
   const createEventMutation = useMutation({
     mutationFn: (eventData: Partial<CalendarEvent>) => 
@@ -477,7 +485,7 @@ export default function Planner() {
                       <div className="absolute left-0 top-0 w-1 h-full bg-cornflower-blue" style={{ backgroundColor: '#6495ED' }}></div>
                     </div>
                     <label htmlFor="simplepractice" className="text-sm font-medium" style={{ color: '#6495ED' }}>
-                      SimplePractice ({events.filter(e => e.source === 'simplepractice').length})
+                      SimplePractice ({allEvents.filter(e => e.source === 'simplepractice').length})
                     </label>
                   </div>
 
@@ -521,7 +529,7 @@ export default function Planner() {
                       }}
                     ></div>
                     <label htmlFor="personal" className="text-sm font-medium" style={{ color: '#B8860B' }}>
-                      US Holidays ({events.filter(e => e.source === 'manual' || e.title?.toLowerCase().includes('holiday')).length})
+                      US Holidays ({allEvents.filter(e => e.source === 'manual' || e.title?.toLowerCase().includes('holiday')).length})
                     </label>
                   </div>
                 </div>
