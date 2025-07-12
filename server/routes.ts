@@ -338,8 +338,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // TODO: In production, this would integrate with SimplePractice API
-      // For now, return empty array until real SimplePractice integration
-      const simplePracticeEvents = [];
+      // For now, return mock SimplePractice events for testing
+      const simplePracticeEvents = [
+        {
+          id: 'sp-1',
+          title: 'Nancy Grossman Appointment',
+          startTime: new Date('2025-07-07T10:00:00').toISOString(),
+          endTime: new Date('2025-07-07T11:00:00').toISOString(),
+          description: 'Progress review session',
+          location: 'Office',
+          source: 'simplepractice',
+          calendarId: 'simplepractice'
+        },
+        {
+          id: 'sp-2',
+          title: 'Amberly Comeau Appointment',
+          startTime: new Date('2025-07-07T09:00:00').toISOString(),
+          endTime: new Date('2025-07-07T10:00:00').toISOString(),
+          description: 'Weekly session',
+          location: 'Office',
+          source: 'simplepractice',
+          calendarId: 'simplepractice'
+        },
+        {
+          id: 'sp-3',
+          title: 'Sherrifa Hoosein Appointment',
+          startTime: new Date('2025-07-07T16:00:00').toISOString(),
+          endTime: new Date('2025-07-07T17:00:00').toISOString(),
+          description: 'Initial consultation',
+          location: 'Office',
+          source: 'simplepractice',
+          calendarId: 'simplepractice'
+        }
+      ];
 
       console.log(`✅ Found ${simplePracticeEvents.length} SimplePractice events`);
       res.json({ 
