@@ -217,17 +217,51 @@ export class ComprehensivePixelAnalyzer {
   private async captureDashboardWithMeasurements(): Promise<string> {
     console.log('📸 Capturing dashboard with measurement overlay...');
     
-    // Find the calendar container
-    const calendarContainer = document.querySelector('.calendar-container') ||
-                             document.querySelector('.weekly-calendar-grid') ||
-                             document.querySelector('.daily-view') ||
-                             document.querySelector('[data-testid="calendar-grid"]');
+    // Try multiple selectors to find the calendar container
+    const calendarSelectors = [
+      '.calendar-container',
+      '.weekly-calendar-grid',
+      '.daily-view',
+      '[data-testid="calendar-grid"]',
+      '.planner-container',
+      '.calendar-grid',
+      '.main-calendar',
+      '.calendar-wrapper',
+      'main',
+      '.content'
+    ];
+    
+    let calendarContainer: Element | null = null;
+    for (const selector of calendarSelectors) {
+      calendarContainer = document.querySelector(selector);
+      if (calendarContainer) {
+        console.log(`📍 Found calendar container with selector: ${selector}`);
+        break;
+      }
+    }
     
     if (!calendarContainer) {
-      throw new Error('Calendar container not found for measurement capture');
+      console.warn('⚠️ Calendar container not found, using document body');
+      calendarContainer = document.body;
     }
 
     this.dashboardElement = calendarContainer as HTMLElement;
+    
+    // Log available elements for debugging
+    console.log('🔍 Available elements in container:');
+    const allElements = this.dashboardElement.querySelectorAll('*');
+    const elementCounts = new Map<string, number>();
+    
+    allElements.forEach(el => {
+      const tagName = el.tagName.toLowerCase();
+      const className = el.className.toString();
+      if (className) {
+        const key = `${tagName}.${className}`;
+        elementCounts.set(key, (elementCounts.get(key) || 0) + 1);
+      }
+    });
+    
+    console.log('📊 Element counts:', Object.fromEntries(elementCounts));
     
     // Create measurement overlay
     const measurementOverlay = this.createMeasurementOverlay();
@@ -265,38 +299,110 @@ export class ComprehensivePixelAnalyzer {
     }
 
     const rect = this.dashboardElement.getBoundingClientRect();
+    console.log('📐 Dashboard element rect:', rect);
     
-    // Extract time column measurements
-    const timeColumn = this.dashboardElement.querySelector('.time-column') ||
-                      this.dashboardElement.querySelector('[data-testid="time-column"]');
+    // Try multiple selectors to find time column
+    const timeColumnSelectors = [
+      '.time-column',
+      '[data-testid="time-column"]',
+      '.time-labels',
+      '.time-grid',
+      '.calendar-time-column',
+      '[class*="time"]'
+    ];
+    
+    let timeColumn: Element | null = null;
+    for (const selector of timeColumnSelectors) {
+      timeColumn = this.dashboardElement.querySelector(selector);
+      if (timeColumn) {
+        console.log(`📍 Found time column with selector: ${selector}`);
+        break;
+      }
+    }
+    
     const timeColumnRect = timeColumn?.getBoundingClientRect();
-    const timeColumnWidth = timeColumnRect?.width || 0;
+    const timeColumnWidth = timeColumnRect?.width || 80; // Default fallback
+    console.log('📏 Time column width:', timeColumnWidth);
     
-    // Extract day column measurements
-    const dayColumns = this.dashboardElement.querySelectorAll('.day-column') ||
-                      this.dashboardElement.querySelectorAll('[data-testid="day-column"]');
-    const dayColumnWidth = dayColumns.length > 0 ? 
-      dayColumns[0].getBoundingClientRect().width : 0;
+    // Try multiple selectors to find day columns
+    const dayColumnSelectors = [
+      '.day-column',
+      '[data-testid="day-column"]',
+      '.calendar-day',
+      '.day-grid',
+      '.calendar-column',
+      '[class*="day"]'
+    ];
     
-    // Extract time slot measurements
-    const timeSlots = this.dashboardElement.querySelectorAll('.time-slot') ||
-                     this.dashboardElement.querySelectorAll('[data-testid="time-slot"]');
-    const timeSlotHeight = timeSlots.length > 0 ?
-      timeSlots[0].getBoundingClientRect().height : 0;
+    let dayColumns: NodeListOf<Element> | null = null;
+    for (const selector of dayColumnSelectors) {
+      dayColumns = this.dashboardElement.querySelectorAll(selector);
+      if (dayColumns.length > 0) {
+        console.log(`📍 Found ${dayColumns.length} day columns with selector: ${selector}`);
+        break;
+      }
+    }
     
-    // Extract header measurements
-    const header = this.dashboardElement.querySelector('.calendar-header') ||
-                  this.dashboardElement.querySelector('[data-testid="calendar-header"]');
-    const headerHeight = header?.getBoundingClientRect().height || 0;
+    const dayColumnWidth = dayColumns && dayColumns.length > 0 ? 
+      dayColumns[0].getBoundingClientRect().width : 110; // Default fallback
+    console.log('📏 Day column width:', dayColumnWidth);
+    
+    // Try multiple selectors to find time slots
+    const timeSlotSelectors = [
+      '.time-slot',
+      '[data-testid="time-slot"]',
+      '.calendar-slot',
+      '.time-grid-slot',
+      '.hour-slot',
+      '[class*="slot"]'
+    ];
+    
+    let timeSlots: NodeListOf<Element> | null = null;
+    for (const selector of timeSlotSelectors) {
+      timeSlots = this.dashboardElement.querySelectorAll(selector);
+      if (timeSlots.length > 0) {
+        console.log(`📍 Found ${timeSlots.length} time slots with selector: ${selector}`);
+        break;
+      }
+    }
+    
+    const timeSlotHeight = timeSlots && timeSlots.length > 0 ?
+      timeSlots[0].getBoundingClientRect().height : 40; // Default fallback
+    console.log('📏 Time slot height:', timeSlotHeight);
+    
+    // Try multiple selectors to find header
+    const headerSelectors = [
+      '.calendar-header',
+      '[data-testid="calendar-header"]',
+      '.header',
+      '.calendar-top',
+      '.planner-header',
+      '[class*="header"]'
+    ];
+    
+    let header: Element | null = null;
+    for (const selector of headerSelectors) {
+      header = this.dashboardElement.querySelector(selector);
+      if (header) {
+        console.log(`📍 Found header with selector: ${selector}`);
+        break;
+      }
+    }
+    
+    const headerHeight = header?.getBoundingClientRect().height || 60; // Default fallback
+    console.log('📏 Header height:', headerHeight);
     
     // Extract event positions
     const eventPositions = await this.extractEventPositions();
+    console.log('📍 Event positions extracted:', eventPositions.length);
     
     // Extract font measurements
     const fontSizes = await this.extractFontMeasurements();
+    console.log('🔤 Font sizes extracted:', fontSizes);
     
     // Extract color measurements
     const colors = await this.extractColorMeasurements();
+    console.log('🎨 Colors extracted:', colors);
     
     const measurements: DashboardMeasurements = {
       timeColumnWidth,
@@ -317,6 +423,7 @@ export class ComprehensivePixelAnalyzer {
    */
   private calculateExpectedPDFMeasurements(dashboard: DashboardMeasurements): ExpectedPDFMeasurements {
     console.log('📐 Calculating expected PDF measurements...');
+    console.log('📊 Dashboard input:', dashboard);
     
     // Standard PDF dimensions (8.5x11 inches at 72 DPI)
     const pageWidth = 612; // points
@@ -327,14 +434,29 @@ export class ComprehensivePixelAnalyzer {
     const availableWidth = pageWidth - margins.left - margins.right;
     const availableHeight = pageHeight - margins.top - margins.bottom;
     
+    console.log('📏 Available PDF space:', { availableWidth, availableHeight });
+    
+    // Ensure we have valid measurements
+    const timeColumnWidth = dashboard.timeColumnWidth || 80;
+    const dayColumnWidth = dashboard.dayColumnWidth || 110;
+    const timeSlotHeight = dashboard.timeSlotHeight || 40;
+    
+    console.log('📐 Using measurements:', { timeColumnWidth, dayColumnWidth, timeSlotHeight });
+    
     // Calculate scaling factor to fit dashboard proportions
-    const dashboardTotalWidth = dashboard.timeColumnWidth + (dashboard.dayColumnWidth * 7);
-    const scalingFactor = availableWidth / dashboardTotalWidth;
+    const dashboardTotalWidth = timeColumnWidth + (dayColumnWidth * 7);
+    const scalingFactor = dashboardTotalWidth > 0 ? availableWidth / dashboardTotalWidth : 1;
+    
+    console.log('📊 Scaling calculation:', { 
+      dashboardTotalWidth, 
+      availableWidth, 
+      scalingFactor 
+    });
     
     // Calculate expected dimensions
-    const expectedTimeColumnWidth = dashboard.timeColumnWidth * scalingFactor;
-    const expectedDayColumnWidth = dashboard.dayColumnWidth * scalingFactor;
-    const expectedTimeSlotHeight = dashboard.timeSlotHeight * scalingFactor;
+    const expectedTimeColumnWidth = timeColumnWidth * scalingFactor;
+    const expectedDayColumnWidth = dayColumnWidth * scalingFactor;
+    const expectedTimeSlotHeight = timeSlotHeight * scalingFactor;
     
     const expected: ExpectedPDFMeasurements = {
       pageWidth,
@@ -659,25 +781,47 @@ export class ComprehensivePixelAnalyzer {
   private async extractEventPositions(): Promise<EventPosition[]> {
     if (!this.dashboardElement) return [];
     
-    const events = this.dashboardElement.querySelectorAll('.event, .appointment');
+    // Try multiple selectors to find events
+    const eventSelectors = [
+      '.event',
+      '.appointment',
+      '.calendar-event',
+      '.event-block',
+      '.appointment-block',
+      '[class*="event"]',
+      '[class*="appointment"]'
+    ];
+    
+    let events: NodeListOf<Element> | null = null;
+    for (const selector of eventSelectors) {
+      events = this.dashboardElement.querySelectorAll(selector);
+      if (events.length > 0) {
+        console.log(`📍 Found ${events.length} events with selector: ${selector}`);
+        break;
+      }
+    }
+    
     const positions: EventPosition[] = [];
     
-    events.forEach((event, index) => {
-      const rect = event.getBoundingClientRect();
-      const title = event.textContent?.trim() || `Event ${index + 1}`;
-      
-      positions.push({
-        eventId: `event-${index}`,
-        title,
-        x: rect.x,
-        y: rect.y,
-        width: rect.width,
-        height: rect.height,
-        expectedSlot: index, // Simplified for now
-        actualSlot: index    // Simplified for now
+    if (events) {
+      events.forEach((event, index) => {
+        const rect = event.getBoundingClientRect();
+        const title = event.textContent?.trim() || `Event ${index + 1}`;
+        
+        positions.push({
+          eventId: `event-${index}`,
+          title,
+          x: rect.x,
+          y: rect.y,
+          width: rect.width,
+          height: rect.height,
+          expectedSlot: index, // Simplified for now
+          actualSlot: index    // Simplified for now
+        });
       });
-    });
+    }
     
+    console.log(`📍 Extracted ${positions.length} event positions`);
     return positions;
   }
 
