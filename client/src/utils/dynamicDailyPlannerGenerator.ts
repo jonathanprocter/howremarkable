@@ -127,7 +127,16 @@ export class DynamicDailyPlannerGenerator {
     );
     
     const weeklyTotalMinutes = weeklyScheduledEvents.reduce((sum, event) => {
-      const duration = (event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60);
+      const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+      const endTime = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
+      
+      // Validate dates
+      if (!startTime || !endTime || isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+        console.warn('Invalid date found in event:', event);
+        return sum;
+      }
+      
+      const duration = (endTime.getTime() - startTime.getTime()) / (1000 * 60);
       return sum + duration;
     }, 0);
     
