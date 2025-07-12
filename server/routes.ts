@@ -123,7 +123,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "email", 
         "https://www.googleapis.com/auth/drive.file",
         "https://www.googleapis.com/auth/calendar.readonly"
-      ]
+      ],
+      accessType: 'offline',
+      prompt: 'consent'
     })(req, res, next);
   });
 
