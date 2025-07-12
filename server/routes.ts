@@ -325,6 +325,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   };
 
+  // Get SimplePractice events
+  app.get("/api/simplepractice/events", requireAuth, async (req, res) => {
+    console.log('🔍 SimplePractice events requested');
+    
+    try {
+      const user = req.user as any;
+      const { start, end } = req.query;
+
+      if (!start || !end) {
+        return res.status(400).json({ error: 'Start and end dates are required' });
+      }
+
+      // For now, return sample SimplePractice events
+      // In production, this would integrate with SimplePractice API
+      const sampleSimplePracticeEvents = [
+        {
+          id: 'sp-1',
+          title: 'John Smith - Therapy Session',
+          startTime: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
+          endTime: new Date(Date.now() + 86400000 + 3600000).toISOString(), // Tomorrow + 1 hour
+          description: 'Individual therapy session',
+          location: 'Office A',
+          source: 'simplepractice',
+          calendarId: 'simplepractice'
+        },
+        {
+          id: 'sp-2',
+          title: 'Jane Doe - Intake Appointment',
+          startTime: new Date(Date.now() + 172800000).toISOString(), // Day after tomorrow
+          endTime: new Date(Date.now() + 172800000 + 3600000).toISOString(), // Day after tomorrow + 1 hour
+          description: 'Initial consultation',
+          location: 'Office B',
+          source: 'simplepractice',
+          calendarId: 'simplepractice'
+        }
+      ];
+
+      console.log(`✅ Found ${sampleSimplePracticeEvents.length} SimplePractice events`);
+      res.json({ 
+        events: sampleSimplePracticeEvents,
+        calendars: [{
+          id: 'simplepractice',
+          name: 'SimplePractice',
+          color: '#6495ED'
+        }]
+      });
+
+    } catch (error) {
+      console.error('SimplePractice events error:', error);
+      res.status(500).json({ 
+        error: 'Failed to fetch SimplePractice events',
+        details: error.message 
+      });
+    }
+  });
+
   // Get calendar events with enhanced debugging
   app.get("/api/calendar/events", requireAuth, async (req, res) => {
     console.log('🔍 Session Debug [GET /api/calendar/events]: User=' + (req.user ? 'true' : 'false') + ', Session=' + req.sessionID?.substring(0, 8) + '...');
@@ -332,7 +388,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user as any;
 
-    // For development users, return mock events
+    // For development users, return mock events including SimplePractice
     if (user.email === 'dev@test.com') {
       console.log('🔧 Development user detected, returning mock events');
       const mockEvents = [
@@ -347,7 +403,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           calendarId: 'primary'
         }
       ];
-      return res.json(mockEvents);
+
+      const mockCalendars = [
+        {
+          id: 'primary',
+          name: 'Primary Calendar',
+          color: '#4285f4'
+        },
+        {
+          id: 'simplepractice',
+          name: 'SimplePractice',
+          color: '#6495ED'
+        }
+      ];
+
+      return res.json({ 
+        events: mockEvents,
+        calendars: mockCalendars
+      });
     }
 
       if (!user.accessToken || user.accessToken === 'undefined') {
@@ -404,10 +477,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         color: cal.backgroundColor || '#4285f4'
       }));
 
+      // Add SimplePractice calendar to the list
+      const allCalendars = [
+        ...calendars,
+        {
+          id: 'simplepractice',
+          name: 'SimplePractice',
+          color: '#6495ED'
+        }
+      ];
+
       // Return in the expected format with events array and actual calendars
       res.json({ 
         events: formattedEvents,
-        calendars: calendars.length > 0 ? calendars : [{
+        calendars: allCalendars.length > 0 ? allCalendars : [{
           id: 'primary',
           name: 'Primary Calendar',
           color: '#4285f4'

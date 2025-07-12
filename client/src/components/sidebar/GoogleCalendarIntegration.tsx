@@ -33,7 +33,7 @@ export const GoogleCalendarIntegration = ({
       <CardHeader>
         <CardTitle className="text-sm flex items-center gap-2">
           <Calendar className="w-4 h-4" />
-          Google Calendar
+          Calendar Integration
           {isConnected ? (
             <CheckCircle className="w-4 h-4 text-green-500" />
           ) : (

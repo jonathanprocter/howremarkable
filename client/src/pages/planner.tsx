@@ -61,6 +61,23 @@ export default function Planner() {
     refetchInterval: 30 * 60 * 1000, // 30 minutes
   });
 
+   // SimplePractice calendar data
+   const { data: simplePracticeEvents = [], isLoading: isLoadingSimplePracticeEvents, error: simplePracticeError } = useQuery({
+    queryKey: ['/api/simplepractice/events'],
+    queryFn: async () => {
+        const startDate = new Date(2024, 0, 1).toISOString(); // January 1, 2024
+        const endDate = new Date(2025, 11, 31).toISOString(); // December 31, 2025
+        const response = await fetch(`/api/simplepractice/events?start=${startDate}&end=${endDate}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch SimplePractice events');
+        }
+        return response.json();
+    },
+    retry: 1,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
   // Google Calendar data with error handling
   const { data: googleCalendarData, isLoading: isLoadingGoogleEvents, error: googleCalendarError } = useQuery({
     queryKey: ['/api/calendar/events'],
@@ -83,7 +100,7 @@ export default function Planner() {
   const isGoogleCalendarConnected = !googleCalendarError && (googleEvents.length > 0 || googleCalendars.length > 0);
 
   // Combine and filter events
-  const allEvents = [...events, ...googleEvents].filter(event => {
+  const allEvents = [...events, ...googleEvents, ...simplePracticeEvents].filter(event => {
     const eventSource = event.source || 'manual';
     if (eventSource === 'simplepractice' && !calendarFilters.simplepractice) return false;
     if (eventSource === 'google' && !calendarFilters.google) return false;
@@ -294,7 +311,7 @@ export default function Planner() {
     );
   }
 
-  const isLoading = eventsLoading || isLoadingGoogleEvents;
+  const isLoading = eventsLoading || isLoadingGoogleEvents || isLoadingSimplePracticeEvents;
 
   return (
     <div className="min-h-screen bg-background p-4">
@@ -485,7 +502,7 @@ export default function Planner() {
                       <div className="absolute left-0 top-0 w-1 h-full bg-cornflower-blue" style={{ backgroundColor: '#6495ED' }}></div>
                     </div>
                     <label htmlFor="simplepractice" className="text-sm font-medium" style={{ color: '#6495ED' }}>
-                      SimplePractice ({allEvents.filter(e => e.source === 'simplepractice').length})
+                      SimplePractice ({[...events.filter(e => e.source === 'simplepractice'), ...simplePracticeEvents].length})
                     </label>
                   </div>
 
