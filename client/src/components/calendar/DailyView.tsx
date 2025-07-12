@@ -48,7 +48,7 @@ export const DailyView = ({
       const endTime = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
       
       // Validate that dates are valid
-      if (isNaN(startTime.getTime()) || isNaN(endTime.getTime()) || isNaN(selectedDate.getTime())) {
+      if (!startTime || !endTime || isNaN(startTime.getTime()) || isNaN(endTime.getTime()) || isNaN(selectedDate.getTime())) {
         console.warn('Invalid date detected:', { event: event.title, startTime: event.startTime, endTime: event.endTime });
         return false;
       }
@@ -89,7 +89,7 @@ export const DailyView = ({
       // Convert startTime and endTime to Date objects if they aren't already
       const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
       const endTime = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
-      if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) return sum;
+      if (!startTime || !endTime || isNaN(startTime.getTime()) || isNaN(endTime.getTime())) return sum;
       return sum + (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
     } catch (error) {
       console.warn('Error calculating event duration:', event.title, error);
@@ -109,6 +109,13 @@ export const DailyView = ({
     // Convert startTime and endTime to Date objects if they aren't already
     const eventStart = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
     const eventEnd = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
+    
+    // Validate dates
+    if (!eventStart || !eventEnd || isNaN(eventStart.getTime()) || isNaN(eventEnd.getTime())) {
+      console.warn('Invalid dates in event:', event.title);
+      return { className: 'appointment', style: { display: 'none' } };
+    }
+    
     const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
 
     // Check if this is an all-day event
@@ -234,6 +241,12 @@ export const DailyView = ({
     // Convert startTime and endTime to Date objects if they aren't already
     const start = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
     const end = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
+    
+    // Validate dates
+    if (!start || !end || isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return 'Invalid time';
+    }
+    
     return `${start.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}-${end.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}`;
   };
 
@@ -320,6 +333,12 @@ export const DailyView = ({
         // Convert startTime and endTime to Date objects if they aren't already
         const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
         const endTime = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
+        
+        // Validate dates
+        if (!startTime || !endTime || isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+          return false;
+        }
+        
         const duration = endTime.getTime() - startTime.getTime();
         const hours = duration / (1000 * 60 * 60);
         const startHour = startTime.getHours();
@@ -335,6 +354,12 @@ export const DailyView = ({
               // Convert startTime and endTime to Date objects if they aren't already
               const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
               const endTime = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
+              
+              // Validate dates
+              if (!startTime || !endTime || isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+                return false;
+              }
+              
               const duration = endTime.getTime() - startTime.getTime();
               const hours = duration / (1000 * 60 * 60);
               const startHour = startTime.getHours();
@@ -391,6 +416,12 @@ export const DailyView = ({
             // Convert startTime and endTime to Date objects if they aren't already
             const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
             const endTime = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
+            
+            // Validate dates
+            if (!startTime || !endTime || isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+              return false;
+            }
+            
             const duration = endTime.getTime() - startTime.getTime();
             const hours = duration / (1000 * 60 * 60);
             const startHour = startTime.getHours();

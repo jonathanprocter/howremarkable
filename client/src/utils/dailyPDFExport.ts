@@ -1,7 +1,3 @@
-` tags.
-
-```typescript
-<replit_final_file>
 import jsPDF from 'jspdf';
 import { CalendarEvent } from '../types/calendar';
 
@@ -434,24 +430,27 @@ export const exportDailyToPDF = async (
   console.log(`Date: ${selectedDate.toDateString()}`);
   console.log(`Total events: ${events.length}`);
 
-  const pdf = new jsPDF({
-    orientation: 'portrait',
-    unit: 'pt',
-    format: [DAILY_CONFIG.pageWidth, DAILY_CONFIG.pageHeight]
-  });
+  try {
+    // Create PDF document
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'pt',
+      format: [DAILY_CONFIG.pageWidth, DAILY_CONFIG.pageHeight],
+      compress: true
+    });
 
-  // White background
-  pdf.setFillColor(...DAILY_CONFIG.colors.white);
-  pdf.rect(0, 0, DAILY_CONFIG.pageWidth, DAILY_CONFIG.pageHeight, 'F');
+    // Draw components
+    drawDailyHeader(pdf, selectedDate, events);
+    drawTimeGrid(pdf);
+    drawAppointments(pdf, selectedDate, events);
 
-  // Draw sections
-  drawDailyHeader(pdf, selectedDate, events);
-  drawTimeGrid(pdf);
-  drawAppointments(pdf, selectedDate, events);
-
-  // Save PDF
-  const fileName = `daily-planner-${selectedDate.toISOString().split('T')[0]}.pdf`;
-  pdf.save(fileName);
-
-  console.log(`PDF saved as: ${fileName}`);
+    // Save PDF
+    const filename = `daily-planner-${selectedDate.toISOString().split('T')[0]}.pdf`;
+    pdf.save(filename);
+    
+    console.log(`PDF saved as: ${filename}`);
+  } catch (error) {
+    console.error('Daily PDF export error:', error);
+    throw error;
+  }
 };
