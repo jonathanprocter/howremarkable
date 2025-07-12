@@ -223,6 +223,14 @@ export const ExportToPDF = ({
           >
             🚀 Test Simple PDF Export
           </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => (window as any).runPixelPerfectReview()}
+            className="w-full text-xs bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
+            size="sm"
+          >
+            🔍 Pixel-Perfect Review
+          </Button>
         </div>
       </div>
 
