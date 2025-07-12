@@ -21,32 +21,49 @@ export interface PixelComparisonResult {
  * Captures a full screenshot of the current dashboard for comparison
  */
 export const captureDashboardScreenshot = async (): Promise<string> => {
-  try {
-    console.log('📸 Capturing dashboard screenshot for pixel comparison...');
-    
-    // Find the main calendar container
-    const calendarContainer = document.querySelector('.weekly-calendar-grid, .calendar-grid, .main-calendar') as HTMLElement;
-    
-    if (!calendarContainer) {
-      throw new Error('Calendar container not found for screenshot');
-    }
+  // Try multiple possible selectors for the calendar container
+  const possibleSelectors = [
+    '.calendar-container',
+    '.daily-view',
+    '.weekly-view', 
+    '.planner-content',
+    '.main-content',
+    '[data-testid="calendar-container"]',
+    '.calendar-grid',
+    'main',
+    '.container'
+  ];
 
-    // Capture the calendar area
+  let calendarContainer: HTMLElement | null = null;
+
+  for (const selector of possibleSelectors) {
+    calendarContainer = document.querySelector(selector);
+    if (calendarContainer) {
+      console.log(`📸 Found calendar container using selector: ${selector}`);
+      break;
+    }
+  }
+
+  // If no specific container found, use the entire viewport
+  if (!calendarContainer) {
+    console.log('📸 No specific calendar container found, using document.body');
+    calendarContainer = document.body;
+  }
+
+  try {
     const canvas = await html2canvas(calendarContainer, {
       useCORS: true,
-      allowTaint: false,
-      backgroundColor: '#ffffff',
-      scale: 1, // 100% scale for exact pixel matching
-      logging: false
+      allowTaint: true,
+      scale: 1,
+      logging: false,
+      width: calendarContainer.scrollWidth,
+      height: calendarContainer.scrollHeight
     });
 
-    const screenshotDataUrl = canvas.toDataURL('image/png');
-    console.log('✅ Dashboard screenshot captured successfully');
-    
-    return screenshotDataUrl;
+    return canvas.toDataURL('image/png');
   } catch (error) {
     console.error('❌ Failed to capture dashboard screenshot:', error);
-    throw error;
+    throw new Error(`Failed to capture dashboard screenshot: ${error}`);
   }
 };
 
@@ -55,23 +72,23 @@ export const captureDashboardScreenshot = async (): Promise<string> => {
  */
 export const extractExactDashboardStyles = () => {
   console.log('🔍 Extracting exact dashboard styles...');
-  
+
   // Debug: Log all available elements to help with selector detection
   console.log('🔍 Inspecting DOM structure...');
   const allElements = document.querySelectorAll('*');
   const elementClasses = new Set();
   const elementIds = new Set();
-  
+
   allElements.forEach(el => {
     if (el.className && typeof el.className === 'string') {
       el.className.split(' ').forEach(cls => cls && elementClasses.add(cls));
     }
     if (el.id) elementIds.add(el.id);
   });
-  
+
   console.log('📋 Available classes:', Array.from(elementClasses).slice(0, 20));
   console.log('📋 Available IDs:', Array.from(elementIds).slice(0, 10));
-  
+
   // Try multiple selector strategies to find calendar elements
   const selectorStrategies = {
     timeColumn: [
@@ -122,7 +139,7 @@ export const extractExactDashboardStyles = () => {
       '.title'
     ]
   };
-  
+
   const findBestElement = (strategies: string[]) => {
     for (const strategy of strategies) {
       const element = document.querySelector(strategy) as HTMLElement;
@@ -134,7 +151,7 @@ export const extractExactDashboardStyles = () => {
     console.log(`❌ No element found with strategies: ${strategies.join(', ')}`);
     return null;
   };
-  
+
   const findBestElements = (strategies: string[]) => {
     for (const strategy of strategies) {
       const elements = document.querySelectorAll(strategy) as NodeListOf<HTMLElement>;
@@ -146,7 +163,7 @@ export const extractExactDashboardStyles = () => {
     console.log(`❌ No elements found with strategies: ${strategies.join(', ')}`);
     return document.querySelectorAll('') as NodeListOf<HTMLElement>; // Empty list
   };
-  
+
   const elements = {
     timeColumn: findBestElement(selectorStrategies.timeColumn),
     dayColumns: findBestElements(selectorStrategies.dayColumn),
@@ -159,10 +176,10 @@ export const extractExactDashboardStyles = () => {
   // Extract dimensions with exact pixel values
   const extractExactDimensions = (element: HTMLElement | null) => {
     if (!element) return null;
-    
+
     const rect = element.getBoundingClientRect();
     const computed = getComputedStyle(element);
-    
+
     return {
       width: rect.width,
       height: rect.height,
@@ -188,14 +205,14 @@ export const extractExactDashboardStyles = () => {
   const calculateDayColumnWidth = () => {
     const timeColumnWidth = elements.timeColumn ? elements.timeColumn.getBoundingClientRect().width : 80;
     const gridWidth = elements.grid ? elements.grid.getBoundingClientRect().width : 1000;
-    
+
     // If grid width seems too small (likely measuring wrong element), use standard proportions
     if (gridWidth < 500) {
       console.log('⚠️ Grid width too small, using standard proportions');
       // Standard weekly calendar: time column ~80px, each day column ~100-120px
       return 110; // Use reasonable day column width
     }
-    
+
     const availableWidth = gridWidth - timeColumnWidth;
     const dayColumnWidth = availableWidth / 7; // 7 days in a week
     return dayColumnWidth;
@@ -215,7 +232,7 @@ export const extractExactDashboardStyles = () => {
   };
 
   console.log('📐 Exact Dashboard Dimensions:', exactStyles);
-  
+
   return exactStyles;
 };
 
@@ -224,16 +241,16 @@ export const extractExactDashboardStyles = () => {
  */
 export const performVisualComparison = async (): Promise<PixelComparisonResult> => {
   console.log('🎯 Starting pixel-perfect visual comparison...');
-  
+
   try {
     // Capture current dashboard state
     const dashboardScreenshot = await captureDashboardScreenshot();
     const exactStyles = extractExactDashboardStyles();
-    
+
     // Analyze differences (this would normally compare with PDF)
     const visualDifferences = [];
     const recommendations = [];
-    
+
     // Check for common issues
     if (exactStyles.timeColumn) {
       if (exactStyles.timeColumn.width < 50 || exactStyles.timeColumn.width > 100) {
@@ -285,7 +302,7 @@ export const performVisualComparison = async (): Promise<PixelComparisonResult> 
  */
 export const extractPrintOptimizedStyles = () => {
   console.log('🖨️ Extracting print-optimized dashboard styles...');
-  
+
   // Get the actual calendar grid with multiple selector options
   const calendarGrid = document.querySelector('table, [class*="grid"], [class*="calendar"], .planner-view, main') as HTMLElement;
   if (!calendarGrid) {
@@ -293,7 +310,7 @@ export const extractPrintOptimizedStyles = () => {
     // Fallback to document body for measurements
     const gridRect = document.body.getBoundingClientRect();
     const gridStyles = getComputedStyle(document.body);
-    
+
     return {
       gridWidth: gridRect.width,
       gridHeight: gridRect.height,
@@ -323,7 +340,7 @@ export const extractPrintOptimizedStyles = () => {
 
   // Calculate proper day column width from grid layout or use standard proportions
   const timeColumnWidth = timeColumn ? timeColumn.getBoundingClientRect().width : 80;
-  
+
   // If grid width seems too small (likely measuring wrong element), use standard proportions
   let calculatedDayColumnWidth;
   if (gridRect.width < 500) {
@@ -338,19 +355,19 @@ export const extractPrintOptimizedStyles = () => {
     // Grid container
     gridWidth: gridRect.width,
     gridHeight: gridRect.height,
-    
+
     // Time column measurements
     timeColumnWidth: timeColumnWidth,
     timeColumnStyles: timeColumn ? getComputedStyle(timeColumn) : null,
-    
+
     // Day column measurements  
     dayColumnWidth: calculatedDayColumnWidth, // Use calculated width instead of individual header width
     dayColumnStyles: firstDayColumn ? getComputedStyle(firstDayColumn) : null,
-    
+
     // Time slot measurements
     timeSlotHeight: firstTimeSlot ? firstTimeSlot.getBoundingClientRect().height : 40,
     timeSlotStyles: firstTimeSlot ? getComputedStyle(firstTimeSlot) : null,
-    
+
     // Grid styles
     gridStyles: {
       fontFamily: gridStyles.fontFamily,
@@ -372,7 +389,7 @@ export const extractPrintOptimizedStyles = () => {
  */
 export const logDetailedStyleComparison = (dashboardStyles: any, pdfStyles: any) => {
   console.group('🎯 DETAILED STYLE COMPARISON');
-  
+
   console.log('📐 DIMENSIONS COMPARISON:');
   console.table({
     'Time Column Width': {

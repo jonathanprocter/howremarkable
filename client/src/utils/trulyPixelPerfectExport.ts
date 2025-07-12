@@ -213,7 +213,18 @@ export const exportTrulyPixelPerfectWeeklyPDF = async (
 
     // STEP 1: Perform visual comparison and capture exact measurements as requested by user
     console.log('📸 Step 1: Capturing dashboard screenshot for visual comparison...');
-    const visualComparison = await performVisualComparison();
+    let visualComparison;
+    try {
+      visualComparison = await performVisualComparison();
+      console.log('🎯 Visual comparison completed with score:', visualComparison.score);
+    } catch (error) {
+      console.log('⚠️ Visual comparison failed, continuing with export:', error);
+      visualComparison = {
+        score: 0,
+        issues: [],
+        recommendations: ['Visual comparison skipped due to error']
+      };
+    }
 
     // STEP 2: Extract exact print-optimized styles from dashboard
     console.log('📐 Step 2: Extracting exact dashboard measurements...');
