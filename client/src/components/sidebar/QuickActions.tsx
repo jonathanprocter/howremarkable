@@ -4,6 +4,7 @@ interface QuickActionsProps {
   onGoToToday: () => void;
   onGoToDate: () => void;
   onRefreshEvents: () => void;
+  onSyncCalendarEvents: () => void;
   onSyncNotes: () => void;
 }
 
@@ -11,6 +12,7 @@ export const QuickActions = ({
   onGoToToday,
   onGoToDate,
   onRefreshEvents,
+  onSyncCalendarEvents,
   onSyncNotes
 }: QuickActionsProps) => {
   return (
@@ -40,6 +42,13 @@ export const QuickActions = ({
           size="sm"
         >
           Refresh Events
+        </Button>
+        <Button 
+          onClick={onSyncCalendarEvents}
+          className="w-full bg-green-600 hover:bg-green-700 text-white"
+          size="sm"
+        >
+          Sync Calendar Events
         </Button>
         <Button 
           variant="outline" 
