@@ -23,6 +23,7 @@ import { exportWeeklyPackage } from '@/utils/weeklyPackageExport';
 import { exportTrulyPixelPerfectWeeklyPDF } from '@/utils/trulyPixelPerfectExport';
 import { exportExactWeeklySpec } from '@/utils/exactWeeklySpecExport';
 import { exportDynamicDailyPlannerPDF } from '@/utils/dynamicDailyPlannerPDF';
+import { DevLoginButton } from '../components/DevLoginButton';
 
 export default function Planner() {
   const { user, isLoading: userLoading } = useAuthenticatedUser();
@@ -438,6 +439,7 @@ export default function Planner() {
                   >
                     Sync Calendar Events
                   </Button>
+                  <DevLoginButton />
                 </div>
               </CardContent>
             </Card>

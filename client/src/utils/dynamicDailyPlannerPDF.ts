@@ -101,26 +101,50 @@ export async function exportDynamicDailyPlannerPDF(
     
     // Capture canvas with US Letter proportions for perfect fit
     const canvas = await html2canvas(content, {
-      scale: 1.5, // Reduced scale to prevent memory issues
+      scale: 1.0, // Reduced scale to prevent memory issues
       useCORS: true,
       allowTaint: false,
       backgroundColor: '#FAFAF7',
-      width: 612, // Full page width
-      height: 792, // Full page height
-      logging: false, // Reduce console spam
-      foreignObjectRendering: false, // More reliable rendering
-      removeContainer: true,
-      imageTimeout: 10000,
+      width: 612, // US Letter width in points
+      height: 792, // US Letter height in points
+      logging: true, // Enable logging for debugging
+      foreignObjectRendering: true, // Use foreign object rendering
+      removeContainer: false,
+      imageTimeout: 15000,
+      scrollX: 0,
+      scrollY: 0,
       onclone: (clonedDoc) => {
         try {
           // Ensure styling is preserved and appointments fill cells
           const style = clonedDoc.createElement('style');
           style.textContent = `
-            body { font-family: Georgia, serif; background: #FAFAF7; margin: 0; padding: 20px; }
-            * { box-sizing: border-box; }
-            .appointment { width: 100% !important; margin: 0 !important; }
-            .timeline-slot { width: 100% !important; }
-            .daily-planner { max-width: none !important; width: 100% !important; }
+            body { 
+              font-family: Georgia, serif !important; 
+              background: #FAFAF7 !important; 
+              margin: 0 !important; 
+              padding: 20px !important;
+              width: 612px !important;
+              height: 792px !important;
+              overflow: hidden !important;
+            }
+            * { box-sizing: border-box !important; }
+            .appointment { 
+              width: 100% !important; 
+              margin: 0 !important; 
+              padding: 4px !important;
+              background: #fff !important;
+              border: 1px solid #ddd !important;
+            }
+            .timeline-slot { 
+              width: 100% !important; 
+              height: 40px !important;
+              border-bottom: 1px solid #eee !important;
+            }
+            .daily-planner { 
+              max-width: none !important; 
+              width: 100% !important; 
+              height: 100% !important;
+            }
           `;
           clonedDoc.head.appendChild(style);
           console.log('✅ US Letter styles applied to cloned document');
