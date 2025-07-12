@@ -894,8 +894,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json(event);
-    }```text
- catch (error) {
+    } catch (error) {
       console.error('Update event by sourceId error:', error);
       if (!res.headersSent) {
         res.status(400).json({ error: "Failed to update event", details: error instanceof Error ? error.message : 'Unknown error' });
