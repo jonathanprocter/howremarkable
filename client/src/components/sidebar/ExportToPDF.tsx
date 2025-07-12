@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { runPixelPerfectAudit } from '@/utils/pixelPerfectAudit';
 import { pdfPerfectionTester } from '@/utils/pdfPerfectionTest';
 import { pixelPerfectReviewer } from '@/utils/pixelPerfectReview';
+import { comprehensivePixelAnalyzer } from '@/utils/comprehensivePixelAnalysis';
 
 interface ExportToPDFProps {
   isGoogleConnected: boolean;
@@ -117,6 +118,63 @@ export const ExportToPDF = ({
       
     } catch (error) {
       console.error('❌ Pixel-Perfect Review failed:', error);
+    }
+  };
+
+  // Add comprehensive pixel analysis function
+  (window as any).runComprehensivePixelAnalysis = async () => {
+    try {
+      console.log('🔍 Running Comprehensive Pixel Analysis');
+      
+      // Use current date and get events
+      const testDate = new Date();
+      const events = (window as any).currentEvents || [];
+      
+      console.log('Analyzing for date:', testDate.toDateString());
+      console.log('Events for analysis:', events.length);
+      
+      const results = await comprehensivePixelAnalyzer.runComprehensiveAnalysis(testDate, events);
+      
+      console.log('\n🎯 COMPREHENSIVE PIXEL ANALYSIS RESULTS:');
+      console.log('='.repeat(100));
+      console.log(`📊 Overall Score: ${results.overallScore}/${results.maxScore} (${results.percentage}%)`);
+      console.log(`🔧 Issues Found: ${results.issues.length}`);
+      console.log(`💡 Recommendations: ${results.recommendations.length}`);
+      
+      console.log('\n📏 DETAILED MEASUREMENTS:');
+      console.log('Dashboard Measurements:', results.measurements.dashboard);
+      console.log('Expected PDF Measurements:', results.measurements.expectedPDF);
+      console.log('Measurement Differences:', results.measurements.differences);
+      
+      if (results.issues.length > 0) {
+        console.log('\n❌ DETAILED ISSUES:');
+        results.issues.forEach((issue, index) => {
+          console.log(`${index + 1}. [${issue.severity.toUpperCase()}] ${issue.description}`);
+          console.log(`   Dashboard: ${issue.dashboardValue}`);
+          console.log(`   Expected PDF: ${issue.expectedPDFValue}`);
+          console.log(`   Difference: ${issue.actualDifference}`);
+          console.log(`   Impact Score: ${issue.impactScore}/100`);
+          console.log(`   Fix: ${issue.fixRecommendation}`);
+          console.log(`   Code Location: ${issue.codeLocation}\n`);
+        });
+      }
+      
+      if (results.recommendations.length > 0) {
+        console.log('\n💡 COMPREHENSIVE RECOMMENDATIONS:');
+        results.recommendations.forEach((rec, index) => {
+          console.log(`${index + 1}. ${rec}`);
+        });
+      }
+      
+      // Save results to localStorage
+      localStorage.setItem('comprehensivePixelAnalysisResults', JSON.stringify(results));
+      
+      console.log('✅ Comprehensive Pixel Analysis completed successfully');
+      
+      return results;
+      
+    } catch (error) {
+      console.error('❌ Comprehensive Pixel Analysis failed:', error);
     }
   };
 
@@ -287,6 +345,14 @@ export const ExportToPDF = ({
             size="sm"
           >
             🔍 Pixel-Perfect Review
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => (window as any).runComprehensivePixelAnalysis()}
+            className="w-full text-xs bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100"
+            size="sm"
+          >
+            🔬 Comprehensive Analysis
           </Button>
         </div>
       </div>
