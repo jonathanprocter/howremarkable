@@ -65,7 +65,9 @@ export default function Planner() {
   const { data: googleCalendarData, isLoading: isLoadingGoogleEvents, error: googleCalendarError } = useQuery({
     queryKey: ['/api/calendar/events'],
     queryFn: async () => {
-      const response = await fetch('/api/calendar/events');
+      const startDate = new Date(2024, 0, 1).toISOString(); // January 1, 2024
+      const endDate = new Date(2025, 11, 31).toISOString(); // December 31, 2025
+      const response = await fetch(`/api/calendar/events?start=${startDate}&end=${endDate}`);
       if (!response.ok) {
         throw new Error('Failed to fetch Google Calendar events');
       }
@@ -240,15 +242,15 @@ export default function Planner() {
     }
   };
 
-  // Additional handlers for Google Calendar integration
   const handleReconnectGoogle = () => {
-    // Implement the logic to reconnect to Google Calendar
-    console.log("Reconnecting to Google Calendar...");
+    console.log('Reconnecting to Google Calendar...');
+    window.location.href = '/api/auth/google';
   };
 
   const handleRefreshCalendars = () => {
-    // Implement the logic to refresh Google Calendars
-    console.log("Refreshing Google Calendars...");
+    console.log('Refreshing calendars...');
+    // Force refetch of Google Calendar events
+    queryClient.invalidateQueries({ queryKey: ['/api/calendar/events'] });
   };
 
   // Navigation

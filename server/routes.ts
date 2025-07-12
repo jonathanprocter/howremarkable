@@ -393,7 +393,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         calendarId: event.organizer?.email || 'primary'
       }));
 
-      res.json(formattedEvents);
+      // Return in the expected format with events array
+      res.json({ 
+        events: formattedEvents,
+        calendars: [{
+          id: 'primary',
+          name: 'Primary Calendar',
+          color: '#4285f4'
+        }]
+      });
 
     } catch (error) {
       console.error('Calendar events error:', error);
