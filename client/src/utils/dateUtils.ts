@@ -50,6 +50,25 @@ export const formatWeekRange = (startDate: Date, endDate: Date): string => {
   return `Week ${weekNumber} - ${startFormat} - ${endFormat}`;
 };
 
+export const generateWeekDays = (referenceDate: Date): any[] => {
+  const startDate = getWeekStartDate(referenceDate);
+  const days = [];
+  
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(startDate);
+    date.setDate(startDate.getDate() + i);
+    
+    days.push({
+      date,
+      dayOfWeek: date.toLocaleDateString('en-US', { weekday: 'long' }),
+      dayNumber: date.getDate(),
+      events: []
+    });
+  }
+  
+  return days;
+};
+
 export const isSameDay = (date1: Date, date2: Date): boolean => {
   return date1.getDate() === date2.getDate() &&
          date1.getMonth() === date2.getMonth() &&
