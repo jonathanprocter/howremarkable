@@ -62,7 +62,7 @@ export default function Planner() {
   });
 
    // SimplePractice calendar data
-   const { data: simplePracticeEvents = [], isLoading: isLoadingSimplePracticeEvents, error: simplePracticeError } = useQuery({
+   const { data: simplePracticeData, isLoading: isLoadingSimplePracticeEvents, error: simplePracticeError } = useQuery({
     queryKey: ['/api/simplepractice/events'],
     queryFn: async () => {
         const startDate = new Date(2024, 0, 1).toISOString(); // January 1, 2024
@@ -77,6 +77,9 @@ export default function Planner() {
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
+
+  // Extract SimplePractice events safely
+  const simplePracticeEvents = Array.isArray(simplePracticeData?.events) ? simplePracticeData.events : [];
 
   // Google Calendar data with error handling
   const { data: googleCalendarData, isLoading: isLoadingGoogleEvents, error: googleCalendarError } = useQuery({
@@ -502,7 +505,7 @@ export default function Planner() {
                       <div className="absolute left-0 top-0 w-1 h-full bg-cornflower-blue" style={{ backgroundColor: '#6495ED' }}></div>
                     </div>
                     <label htmlFor="simplepractice" className="text-sm font-medium" style={{ color: '#6495ED' }}>
-                      SimplePractice ({[...events.filter(e => e.source === 'simplepractice'), ...simplePracticeEvents].length})
+                      SimplePractice ({allEvents.filter(e => e.source === 'simplepractice').length})
                     </label>
                   </div>
 
