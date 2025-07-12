@@ -40,6 +40,8 @@ export const dailyNotes = pgTable("daily_notes", {
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
+  email: true,
+  name: true,
 });
 
 export const insertEventSchema = createInsertSchema(events).omit({

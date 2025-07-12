@@ -255,13 +255,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Development authentication notice
+  // Development authentication for testing
   app.post("/api/auth/dev-login", async (req, res) => {
-    res.status(400).json({ 
-      error: "Development authentication disabled", 
-      message: "Please use Google OAuth for calendar access",
-      authUrl: "/api/auth/google"
-    });
+    try {
+      console.log("🔍 Session Debug [POST /api/auth/dev-login]: User=" + !!req.user + ", Session=" + req.sessionID?.substring(0, 8) + "...");
+      
+      // Create or get development user
+      let devUser = await storage.getUserByUsername('dev@test.com');
+      if (!devUser) {
+        devUser = await storage.createUser({
+          username: 'dev@test.com',
+          email: 'dev@test.com',
+          name: 'Development User',
+          password: 'password123'
+        });
+      }
+      
+      // Create user session object
+      const sessionUser = {
+        id: devUser.id.toString(),
+        email: devUser.email,
+        name: devUser.name || 'Development User',
+        username: devUser.username
+      };
+      
+      // Log the user in
+      req.logIn(sessionUser, (err) => {
+        if (err) {
+          console.error("Dev login error:", err);
+          return res.status(500).json({ error: "Login failed" });
+        }
+        
+        console.log("Development user logged in:", sessionUser.email);
+        console.log("Session after dev login:", req.sessionID);
+        console.log("User object in session:", !!req.user);
+        
+        // Force session save
+        req.session.save((saveErr) => {
+          if (saveErr) {
+            console.error("Session save error:", saveErr);
+            return res.status(500).json({ error: "Session save failed" });
+          }
+          
+          res.json({ 
+            success: true,
+            user: sessionUser,
+            message: "Development authentication successful"
+          });
+        });
+      });
+      
+    } catch (error) {
+      console.error("Development authentication error:", error);
+      res.status(500).json({ 
+        error: "Development authentication failed",
+        message: error.message 
+      });
+    }
   });
 
   // Google Calendar API - Fetch Events
