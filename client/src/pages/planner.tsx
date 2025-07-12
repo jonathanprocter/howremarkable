@@ -28,6 +28,7 @@ import { exportTrulyPixelPerfectWeeklyPDF } from '../utils/trulyPixelPerfectExpo
 import { exportBrowserMatchingWeeklyPDF, exportBrowserMatchingDailyPDF } from '../utils/browserMatchingPDF';
 import { exportPixelPerfectDailyPlanner } from '../utils/pixelPerfectDailyExport';
 import { exportDynamicDailyPlannerToPDF, exportDynamicDailyPlannerHTML, previewDynamicDailyPlanner } from '../utils/dynamicDailyPlannerPDF';
+import { exportSimplePDF } from '../utils/simplePDFExport';
 
 
 

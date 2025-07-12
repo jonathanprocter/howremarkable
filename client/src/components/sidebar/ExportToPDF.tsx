@@ -35,6 +35,34 @@ export const ExportToPDF = ({
     onExportCurrentView('Daily View');
   };
 
+  // Add simple PDF export test
+  (window as any).testSimplePDF = async () => {
+    try {
+      console.log('🧪 Testing Simple PDF Export');
+      
+      // Import the simple PDF export function
+      const { exportSimplePDF } = await import('../../utils/simplePDFExport');
+      
+      // Use current date and get events for today
+      const testDate = new Date();
+      const events = (window as any).currentEvents || [];
+      const todayEvents = events.filter(event => {
+        const eventDate = new Date(event.startTime);
+        return eventDate.toDateString() === testDate.toDateString();
+      });
+      
+      console.log('Exporting Simple PDF for date:', testDate.toDateString());
+      console.log('Events for this date:', todayEvents.length);
+      
+      await exportSimplePDF(testDate, todayEvents);
+      
+      console.log('✅ Simple PDF test completed successfully');
+      
+    } catch (error) {
+      console.error('❌ Simple PDF test failed:', error);
+    }
+  };
+
   // Add pixel-perfect audit test function
   (window as any).testPixelPerfectAudit = async () => {
     try {
@@ -186,6 +214,14 @@ export const ExportToPDF = ({
             size="sm"
           >
             🔍 Pixel-Perfect Audit
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => (window as any).testSimplePDF()}
+            className="w-full text-xs bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+            size="sm"
+          >
+            🚀 Test Simple PDF Export
           </Button>
         </div>
       </div>
