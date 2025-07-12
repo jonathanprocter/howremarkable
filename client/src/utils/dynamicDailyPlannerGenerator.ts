@@ -28,9 +28,6 @@ export interface DailyStatistics {
   daily_utilization: number;
   weekly_appointments: number;
   weekly_scheduled_hours: number;
-  daily_utilization: number;
-  weekly_appointments: number;
-  weekly_scheduled_hours: number;
 }
 
 export class DynamicDailyPlannerGenerator {
@@ -283,7 +280,16 @@ export class DynamicDailyPlannerGenerator {
   }
   
   public generateCompleteDailyPlannerHTML(date: Date, events: CalendarEvent[]): string {
-    const appointments = this.convertCalendarEventsToAppointments(events);
+    // CRITICAL FIX: Filter events by selected date FIRST
+    const targetDateStr = format(date, 'yyyy-MM-dd');
+    const dailyEvents = events.filter(event => {
+      const eventDateStr = format(new Date(event.startTime), 'yyyy-MM-dd');
+      return eventDateStr === targetDateStr;
+    });
+    
+    console.log(`🔧 FILTERED EVENTS: ${dailyEvents.length} events for ${targetDateStr} (from ${events.length} total)`);
+    
+    const appointments = this.convertCalendarEventsToAppointments(dailyEvents);
     const freeTimeSlots = this.calculateFreeTimeSlots(appointments);
     const statistics = this.calculateStatistics(appointments, date, events);
     const dateString = format(date, 'EEEE, MMMM d, yyyy');
