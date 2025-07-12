@@ -41,8 +41,8 @@ export async function exportDynamicDailyPlannerPDF(
     const html = generator.generateCompleteDailyPlannerHTML(date, events);
     console.log('✅ HTML generated, length:', html.length);
     
-    // Create a new window/popup to render the HTML cleanly
-    const popupWindow = window.open('', '_blank', 'width=816,height=1056,scrollbars=no');
+    // Create a new window/popup to render the HTML cleanly with proper height for full timeline
+    const popupWindow = window.open('', '_blank', 'width=816,height=1740,scrollbars=no');
     
     if (!popupWindow) {
       throw new Error('Failed to open popup window for PDF generation. Please allow popups for this site.');
