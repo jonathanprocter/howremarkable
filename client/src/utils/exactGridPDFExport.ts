@@ -54,15 +54,22 @@ const GRID_CONFIG = {
 export const exportExactGridPDF = async (
   weekStartDate: Date,
   weekEndDate: Date,
-  events: CalendarEvent[]
+  events: CalendarEvent[] = []
 ): Promise<void> => {
   try {
     console.log('Creating PDF with exact grid layout...');
 
     // Filter events for the week
-    const weekEvents = events.filter(event => {
-      const eventDate = new Date(event.startTime);
-      return eventDate >= weekStartDate && eventDate <= weekEndDate;
+    const weekEvents = (events || []).filter(event => {
+      if (!event || !event.startTime || !event.endTime) return false;
+      try {
+        const eventDate = new Date(event.startTime);
+        if (isNaN(eventDate.getTime())) return false;
+        return eventDate >= weekStartDate && eventDate <= weekEndDate;
+      } catch (error) {
+        console.warn('Error filtering event:', event, error);
+        return false;
+      }
     });
 
     // Create PDF with A3 landscape dimensions for better content fit
@@ -490,7 +497,7 @@ export const exportExactGridPDF = async (
             const timeY = is30MinuteAppt ? 
               eventY + eventHeight - textPadding - 4 : // Position higher in 30-min appointments
               eventY + eventHeight - textPadding - (timeFontSize * 0.3);
-            
+
             pdf.text(`${startTime}-${endTime}`, textX, timeY);
           }
         }
@@ -528,6 +535,11 @@ export const exportExactGridPDF = async (
     console.log('PDF exported successfully!');
   } catch (error) {
     console.error('PDF export error:', error);
-    throw error;
+    console.error('Error details:', {
+      name: error instanceof Error ? error.name : 'Unknown',
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace'
+    });
+    throw new Error(`PDF export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };
