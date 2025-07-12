@@ -68,18 +68,19 @@ export async function exportPixelPerfectPDF(
     // Add to document
     document.body.appendChild(container);
     
-    // Wait for rendering
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Wait for rendering and font loading
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
     // Capture with exact dimensions
     const canvas = await html2canvas(container, {
-      scale: 1, // Use exact 1:1 scaling for precision
+      scale: 2, // Use 2x scaling for better quality
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#ffffff',
       width: pdfConfig.pageWidth,
       height: pdfConfig.pageHeight,
-      logging: false
+      logging: false,
+      foreignObjectRendering: true
     });
     
     console.log('✅ Canvas captured:', canvas.width, 'x', canvas.height);
@@ -169,7 +170,17 @@ async function extractDashboardMeasurements(): Promise<DashboardMeasurements> {
   const margins = 40;
   const availableWidth = pageWidth - (margins * 2);
   const dashboardTotalWidth = timeColumnWidth + (dayColumnWidth * 7);
-  const scalingFactor = availableWidth / dashboardTotalWidth;
+  const scalingFactor = dashboardTotalWidth > 0 ? availableWidth / dashboardTotalWidth : 1;
+  
+  console.log('📐 Scaling calculation:', {
+    pageWidth,
+    margins,
+    availableWidth,
+    timeColumnWidth,
+    dayColumnWidth,
+    dashboardTotalWidth,
+    scalingFactor
+  });
   
   return {
     timeColumnWidth,
@@ -194,14 +205,14 @@ function calculatePDFConfig(dashboard: DashboardMeasurements): PDFConfig {
   const timeSlotHeight = dashboard.timeSlotHeight * dashboard.scalingFactor;
   const headerHeight = dashboard.headerHeight * dashboard.scalingFactor;
   
-  // Calculate font sizes proportional to scaling
-  const baseFontScale = dashboard.scalingFactor;
+  // Calculate font sizes proportional to scaling but with minimum readable sizes
+  const baseFontScale = Math.max(dashboard.scalingFactor, 0.7); // Minimum scale factor
   const fontSizes = {
-    title: Math.round(20 * baseFontScale),
-    header: Math.round(16 * baseFontScale),
-    timeLabel: Math.round(12 * baseFontScale),
-    eventTitle: Math.round(14 * baseFontScale),
-    eventTime: Math.round(12 * baseFontScale)
+    title: Math.max(Math.round(20 * baseFontScale), 14),
+    header: Math.max(Math.round(16 * baseFontScale), 12),
+    timeLabel: Math.max(Math.round(12 * baseFontScale), 10),
+    eventTitle: Math.max(Math.round(14 * baseFontScale), 11),
+    eventTime: Math.max(Math.round(12 * baseFontScale), 10)
   };
   
   console.log('🔤 Calculated font sizes:', fontSizes);
@@ -319,7 +330,7 @@ function generatePixelPerfectHTML(
           color: #333;
         }
         
-        .time-slot:nth-child(odd) {
+        .time-slot:nth-child(even) {
           background: #f0f0f0;
         }
         
@@ -401,10 +412,10 @@ function generatePixelPerfectHTML(
               // Calculate position and height
               const startSlot = ((startHour - 6) * 2) + (startMinute >= 30 ? 1 : 0);
               const endSlot = ((endHour - 6) * 2) + (endMinute >= 30 ? 1 : 0);
-              const duration = endSlot - startSlot;
+              const duration = Math.max(endSlot - startSlot, 1); // Minimum 1 slot
               
               const top = startSlot * config.timeSlotHeight;
-              const height = duration * config.timeSlotHeight - 2; // -2 for gap
+              const height = Math.max(duration * config.timeSlotHeight - 2, config.timeSlotHeight - 2); // Minimum height
               
               // Determine event type
               let eventClass = 'event';
