@@ -17,13 +17,15 @@ import { LoadingState } from '@/components/common/LoadingState';
 import { generateWeekDays } from '@/utils/dateUtils';
 import { extractDashboardStyles, logStyleComparison } from '@/utils/dashboardStyleExtractor';
 import { runPixelPerfectAudit } from '@/utils/pixelPerfectAudit';
+import { auditSystem, AuditResults } from '@/utils/comprehensiveAuditSystem';
 import { exportExactGridPDF } from '@/utils/exactGridPDFExport';
 import { exportDailyToPDF } from '@/utils/dailyPDFExport';
 import { exportWeeklyPackage } from '@/utils/weeklyPackageExport';
+import { exportBidirectionalWeeklyPackage } from '@/utils/bidirectionalWeeklyPackage';
+import { exportDynamicDailyPlannerPDF } from '@/utils/dynamicDailyPlannerPDF';
 import { exportTrulyPixelPerfectWeeklyPDF } from '@/utils/trulyPixelPerfectExport';
 import { exportExactWeeklySpec } from '@/utils/exactWeeklySpecExport';
-import { exportDynamicDailyPlannerPDF } from '@/utils/fixedDynamicDailyPlannerPDF';
-import { exportBidirectionalWeeklyPackage } from '@/utils/bidirectionalWeeklyPackage';
+import { exportFixedDynamicDailyPlannerPDF } from '@/utils/fixedDynamicDailyPlannerPDF';
 import { DevLoginButton } from '../components/DevLoginButton';
 
 export default function Planner() {
@@ -270,6 +272,63 @@ export default function Planner() {
     } catch (error) {
       console.error('Audit failed:', error);
       toast({ title: 'Audit failed', variant: 'destructive' });
+    }
+  };
+
+  const handleRunComprehensiveAudit = async () => {
+    try {
+      toast({ title: 'Running comprehensive audit system...' });
+      const auditResults = await auditSystem.runFullAudit(allEvents);
+      console.log('🎯 Comprehensive Audit Results:', auditResults);
+      
+      // Display results in toast
+      toast({ 
+        title: `Audit Complete - Score: ${auditResults.pixelPerfectScore}%`,
+        description: `Found ${auditResults.inconsistencies.length} inconsistencies. Check console for details.`
+      });
+
+      // Export results to localStorage
+      auditSystem.exportAuditResults(auditResults);
+      
+    } catch (error) {
+      console.error('Comprehensive audit failed:', error);
+      toast({ title: 'Comprehensive audit failed', variant: 'destructive' });
+    }
+  };
+
+  const handleTestExports = async () => {
+    try {
+      toast({ title: 'Running comprehensive export tests...' });
+      
+      // Import the audit report generator
+      const { auditReportGenerator } = await import('@/utils/auditReportGenerator');
+      
+      // Clear previous results
+      auditReportGenerator.clearResults();
+      
+      // Run layout tests
+      await auditReportGenerator.runLayoutTests(allEvents);
+      
+      // Run export functionality tests
+      await auditReportGenerator.testExportFunctionality(allEvents);
+      
+      // Run comprehensive audit
+      const auditResults = await auditSystem.runFullAudit(allEvents);
+      
+      // Generate comprehensive report
+      const report = auditReportGenerator.generateReport(auditResults);
+      
+      // Export report to localStorage
+      auditReportGenerator.exportReport(report);
+      
+      toast({ 
+        title: `Comprehensive Testing Complete - Score: ${report.overallScore}%`,
+        description: `${report.passedTests} passed, ${report.failedTests} failed. Check console for details.`
+      });
+      
+    } catch (error) {
+      console.error('Comprehensive testing failed:', error);
+      toast({ title: 'Comprehensive testing failed', variant: 'destructive' });
     }
   };
 
@@ -697,6 +756,24 @@ export default function Planner() {
                 >
                   <Settings className="h-4 w-4 mr-2" />
                   Run Pixel Audit
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRunComprehensiveAudit}
+                  className="w-full justify-start bg-purple-50 hover:bg-purple-100"
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Comprehensive Audit
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleTestExports}
+                  className="w-full justify-start bg-orange-50 hover:bg-orange-100"
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Test Export Features
                 </Button>
               </CardContent>
             </Card>
