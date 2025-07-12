@@ -90,24 +90,24 @@ export default function Planner() {
         (window as any).testPixelPerfectAudit = async () => {
           console.log('🔍 STARTING PIXEL-PERFECT AUDIT TEST FROM CONSOLE');
           console.log('='.repeat(80));
-          
+
           const currentDate = (window as any).selectedDate || new Date();
           const currentEvents = (window as any).currentEvents || [];
-          
+
           console.log(`📅 Auditing date: ${currentDate.toDateString()}`);
           console.log(`📊 Total events: ${currentEvents.length}`);
-          
+
           const result = await runPixelPerfectAudit(currentDate, currentEvents);
-          
+
           console.log(`✅ Audit Complete - Score: ${result.score}/${result.maxScore} (${result.percentage}%)`);
           console.log(`🔧 Issues Found: ${result.issues.length}`);
           console.log(`📋 Recommendations: ${result.recommendations.length}`);
-          
+
           // Show detailed results
           console.log('\n🎯 PIXEL-PERFECT AUDIT RESULTS:');
           console.log('='.repeat(50));
           console.log(`📊 Overall Score: ${result.score}/${result.maxScore} (${result.percentage}%)`);
-          
+
           if (result.issues.length > 0) {
             console.log('\n⚠️ ISSUES FOUND:');
             result.issues.forEach((issue, index) => {
@@ -116,27 +116,27 @@ export default function Planner() {
               console.log(`   Actual: ${issue.actual}`);
             });
           }
-          
+
           if (result.recommendations.length > 0) {
             console.log('\n💡 RECOMMENDATIONS:');
             result.recommendations.forEach((rec, index) => {
               console.log(`${index + 1}. ${rec}`);
             });
           }
-          
+
           // Save results to localStorage
           localStorage.setItem('pixelPerfectAuditResults', JSON.stringify(result));
-          
+
           console.log('\n✅ Pixel-perfect audit completed! Results saved to localStorage.');
           return result;
         };
-        
+
         console.log('🔍 Pixel-perfect audit function initialized');
       } catch (error) {
         console.error('❌ Failed to initialize audit function:', error);
       }
     };
-    
+
     initializeAudit();
   }, []);
 
@@ -585,20 +585,19 @@ export default function Planner() {
           break;
 
         case 'Daily View':
-          // Export current daily view using the Python-based dynamic daily planner
           try {
             console.log('=== DAILY VIEW PDF EXPORT ===');
             console.log('Selected date:', selectedDateForExport.toDateString());
-            console.log('Current view state:', state.viewMode);
             console.log('Events for export:', validatedEvents.length);
 
-            // Use the Python-based dynamic daily planner export
-            await exportDynamicDailyPlannerToPDF(selectedDateForExport, validatedEvents);
-            
+            // Use the working daily export function
+            const { exportWorkingDailyPDF } = await import('../utils/workingDailyExport');
+            await exportWorkingDailyPDF(selectedDateForExport, validatedEvents);
+
             console.log('=== DAILY VIEW PDF EXPORT COMPLETE ===');
-            
+
             toast({
-              title: "Daily View Export Successful",
+              title: "Daily View Export Successful", 
               description: `Daily planner PDF for ${selectedDateForExport.toLocaleDateString()} downloaded successfully!`
             });
             return;
@@ -837,9 +836,9 @@ export default function Planner() {
             try {
               console.log('=== BROWSER MATCHING DAILY PDF EXPORT ===');
               console.log('Selected date:', selectedDateForExport.toDateString());
-              
+
               await exportBrowserMatchingDailyPDF(selectedDateForExport, validatedEvents);
-              
+
               toast({
                 title: "Browser-Matching Export Successful",
                 description: "PDF that exactly matches your browser display downloaded!"
@@ -859,13 +858,13 @@ export default function Planner() {
               console.log('=== BROWSER MATCHING WEEKLY PDF EXPORT ===');
               console.log('Week start:', state.currentWeek.startDate.toDateString());
               console.log('Week end:', state.currentWeek.endDate.toDateString());
-              
+
               await exportBrowserMatchingWeeklyPDF(
                 state.currentWeek.startDate,
                 state.currentWeek.endDate,
                 validatedEvents
               );
-              
+
               toast({
                 title: "Browser-Matching Export Successful",
                 description: "PDF that exactly matches your browser display downloaded!"
