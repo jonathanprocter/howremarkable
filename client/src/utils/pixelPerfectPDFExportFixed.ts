@@ -53,6 +53,10 @@ export async function exportPixelPerfectPDF(
     const html = generatePixelPerfectHTML(date, events, pdfConfig);
     console.log('✅ Pixel-perfect HTML generated, length:', html.length);
     
+    if (!html || html.length < 100) {
+      throw new Error('Invalid HTML generated - too short or empty');
+    }
+    
     // Create temporary container with exact PDF dimensions
     const container = document.createElement('div');
     container.innerHTML = html;
@@ -95,6 +99,11 @@ export async function exportPixelPerfectPDF(
     });
     
     console.log('✅ Canvas captured:', canvas.width, 'x', canvas.height);
+    
+    if (!canvas || canvas.width === 0 || canvas.height === 0) {
+      document.body.removeChild(container);
+      throw new Error('Canvas capture failed - invalid dimensions');
+    }
     
     // Remove temporary container
     document.body.removeChild(container);
