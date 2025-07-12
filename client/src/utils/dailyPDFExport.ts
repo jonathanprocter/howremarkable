@@ -543,7 +543,7 @@ export const exportDailyToPDF = async (
   });
 
   console.log(`Day events: ${dayEvents.length}`);
-  console.log('Day events details:', dayEvents.map(e => ({ title: e.title, time: e.startTime.toLocaleTimeString() })));
+  console.log('Day events details:', dayEvents.map(e => ({ title: e.title, time: new Date(e.startTime).toLocaleTimeString() })));
 
   // Draw layout
   drawDailyHeader(pdf, selectedDate, dayEvents);
