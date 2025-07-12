@@ -283,7 +283,7 @@ export default function Planner() {
     );
   }
 
-  const isLoading = eventsLoading || googleEventsLoading;
+  const isLoading = eventsLoading || isLoadingGoogleEvents;
 
   return (
     <div className="min-h-screen bg-background p-4">
