@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { runPixelPerfectAudit } from '@/utils/pixelPerfectAudit';
+import { pdfPerfectionTester } from '@/utils/pdfPerfectionTest';
 
 interface ExportToPDFProps {
   isGoogleConnected: boolean;
@@ -79,41 +80,48 @@ export const ExportToPDF = ({
 
       // Store results in localStorage
       localStorage.setItem('pixelPerfectAuditResults', JSON.stringify(auditResults));
-      
       console.log('\n✅ Pixel-perfect audit completed! Results saved to localStorage.');
       
-      // Show summary alert
-      alert(`Pixel-Perfect Audit Complete!\n\nScore: ${auditResults.percentage}%\nIssues: ${auditResults.issues.length}\nRecommendations: ${auditResults.recommendations.length}\n\nCheck console for detailed results.`);
-
     } catch (error) {
-      console.error('❌ Pixel-perfect audit test failed:', error);
-      alert('Audit failed. Check console for details.');
+      console.error('❌ Pixel-perfect audit failed:', error);
     }
   };
 
-  // Add standalone audit function (no export)
-  const runStandaloneAudit = async () => {
+  // Add comprehensive PDF perfection test function
+  (window as any).testPDFPerfection = async () => {
     try {
-      console.log('🔍 RUNNING STANDALONE PIXEL-PERFECT AUDIT...');
-      console.log('='.repeat(50));
+      console.log('🎯 STARTING COMPREHENSIVE PDF PERFECTION TEST');
+      console.log('='.repeat(80));
 
-      const { runPixelPerfectAudit } = await import('../../utils/pixelPerfectAudit');
-      const currentDate = (window as any).selectedDate || new Date();
-      const currentEvents = (window as any).currentEvents || [];
-      const auditResults = await runPixelPerfectAudit(currentDate, currentEvents);
+      // Get current date and events from window context
+      const selectedDate = new Date(); // Default to today
+      const events = (window as any).currentEvents || [];
+      
+      console.log(`📅 Testing date: ${selectedDate.toDateString()}`);
+      console.log(`📊 Total events: ${events.length}`);
 
-      // Display key results in an alert
-      alert(`Pixel-Perfect Audit Complete!\n\nScore: ${auditResults.percentage}%\nIssues Found: ${auditResults.issues.length}\nRecommendations: ${auditResults.recommendations.length}\n\nFull results logged to console and saved to localStorage.`);
-
+      // Run comprehensive perfection test
+      const perfectionResults = await pdfPerfectionTester.runComprehensivePerfectionTest(selectedDate, events);
+      
+      // Generate and display report
+      const report = pdfPerfectionTester.generateTestReport(perfectionResults);
+      console.log(report);
+      
+      // Save results to localStorage for external access
+      localStorage.setItem('pdfPerfectionTestResults', JSON.stringify({
+        timestamp: new Date().toISOString(),
+        date: selectedDate.toISOString(),
+        eventCount: events.length,
+        results: perfectionResults,
+        report: report
+      }));
+      
+      console.log('\n✅ PDF perfection test completed! Results saved to localStorage.');
+      
     } catch (error) {
-      console.error('❌ Standalone audit failed:', error);
-      alert('Audit failed. Check console for details.');
+      console.error('❌ PDF perfection test failed:', error);
+      console.error('Error details:', error.message);
     }
-  };
-
-  const testExport = () => {
-    console.log('🚀 DIRECT TEST EXPORT CALLED!');
-    onExportCurrentView('Test Export');
   };
 
   return (
@@ -159,6 +167,29 @@ export const ExportToPDF = ({
         </div>
       </div>
 
+      {/* PDF Perfection Test */}
+      <div className="mb-4">
+        <h4 className="text-xs font-medium text-gray-700 mb-2">🎯 PDF Perfection</h4>
+        <div className="space-y-1">
+          <Button 
+            variant="outline" 
+            onClick={() => (window as any).testPDFPerfection()}
+            className="w-full text-xs bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100"
+            size="sm"
+          >
+            🎯 Test PDF Perfection
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => (window as any).testPixelPerfectAudit()}
+            className="w-full text-xs bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100"
+            size="sm"
+          >
+            🔍 Pixel-Perfect Audit
+          </Button>
+        </div>
+      </div>
+
       {/* Google Drive Export Section */}
       <div className="mb-4">
         <h4 className="text-xs font-medium text-gray-700 mb-2">☁️ Google Drive</h4>
@@ -180,113 +211,22 @@ export const ExportToPDF = ({
           </Button>
         </div>
       </div>
-      <div className="border-t pt-3 mt-3">
-          <p className="text-xs text-gray-600 mb-2">📅 Weekly Export</p>
-          <Button 
-            variant="outline" 
-            onClick={() => {
-              console.log('🎯 PERFECT WEEKLY EXPORT - OPTIMIZED TYPOGRAPHY!');
-              onExportCurrentView('Exact Weekly Spec');
-            }}
-            className="w-full text-xs mb-2 bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
-            size="sm"
-          >
-            📅 Export Weekly Calendar
-          </Button>
-        </div>
 
-        {/* Pixel-Perfect Audit Section */}
-        <div className="border-t pt-3 mt-3">
-          <p className="text-xs text-gray-600 mb-2">🔍 Quality Audit</p>
-          <Button 
-            variant="outline" 
-            onClick={async () => {
-              console.log('🔍 RUNNING COMPREHENSIVE AUDIT WITH REAL EVENTS...');
-              
-              // Check for existing events first
-              const currentEvents = (window as any).currentEvents || [];
-              console.log(`📊 Current events count: ${currentEvents.length}`);
-              
-              // If no events, create sample data for comprehensive testing
-              if (currentEvents.length === 0) {
-                console.log('📊 Creating sample events for comprehensive audit test...');
-                
-                const sampleEvents = [
-                  {
-                    id: 'audit-test-1',
-                    title: 'Dan re: Supervision',
-                    startTime: new Date('2025-07-11T10:00:00'),
-                    endTime: new Date('2025-07-11T11:00:00'),
-                    source: 'google',
-                    notes: 'Review client progress\nDiscuss treatment goals',
-                    actionItems: 'Update treatment plan\nSchedule follow-up',
-                    calendarId: 'primary'
-                  },
-                  {
-                    id: 'audit-test-2',
-                    title: 'Nancy Grossman Appointment',
-                    startTime: new Date('2025-07-11T14:30:00'),
-                    endTime: new Date('2025-07-11T15:30:00'),
-                    source: 'simplepractice',
-                    notes: 'Initial consultation',
-                    actionItems: 'Complete intake forms',
-                    calendarId: 'simplepractice'
-                  },
-                  {
-                    id: 'audit-test-3',
-                    title: 'Team Meeting',
-                    startTime: new Date('2025-07-11T16:00:00'),
-                    endTime: new Date('2025-07-11T17:00:00'),
-                    source: 'google',
-                    notes: 'Weekly team sync',
-                    actionItems: 'Prepare presentation',
-                    calendarId: 'primary'
-                  }
-                ];
-                
-                (window as any).currentEvents = sampleEvents;
-                console.log(`✅ Created ${sampleEvents.length} sample events for testing`);
-              }
-              
-              // Run comprehensive audit
-              console.log('🔍 Running comprehensive audit with events...');
-              const result = await (window as any).testPixelPerfectAudit();
-              
-              // Analyze results
-              console.log('\n🎯 COMPREHENSIVE AUDIT ANALYSIS:');
-              console.log('=====================================');
-              
-              if (result) {
-                console.log(`📊 Overall Score: ${result.percentage}%`);
-                console.log(`🔧 Issues Found: ${result.issues.length}`);
-                console.log(`📋 Recommendations: ${result.recommendations.length}`);
-                
-                if (result.issues.length > 0) {
-                  console.log('\n⚠️ ISSUES FOUND:');
-                  result.issues.forEach((issue, index) => {
-                    console.log(`${index + 1}. [${issue.severity.toUpperCase()}] ${issue.description}`);
-                    console.log(`   Expected: ${issue.expected}`);
-                    console.log(`   Actual: ${issue.actual}`);
-                    console.log(`   Fix: ${issue.fixRecommendation}`);
-                  });
-                }
-                
-                if (result.recommendations.length > 0) {
-                  console.log('\n💡 RECOMMENDATIONS:');
-                  result.recommendations.forEach((rec, index) => {
-                    console.log(`${index + 1}. ${rec}`);
-                  });
-                }
-              }
-              
-              console.log('\n🎯 COMPREHENSIVE AUDIT COMPLETE!');
-            }}
-            className="w-full text-xs mb-2 bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
-            size="sm"
-          >
-            🔍 Run Comprehensive Audit
-          </Button>
-        </div>
+      {/* Weekly Export */}
+      <div className="border-t pt-3 mt-3">
+        <p className="text-xs text-gray-600 mb-2">📅 Weekly Export</p>
+        <Button 
+          variant="outline" 
+          onClick={() => {
+            console.log('🎯 PERFECT WEEKLY EXPORT - OPTIMIZED TYPOGRAPHY!');
+            onExportCurrentView('Exact Weekly Spec');
+          }}
+          className="w-full text-xs mb-2 bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+          size="sm"
+        >
+          📅 Export Weekly Calendar
+        </Button>
+      </div>
     </div>
   );
 };

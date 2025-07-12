@@ -9,7 +9,7 @@ import { DynamicDailyPlannerGenerator } from './dynamicDailyPlannerGenerator';
 import { CalendarEvent } from '../types/calendar';
 import { format } from 'date-fns';
 
-export async function exportDynamicDailyPlannerToPDF(
+export async function exportDynamicDailyPlannerPDF(
   date: Date,
   events: CalendarEvent[]
 ): Promise<void> {
@@ -161,6 +161,9 @@ export async function exportDynamicDailyPlannerToPDF(
     throw new Error(`PDF export failed: ${error.message || 'Unknown error'}`);
   }
 }
+
+// Export function with correct name for compatibility
+export const exportDynamicDailyPlannerToPDF = exportDynamicDailyPlannerPDF;
 
 export async function exportDynamicDailyPlannerHTML(
   date: Date,
