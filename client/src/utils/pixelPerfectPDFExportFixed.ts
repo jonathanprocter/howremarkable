@@ -6,6 +6,8 @@
 import { CalendarEvent } from '@/shared/schema';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { getDashboardMeasurements } from './dashboardStyleExtractor';
+import { runPixelPerfectAudit } from './pixelPerfectAudit';
 
 interface DashboardMeasurements {
   timeColumnWidth: number;
