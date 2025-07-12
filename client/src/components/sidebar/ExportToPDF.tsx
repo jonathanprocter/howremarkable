@@ -3,7 +3,7 @@ import { runPixelPerfectAudit } from '@/utils/pixelPerfectAudit';
 import { pdfPerfectionTester } from '@/utils/pdfPerfectionTest';
 import { pixelPerfectReviewer } from '@/utils/pixelPerfectReview';
 import { comprehensivePixelAnalyzer } from '@/utils/comprehensivePixelAnalysis';
-import { exportPixelPerfectPDF } from '@/utils/pixelPerfectPDFExport';
+import { exportPixelPerfectPDF } from '@/utils/pixelPerfectPDFExportFixed';
 
 interface ExportToPDFProps {
   isGoogleConnected: boolean;

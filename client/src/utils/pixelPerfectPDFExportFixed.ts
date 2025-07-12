@@ -3,10 +3,9 @@
  * Uses exact dashboard measurements for 100% accuracy
  */
 
-import { jsPDF } from 'jspdf';
+import { CalendarEvent } from '@/shared/schema';
 import html2canvas from 'html2canvas';
-import { CalendarEvent } from '../types/calendar';
-import { format } from 'date-fns';
+import jsPDF from 'jspdf';
 
 interface DashboardMeasurements {
   timeColumnWidth: number;
@@ -39,14 +38,14 @@ export async function exportPixelPerfectPDF(
 ): Promise<void> {
   try {
     console.log('🎯 Starting Pixel-Perfect PDF Export');
-    console.log('📅 Date:', format(date, 'yyyy-MM-dd'));
+    console.log('📅 Date:', date.toISOString().split('T')[0]);
     console.log('📊 Events:', events.length);
-
-    // Extract exact dashboard measurements
+    
+    // Extract dashboard measurements
     const dashboardMeasurements = await extractDashboardMeasurements();
     console.log('📏 Dashboard measurements:', dashboardMeasurements);
     
-    // Calculate PDF configuration based on dashboard
+    // Calculate PDF configuration
     const pdfConfig = calculatePDFConfig(dashboardMeasurements);
     console.log('📐 PDF configuration:', pdfConfig);
     
@@ -103,76 +102,49 @@ export async function exportPixelPerfectPDF(
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'pt',
-      format: [pdfConfig.pageWidth, pdfConfig.pageHeight],
-      compress: false
+      format: [pdfConfig.pageWidth, pdfConfig.pageHeight]
     });
     
-    // Add image with proper scaling compensation
-    const imgData = canvas.toDataURL('image/png', 1.0);
-    const actualWidth = canvas.width;
-    const actualHeight = canvas.height;
-    
-    // Calculate scaling to fit PDF page exactly
-    const scaleX = pdfConfig.pageWidth / actualWidth;
-    const scaleY = pdfConfig.pageHeight / actualHeight;
-    const scale = Math.min(scaleX, scaleY);
-    
-    const finalWidth = actualWidth * scale;
-    const finalHeight = actualHeight * scale;
-    
-    // Center the image on the page
-    const x = (pdfConfig.pageWidth - finalWidth) / 2;
-    const y = (pdfConfig.pageHeight - finalHeight) / 2;
+    // Add canvas to PDF with scale compensation
+    const imgData = canvas.toDataURL('image/png');
+    const scale = 0.5; // Compensate for 2x canvas scaling
+    const finalWidth = pdfConfig.pageWidth;
+    const finalHeight = pdfConfig.pageHeight;
     
     console.log('📐 PDF image scaling:', {
-      canvasSize: `${actualWidth}x${actualHeight}`,
+      canvasSize: `${canvas.width}x${canvas.height}`,
       pdfPageSize: `${pdfConfig.pageWidth}x${pdfConfig.pageHeight}`,
       scale,
       finalSize: `${finalWidth}x${finalHeight}`,
-      position: `${x}, ${y}`
+      position: '0, 0'
     });
     
-    pdf.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight);
+    pdf.addImage(imgData, 'PNG', 0, 0, finalWidth, finalHeight);
     
     // Save PDF
-    const filename = `Pixel_Perfect_Daily_${format(date, 'yyyy-MM-dd')}.pdf`;
+    const filename = `Pixel_Perfect_Daily_${date.toISOString().split('T')[0]}.pdf`;
     pdf.save(filename);
     
     console.log('✅ Pixel-perfect PDF exported successfully:', filename);
     
   } catch (error) {
     console.error('❌ Pixel-perfect PDF export failed:', error);
-    throw new Error(`Pixel-perfect PDF export failed: ${error.message}`);
+    throw error;
   }
 }
 
 async function extractDashboardMeasurements(): Promise<DashboardMeasurements> {
   console.log('📏 Extracting dashboard measurements...');
   
-  // Try multiple selectors to find calendar elements
-  const calendarSelectors = [
-    '.calendar-container',
-    '.weekly-calendar-grid',
-    '.daily-view',
-    'main',
-    '.content'
-  ];
-  
-  let calendarContainer: Element | null = null;
-  for (const selector of calendarSelectors) {
-    calendarContainer = document.querySelector(selector);
-    if (calendarContainer) {
-      console.log(`📍 Found calendar container: ${selector}`);
-      break;
-    }
-  }
-  
+  // Find calendar container
+  const calendarContainer = document.querySelector('.calendar-container');
   if (!calendarContainer) {
-    console.warn('⚠️ Using document body as container');
-    calendarContainer = document.body;
+    throw new Error('Calendar container not found');
   }
   
-  // Extract measurements with fallbacks
+  console.log('📍 Found calendar container: .calendar-container');
+  
+  // Extract measurements
   const timeColumnSelectors = ['.time-column', '[class*="time"]'];
   let timeColumn: Element | null = null;
   for (const selector of timeColumnSelectors) {
@@ -284,16 +256,6 @@ function generatePixelPerfectHTML(
   
   console.log(`📅 Events for ${date.toDateString()}: ${dayEvents.length}`);
   
-  // Calculate time slots (6:00 to 23:30)
-  const timeSlots = [];
-  for (let hour = 6; hour <= 23; hour++) {
-    timeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
-    if (hour < 23) {
-      timeSlots.push(`${hour.toString().padStart(2, '0')}:30`);
-    }
-  }
-  timeSlots.push('23:30');
-  
   // Generate simple HTML structure
   const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
   const monthDay = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
@@ -399,56 +361,59 @@ function generatePixelPerfectHTML(
     </body>
     </html>
   `;
-            ${timeSlots.map(time => `
-              <div class="time-slot">${time}</div>
-            `).join('')}
-          </div>
-          
-          <div class="appointments-column">
-            ${timeSlots.map((time, index) => `
-              <div class="appointment-slot" data-time="${time}"></div>
-            `).join('')}
-            
-            ${dayEvents.map(event => {
-              const startTime = new Date(event.startTime);
-              const endTime = new Date(event.endTime);
-              const startHour = startTime.getHours();
-              const startMinute = startTime.getMinutes();
-              const endHour = endTime.getHours();
-              const endMinute = endTime.getMinutes();
-              
-              // Calculate position and height
-              const startSlot = ((startHour - 6) * 2) + (startMinute >= 30 ? 1 : 0);
-              const endSlot = ((endHour - 6) * 2) + (endMinute >= 30 ? 1 : 0);
-              const duration = Math.max(endSlot - startSlot, 1); // Minimum 1 slot
-              
-              const top = startSlot * config.timeSlotHeight;
-              const height = Math.max(duration * config.timeSlotHeight - 2, config.timeSlotHeight - 2); // Minimum height
-              
-              // Determine event type
-              let eventClass = 'event';
-              if (event.title.includes('Appointment')) {
-                eventClass += ' simplepractice';
-              } else if (event.calendarId && event.calendarId.includes('google')) {
-                eventClass += ' google-calendar';
-              } else if (event.title.includes('Holiday')) {
-                eventClass += ' holiday';
-              }
-              
-              const cleanTitle = event.title.replace(' Appointment', '').trim();
-              const timeRange = `${format(startTime, 'HH:mm')}-${format(endTime, 'HH:mm')}`;
-              
-              return `
-                <div class="${eventClass}" style="top: ${top}px; height: ${height}px; left: 4px; right: 4px;">
-                  <div class="event-title">${cleanTitle}</div>
-                  <div class="event-time">${timeRange}</div>
-                </div>
-              `;
-            }).join('')}
-          </div>
-        </div>
+}
+
+function generateTimeSlots(config: PDFConfig): string {
+  const slots = [];
+  
+  // Generate time slots from 6:00 to 23:30
+  for (let hour = 6; hour <= 23; hour++) {
+    const hourStr = hour.toString().padStart(2, '0');
+    slots.push(`<div class="time-slot">${hourStr}:00</div>`);
+    
+    if (hour < 23) {
+      slots.push(`<div class="time-slot">${hourStr}:30</div>`);
+    }
+  }
+  
+  // Add final 23:30 slot
+  slots.push(`<div class="time-slot">23:30</div>`);
+  
+  return slots.join('');
+}
+
+function generateAppointments(events: CalendarEvent[], config: PDFConfig): string {
+  return events.map(event => {
+    const startTime = new Date(event.start_time);
+    const endTime = new Date(event.end_time);
+    
+    // Calculate position in grid
+    const startHour = startTime.getHours();
+    const startMinute = startTime.getMinutes();
+    const endHour = endTime.getHours();
+    const endMinute = endTime.getMinutes();
+    
+    const startSlot = (startHour - 6) * 2 + (startMinute >= 30 ? 1 : 0);
+    const endSlot = (endHour - 6) * 2 + (endMinute >= 30 ? 1 : 0);
+    
+    const top = startSlot * 17; // 17px per slot
+    const height = Math.max((endSlot - startSlot) * 17, 17);
+    
+    let eventClass = 'appointment';
+    if (event.title.includes('Appointment')) {
+      eventClass += ' simplepractice';
+    } else if (event.calendar_id) {
+      eventClass += ' google';
+    }
+    
+    const cleanTitle = event.title.replace(' Appointment', '').trim();
+    const timeRange = `${startTime.toTimeString().substring(0, 5)}-${endTime.toTimeString().substring(0, 5)}`;
+    
+    return `
+      <div class="${eventClass}" style="top: ${top}px; height: ${height}px;">
+        <div style="font-weight: bold; font-size: 9px;">${cleanTitle}</div>
+        <div style="font-size: 8px; color: #666;">${timeRange}</div>
       </div>
-    </body>
-    </html>
-  `;
+    `;
+  }).join('');
 }
