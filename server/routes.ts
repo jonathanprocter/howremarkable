@@ -337,47 +337,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Start and end dates are required' });
       }
 
-      // TODO: Implement actual SimplePractice API integration
-      // This requires SimplePractice API credentials and proper authentication
-      const simplePracticeEvents = await fetchSimplePracticeEvents(start, end);
-
-      async function fetchSimplePracticeEvents(start: Date, end: Date) {
-        try {
-          // TODO: Replace with actual SimplePractice API call
-          // Example structure:
-          // const response = await fetch('https://api.simplepractice.com/v1/appointments', {
-          //   headers: {
-          //     'Authorization': `Bearer ${process.env.SIMPLEPRACTICE_API_TOKEN}`,
-          //     'Content-Type': 'application/json'
-          //   },
-          //   params: {
-          //     start_date: start.toISOString(),
-          //     end_date: end.toISOString()
-          //   }
-          // });
-          // const data = await response.json();
-          // return data.appointments.map(appointment => ({
-          //   id: appointment.id,
-          //   title: `${appointment.client.name} Appointment`,
-          //   startTime: appointment.start_time,
-          //   endTime: appointment.end_time,
-          //   description: appointment.notes || '',
-          //   location: appointment.location || 'Office',
-          //   source: 'simplepractice',
-          //   calendarId: 'simplepractice'
-          // }));
-
-          console.warn('SimplePractice API integration not implemented yet');
-          return [];
-        } catch (error) {
-          console.error('Failed to fetch SimplePractice events:', error);
-          return [];
-        }
+      // For development users, return empty array
+      if (user.email === 'dev@test.com') {
+        console.log('🔧 Development user - returning empty SimplePractice events');
+        return res.json({ 
+          events: [],
+          calendars: [{
+            id: 'simplepractice',
+            name: 'SimplePractice',
+            color: '#6495ED'
+          }]
+        });
       }
 
-      console.log(`✅ Found ${simplePracticeEvents.length} SimplePractice events`);
+      if (!user.accessToken || user.accessToken === 'undefined') {
+        console.log('❌ Invalid tokens for SimplePractice events');
+        return res.status(401).json({ 
+          error: 'Invalid authentication tokens. Please re-authenticate.',
+          needsReauth: true 
+        });
+      }
+
+      console.log('Fetching SimplePractice events from Google Calendar...');
+
+      const calendar = google.calendar({ version: 'v3' });
+
+      // Fetch from SimplePractice calendar specifically
+      const response = await calendar.events.list({
+        calendarId: '0np7sib5u30o7oc297j5pb259g', // SimplePractice calendar ID
+        timeMin: start as string,
+        timeMax: end as string,
+        singleEvents: true,
+        orderBy: 'startTime',
+        access_token: user.accessToken
+      });
+
+      const events = response.data.items || [];
+      console.log(`✅ Found ${events.length} SimplePractice events from Google Calendar`);
+
+      const formattedEvents = events.map(event => ({
+        id: event.id,
+        title: event.summary || 'Untitled Event',
+        startTime: event.start?.dateTime || event.start?.date,
+        endTime: event.end?.dateTime || event.end?.date,
+        description: event.description || '',
+        location: event.location || '',
+        source: 'simplepractice',
+        calendarId: '0np7sib5u30o7oc297j5pb259g'
+      }));
+
       res.json({ 
-        events: simplePracticeEvents,
+        events: formattedEvents,
         calendars: [{
           id: 'simplepractice',
           name: 'SimplePractice',
@@ -387,6 +397,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error('SimplePractice events error:', error);
+
+      if (error.code === 401) {
+        console.log('❌ Google API authentication failed for SimplePractice');
+        return res.status(401).json({ 
+          error: 'SimplePractice calendar authentication failed. Please re-authenticate.',
+          needsReauth: true 
+        });
+      }
+
       res.status(500).json({ 
         error: 'Failed to fetch SimplePractice events',
         details: error.message 
@@ -875,7 +894,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json(event);
-    } catch (error) {
+    }```text
+ catch (error) {
       console.error('Update event by sourceId error:', error);
       if (!res.headersSent) {
         res.status(400).json({ error: "Failed to update event", details: error instanceof Error ? error.message : 'Unknown error' });
