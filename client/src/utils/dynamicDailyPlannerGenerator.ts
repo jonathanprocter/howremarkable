@@ -32,44 +32,44 @@ export interface DailyStatistics {
 
 export class DynamicDailyPlannerGenerator {
   private timeSlots: string[] = [];
-  
+
   constructor() {
     this.timeSlots = this.generateTimeSlots();
   }
-  
+
   private generateTimeSlots(): string[] {
     const slots: string[] = [];
     const startHour = 6;
     const endHour = 23;
     const endMinute = 30;
-    
+
     console.log('🕐 GENERATING TIME SLOTS: 06:00 to 23:30');
-    
+
     for (let hour = startHour; hour <= endHour; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
         if (hour === endHour && minute > endMinute) break;
-        
+
         const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
         slots.push(timeString);
       }
     }
-    
+
     console.log(`🕐 GENERATED ${slots.length} TIME SLOTS:`, slots.slice(0, 3), '...', slots.slice(-3));
     console.log('🕐 FIRST SLOT:', slots[0], 'LAST SLOT:', slots[slots.length - 1]);
-    
+
     return slots;
   }
-  
+
   public convertCalendarEventsToAppointments(events: CalendarEvent[]): AppointmentData[] {
     return events.map(event => {
       const startTime = new Date(event.startTime);
       const endTime = new Date(event.endTime);
       const duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
-      
+
       // Extract notes and action items from event properties
       const eventNotes = event.notes ? event.notes.split('\n').filter(note => note.trim()) : [];
       const actionItems = event.actionItems ? event.actionItems.split('\n').filter(item => item.trim()) : [];
-      
+
       return {
         title: event.title,
         start_time: format(startTime, 'HH:mm'),
@@ -82,34 +82,34 @@ export class DynamicDailyPlannerGenerator {
       };
     });
   }
-  
+
   private calculateFreeTimeSlots(appointments: AppointmentData[]): string[] {
     const occupiedSlots = new Set<string>();
-    
+
     appointments.forEach(apt => {
       if (apt.status === 'scheduled') {
         const startIndex = this.timeSlots.indexOf(apt.start_time);
         const slotsNeeded = Math.ceil(apt.duration_minutes / 30);
-        
+
         for (let i = 0; i < slotsNeeded && startIndex + i < this.timeSlots.length; i++) {
           occupiedSlots.add(this.timeSlots[startIndex + i]);
         }
       }
     });
-    
+
     return this.timeSlots.filter(slot => !occupiedSlots.has(slot));
   }
-  
+
   private calculateStatistics(appointments: AppointmentData[], currentDate: Date, allEvents: CalendarEvent[]): DailyStatistics {
     // Calculate weekly statistics (reset every Monday)
     const currentWeekStart = this.getWeekStart(currentDate);
     const currentWeekEnd = this.getWeekEnd(currentDate);
-    
+
     console.log(`📊 Statistics calculation for ${currentDate.toDateString()}`);
     console.log(`📅 Week range: ${currentWeekStart.toDateString()} to ${currentWeekEnd.toDateString()}`);
     console.log(`📋 Total events passed: ${allEvents.length}`);
     console.log(`📋 Daily appointments: ${appointments.length}`);
-    
+
     // Filter events for the current week
     const weeklyEvents = allEvents.filter(event => {
       const eventDate = new Date(event.startTime);
@@ -119,37 +119,37 @@ export class DynamicDailyPlannerGenerator {
       }
       return inWeek;
     });
-    
+
     // Convert weekly events to weekly statistics
     const weeklyScheduledEvents = weeklyEvents.filter(event => 
       !event.title.toLowerCase().includes('canceled') && 
       !event.title.toLowerCase().includes('cancelled')
     );
-    
+
     const weeklyTotalMinutes = weeklyScheduledEvents.reduce((sum, event) => {
       const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
       const endTime = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
-      
+
       // Validate dates
       if (!startTime || !endTime || isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
         console.warn('Invalid date found in event:', event);
         return sum;
       }
-      
+
       const duration = (endTime.getTime() - startTime.getTime()) / (1000 * 60);
       return sum + duration;
     }, 0);
-    
+
     // Calculate weekly available time (5 working days × 17.5 hours = 87.5 hours)
     const weeklyAvailableMinutes = 5 * 17.5 * 60; // 5250 minutes
     const weeklyUtilization = Math.round((weeklyTotalMinutes / weeklyAvailableMinutes) * 100);
-    
+
     // Daily statistics for the current day
     const scheduledAppointments = appointments.filter(apt => apt.status === 'scheduled');
     const totalScheduledMinutes = scheduledAppointments.reduce((sum, apt) => sum + apt.duration_minutes, 0);
     const totalAvailableMinutes = this.timeSlots.length * 30;
     const dailyUtilization = Math.round((totalScheduledMinutes / totalAvailableMinutes) * 100);
-    
+
     return {
       total_appointments: appointments.length,
       scheduled_count: scheduledAppointments.length,
@@ -162,32 +162,32 @@ export class DynamicDailyPlannerGenerator {
       weekly_scheduled_hours: Math.round(weeklyTotalMinutes / 60 * 10) / 10
     };
   }
-  
+
   private getWeekStart(date: Date): Date {
     const d = new Date(date);
     const day = d.getDay();
     const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
     return new Date(d.setDate(diff));
   }
-  
+
   private getWeekEnd(date: Date): Date {
     const weekStart = this.getWeekStart(date);
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 6);
     return weekEnd;
   }
-  
+
   private getAppointmentHeight(durationMinutes: number): number {
     const slotsNeeded = Math.max(1, Math.ceil(durationMinutes / 30));
     return slotsNeeded * 40; // 40px per 30-minute slot
   }
-  
+
   private renderAppointmentHTML(appointment: AppointmentData): string {
     const height = this.getAppointmentHeight(appointment.duration_minutes);
     const statusClass = appointment.status;
     const hasContent = appointment.event_notes.length > 0 || appointment.action_items.length > 0;
     const middleClass = hasContent ? "appointment-middle has-content" : "appointment-middle";
-    
+
     // Generate event notes HTML with enhanced formatting
     const eventNotesHTML = appointment.event_notes.length > 0 ? `
       <div class="detail-header">
@@ -200,7 +200,7 @@ export class DynamicDailyPlannerGenerator {
         </ul>
       </div>
     ` : '';
-    
+
     // Generate action items HTML with enhanced formatting
     const actionItemsHTML = appointment.action_items.length > 0 ? `
       <div class="detail-header">
@@ -213,11 +213,11 @@ export class DynamicDailyPlannerGenerator {
         </ul>
       </div>
     ` : '';
-    
+
     const durationText = `${appointment.start_time} - ${appointment.end_time} • ${appointment.duration_minutes} min`;
     const statusDisplay = appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1);
     const statusButtonClass = `status-${appointment.status}`;
-    
+
     return `
       <div class="appointment ${statusClass}" style="height: ${height}px;">
         <div class="appointment-left">
@@ -234,7 +234,7 @@ export class DynamicDailyPlannerGenerator {
       </div>
     `;
   }
-  
+
   private generateTimeColumnHTML(freeTimeSlots: string[]): string {
     return this.timeSlots.map(slot => {
       let cssClass = "time-slot";
@@ -248,40 +248,40 @@ export class DynamicDailyPlannerGenerator {
       return `<div class="${cssClass}">${slot}</div>`;
     }).join('\n');
   }
-  
+
   private generateAppointmentsColumnHTML(appointments: AppointmentData[]): string {
     let html = '';
     const processedSlots = new Set<number>();
-    
+
     for (let i = 0; i < this.timeSlots.length; i++) {
       if (processedSlots.has(i)) {
         continue; // Skip already processed slots
       }
-      
+
       const slot = this.timeSlots[i];
       // Find ALL appointments that start at this time slot
       const overlappingAppointments = appointments.filter(apt => apt.start_time === slot);
-      
+
       if (overlappingAppointments.length > 0) {
         // Handle overlapping appointments - render side by side
         const maxDuration = Math.max(...overlappingAppointments.map(apt => apt.duration_minutes));
         const slotsToSkip = Math.ceil(maxDuration / 30);
-        
+
         // Create container for overlapping appointments
         html += `<div class="time-block overlapping-container" style="height: ${slotsToSkip * 40}px;">\n`;
-        
+
         // Render each overlapping appointment with horizontal offset
         overlappingAppointments.forEach((appointment, index) => {
           const horizontalOffset = index * 33; // 33% width for each appointment
           const appointmentWidth = Math.min(100 / overlappingAppointments.length, 30); // Max 30% width
-          
+
           html += `<div class="overlapping-appointment" style="left: ${horizontalOffset}%; width: ${appointmentWidth}%;">\n`;
           html += this.renderAppointmentHTML(appointment);
           html += `</div>\n`;
         });
-        
+
         html += `</div>\n`;
-        
+
         // Mark covered slots as processed
         for (let j = 1; j < slotsToSkip && i + j < this.timeSlots.length; j++) {
           processedSlots.add(i + j);
@@ -290,10 +290,10 @@ export class DynamicDailyPlannerGenerator {
         html += `<div class="time-block"></div> <!-- ${slot} -->\n`;
       }
     }
-    
+
     return html;
   }
-  
+
   private generateNotesColumnHTML(): string {
     let html = '<div class="notes-header">Handwritten Notes</div>\n';
     for (let i = 0; i < this.timeSlots.length; i++) {
@@ -301,7 +301,7 @@ export class DynamicDailyPlannerGenerator {
     }
     return html;
   }
-  
+
   public generateCompleteDailyPlannerHTML(date: Date, events: CalendarEvent[]): string {
     // CRITICAL FIX: Filter events by selected date FIRST
     const targetDateStr = format(date, 'yyyy-MM-dd');
@@ -309,18 +309,18 @@ export class DynamicDailyPlannerGenerator {
       const eventDateStr = format(new Date(event.startTime), 'yyyy-MM-dd');
       return eventDateStr === targetDateStr;
     });
-    
+
     console.log(`🔧 FILTERED EVENTS: ${dailyEvents.length} events for ${targetDateStr} (from ${events.length} total)`);
-    
+
     const appointments = this.convertCalendarEventsToAppointments(dailyEvents);
     const freeTimeSlots = this.calculateFreeTimeSlots(appointments);
     const statistics = this.calculateStatistics(appointments, date, events);
     const dateString = format(date, 'EEEE, MMMM d, yyyy');
-    
+
     const timeColumnHTML = this.generateTimeColumnHTML(freeTimeSlots);
     const appointmentsColumnHTML = this.generateAppointmentsColumnHTML(appointments);
     const notesColumnHTML = this.generateNotesColumnHTML();
-    
+
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -340,19 +340,19 @@ export class DynamicDailyPlannerGenerator {
             --border-grey: #E8E9EA;
             --free-time: #F5F7FA;
         }
-        
+
         /* reMarkable Paper Pro Optimized Print Styles */
         @page {
             size: letter portrait;
             margin: 0.75in;
         }
-        
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Georgia', serif;
             font-size: 14px;
@@ -362,14 +362,14 @@ export class DynamicDailyPlannerGenerator {
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
         }
-        
+
         .daily-planner {
             max-width: 8.5in;
             margin: 0 auto;
             padding: 0.5rem;
             background: var(--warm-white);
         }
-        
+
         /* Header Section */
         .header-section {
             text-align: center;
@@ -378,7 +378,7 @@ export class DynamicDailyPlannerGenerator {
             border-bottom: 2px solid var(--border-grey);
             page-break-inside: avoid;
         }
-        
+
         .header-section h1 {
             font-size: 28px;
             font-weight: 400;
@@ -386,7 +386,7 @@ export class DynamicDailyPlannerGenerator {
             color: var(--navy);
             letter-spacing: -0.5px;
         }
-        
+
         .day-stats {
             margin-top: 1rem;
             font-size: 12px;
@@ -395,7 +395,7 @@ export class DynamicDailyPlannerGenerator {
             justify-content: center;
             gap: 2rem;
         }
-        
+
         /* Navigation Section (hidden in print) */
         .navigation-section {
             display: flex;
@@ -403,7 +403,7 @@ export class DynamicDailyPlannerGenerator {
             gap: 1rem;
             margin-bottom: 1rem;
         }
-        
+
         .nav-button {
             padding: 0.5rem 1rem;
             background: var(--light-grey);
@@ -414,18 +414,18 @@ export class DynamicDailyPlannerGenerator {
             font-size: 12px;
             font-weight: 500;
         }
-        
+
         .nav-button:hover {
             background: var(--cool-grey);
             color: white;
         }
-        
+
         @media print {
             .navigation-section {
                 display: none;
             }
         }
-        
+
         /* Main Content Layout - Exact measurements for pixel-perfect audit */
         .main-content {
             display: grid;
@@ -434,13 +434,13 @@ export class DynamicDailyPlannerGenerator {
             max-width: 100%;
             width: 100%;
         }
-        
+
         /* Time Column */
         .time-column {
             display: flex;
             flex-direction: column;
         }
-        
+
         .time-slot {
             font-size: 13px;
             color: var(--cool-grey);
@@ -453,31 +453,31 @@ export class DynamicDailyPlannerGenerator {
             align-items: center;
             justify-content: flex-end;
         }
-        
+
         .time-slot.early-morning {
             color: var(--cornflower);
             font-weight: 600;
             border-right: 2px solid var(--cornflower);
         }
-        
+
         .time-slot.free-time {
             color: var(--cornflower);
             font-weight: 600;
             border-right: 2px solid var(--cornflower);
         }
-        
+
         /* Appointments Column */
         .appointments-column {
             display: flex;
             flex-direction: column;
         }
-        
+
         .time-block {
             height: 40px;
             position: relative;
             border-bottom: 1px solid var(--border-grey);
         }
-        
+
         .appointment {
             position: absolute;
             top: 0;
@@ -494,16 +494,16 @@ export class DynamicDailyPlannerGenerator {
             min-height: 40px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
-        
+
         .appointment.scheduled {
             border-left: 4px solid var(--cornflower);
         }
-        
+
         .appointment.canceled {
             border-left: 4px solid var(--coral);
             background: #FFF5F5;
         }
-        
+
         /* Overlapping Appointments Styles */
         .overlapping-container {
             position: relative;
@@ -511,7 +511,7 @@ export class DynamicDailyPlannerGenerator {
             flex-direction: row;
             gap: 0.25rem;
         }
-        
+
         .overlapping-appointment {
             position: absolute;
             top: 0;
@@ -519,18 +519,18 @@ export class DynamicDailyPlannerGenerator {
             z-index: 1;
             opacity: 0.95;
         }
-        
+
         .overlapping-appointment:hover {
             z-index: 2;
             opacity: 1;
         }
-        
+
         .appointment-left {
             display: flex;
             flex-direction: column;
             gap: 0.3rem;
         }
-        
+
         .appointment-title {
             font-size: 11px;
             font-weight: 700;
@@ -538,13 +538,13 @@ export class DynamicDailyPlannerGenerator {
             line-height: 1.2;
             margin-bottom: 0.1rem;
         }
-        
+
         .appointment-time {
             font-size: 8px;
             color: var(--cool-grey);
             font-weight: 500;
         }
-        
+
         .appointment-status {
             font-size: 8px;
             text-transform: uppercase;
@@ -553,54 +553,54 @@ export class DynamicDailyPlannerGenerator {
             text-align: center;
             font-weight: 600;
         }
-        
+
         .status-scheduled {
             background: var(--cornflower);
             color: white;
         }
-        
+
         .status-canceled {
             background: var(--coral);
             color: white;
         }
-        
+
         .appointment-middle {
             border-left: 1px solid var(--border-grey);
             padding-left: 0.5rem;
         }
-        
+
         .appointment-middle.has-content {
             border-right: 1px solid var(--border-grey);
         }
-        
+
         .appointment-right {
             padding-left: 0.5rem;
         }
-        
+
         .detail-header {
             display: flex;
             align-items: center;
             gap: 0.2rem;
             margin-bottom: 0.25rem;
         }
-        
+
         .detail-icon {
             font-size: 6px;
         }
-        
+
         .detail-label {
             font-size: 6px;
             text-transform: uppercase;
             color: var(--navy);
             font-weight: 600;
         }
-        
+
         .detail-content ul.detail-list {
             list-style: none;
             padding-left: 0.8rem;
             margin: 0;
         }
-        
+
         .detail-content li.detail-item {
             font-size: 6px;
             color: var(--navy);
@@ -611,7 +611,7 @@ export class DynamicDailyPlannerGenerator {
             word-wrap: break-word;
             hyphens: auto;
         }
-        
+
         .detail-content li.detail-item:before {
             content: "•";
             position: absolute;
@@ -620,13 +620,13 @@ export class DynamicDailyPlannerGenerator {
             font-weight: bold;
             font-size: 7px;
         }
-        
+
         /* Notes Column */
         .notes-column {
             display: flex;
             flex-direction: column;
         }
-        
+
         .notes-header {
             font-size: 10px;
             font-weight: 600;
@@ -636,52 +636,52 @@ export class DynamicDailyPlannerGenerator {
             border-bottom: 1px solid var(--border-grey);
             margin-bottom: 1rem;
         }
-        
+
         .note-space {
             height: 40px;
             border-bottom: 1px dotted var(--border-grey);
         }
-        
+
         /* Day Summary Section */
         .day-summary {
             margin-top: 2rem;
             padding-top: 1rem;
             border-top: 2px solid var(--border-grey);
         }
-        
+
         .summary-stats {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 1rem;
             margin-bottom: 1rem;
         }
-        
+
         .stat-item {
             text-align: center;
             padding: 0.5rem;
             background: var(--light-grey);
             border-radius: 4px;
         }
-        
+
         .stat-value {
             font-size: 16px;
             font-weight: 600;
             color: var(--navy);
         }
-        
+
         .stat-label {
             font-size: 10px;
             color: var(--cool-grey);
             margin-top: 0.2rem;
         }
-        
+
         .reflection-area {
             border: 2px dashed var(--border-grey);
             border-radius: 4px;
             padding: 1rem;
             min-height: 100px;
         }
-        
+
         .reflection-label {
             font-size: 10px;
             color: var(--cool-grey);
@@ -701,27 +701,27 @@ export class DynamicDailyPlannerGenerator {
                 <span>🕐 ${statistics.weekly_scheduled_hours}h scheduled this week</span>
             </div>
         </div>
-        
+
         <div class="navigation-section">
             <a href="#" class="nav-button">← Previous Day</a>
             <a href="#" class="nav-button">Today</a>
             <a href="#" class="nav-button">Next Day →</a>
         </div>
-        
+
         <div class="main-content">
             <div class="time-column">
                 ${timeColumnHTML}
             </div>
-            
+
             <div class="appointments-column">
                 ${appointmentsColumnHTML}
             </div>
-            
+
             <div class="notes-column">
                 ${notesColumnHTML}
             </div>
         </div>
-        
+
         <div class="day-summary">
             <div class="summary-stats">
                 <div class="stat-item">
@@ -741,7 +741,7 @@ export class DynamicDailyPlannerGenerator {
                     <div class="stat-label">Weekly Utilization</div>
                 </div>
             </div>
-            
+
             <div class="reflection-area">
                 <div class="reflection-label">Daily Reflection & Notes:</div>
                 <!-- Space for handwritten notes -->

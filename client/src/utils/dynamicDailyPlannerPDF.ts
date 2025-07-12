@@ -92,27 +92,29 @@ export async function exportDynamicDailyPlannerPDF(
     console.log('🔧 Total time slots:', totalTimeSlots);
     console.log('🔧 Calculated height:', calculatedHeight);
     
-    // Capture the content as canvas with proper scaling
+    // Capture canvas with US Letter proportions for perfect fit
     const canvas = await html2canvas(content, {
-      scale: 3, // Increased scale for better quality
+      scale: 2, // Optimized scale for US Letter output
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#FAFAF7',
-      width: 816,
-      height: calculatedHeight,
+      width: 540, // US Letter width minus margins
+      height: 720, // US Letter height minus margins
       logging: true,
       foreignObjectRendering: true,
       removeContainer: false,
       imageTimeout: 15000,
       onclone: (clonedDoc) => {
-        // Ensure styling is preserved in cloned document
+        // Ensure styling is preserved and appointments fill cells
         const style = clonedDoc.createElement('style');
         style.textContent = `
           body { font-family: Georgia, serif; background: #FAFAF7; margin: 0; padding: 0; }
           * { box-sizing: border-box; }
+          .appointment { width: 100% !important; margin: 0 !important; }
+          .timeline-slot { width: 100% !important; }
         `;
         clonedDoc.head.appendChild(style);
-        console.log('✅ Styles applied to cloned document');
+        console.log('✅ US Letter styles applied to cloned document');
       }
     });
     
@@ -126,35 +128,31 @@ export async function exportDynamicDailyPlannerPDF(
       throw new Error('Canvas has no content - check HTML rendering');
     }
     
-    // Create PDF with high quality settings
+    // Create PDF with US Letter portrait settings - exactly 8.5 x 11 inches
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'pt',
-      format: [612, 792], // US Letter in points
+      format: 'letter', // Use standard US Letter format
       compress: false,
       precision: 2
     });
     
     console.log('✅ PDF document created');
     
-    // Calculate dimensions to fit the page properly
-    const pageWidth = 612;
-    const pageHeight = 792;
-    const margins = 36; // 0.5 inch margins
-    const availableWidth = pageWidth - (margins * 2);
-    const availableHeight = pageHeight - (margins * 2);
+    // Calculate dimensions to perfectly fit US Letter portrait
+    const pageWidth = 612; // 8.5 inches * 72 pts/inch
+    const pageHeight = 792; // 11 inches * 72 pts/inch
+    const margins = 36; // 0.5 inch margins for print safety
+    const availableWidth = pageWidth - (margins * 2); // 540 pts
+    const availableHeight = pageHeight - (margins * 2); // 720 pts
     
-    // Scale to fit within available space
-    const scaleX = availableWidth / canvas.width;
-    const scaleY = availableHeight / canvas.height;
-    const scale = Math.min(scaleX, scaleY);
+    // Force canvas to exactly match page dimensions for perfect fit
+    const targetWidth = availableWidth;
+    const targetHeight = availableHeight;
     
-    const finalWidth = canvas.width * scale;
-    const finalHeight = canvas.height * scale;
-    
-    // Center the image on the page
-    const x = (pageWidth - finalWidth) / 2;
-    const y = (pageHeight - finalHeight) / 2;
+    // Center the content on the page with margins
+    const x = margins;
+    const y = margins;
     
     console.log('✅ Calculated dimensions:', { finalWidth, finalHeight, x, y });
     
@@ -162,8 +160,8 @@ export async function exportDynamicDailyPlannerPDF(
     const imgData = canvas.toDataURL('image/png', 1.0);
     console.log('✅ Canvas converted to image data, length:', imgData.length);
     
-    // Add the canvas image to PDF
-    pdf.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight, '', 'FAST');
+    // Add the canvas image to PDF - stretch to fill available space
+    pdf.addImage(imgData, 'PNG', x, y, targetWidth, targetHeight, '', 'FAST');
     console.log('✅ Image added to PDF');
     
     // Generate filename
