@@ -431,6 +431,15 @@ export const exportDailyToPDF = async (
   console.log(`Total events: ${events.length}`);
 
   try {
+    // Validate inputs
+    if (!selectedDate || !(selectedDate instanceof Date) || isNaN(selectedDate.getTime())) {
+      throw new Error('Invalid selected date for daily export');
+    }
+    
+    if (!Array.isArray(events)) {
+      throw new Error('Events must be an array');
+    }
+
     // Create PDF document
     const pdf = new jsPDF({
       orientation: 'portrait',
@@ -439,18 +448,39 @@ export const exportDailyToPDF = async (
       compress: true
     });
 
+    console.log('✓ PDF document created successfully');
+
     // Draw components
     drawDailyHeader(pdf, selectedDate, events);
+    console.log('✓ Header drawn successfully');
+    
     drawTimeGrid(pdf);
+    console.log('✓ Time grid drawn successfully');
+    
     drawAppointments(pdf, selectedDate, events);
+    console.log('✓ Appointments drawn successfully');
 
     // Save PDF
     const filename = `daily-planner-${selectedDate.toISOString().split('T')[0]}.pdf`;
+    
+    console.log(`🔄 Attempting to save PDF as: ${filename}`);
     pdf.save(filename);
     
-    console.log(`PDF saved as: ${filename}`);
+    console.log(`✅ PDF saved successfully as: ${filename}`);
+    
+    // Additional success confirmation
+    setTimeout(() => {
+      console.log('🎉 Daily PDF export completed successfully!');
+    }, 1000);
+
   } catch (error) {
-    console.error('Daily PDF export error:', error);
+    console.error('❌ Daily PDF export failed:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      selectedDate: selectedDate?.toString(),
+      eventsCount: events?.length
+    });
     throw error;
   }
 };
