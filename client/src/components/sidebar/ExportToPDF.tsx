@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { runPixelPerfectAudit } from '@/utils/pixelPerfectAudit';
 import { pdfPerfectionTester } from '@/utils/pdfPerfectionTest';
+import { pixelPerfectReviewer } from '@/utils/pixelPerfectReview';
 
 interface ExportToPDFProps {
   isGoogleConnected: boolean;
@@ -60,6 +61,62 @@ export const ExportToPDF = ({
       
     } catch (error) {
       console.error('❌ Simple PDF test failed:', error);
+    }
+  };
+
+  // Add pixel-perfect review function
+  (window as any).runPixelPerfectReview = async () => {
+    try {
+      console.log('🔍 Running Pixel-Perfect Review');
+      
+      // Use current date and get events
+      const testDate = new Date();
+      const events = (window as any).currentEvents || [];
+      
+      console.log('Reviewing for date:', testDate.toDateString());
+      console.log('Events for analysis:', events.length);
+      
+      const results = await pixelPerfectReviewer.runPixelPerfectReview(testDate, events);
+      
+      console.log('\n🎯 PIXEL-PERFECT REVIEW RESULTS:');
+      console.log('='.repeat(80));
+      console.log(`📊 Overall Score: ${results.overallScore}/${results.maxScore} (${results.percentage}%)`);
+      console.log(`🔧 Issues Found: ${results.issues.length}`);
+      console.log(`💡 Recommendations: ${results.recommendations.length}`);
+      
+      if (results.issues.length > 0) {
+        console.log('\n❌ ISSUES FOUND:');
+        results.issues.forEach((issue, index) => {
+          console.log(`${index + 1}. [${issue.severity.toUpperCase()}] ${issue.description}`);
+          console.log(`   Expected: ${issue.expected}`);
+          console.log(`   Actual: ${issue.actual}`);
+          console.log(`   Fix: ${issue.fixRecommendation}\n`);
+        });
+      }
+      
+      if (results.recommendations.length > 0) {
+        console.log('\n💡 RECOMMENDATIONS:');
+        results.recommendations.forEach((rec, index) => {
+          console.log(`${index + 1}. ${rec}`);
+        });
+      }
+      
+      console.log('\n📊 OVERLAY ANALYSIS:');
+      console.log(`Grid Alignment: ${results.visualComparison.overlayAnalysis.gridAlignment}%`);
+      console.log(`Text Alignment: ${results.visualComparison.overlayAnalysis.textAlignment}%`);
+      console.log(`Color Accuracy: ${results.visualComparison.overlayAnalysis.colorAccuracy}%`);
+      console.log(`Spacing Consistency: ${results.visualComparison.overlayAnalysis.spacingConsistency}%`);
+      console.log(`Element Positioning: ${results.visualComparison.overlayAnalysis.elementPositioning}%`);
+      
+      // Save results to localStorage
+      localStorage.setItem('pixelPerfectReviewResults', JSON.stringify(results));
+      
+      console.log('✅ Pixel-Perfect Review completed successfully');
+      
+      return results;
+      
+    } catch (error) {
+      console.error('❌ Pixel-Perfect Review failed:', error);
     }
   };
 
