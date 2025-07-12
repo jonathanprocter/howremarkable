@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { pool } from "./db";
 import ConnectPgSimple from "connect-pg-simple";
 import http from "http";
 
@@ -23,12 +24,7 @@ const sessionStore = new PgSession({
   createTableIfMissing: true,
   pruneSessionInterval: 60 * 15, // Prune expired sessions every 15 minutes
   ttl: 24 * 60 * 60, // 24 hours session TTL
-  schemaName: 'public', // Explicitly set schema name
-  pool: {
-    max: 3, // Limit session store connections
-    min: 1,
-    idleTimeoutMillis: 30000
-  }
+  schemaName: 'public' // Explicitly set schema name
 });
 
 // Handle session store errors gracefully
