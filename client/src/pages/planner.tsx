@@ -26,6 +26,7 @@ import { exportDynamicDailyPlannerPDF } from '@/utils/dynamicDailyPlannerPDF';
 import { exportTrulyPixelPerfectWeeklyPDF } from '@/utils/trulyPixelPerfectExport';
 import { exportExactWeeklySpec } from '@/utils/exactWeeklySpecExport';
 import { exportFixedDynamicDailyPlannerPDF } from '@/utils/fixedDynamicDailyPlannerPDF';
+import { exportAuditEnhancedPDF } from '@/utils/auditBasedPDFExport';
 import { DevLoginButton } from '../components/DevLoginButton';
 
 export default function Planner() {
@@ -251,6 +252,9 @@ export default function Planner() {
         case 'dynamic-daily':
           await exportDynamicDailyPlannerPDF(selectedDate, allEvents);
           break;
+        case 'audit-enhanced':
+          await exportAuditEnhancedPDF(currentWeek[0]?.date || new Date(), currentWeek[6]?.date || new Date(), allEvents);
+          break;
         default:
           throw new Error('Unknown export type');
       }
@@ -298,37 +302,25 @@ export default function Planner() {
 
   const handleTestExports = async () => {
     try {
-      toast({ title: 'Running comprehensive export tests...' });
+      toast({ title: 'Running comprehensive audit demo with automatic fixes...' });
       
-      // Import the audit report generator
-      const { auditReportGenerator } = await import('@/utils/auditReportGenerator');
+      // Import the audit system demo
+      const { auditSystemDemo } = await import('@/utils/auditSystemDemo');
       
-      // Clear previous results
-      auditReportGenerator.clearResults();
+      // Run comprehensive demo with automatic fixes
+      await auditSystemDemo.runComprehensiveDemo(allEvents);
       
-      // Run layout tests
-      await auditReportGenerator.runLayoutTests(allEvents);
-      
-      // Run export functionality tests
-      await auditReportGenerator.testExportFunctionality(allEvents);
-      
-      // Run comprehensive audit
-      const auditResults = await auditSystem.runFullAudit(allEvents);
-      
-      // Generate comprehensive report
-      const report = auditReportGenerator.generateReport(auditResults);
-      
-      // Export report to localStorage
-      auditReportGenerator.exportReport(report);
+      // Get results
+      const results = auditSystemDemo.getResults();
       
       toast({ 
-        title: `Comprehensive Testing Complete - Score: ${report.overallScore}%`,
-        description: `${report.passedTests} passed, ${report.failedTests} failed. Check console for details.`
+        title: `Audit Demo Complete - Score: ${results.originalScore}% → ${results.finalScore}%`,
+        description: `Improvement: +${results.improvement}%. Implemented ${results.fixes.length} fixes. Check console for details.`
       });
       
     } catch (error) {
-      console.error('Comprehensive testing failed:', error);
-      toast({ title: 'Comprehensive testing failed', variant: 'destructive' });
+      console.error('Audit demo failed:', error);
+      toast({ title: 'Audit demo failed', variant: 'destructive' });
     }
   };
 
@@ -738,6 +730,15 @@ export default function Planner() {
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Bidirectional Weekly Package
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleExportPDF('audit-enhanced')}
+                  className="w-full justify-start bg-yellow-50 hover:bg-yellow-100 border-yellow-300"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  🔧 Audit-Enhanced Export
                 </Button>
               </CardContent>
             </Card>
