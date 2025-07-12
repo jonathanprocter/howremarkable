@@ -100,10 +100,19 @@ export class DynamicDailyPlannerGenerator {
     const currentWeekStart = this.getWeekStart(currentDate);
     const currentWeekEnd = this.getWeekEnd(currentDate);
     
+    console.log(`📊 Statistics calculation for ${currentDate.toDateString()}`);
+    console.log(`📅 Week range: ${currentWeekStart.toDateString()} to ${currentWeekEnd.toDateString()}`);
+    console.log(`📋 Total events passed: ${allEvents.length}`);
+    console.log(`📋 Daily appointments: ${appointments.length}`);
+    
     // Filter events for the current week
     const weeklyEvents = allEvents.filter(event => {
       const eventDate = new Date(event.startTime);
-      return eventDate >= currentWeekStart && eventDate <= currentWeekEnd;
+      const inWeek = eventDate >= currentWeekStart && eventDate <= currentWeekEnd;
+      if (inWeek) {
+        console.log(`✅ Weekly event: ${event.title} on ${eventDate.toDateString()}`);
+      }
+      return inWeek;
     });
     
     // Convert weekly events to weekly statistics

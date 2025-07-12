@@ -29,8 +29,10 @@ export async function exportDynamicDailyPlannerToPDF(
     const popupWindow = window.open('', '_blank', 'width=816,height=1056,scrollbars=no');
     
     if (!popupWindow) {
-      throw new Error('Failed to open popup window for PDF generation');
+      throw new Error('Failed to open popup window for PDF generation. Please allow popups for this site.');
     }
+    
+    console.log('✅ Popup window opened successfully');
     
     // Write the HTML to the popup window
     popupWindow.document.write(html);
@@ -39,11 +41,19 @@ export async function exportDynamicDailyPlannerToPDF(
     console.log('✅ HTML written to popup window');
     
     // Wait for the popup to load completely
-    await new Promise(resolve => {
+    await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('Popup window load timeout'));
+      }, 10000);
+      
       if (popupWindow.document.readyState === 'complete') {
-        resolve();
+        clearTimeout(timeout);
+        resolve(null);
       } else {
-        popupWindow.addEventListener('load', resolve);
+        popupWindow.addEventListener('load', () => {
+          clearTimeout(timeout);
+          resolve(null);
+        });
       }
     });
     
@@ -138,7 +148,17 @@ export async function exportDynamicDailyPlannerToPDF(
     
   } catch (error) {
     console.error('❌ Dynamic Daily Planner PDF export failed:', error);
-    throw error;
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    
+    // Provide more detailed error information
+    if (error.name === 'SecurityError') {
+      console.error('Security error - popup blocked or cross-origin issue');
+    } else if (error.name === 'TypeError') {
+      console.error('Type error - likely HTML2Canvas or jsPDF issue');
+    }
+    
+    throw new Error(`PDF export failed: ${error.message || 'Unknown error'}`);
   }
 }
 

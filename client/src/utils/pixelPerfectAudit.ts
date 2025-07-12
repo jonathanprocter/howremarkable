@@ -193,7 +193,7 @@ export class PixelPerfectAudit {
 
     // Test 1: Event count accuracy (5 points)
     const dayEvents = events.filter(event => {
-      const eventDate = new Date(event.start_time);
+      const eventDate = new Date(event.startTime);
       return eventDate.toDateString() === date.toDateString();
     });
     
@@ -232,8 +232,8 @@ export class PixelPerfectAudit {
     // Test 3: Appointment duration accuracy (5 points)
     let durationAccurate = true;
     dayEvents.forEach((event, index) => {
-      const startTime = new Date(event.start_time);
-      const endTime = new Date(event.end_time);
+      const startTime = new Date(event.startTime);
+      const endTime = new Date(event.endTime);
       const expectedDuration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
       
       const appointmentElement = renderedAppointments[index] as HTMLElement;
@@ -260,7 +260,7 @@ export class PixelPerfectAudit {
       event.notes && event.notes.length > 0
     );
     const eventsWithActions = dayEvents.filter(event => 
-      event.action_items && event.action_items.length > 0
+      event.actionItems && event.actionItems.length > 0
     );
     
     const notesDisplayed = this.auditContainer?.querySelectorAll('.event-notes') || [];
@@ -419,12 +419,16 @@ export class PixelPerfectAudit {
     let score = 0;
     const maxScore = 15;
 
-    // Calculate expected statistics
-    const appointments = this.generator.convertCalendarEventsToAppointments(events);
-    const dayAppointments = appointments.filter(apt => {
-      const aptDate = new Date(apt.start_time);
-      return aptDate.toDateString() === date.toDateString();
+    // Calculate expected statistics - filter events for the current day first
+    const dayEvents = events.filter(event => {
+      const eventDate = new Date(event.startTime);
+      return eventDate.toDateString() === date.toDateString();
     });
+    
+    console.log(`🔍 Audit Statistics: ${dayEvents.length} events for ${date.toDateString()}`);
+    
+    const appointments = this.generator.convertCalendarEventsToAppointments(dayEvents);
+    const dayAppointments = appointments;
 
     // Get week range
     const weekStart = new Date(date);
@@ -432,10 +436,14 @@ export class PixelPerfectAudit {
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 6); // Sunday
 
-    const weekAppointments = appointments.filter(apt => {
-      const aptDate = new Date(apt.start_time);
-      return aptDate >= weekStart && aptDate <= weekEnd;
+    const weekEvents = events.filter(event => {
+      const eventDate = new Date(event.startTime);
+      return eventDate >= weekStart && eventDate <= weekEnd;
     });
+    
+    console.log(`🔍 Audit Statistics: ${weekEvents.length} events for week ${weekStart.toDateString()} to ${weekEnd.toDateString()}`);
+    
+    const weekAppointments = this.generator.convertCalendarEventsToAppointments(weekEvents);
 
     // Test 1: Daily appointment count (5 points)
     const dailyCountElement = this.auditContainer?.querySelector('.stat-value') as HTMLElement;
