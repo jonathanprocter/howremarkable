@@ -64,16 +64,30 @@ export const exportExactWeeklySpec = async (
     CELL_BORDER: 1
   };
 
-  // Filter events for this week
+  // Filter events for this week with more robust date comparison
   const weekEvents = events.filter(event => {
     const eventDate = new Date(event.startTime);
-    return eventDate >= weekStartDate && eventDate <= weekEndDate;
+    const eventLocalDate = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+    const weekStartLocalDate = new Date(weekStartDate.getFullYear(), weekStartDate.getMonth(), weekStartDate.getDate());
+    const weekEndLocalDate = new Date(weekEndDate.getFullYear(), weekEndDate.getMonth(), weekEndDate.getDate());
+    
+    return eventLocalDate >= weekStartLocalDate && eventLocalDate <= weekEndLocalDate;
   });
 
   console.log(`📅 Week Export Debug:`);
   console.log(`Week Start: ${weekStartDate.toDateString()}`);
   console.log(`Week End: ${weekEndDate.toDateString()}`);
   console.log(`Total Events: ${weekEvents.length}`);
+  
+  // Log events by day for debugging
+  const eventsByDay = {};
+  weekEvents.forEach(event => {
+    const eventDate = new Date(event.startTime);
+    const dayName = eventDate.toLocaleDateString('en-US', { weekday: 'long' });
+    if (!eventsByDay[dayName]) eventsByDay[dayName] = [];
+    eventsByDay[dayName].push(event.title);
+  });
+  console.log('Events by day:', eventsByDay);
   
   // Verify first day of week is Monday
   const firstDayOfWeek = weekStartDate.getDay(); // 0=Sunday, 1=Monday
@@ -128,7 +142,7 @@ function drawExactHeader(pdf: jsPDF, weekStartDate: Date, weekEndDate: Date, SPE
 }
 
 function drawExactTable(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent[], SPEC: any, SCALE: number): void {
-  // Column positions - flush to left margin to prevent Sunday cutoff
+  // Column positions - ensure Monday column is properly positioned
   const columnPositions = [];
   let currentX = SPEC.MARGIN;
   
@@ -136,14 +150,19 @@ function drawExactTable(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent[]
   columnPositions.push({ start: currentX, end: currentX + SPEC.TIME_COL_WIDTH });
   currentX += SPEC.TIME_COL_WIDTH;
   
-  // Calculate adjusted day column width to fit all days within page
+  // Calculate day column width to ensure all days fit within page boundaries
   const availableWidth = SPEC.TOTAL_WIDTH - SPEC.MARGIN * 2 - SPEC.TIME_COL_WIDTH;
-  const adjustedDayWidth = availableWidth / 7;
+  const dayWidth = Math.floor(availableWidth / 7); // Use floor to prevent overflow
   
-  // Day columns with adjusted width
+  // Day columns - ensure Monday (index 0) starts immediately after time column
   for (let i = 0; i < 7; i++) {
-    columnPositions.push({ start: currentX, end: currentX + adjustedDayWidth });
-    currentX += adjustedDayWidth;
+    const colStart = currentX;
+    const colEnd = currentX + dayWidth;
+    columnPositions.push({ start: colStart, end: colEnd });
+    currentX += dayWidth;
+    
+    const dayName = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][i];
+    console.log(`${dayName} column: ${colStart}-${colEnd} (width: ${dayWidth})`);
   }
 
   // Day headers with full day names and dates
@@ -280,12 +299,23 @@ function drawExactAppointments(pdf: jsPDF, weekStartDate: Date, events: Calendar
     
     // Calculate day index (0-6 for Mon-Sun)
     const dayIndex = Math.floor((eventLocalDate.getTime() - weekStartLocalDate.getTime()) / (1000 * 60 * 60 * 24));
+    const dayName = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][dayIndex];
     
-    console.log(`Event: ${event.title} | Event Date: ${eventDate.toDateString()} | Week Start: ${weekStartDate.toDateString()} | Day Index: ${dayIndex}`);
+    console.log(`📍 Event: ${event.title} | Event Date: ${eventDate.toDateString()} | Day: ${dayName} | Day Index: ${dayIndex}`);
     
-    if (dayIndex < 0 || dayIndex > 6) return;
+    if (dayIndex < 0 || dayIndex > 6) {
+      console.warn(`⚠️ Event ${event.title} outside week range - Day Index: ${dayIndex}`);
+      return;
+    }
     
     const columnIndex = dayIndex + 1; // +1 to skip TIME column (1-7 for Mon-Sun)
+    console.log(`📊 ${event.title} -> Column ${columnIndex} (${dayName})`);
+    
+    // Verify column exists
+    if (!columnPositions[columnIndex]) {
+      console.error(`❌ Column ${columnIndex} not found for ${dayName} event: ${event.title}`);
+      return;
+    }
     
     // Find time slot indices
     const startHour = eventDate.getHours();
