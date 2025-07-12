@@ -80,35 +80,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   passport.deserializeUser((user: any, done) => {
     // Handle both old format (just user ID) and new format (full user object)
     if (typeof user === 'string' || typeof user === 'number') {
-      // Old format - just user ID, create basic user object
-      const userObj = {
-        id: user.toString(),
-        email: 'jonathan.procter@gmail.com',
-        name: 'Jonathan Procter',
-        googleId: '116610633375195855574',
-        accessToken: 'dev-access-token',
-        refreshToken: 'dev-refresh-token'
-      };
-      // Only log occasionally to reduce spam
-      if (Math.random() < 0.01) {
-        console.log("✅ Deserializing user (ID only):", { id: userObj.id, email: userObj.email });
-      }
-      done(null, userObj);
+      // Old format - just user ID, but don't create fake tokens
+      console.log("❌ Invalid session format - user ID only without tokens");
+      done(null, false);
     } else if (user && typeof user === 'object') {
-      // New format - full user object, ensure all fields are present
-      const userObj = {
-        id: user.id || '1',
-        email: user.email || 'jonathan.procter@gmail.com',
-        name: user.name || 'Jonathan Procter',
-        googleId: user.googleId || '116610633375195855574',
-        accessToken: user.accessToken || 'dev-access-token',
-        refreshToken: user.refreshToken || 'dev-refresh-token'
-      };
-      // Only log occasionally to reduce spam
-      if (Math.random() < 0.01) {
-        console.log("✅ Deserializing user (full object):", { id: userObj.id, email: userObj.email });
+      // New format - full user object, only proceed if we have real tokens
+      if (user.accessToken && user.refreshToken && 
+          user.accessToken !== 'dev-access-token' && 
+          user.refreshToken !== 'dev-refresh-token') {
+        // Only log occasionally to reduce spam
+        if (Math.random() < 0.01) {
+          console.log("✅ Deserializing user (full object):", { id: user.id, email: user.email });
+        }
+        done(null, user);
+      } else {
+        console.log("❌ Invalid tokens in session - please re-authenticate");
+        done(null, false);
       }
-      done(null, userObj);
     } else {
       console.log("❌ Invalid user data in session:", user);
       done(null, false);
@@ -267,54 +255,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Development authentication bypass
+  // Development authentication notice
   app.post("/api/auth/dev-login", async (req, res) => {
-    try {
-      console.log("🔧 DEV LOGIN: Creating development user session...");
-      
-      // Use hardcoded user ID 1 for development (known to exist)
-      console.log("Using existing user ID 1 for development login");
-      
-      // Create user object for session without database lookup
-      const user = {
-        id: '1',
-        googleId: '116610633375195855574',
-        email: 'jonathan.procter@gmail.com',
-        name: 'Jonathan Procter',
-        accessToken: 'dev-access-token',
-        refreshToken: 'dev-refresh-token'
-      };
-      
-      // Log in the user using passport
-      req.logIn(user, (err) => {
-        if (err) {
-          console.error("Dev login error:", err);
-          return res.status(500).json({ error: "Failed to log in development user" });
-        }
-        
-        console.log("✅ DEV LOGIN: User logged in successfully");
-        console.log("Session ID:", req.sessionID);
-        console.log("User in session:", !!req.user);
-        
-        // Force session save
-        req.session.save((saveErr) => {
-          if (saveErr) {
-            console.error("Session save error:", saveErr);
-            return res.status(500).json({ error: "Failed to save session" });
-          }
-          
-          console.log("✅ DEV LOGIN: Session saved successfully");
-          res.json({ 
-            success: true, 
-            user: { id: user.id, email: user.email, name: user.name },
-            sessionId: req.sessionID
-          });
-        });
-      });
-    } catch (error) {
-      console.error("Development login error:", error);
-      res.status(500).json({ error: "Failed to create development session" });
-    }
+    res.status(400).json({ 
+      error: "Development authentication disabled", 
+      message: "Please use Google OAuth for calendar access",
+      authUrl: "/api/auth/google"
+    });
   });
 
   // Google Calendar API - Fetch Events
