@@ -337,8 +337,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Start and end dates are required' });
       }
 
-      // For development users, return empty array
-      if (user.email === 'dev@test.com') {
+      // Only use development mode for specific development user in development environment
+      if (user.email === 'dev@test.com' && process.env.NODE_ENV === 'development') {
         console.log('🔧 Development user - returning empty SimplePractice events');
         return res.json({ 
           events: [],
@@ -486,8 +486,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user as any;
 
-    // For development users, return mock events including SimplePractice
-    if (user.email === 'dev@test.com') {
+    // Only use development mode for specific development user
+    if (user.email === 'dev@test.com' && process.env.NODE_ENV === 'development') {
       console.log('🔧 Development user detected, returning mock events');
       const mockEvents = [
         {
