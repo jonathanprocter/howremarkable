@@ -87,43 +87,65 @@ function formatEventTime(event: CalendarEvent) {
 function drawHeader(pdf: jsPDF, selectedDate: Date, totalEvents: number) {
   const { margin, colors, fonts } = DAILY_CONFIG;
   
-  // Simple header matching DailyView component structure
+  // Header layout matching DailyView component exactly
   const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
   const dateString = selectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   
-  // Navigation buttons - simplified
-  const prevDay = new Date(selectedDate);
-  prevDay.setDate(prevDay.getDate() - 1);
-  const nextDay = new Date(selectedDate);
-  nextDay.setDate(nextDay.getDate() + 1);
-  
-  const prevDayName = prevDay.toLocaleDateString('en-US', { weekday: 'short' });
-  const nextDayName = nextDay.toLocaleDateString('en-US', { weekday: 'short' });
-  
-  // Previous day button
-  pdf.setFillColor(...colors.white);
+  // Header border (main container)
   pdf.setDrawColor(...colors.gray);
-  pdf.rect(margin, margin, 60, 20, 'FD');
+  pdf.setLineWidth(1);
+  pdf.rect(margin, margin, DAILY_CONFIG.pageWidth - 2 * margin, 70, 'S');
+  
+  // Weekly Overview button (top left)
+  pdf.setFillColor(245, 245, 245); // Light grey background #F5F5F5
+  pdf.setDrawColor(200, 200, 200); // Border grey #C8C8C8
+  pdf.rect(margin + 10, margin + 10, 80, 20, 'FD');
   pdf.setFontSize(fonts.navButton);
   pdf.setTextColor(...colors.black);
-  pdf.text(`← ${prevDayName}`, margin + 5, margin + 13);
+  pdf.text('📅 Weekly Overview', margin + 15, margin + 22);
   
-  // Next day button
-  pdf.rect(DAILY_CONFIG.pageWidth - margin - 60, margin, 60, 20, 'FD');
-  pdf.text(`${nextDayName} →`, DAILY_CONFIG.pageWidth - margin - 55, margin + 13);
-  
-  // Back to Weekly button (center)
-  pdf.rect((DAILY_CONFIG.pageWidth - 80) / 2, margin, 80, 20, 'FD');
-  pdf.text('Back to Weekly', (DAILY_CONFIG.pageWidth - 80) / 2 + 5, margin + 13);
-  
-  // Page title
-  pdf.setFontSize(fonts.title);
+  // Page title and date (center)
+  pdf.setFontSize(20); // Larger title font
   pdf.setFont('helvetica', 'bold');
-  const titleText = `${dayName}, ${dateString}`;
+  const titleText = 'DAILY PLANNER';
   const titleWidth = pdf.getTextWidth(titleText);
-  pdf.text(titleText, (DAILY_CONFIG.pageWidth - titleWidth) / 2, margin + 35);
+  pdf.text(titleText, (DAILY_CONFIG.pageWidth - titleWidth) / 2, margin + 25);
   
-  return margin + 45; // Return Y position for next section
+  // Date and appointment count (center, below title)
+  pdf.setFontSize(12);
+  pdf.setFont('helvetica', 'normal');
+  const dateText = `${dayName}, ${dateString}`;
+  const dateWidth = pdf.getTextWidth(dateText);
+  pdf.text(dateText, (DAILY_CONFIG.pageWidth - dateWidth) / 2, margin + 40);
+  
+  const appointmentText = `${totalEvents} appointments`;
+  const appointmentWidth = pdf.getTextWidth(appointmentText);
+  pdf.text(appointmentText, (DAILY_CONFIG.pageWidth - appointmentWidth) / 2, margin + 55);
+  
+  // Legend (top right)
+  const legendX = DAILY_CONFIG.pageWidth - margin - 180;
+  const legendY = margin + 15;
+  
+  // SimplePractice legend
+  pdf.setFillColor(...colors.white);
+  pdf.setDrawColor(...colors.simplePracticeBlue);
+  pdf.rect(legendX, legendY, 8, 6, 'FD');
+  pdf.setFontSize(fonts.legend);
+  pdf.setTextColor(...colors.black);
+  pdf.text('SimplePractice', legendX + 12, legendY + 5);
+  
+  // Google Calendar legend
+  pdf.setDrawColor(...colors.googleGreen);
+  pdf.rect(legendX, legendY + 10, 8, 6, 'FD');
+  pdf.text('Google Calendar', legendX + 12, legendY + 15);
+  
+  // Holidays legend
+  pdf.setFillColor(...colors.holidayOrange);
+  pdf.setDrawColor(...colors.holidayOrange);
+  pdf.rect(legendX, legendY + 20, 8, 6, 'FD');
+  pdf.text('Holidays', legendX + 12, legendY + 25);
+  
+  return margin + 80; // Return Y position for next section
 }
 
 function drawStats(pdf: jsPDF, events: CalendarEvent[], yPosition: number) {
