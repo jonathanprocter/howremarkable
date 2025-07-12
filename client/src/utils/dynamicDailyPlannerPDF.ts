@@ -23,51 +23,70 @@ export async function exportDynamicDailyPlannerToPDF(
     
     // Generate the complete HTML
     const html = generator.generateCompleteDailyPlannerHTML(date, events);
+    console.log('✅ HTML generated, length:', html.length);
     
-    // Create a temporary container to render the HTML
-    const container = document.createElement('div');
-    container.innerHTML = html;
-    container.style.position = 'absolute';
-    container.style.left = '-9999px';
-    container.style.top = '-9999px';
-    container.style.width = '8.5in'; // 816px at 96dpi
-    container.style.minHeight = '11in'; // 1056px at 96dpi
-    container.style.background = '#FAFAF7';
-    container.style.padding = '0.75in';
-    container.style.fontSize = '14px';
-    container.style.fontFamily = 'Georgia, serif';
+    // Create a new window/popup to render the HTML cleanly
+    const popupWindow = window.open('', '_blank', 'width=816,height=1056,scrollbars=no');
     
-    // Add to DOM temporarily
-    document.body.appendChild(container);
+    if (!popupWindow) {
+      throw new Error('Failed to open popup window for PDF generation');
+    }
     
-    // Wait for fonts and all content to render
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    // Write the HTML to the popup window
+    popupWindow.document.write(html);
+    popupWindow.document.close();
     
-    // Capture the HTML as canvas with high quality settings
-    const canvas = await html2canvas(container, {
-      scale: 3, // Higher scale for better quality
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: '#FAFAF7',
-      width: 816, // 8.5in at 96dpi
-      height: 1056, // 11in at 96dpi
-      logging: false,
-      foreignObjectRendering: true,
-      removeContainer: false,
-      imageTimeout: 30000,
-      onclone: (clonedDoc) => {
-        // Ensure proper styling in cloned document
-        const style = clonedDoc.createElement('style');
-        style.textContent = `
-          * { box-sizing: border-box; }
-          body { font-family: Georgia, serif; }
-        `;
-        clonedDoc.head.appendChild(style);
+    console.log('✅ HTML written to popup window');
+    
+    // Wait for the popup to load completely
+    await new Promise(resolve => {
+      if (popupWindow.document.readyState === 'complete') {
+        resolve();
+      } else {
+        popupWindow.addEventListener('load', resolve);
       }
     });
     
-    // Remove temporary container
-    document.body.removeChild(container);
+    // Additional wait for fonts and rendering
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Find the content in the popup
+    const content = popupWindow.document.body;
+    console.log('✅ Content element found in popup:', content.tagName);
+    
+    // Capture the content as canvas
+    const canvas = await html2canvas(content, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#FAFAF7',
+      width: 816,
+      height: 1056,
+      logging: true,
+      foreignObjectRendering: true,
+      removeContainer: false,
+      imageTimeout: 10000,
+      onclone: (clonedDoc) => {
+        // Ensure styling is preserved in cloned document
+        const style = clonedDoc.createElement('style');
+        style.textContent = `
+          body { font-family: Georgia, serif; background: #FAFAF7; margin: 0; padding: 0; }
+          * { box-sizing: border-box; }
+        `;
+        clonedDoc.head.appendChild(style);
+        console.log('✅ Styles applied to cloned document');
+      }
+    });
+    
+    console.log('✅ Canvas created:', canvas.width, 'x', canvas.height);
+    
+    // Close the popup window
+    popupWindow.close();
+    
+    // Verify canvas has content
+    if (canvas.width === 0 || canvas.height === 0) {
+      throw new Error('Canvas has no content - check HTML rendering');
+    }
     
     // Create PDF with high quality settings
     const pdf = new jsPDF({
@@ -78,28 +97,36 @@ export async function exportDynamicDailyPlannerToPDF(
       precision: 2
     });
     
+    console.log('✅ PDF document created');
+    
     // Calculate dimensions to fit the page properly
     const pageWidth = 612;
     const pageHeight = 792;
-    const imgWidth = pageWidth;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    const margins = 36; // 0.5 inch margins
+    const availableWidth = pageWidth - (margins * 2);
+    const availableHeight = pageHeight - (margins * 2);
     
-    // If the image is too tall, scale it down to fit
-    let finalWidth = imgWidth;
-    let finalHeight = imgHeight;
+    // Scale to fit within available space
+    const scaleX = availableWidth / canvas.width;
+    const scaleY = availableHeight / canvas.height;
+    const scale = Math.min(scaleX, scaleY);
     
-    if (imgHeight > pageHeight) {
-      finalHeight = pageHeight;
-      finalWidth = (canvas.width * finalHeight) / canvas.height;
-    }
+    const finalWidth = canvas.width * scale;
+    const finalHeight = canvas.height * scale;
     
     // Center the image on the page
     const x = (pageWidth - finalWidth) / 2;
     const y = (pageHeight - finalHeight) / 2;
     
-    // Add the canvas image to PDF with high quality
+    console.log('✅ Calculated dimensions:', { finalWidth, finalHeight, x, y });
+    
+    // Convert canvas to image data
     const imgData = canvas.toDataURL('image/png', 1.0);
+    console.log('✅ Canvas converted to image data, length:', imgData.length);
+    
+    // Add the canvas image to PDF
     pdf.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight, '', 'FAST');
+    console.log('✅ Image added to PDF');
     
     // Generate filename
     const filename = `Daily_Planner_${format(date, 'yyyy-MM-dd')}.pdf`;
