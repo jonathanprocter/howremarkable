@@ -132,7 +132,7 @@ export const GoogleCalendarIntegration = ({
                 Click above to authenticate with Google
               </div>
             </>
-          )}</div>
+          )}
         </div>
 
         {/* Debug Info */}
