@@ -39,6 +39,19 @@ export const WeeklyPlannerView = ({
     return eventDate >= weekStart && eventDate <= weekEnd;
   });
 
+  // Debug logging for event filtering
+  console.log('📅 Weekly view debug:', {
+    totalEvents: events.length,
+    weekEvents: weekEvents.length,
+    weekStart: weekStartDate?.toDateString(),
+    weekEnd: weekEndDate?.toDateString(),
+    eventsInWeek: weekEvents.map(e => ({
+      title: e.title,
+      start: new Date(e.startTime).toDateString(),
+      source: e.source
+    }))
+  });
+
   const totalEvents = weekEvents.length;
   const totalHours = weekEvents.reduce((sum, event) => {
     return sum + (new Date(event.endTime).getTime() - new Date(event.startTime).getTime()) / (1000 * 60 * 60);

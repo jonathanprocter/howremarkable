@@ -34,7 +34,8 @@ export default function Planner() {
   const [viewMode, setViewMode] = useState<ViewMode>('weekly');
   const [selectedDate, setSelectedDate] = useState<Date>(() => {
     try {
-      return new Date();
+      // Start at a date in 2024 where SimplePractice appointments should be visible
+      return new Date(2024, 6, 1); // July 1, 2024
     } catch (error) {
       console.warn('Failed to create initial date, using fallback');
       return new Date(Date.now());
@@ -120,6 +121,20 @@ export default function Planner() {
     google: allEvents.filter(e => e.source === 'google').length,
     manual: allEvents.filter(e => e.source === 'manual' || !e.source).length
   });
+
+  // Debug: Show date ranges of your appointments
+  if (allEvents.length > 0) {
+    const eventDates = allEvents.map(e => new Date(e.startTime)).sort((a, b) => a.getTime() - b.getTime());
+    const earliestDate = eventDates[0];
+    const latestDate = eventDates[eventDates.length - 1];
+    
+    console.log('📅 Your appointments date range:', {
+      earliest: earliestDate?.toDateString(),
+      latest: latestDate?.toDateString(),
+      sampleDates: eventDates.slice(0, 5).map(d => d.toDateString()),
+      currentlyViewing: selectedDate.toDateString()
+    });
+  }
 
   // Log SimplePractice status for debugging
   console.log('🔍 SimplePractice Status:', {
@@ -376,6 +391,27 @@ export default function Planner() {
             >
               Next →
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => setSelectedDate(new Date())}
+              size="sm"
+            >
+              Today
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setSelectedDate(new Date(2024, 0, 1))} // January 2024
+              size="sm"
+            >
+              Jan 2024
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setSelectedDate(new Date(2024, 2, 1))} // March 2024
+              size="sm"
+            >
+              Mar 2024
+            </Button>
           </div>
 
           <div className="text-lg font-semibold">
@@ -409,10 +445,23 @@ export default function Planner() {
                 ) : (
                   <DailyView
                     selectedDate={selectedDate}
-                    events={allEvents.filter(event => {
-                      const eventDate = new Date(event.startTime);
-                      return eventDate.toDateString() === selectedDate.toDateString();
-                    })}
+                    events={(() => {
+                      const dailyEvents = allEvents.filter(event => {
+                        const eventDate = new Date(event.startTime);
+                        return eventDate.toDateString() === selectedDate.toDateString();
+                      });
+                      console.log('📅 Daily view debug:', {
+                        selectedDate: selectedDate.toDateString(),
+                        totalEvents: allEvents.length,
+                        dailyEvents: dailyEvents.length,
+                        eventsForDay: dailyEvents.map(e => ({
+                          title: e.title,
+                          start: new Date(e.startTime).toDateString(),
+                          source: e.source
+                        }))
+                      });
+                      return dailyEvents;
+                    })()}
                     dailyNotes=""
                     onPreviousDay={() => navigateDay('prev')}
                     onNextDay={() => navigateDay('next')}
