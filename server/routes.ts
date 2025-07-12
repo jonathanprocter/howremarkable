@@ -325,7 +325,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   };
 
-  // Get SimplePractice events
+  // Get SimplePractice events from all calendars
   app.get("/api/simplepractice/events", requireAuth, async (req, res) => {
     console.log('🔍 SimplePractice events requested');
 
@@ -358,41 +358,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      console.log('Fetching SimplePractice events from Google Calendar...');
+      console.log('Fetching SimplePractice events from all Google Calendars...');
 
       const calendar = google.calendar({ version: 'v3' });
 
-      // Fetch from SimplePractice calendar specifically
-      const response = await calendar.events.list({
-        calendarId: '0np7sib5u30o7oc297j5pb259g', // SimplePractice calendar ID
-        timeMin: start as string,
-        timeMax: end as string,
-        singleEvents: true,
-        orderBy: 'startTime',
+      // First get all available calendars
+      const calendarListResponse = await calendar.calendarList.list({
         access_token: user.accessToken
       });
 
-      const events = response.data.items || [];
-      console.log(`✅ Found ${events.length} SimplePractice events from Google Calendar`);
+      const calendars = calendarListResponse.data.items || [];
+      console.log(`📅 Found ${calendars.length} calendars to search`);
 
-      const formattedEvents = events.map(event => ({
-        id: event.id,
-        title: event.summary || 'Untitled Event',
-        startTime: event.start?.dateTime || event.start?.date,
-        endTime: event.end?.dateTime || event.end?.date,
-        description: event.description || '',
-        location: event.location || '',
-        source: 'simplepractice',
-        calendarId: '0np7sib5u30o7oc297j5pb259g'
-      }));
+      let allSimplePracticeEvents = [];
+      let simplePracticeCalendars = [];
 
-      res.json({ 
-        events: formattedEvents,
-        calendars: [{
+      // Search through all calendars for SimplePractice events
+      for (const cal of calendars) {
+        try {
+          console.log(`🔍 Searching calendar: ${cal.summary} (${cal.id})`);
+          
+          const response = await calendar.events.list({
+            calendarId: cal.id,
+            timeMin: start as string,
+            timeMax: end as string,
+            singleEvents: true,
+            orderBy: 'startTime',
+            access_token: user.accessToken
+          });
+
+          const events = response.data.items || [];
+          
+          // Filter for SimplePractice events (appointments, patient names, etc.)
+          const simplePracticeEvents = events.filter(event => {
+            const title = event.summary || '';
+            const description = event.description || '';
+            
+            // Check if this looks like a SimplePractice appointment
+            const isSimplePractice = 
+              title.toLowerCase().includes('appointment') ||
+              title.toLowerCase().includes('patient') ||
+              title.toLowerCase().includes('session') ||
+              title.toLowerCase().includes('therapy') ||
+              title.toLowerCase().includes('consultation') ||
+              description.toLowerCase().includes('simplepractice') ||
+              description.toLowerCase().includes('appointment') ||
+              // Check for patient name patterns (First Last format)
+              /^[A-Z][a-z]+ [A-Z][a-z]+(\s|$)/.test(title.trim()) ||
+              // Check for common therapy/medical terms
+              title.toLowerCase().includes('counseling') ||
+              title.toLowerCase().includes('supervision') ||
+              title.toLowerCase().includes('intake') ||
+              title.toLowerCase().includes('assessment');
+            
+            return isSimplePractice;
+          });
+
+          if (simplePracticeEvents.length > 0) {
+            console.log(`✅ Found ${simplePracticeEvents.length} SimplePractice events in ${cal.summary}`);
+            
+            const formattedEvents = simplePracticeEvents.map(event => ({
+              id: event.id,
+              title: event.summary || 'Untitled Event',
+              startTime: event.start?.dateTime || event.start?.date,
+              endTime: event.end?.dateTime || event.end?.date,
+              description: event.description || '',
+              location: event.location || '',
+              source: 'simplepractice',
+              calendarId: cal.id
+            }));
+
+            allSimplePracticeEvents.push(...formattedEvents);
+
+            // Track calendars that contain SimplePractice events
+            if (!simplePracticeCalendars.find(c => c.id === cal.id)) {
+              simplePracticeCalendars.push({
+                id: cal.id,
+                name: cal.summary || 'Calendar',
+                color: cal.backgroundColor || '#6495ED'
+              });
+            }
+          }
+        } catch (calendarError) {
+          console.warn(`⚠️ Could not access calendar ${cal.summary}: ${calendarError.message}`);
+          // Continue with other calendars
+        }
+      }
+
+      console.log(`🎯 Total SimplePractice events found: ${allSimplePracticeEvents.length}`);
+
+      // If no SimplePractice events found, still return the structure
+      if (simplePracticeCalendars.length === 0) {
+        simplePracticeCalendars = [{
           id: 'simplepractice',
           name: 'SimplePractice',
           color: '#6495ED'
-        }]
+        }];
+      }
+
+      res.json({ 
+        events: allSimplePracticeEvents,
+        calendars: simplePracticeCalendars
       });
 
     } catch (error) {
@@ -475,30 +541,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const calendar = google.calendar({ version: 'v3' });
 
-      const response = await calendar.events.list({
-        calendarId: 'primary',
-        timeMin: start as string,
-        timeMax: end as string,
-        singleEvents: true,
-        orderBy: 'startTime',
-        access_token: user.accessToken
-      });
-
-      const events = response.data.items || [];
-      console.log(`✅ Found ${events.length} Google Calendar events`);
-
-      const formattedEvents = events.map(event => ({
-        id: event.id,
-        title: event.summary || 'Untitled Event',
-        startTime: event.start?.dateTime || event.start?.date,
-        endTime: event.end?.dateTime || event.end?.date,
-        description: event.description || '',
-        location: event.location || '',
-        source: 'google',
-        calendarId: event.organizer?.email || 'primary'
-      }));
-
-      // Get the calendar list to show actual calendars
+      // Get the calendar list first to fetch from all calendars
       const calendarListResponse = await calendar.calendarList.list({
         access_token: user.accessToken
       });
@@ -508,6 +551,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
         name: cal.summary || 'Calendar',
         color: cal.backgroundColor || '#4285f4'
       }));
+
+      console.log(`📅 Found ${calendars.length} calendars to fetch from`);
+
+      let allGoogleEvents = [];
+
+      // Fetch events from all calendars
+      for (const cal of calendars) {
+        try {
+          console.log(`🔍 Fetching from calendar: ${cal.name} (${cal.id})`);
+          
+          const response = await calendar.events.list({
+            calendarId: cal.id,
+            timeMin: start as string,
+            timeMax: end as string,
+            singleEvents: true,
+            orderBy: 'startTime',
+            access_token: user.accessToken
+          });
+
+          const events = response.data.items || [];
+          
+          // Filter out events that look like SimplePractice appointments (they'll be handled separately)
+          const googleEvents = events.filter(event => {
+            const title = event.summary || '';
+            const description = event.description || '';
+            
+            // Exclude SimplePractice-looking events
+            const isSimplePractice = 
+              title.toLowerCase().includes('appointment') ||
+              title.toLowerCase().includes('patient') ||
+              title.toLowerCase().includes('session') ||
+              title.toLowerCase().includes('therapy') ||
+              title.toLowerCase().includes('consultation') ||
+              description.toLowerCase().includes('simplepractice') ||
+              description.toLowerCase().includes('appointment') ||
+              /^[A-Z][a-z]+ [A-Z][a-z]+(\s|$)/.test(title.trim()) ||
+              title.toLowerCase().includes('counseling') ||
+              title.toLowerCase().includes('supervision') ||
+              title.toLowerCase().includes('intake') ||
+              title.toLowerCase().includes('assessment');
+            
+            return !isSimplePractice;
+          });
+
+          const formattedEvents = googleEvents.map(event => ({
+            id: event.id,
+            title: event.summary || 'Untitled Event',
+            startTime: event.start?.dateTime || event.start?.date,
+            endTime: event.end?.dateTime || event.end?.date,
+            description: event.description || '',
+            location: event.location || '',
+            source: 'google',
+            calendarId: cal.id
+          }));
+
+          allGoogleEvents.push(...formattedEvents);
+          
+          if (googleEvents.length > 0) {
+            console.log(`✅ Found ${googleEvents.length} Google Calendar events in ${cal.name}`);
+          }
+        } catch (calendarError) {
+          console.warn(`⚠️ Could not access calendar ${cal.name}: ${calendarError.message}`);
+          // Continue with other calendars
+        }
+      }
+
+      console.log(`🎯 Total Google Calendar events found: ${allGoogleEvents.length}`);
 
       // Add SimplePractice calendar to the list
       const allCalendars = [
@@ -521,7 +631,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Return in the expected format with events array and actual calendars
       res.json({ 
-        events: formattedEvents,
+        events: allGoogleEvents,
         calendars: allCalendars.length > 0 ? allCalendars : [{
           id: 'primary',
           name: 'Primary Calendar',

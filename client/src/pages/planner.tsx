@@ -76,10 +76,12 @@ export default function Planner() {
     retry: 1,
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !!user, // Only run when user is authenticated
   });
 
   // Extract SimplePractice events safely
   const simplePracticeEvents = Array.isArray(simplePracticeData?.events) ? simplePracticeData.events : [];
+  const simplePracticeCalendars = Array.isArray(simplePracticeData?.calendars) ? simplePracticeData.calendars : [];
 
   // Google Calendar data with error handling
   const { data: googleCalendarData, isLoading: isLoadingGoogleEvents, error: googleCalendarError } = useQuery({
@@ -111,12 +113,21 @@ export default function Planner() {
     return true;
   });
 
-  // Debug logging for event sources
+  // Debug logging for event sources and errors
   console.log('📊 Event breakdown:', {
     total: allEvents.length,
     simplepractice: allEvents.filter(e => e.source === 'simplepractice').length,
     google: allEvents.filter(e => e.source === 'google').length,
     manual: allEvents.filter(e => e.source === 'manual' || !e.source).length
+  });
+
+  // Log SimplePractice status for debugging
+  console.log('🔍 SimplePractice Status:', {
+    isLoading: isLoadingSimplePracticeEvents,
+    hasError: !!simplePracticeError,
+    error: simplePracticeError?.message,
+    eventsFound: simplePracticeEvents.length,
+    calendarsFound: simplePracticeCalendars.length
   });
 
   // Event mutations
