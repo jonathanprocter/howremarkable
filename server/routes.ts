@@ -337,34 +337,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Start and end dates are required' });
       }
 
-      // For now, return sample SimplePractice events
-      // In production, this would integrate with SimplePractice API
-      const sampleSimplePracticeEvents = [
-        {
-          id: 'sp-1',
-          title: 'John Smith - Therapy Session',
-          startTime: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
-          endTime: new Date(Date.now() + 86400000 + 3600000).toISOString(), // Tomorrow + 1 hour
-          description: 'Individual therapy session',
-          location: 'Office A',
-          source: 'simplepractice',
-          calendarId: 'simplepractice'
-        },
-        {
-          id: 'sp-2',
-          title: 'Jane Doe - Intake Appointment',
-          startTime: new Date(Date.now() + 172800000).toISOString(), // Day after tomorrow
-          endTime: new Date(Date.now() + 172800000 + 3600000).toISOString(), // Day after tomorrow + 1 hour
-          description: 'Initial consultation',
-          location: 'Office B',
-          source: 'simplepractice',
-          calendarId: 'simplepractice'
-        }
-      ];
+      // TODO: In production, this would integrate with SimplePractice API
+      // For now, return empty array until real SimplePractice integration
+      const simplePracticeEvents = [];
 
-      console.log(`✅ Found ${sampleSimplePracticeEvents.length} SimplePractice events`);
+      console.log(`✅ Found ${simplePracticeEvents.length} SimplePractice events`);
       res.json({ 
-        events: sampleSimplePracticeEvents,
+        events: simplePracticeEvents,
         calendars: [{
           id: 'simplepractice',
           name: 'SimplePractice',
@@ -703,55 +682,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return acc;
       }, {}));
 
-      // Add sample SimplePractice events if none exist
-      const simplePracticeEvents = events.filter(e => e.source === 'simplepractice');
-      if (simplePracticeEvents.length === 0) {
-        console.log('🏥 No SimplePractice events found, adding sample events');
-        const sampleEvents = [
-          {
-            id: 'sp-1',
-            title: 'Dan re: Supervision Notes',
-            description: 'Weekly supervision meeting',
-            startTime: new Date(2025, 0, 13, 8, 0).toISOString(), // Jan 13, 2025 8:00 AM
-            endTime: new Date(2025, 0, 13, 9, 0).toISOString(),
-            source: 'simplepractice',
-            sourceId: 'sp-1',
-            color: '#6495ED', // Cornflower blue
-            notes: 'Review supervision notes from last week',
-            actionItems: 'Schedule next supervision meeting',
-            calendarId: 'simplepractice'
-          },
-          {
-            id: 'sp-2', 
-            title: 'Sherrifa Hoosein Appointment',
-            description: 'Therapy session',
-            startTime: new Date(2025, 0, 13, 9, 0).toISOString(),
-            endTime: new Date(2025, 0, 13, 10, 0).toISOString(),
-            source: 'simplepractice',
-            sourceId: 'sp-2',
-            color: '#6495ED',
-            notes: 'Client struggling with anxiety around work presentations',
-            actionItems: 'Assign daily mood tracking homework',
-            calendarId: 'simplepractice'
-          },
-          {
-            id: 'sp-3',
-            title: 'Nancy Grossman Appointment', 
-            description: 'Therapy session',
-            startTime: new Date(2025, 0, 13, 10, 0).toISOString(),
-            endTime: new Date(2025, 0, 13, 11, 0).toISOString(),
-            source: 'simplepractice',
-            sourceId: 'sp-3',
-            color: '#6495ED',
-            notes: '',
-            actionItems: '',
-            calendarId: 'simplepractice'
-          }
-        ];
-        
-        // Add sample events to the response
-        events.push(...sampleEvents);
-      }
+      // Don't add any sample events - only use real calendar data
 
       // Map database events to the expected format with validation
       const eventsFormatted = events.map(e => {
