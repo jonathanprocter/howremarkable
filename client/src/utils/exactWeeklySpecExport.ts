@@ -70,6 +70,17 @@ export const exportExactWeeklySpec = async (
     return eventDate >= weekStartDate && eventDate <= weekEndDate;
   });
 
+  console.log(`📅 Week Export Debug:`);
+  console.log(`Week Start: ${weekStartDate.toDateString()}`);
+  console.log(`Week End: ${weekEndDate.toDateString()}`);
+  console.log(`Total Events: ${weekEvents.length}`);
+  
+  // Verify first day of week is Monday
+  const firstDayOfWeek = weekStartDate.getDay(); // 0=Sunday, 1=Monday
+  if (firstDayOfWeek !== 1) {
+    console.warn(`⚠️ Week start is not Monday! Day of week: ${firstDayOfWeek}`);
+  }
+
   // Set white background
   pdf.setFillColor(...SPEC.WHITE);
   pdf.rect(0, 0, 792, 612, 'F');
@@ -139,11 +150,14 @@ function drawExactTable(pdf: jsPDF, weekStartDate: Date, events: CalendarEvent[]
   const dayHeaders = ['Time'];
   const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   
-  // Generate full day headers with dates
+  // Generate full day headers with dates - ensure Monday start
   for (let i = 0; i < 7; i++) {
     const dayDate = new Date(weekStartDate);
     dayDate.setDate(weekStartDate.getDate() + i);
     const formattedDate = `${dayDate.getMonth() + 1}-${dayDate.getDate()}-${dayDate.getFullYear()}`;
+    
+    console.log(`Day ${i}: ${dayNames[i]} ${formattedDate} (${dayDate.toDateString()})`);
+    
     dayHeaders.push(`${dayNames[i]} ${formattedDate}`);
   }
   
@@ -260,11 +274,18 @@ function drawExactAppointments(pdf: jsPDF, weekStartDate: Date, events: Calendar
     const eventDate = new Date(event.startTime);
     const endDate = new Date(event.endTime);
     
-    // Calculate day index (1-7 for Mon-Sun, skip TIME column)
-    const dayIndex = Math.floor((eventDate.getTime() - weekStartDate.getTime()) / (1000 * 60 * 60 * 24));
+    // Fix timezone issue by comparing dates in local timezone
+    const eventLocalDate = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+    const weekStartLocalDate = new Date(weekStartDate.getFullYear(), weekStartDate.getMonth(), weekStartDate.getDate());
+    
+    // Calculate day index (0-6 for Mon-Sun)
+    const dayIndex = Math.floor((eventLocalDate.getTime() - weekStartLocalDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    console.log(`Event: ${event.title} | Event Date: ${eventDate.toDateString()} | Week Start: ${weekStartDate.toDateString()} | Day Index: ${dayIndex}`);
+    
     if (dayIndex < 0 || dayIndex > 6) return;
     
-    const columnIndex = dayIndex + 1; // +1 to skip TIME column
+    const columnIndex = dayIndex + 1; // +1 to skip TIME column (1-7 for Mon-Sun)
     
     // Find time slot indices
     const startHour = eventDate.getHours();
