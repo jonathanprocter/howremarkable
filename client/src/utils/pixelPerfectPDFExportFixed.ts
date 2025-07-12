@@ -67,6 +67,7 @@ export async function exportPixelPerfectPDF(
     container.style.overflow = 'visible';
     container.style.display = 'block';
     container.style.visibility = 'visible';
+    container.style.pointerEvents = 'none';
     
     // Add to document
     document.body.appendChild(container);
