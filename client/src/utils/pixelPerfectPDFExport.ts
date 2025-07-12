@@ -57,19 +57,21 @@ export async function exportPixelPerfectPDF(
     // Create temporary container with exact PDF dimensions
     const container = document.createElement('div');
     container.innerHTML = html;
-    container.style.position = 'absolute';
-    container.style.left = '-9999px';
-    container.style.top = '-9999px';
+    container.style.position = 'fixed';
+    container.style.left = '0px';
+    container.style.top = '0px';
     container.style.width = `${pdfConfig.pageWidth}px`;
     container.style.height = `${pdfConfig.pageHeight}px`;
     container.style.backgroundColor = '#ffffff';
     container.style.fontFamily = 'Arial, sans-serif';
+    container.style.zIndex = '9999';
+    container.style.overflow = 'hidden';
     
     // Add to document
     document.body.appendChild(container);
     
     // Wait for rendering and font loading
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 1500));
     
     // Capture with exact dimensions
     const canvas = await html2canvas(container, {
@@ -79,8 +81,15 @@ export async function exportPixelPerfectPDF(
       backgroundColor: '#ffffff',
       width: pdfConfig.pageWidth,
       height: pdfConfig.pageHeight,
-      logging: false,
-      foreignObjectRendering: true
+      logging: true,
+      foreignObjectRendering: true,
+      onclone: (clonedDoc) => {
+        console.log('📸 html2canvas cloned document successfully');
+        const clonedContainer = clonedDoc.querySelector('div');
+        if (clonedContainer) {
+          console.log('📸 Cloned container found:', clonedContainer.getBoundingClientRect());
+        }
+      }
     });
     
     console.log('✅ Canvas captured:', canvas.width, 'x', canvas.height);
