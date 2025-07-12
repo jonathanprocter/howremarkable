@@ -50,31 +50,38 @@ export async function exportDynamicDailyPlannerPDF(
     
     console.log('✅ Popup window opened successfully');
     
-    // Write the HTML to the popup window
-    popupWindow.document.write(html);
-    popupWindow.document.close();
-    
-    console.log('✅ HTML written to popup window');
-    
-    // Wait for the popup to load completely
-    await new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        reject(new Error('Popup window load timeout'));
-      }, 10000);
+    try {
+      // Write the HTML to the popup window
+      popupWindow.document.write(html);
+      popupWindow.document.close();
       
-      if (popupWindow.document.readyState === 'complete') {
-        clearTimeout(timeout);
-        resolve(null);
-      } else {
-        popupWindow.addEventListener('load', () => {
-          clearTimeout(timeout);
-          resolve(null);
-        });
-      }
-    });
-    
-    // Additional wait for fonts and rendering
-    await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log('✅ HTML written to popup window');
+      
+      // Wait for the popup to load completely with better error handling
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Popup window load timeout'));
+        }, 15000); // Increased timeout
+        
+        const checkReady = () => {
+          if (popupWindow.document.readyState === 'complete') {
+            clearTimeout(timeout);
+            resolve(null);
+          } else {
+            setTimeout(checkReady, 100);
+          }
+        };
+        
+        checkReady();
+      });
+      
+      // Additional wait for fonts and rendering
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+    } catch (popupError) {
+      popupWindow.close();
+      throw new Error(`Popup rendering failed: ${popupError.message}`);
+    }
     
     // Find the content in the popup
     const content = popupWindow.document.body;
@@ -94,38 +101,50 @@ export async function exportDynamicDailyPlannerPDF(
     
     // Capture canvas with US Letter proportions for perfect fit
     const canvas = await html2canvas(content, {
-      scale: 2, // Optimized scale for US Letter output
+      scale: 1.5, // Reduced scale to prevent memory issues
       useCORS: true,
-      allowTaint: true,
+      allowTaint: false,
       backgroundColor: '#FAFAF7',
-      width: 540, // US Letter width minus margins
-      height: 720, // US Letter height minus margins
-      logging: true,
-      foreignObjectRendering: true,
-      removeContainer: false,
-      imageTimeout: 15000,
+      width: 612, // Full page width
+      height: 792, // Full page height
+      logging: false, // Reduce console spam
+      foreignObjectRendering: false, // More reliable rendering
+      removeContainer: true,
+      imageTimeout: 10000,
       onclone: (clonedDoc) => {
-        // Ensure styling is preserved and appointments fill cells
-        const style = clonedDoc.createElement('style');
-        style.textContent = `
-          body { font-family: Georgia, serif; background: #FAFAF7; margin: 0; padding: 0; }
-          * { box-sizing: border-box; }
-          .appointment { width: 100% !important; margin: 0 !important; }
-          .timeline-slot { width: 100% !important; }
-        `;
-        clonedDoc.head.appendChild(style);
-        console.log('✅ US Letter styles applied to cloned document');
+        try {
+          // Ensure styling is preserved and appointments fill cells
+          const style = clonedDoc.createElement('style');
+          style.textContent = `
+            body { font-family: Georgia, serif; background: #FAFAF7; margin: 0; padding: 20px; }
+            * { box-sizing: border-box; }
+            .appointment { width: 100% !important; margin: 0 !important; }
+            .timeline-slot { width: 100% !important; }
+            .daily-planner { max-width: none !important; width: 100% !important; }
+          `;
+          clonedDoc.head.appendChild(style);
+          console.log('✅ US Letter styles applied to cloned document');
+        } catch (styleError) {
+          console.warn('⚠️ Could not apply custom styles to cloned document:', styleError);
+        }
       }
     });
     
     console.log('✅ Canvas created:', canvas.width, 'x', canvas.height);
     
-    // Close the popup window
-    popupWindow.close();
-    
-    // Verify canvas has content
+    // Verify canvas has content before closing popup
     if (canvas.width === 0 || canvas.height === 0) {
+      popupWindow.close();
       throw new Error('Canvas has no content - check HTML rendering');
+    }
+    
+    console.log('✅ Canvas verified with content:', canvas.width, 'x', canvas.height);
+    
+    // Close the popup window
+    try {
+      popupWindow.close();
+    } catch (closeError) {
+      console.warn('⚠️ Could not close popup window:', closeError);
     }
     
     // Create PDF with US Letter portrait settings - exactly 8.5 x 11 inches
@@ -154,15 +173,23 @@ export async function exportDynamicDailyPlannerPDF(
     const x = margins;
     const y = margins;
     
-    console.log('✅ Calculated dimensions:', { finalWidth, finalHeight, x, y });
+    console.log('✅ Calculated dimensions:', { targetWidth, targetHeight, x, y });
     
     // Convert canvas to image data
-    const imgData = canvas.toDataURL('image/png', 1.0);
+    const imgData = canvas.toDataURL('image/png', 0.95); // Slightly reduced quality for smaller file
     console.log('✅ Canvas converted to image data, length:', imgData.length);
     
-    // Add the canvas image to PDF - stretch to fill available space
-    pdf.addImage(imgData, 'PNG', x, y, targetWidth, targetHeight, '', 'FAST');
-    console.log('✅ Image added to PDF');
+    if (imgData.length < 1000) {
+      throw new Error('Canvas image data is too small - likely empty canvas');
+    }
+    
+    try {
+      // Add the canvas image to PDF - stretch to fill available space
+      pdf.addImage(imgData, 'PNG', x, y, targetWidth, targetHeight, '', 'FAST');
+      console.log('✅ Image added to PDF');
+    } catch (imageError) {
+      throw new Error(`Failed to add image to PDF: ${imageError.message}`);
+    }
     
     // Generate filename
     const filename = `Daily_Planner_${format(date, 'yyyy-MM-dd')}.pdf`;
