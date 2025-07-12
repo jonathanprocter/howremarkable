@@ -168,28 +168,28 @@ export class DynamicDailyPlannerGenerator {
     const hasContent = appointment.event_notes.length > 0 || appointment.action_items.length > 0;
     const middleClass = hasContent ? "appointment-middle has-content" : "appointment-middle";
     
-    // Generate event notes HTML
+    // Generate event notes HTML with enhanced formatting
     const eventNotesHTML = appointment.event_notes.length > 0 ? `
       <div class="detail-header">
         <div class="detail-icon">📝</div>
         <div class="detail-label">Event Notes:</div>
       </div>
       <div class="detail-content">
-        <ul>
-          ${appointment.event_notes.map(note => `<li>${note}</li>`).join('')}
+        <ul class="detail-list">
+          ${appointment.event_notes.map(note => `<li class="detail-item">${note.trim()}</li>`).join('')}
         </ul>
       </div>
     ` : '';
     
-    // Generate action items HTML
+    // Generate action items HTML with enhanced formatting
     const actionItemsHTML = appointment.action_items.length > 0 ? `
       <div class="detail-header">
         <div class="detail-icon">✅</div>
         <div class="detail-label">Action Items:</div>
       </div>
       <div class="detail-content">
-        <ul>
-          ${appointment.action_items.map(item => `<li>${item}</li>`).join('')}
+        <ul class="detail-list">
+          ${appointment.action_items.map(item => `<li class="detail-item">${item.trim()}</li>`).join('')}
         </ul>
       </div>
     ` : '';
@@ -457,12 +457,13 @@ export class DynamicDailyPlannerGenerator {
             background: white;
             border: 1px solid var(--border-grey);
             border-radius: 4px;
-            padding: 0.5rem;
+            padding: 0.6rem;
             display: grid;
             grid-template-columns: 2fr 1.5fr 1.5fr;
-            gap: 0.5rem;
+            gap: 0.6rem;
             page-break-inside: avoid;
             min-height: 40px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
         
         .appointment.scheduled {
@@ -502,15 +503,17 @@ export class DynamicDailyPlannerGenerator {
         }
         
         .appointment-title {
-            font-size: 10px;
-            font-weight: 600;
+            font-size: 11px;
+            font-weight: 700;
             color: var(--navy);
             line-height: 1.2;
+            margin-bottom: 0.1rem;
         }
         
         .appointment-time {
-            font-size: 7px;
+            font-size: 8px;
             color: var(--cool-grey);
+            font-weight: 500;
         }
         
         .appointment-status {
@@ -563,22 +566,30 @@ export class DynamicDailyPlannerGenerator {
             font-weight: 600;
         }
         
-        .detail-content ul {
+        .detail-content ul.detail-list {
             list-style: none;
-            padding-left: 1.2rem;
+            padding-left: 0.8rem;
+            margin: 0;
         }
         
-        .detail-content li {
-            font-size: 5px;
-            color: var(--cool-grey);
-            line-height: 1.2;
-            margin-bottom: 0.1rem;
+        .detail-content li.detail-item {
+            font-size: 6px;
+            color: var(--navy);
+            line-height: 1.3;
+            margin-bottom: 0.2rem;
+            padding-left: 0.6rem;
+            position: relative;
+            word-wrap: break-word;
+            hyphens: auto;
         }
         
-        .detail-content li:before {
+        .detail-content li.detail-item:before {
             content: "•";
-            margin-right: 0.3rem;
+            position: absolute;
+            left: 0;
             color: var(--cornflower);
+            font-weight: bold;
+            font-size: 7px;
         }
         
         /* Notes Column */
