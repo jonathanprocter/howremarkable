@@ -56,16 +56,15 @@ const getFallbackDashboardStyles = (): DashboardStyles => {
 
 // Convert dashboard styles to PDF configuration
 const createPDFConfig = (dashboardStyles: DashboardStyles) => {
-  // A3 Landscape dimensions (matching user preference)
-  const pageWidth = 1190;
+  // Optimized dimensions for exact 110px day columns
+  const pageWidth = 910;
   const pageHeight = 842;
   const margin = Math.max(dashboardStyles?.spacing?.margin || 20, 20);
 
   // Calculate content area based on dashboard proportions
   const contentWidth = pageWidth - (2 * margin);
   const timeColumnWidth = dashboardStyles?.timeColumnWidth || 80; // Use exact dashboard value
-  const availableForDays = contentWidth - timeColumnWidth;
-  const dayColumnWidth = Math.floor(availableForDays / 7);
+  const dayColumnWidth = 110; // Fixed to match exact dashboard measurement
 
   return {
     // Page setup
@@ -255,11 +254,11 @@ export const exportTrulyPixelPerfectWeeklyPDF = async (
 
     // ROOT CAUSE FIX: Use extracted measurements WITHOUT any scaling factors
     const exactConfig = exactMeasurements ? {
-      // Page setup - keep standard PDF dimensions
-      pageWidth: 1190,
+      // Page setup - optimized for exact 110px day columns
+      pageWidth: 910,
       pageHeight: 842,
       margin: 20,
-      contentWidth: 1150,
+      contentWidth: 870,
 
       // Grid dimensions - USE EXACT DASHBOARD VALUES (NO SCALING!)
       timeColumnWidth: exactMeasurements.timeColumnWidth,    // 80px exactly as dashboard

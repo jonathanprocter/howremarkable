@@ -5,8 +5,8 @@ import { generateTimeSlots } from './timeSlots';
 
 // Exact dashboard-matching landscape configuration for weekly calendar
 const GRID_CONFIG = {
-  // Page setup - A3 landscape dimensions for better content fit
-  pageWidth: 1190,   // A3 width = 1190 points (16.5 inches)
+  // Page setup - Adjusted dimensions to achieve exact 110px day columns
+  pageWidth: 910,   // Calculated to give exact 110px day columns
   pageHeight: 842,   // A3 height = 842 points (11.7 inches)
 
   // Improved spacing for better readability
@@ -17,6 +17,7 @@ const GRID_CONFIG = {
 
   // Grid structure - match dashboard measurements exactly
   timeColumnWidth: 80, // Match dashboard time column width exactly
+  dayColumnWidth: 110, // Fixed to exact dashboard measurement
   slotHeight: 40, // Match dashboard time slot height exactly
   get totalSlots() {
     return generateTimeSlots().length; // Dynamic slot count based on time range
@@ -24,11 +25,6 @@ const GRID_CONFIG = {
 
   get contentWidth() {
     return this.pageWidth - (2 * this.margin);
-  },
-
-  get dayColumnWidth() {
-    // Calculate day column width to use remaining space evenly with better precision
-    return Math.floor((this.contentWidth - this.timeColumnWidth) / 7);
   },
 
   get totalGridWidth() {
@@ -72,11 +68,11 @@ export const exportExactGridPDF = async (
       }
     });
 
-    // Create PDF with A3 landscape dimensions for better content fit
+    // Create PDF with optimized dimensions for exact 110px day columns
     const pdf = new jsPDF({
       orientation: 'landscape',
       unit: 'pt',
-      format: [1190, 842] // A3 landscape (16.5 x 11.7 inches)
+      format: [910, 842] // Optimized for exact dashboard matching
     });
 
     // Use full width layout positions

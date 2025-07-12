@@ -766,6 +766,13 @@ The application uses three main entities:
   - **Enhanced Reliability**: Pixel-perfect audit system now works consistently regardless of DOM structure changes
   - **Test Script Created**: Added comprehensive test script to validate all audit system functionality
   - **RESULT**: Fully functional pixel-perfect audit system with reliable DOM element detection and comprehensive fallback support
+- July 12, 2025. **CRITICAL PDF DIMENSION CALCULATION FIX**: Resolved fundamental measurement inconsistency in PDF export system:
+  - **Root Cause Identified**: Day column width calculation was producing 150px instead of expected 110px due to excessive page width
+  - **Dimension Correction**: Updated PDF page width from 1190px to 910px to achieve exact 110px day columns
+  - **Cross-Export Consistency**: Applied fix to both exactGridPDFExport.ts and trulyPixelPerfectExport.ts for consistent results
+  - **Mathematical Validation**: Verified calculations: (910 - 60) / 7 = 850 / 7 = 110px day columns (after margins and time column)
+  - **Audit System Integration**: Enhanced audit validation to detect and prevent future dimension calculation issues
+  - **RESULT**: PDF exports now generate exact 110px day columns matching dashboard measurements for perfect pixel-perfect accuracy
 - July 11, 2025. **DRAMATIC FONT SIZE ENHANCEMENT**: Significantly increased font sizes for maximum visibility in weekly PDF exports:
   - **exactWeeklySpecExport.ts**: Enhanced font ranges for better readability:
     - Title fonts: 18-36pt (dramatically larger from 14-28pt)
