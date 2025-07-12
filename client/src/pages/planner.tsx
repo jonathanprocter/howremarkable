@@ -594,9 +594,22 @@ export default function Planner() {
 
             // Use the exact daily PDF export function that matches the daily view
             await exportMatchingDailyPDF(selectedDateForExport, validatedEvents);
+            
+            console.log('=== DAILY VIEW PDF EXPORT COMPLETE ===');
+            
+            toast({
+              title: "Daily View Export Successful",
+              description: `Daily planner PDF for ${selectedDateForExport.toLocaleDateString()} downloaded successfully!`
+            });
+            return;
           } catch (dailyError) {
             console.error('Daily PDF export error:', dailyError);
-            throw dailyError;
+            toast({
+              title: "Daily View Export Failed",
+              description: `Daily PDF export failed: ${dailyError.message}`,
+              variant: "destructive"
+            });
+            return;
           }
           break;
 
