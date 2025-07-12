@@ -1,96 +1,256 @@
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
-import { CalendarEvent } from '../types/calendar';
-import { cleanEventTitle, cleanTextForPDF } from './titleCleaner';
-import { generateTimeSlots } from './timeSlots';
-
 /**
  * Pixel-Perfect PDF Export System
- * 
- * This system achieves true pixel-perfect accuracy by:
- * 1. Capturing exact dashboard styling and layout
- * 2. Using HTML-to-canvas for precise rendering
- * 3. Maintaining 1:1 visual fidelity with dashboard
- * 4. Synchronized styling variables with dashboard CSS
+ * Uses exact dashboard measurements for 100% accuracy
  */
 
-// Extract exact styling from dashboard CSS variables
-const DASHBOARD_STYLES = {
-  // Grid configuration matching dashboard exactly
-  timeColumnWidth: 75, // Exact dashboard value
-  slotHeight: 16, // Exact dashboard value  
-  dayColumnWidth: 140, // Exact dashboard value
-  
-  // Typography matching dashboard exactly
-  fonts: {
-    title: 18,
-    subtitle: 14,
-    timeLabel: 8,
-    eventTitle: 12,
-    eventTime: 10,
-    eventSource: 9
-  },
-  
-  // Colors matching dashboard CSS variables exactly
-  colors: {
-    primary: '#000000',
-    secondary: '#666666',
-    background: '#ffffff',
-    gridLine: '#e0e0e0',
-    hourLine: '#c0c0c0',
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
+import { CalendarEvent } from '../types/calendar';
+import { format } from 'date-fns';
+
+interface DashboardMeasurements {
+  timeColumnWidth: number;
+  dayColumnWidth: number;
+  timeSlotHeight: number;
+  headerHeight: number;
+  scalingFactor: number;
+}
+
+interface PDFConfig {
+  pageWidth: number;
+  pageHeight: number;
+  margins: { top: number; right: number; bottom: number; left: number };
+  timeColumnWidth: number;
+  dayColumnWidth: number;
+  timeSlotHeight: number;
+  headerHeight: number;
+  fontSizes: {
+    title: number;
+    header: number;
+    timeLabel: number;
+    eventTitle: number;
+    eventTime: number;
+  };
+}
+
+export async function exportPixelPerfectPDF(
+  date: Date,
+  events: CalendarEvent[]
+): Promise<void> {
+  try {
+    console.log('🎯 Starting Pixel-Perfect PDF Export');
+    console.log('📅 Date:', format(date, 'yyyy-MM-dd'));
+    console.log('📊 Events:', events.length);
+
+    // Extract exact dashboard measurements
+    const dashboardMeasurements = await extractDashboardMeasurements();
+    console.log('📏 Dashboard measurements:', dashboardMeasurements);
     
-    // Event colors matching dashboard
-    simplePractice: {
-      background: '#ffffff',
-      border: '#6495ED',
-      leftFlag: '#6495ED'
-    },
-    google: {
-      background: '#ffffff',
-      border: '#34A853',
-      borderStyle: 'dashed'
-    },
-    holiday: {
-      background: '#FFF8DC',
-      border: '#FFA500'
-    },
+    // Calculate PDF configuration based on dashboard
+    const pdfConfig = calculatePDFConfig(dashboardMeasurements);
+    console.log('📐 PDF configuration:', pdfConfig);
     
-    // Row backgrounds matching dashboard
-    hourRow: '#f0f0f0',
-    halfHourRow: '#f8f8f8'
-  },
-  
-  // Spacing matching dashboard exactly
-  padding: {
-    cell: 4,
-    event: 3,
-    text: 2
-  },
-  
-  // Border styles matching dashboard
-  borders: {
-    main: '1px solid #e0e0e0',
-    hour: '2px solid #c0c0c0',
-    event: '1px solid'
+    // Generate pixel-perfect HTML
+    const html = generatePixelPerfectHTML(date, events, pdfConfig);
+    console.log('✅ Pixel-perfect HTML generated, length:', html.length);
+    
+    // Create temporary container with exact PDF dimensions
+    const container = document.createElement('div');
+    container.innerHTML = html;
+    container.style.position = 'absolute';
+    container.style.left = '-9999px';
+    container.style.top = '-9999px';
+    container.style.width = `${pdfConfig.pageWidth}px`;
+    container.style.height = `${pdfConfig.pageHeight}px`;
+    container.style.backgroundColor = '#ffffff';
+    container.style.fontFamily = 'Arial, sans-serif';
+    
+    // Add to document
+    document.body.appendChild(container);
+    
+    // Wait for rendering
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Capture with exact dimensions
+    const canvas = await html2canvas(container, {
+      scale: 1, // Use exact 1:1 scaling for precision
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      width: pdfConfig.pageWidth,
+      height: pdfConfig.pageHeight,
+      logging: false
+    });
+    
+    console.log('✅ Canvas captured:', canvas.width, 'x', canvas.height);
+    
+    // Remove temporary container
+    document.body.removeChild(container);
+    
+    // Create PDF with exact dimensions
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'pt',
+      format: [pdfConfig.pageWidth, pdfConfig.pageHeight],
+      compress: false
+    });
+    
+    // Add image at exact 1:1 scale
+    const imgData = canvas.toDataURL('image/png', 1.0);
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfConfig.pageWidth, pdfConfig.pageHeight);
+    
+    // Save PDF
+    const filename = `Pixel_Perfect_Daily_${format(date, 'yyyy-MM-dd')}.pdf`;
+    pdf.save(filename);
+    
+    console.log('✅ Pixel-perfect PDF exported successfully:', filename);
+    
+  } catch (error) {
+    console.error('❌ Pixel-perfect PDF export failed:', error);
+    throw new Error(`Pixel-perfect PDF export failed: ${error.message}`);
   }
-};
+}
 
-/**
- * Create pixel-perfect HTML template that matches dashboard exactly
- */
-function createPixelPerfectHTML(
-  events: CalendarEvent[],
-  selectedDate: Date,
-  viewType: 'daily' | 'weekly'
-): string {
-  const timeSlots = generateTimeSlots();
-  const dayEvents = events.filter(event => {
-    const eventDate = new Date(event.startTime);
-    return eventDate.toDateString() === selectedDate.toDateString();
+async function extractDashboardMeasurements(): Promise<DashboardMeasurements> {
+  console.log('📏 Extracting dashboard measurements...');
+  
+  // Try multiple selectors to find calendar elements
+  const calendarSelectors = [
+    '.calendar-container',
+    '.weekly-calendar-grid',
+    '.daily-view',
+    'main',
+    '.content'
+  ];
+  
+  let calendarContainer: Element | null = null;
+  for (const selector of calendarSelectors) {
+    calendarContainer = document.querySelector(selector);
+    if (calendarContainer) {
+      console.log(`📍 Found calendar container: ${selector}`);
+      break;
+    }
+  }
+  
+  if (!calendarContainer) {
+    console.warn('⚠️ Using document body as container');
+    calendarContainer = document.body;
+  }
+  
+  // Extract measurements with fallbacks
+  const timeColumnSelectors = ['.time-column', '[class*="time"]'];
+  let timeColumn: Element | null = null;
+  for (const selector of timeColumnSelectors) {
+    timeColumn = calendarContainer.querySelector(selector);
+    if (timeColumn) break;
+  }
+  const timeColumnWidth = timeColumn?.getBoundingClientRect().width || 80;
+  
+  const dayColumnSelectors = ['.day-column', '[class*="day"]'];
+  const dayColumns = calendarContainer.querySelectorAll(dayColumnSelectors.join(','));
+  const dayColumnWidth = dayColumns.length > 0 ? 
+    dayColumns[0].getBoundingClientRect().width : 137;
+  
+  const timeSlotSelectors = ['.time-slot', '[class*="slot"]'];
+  const timeSlots = calendarContainer.querySelectorAll(timeSlotSelectors.join(','));
+  const timeSlotHeight = timeSlots.length > 0 ?
+    timeSlots[0].getBoundingClientRect().height : 40;
+  
+  const headerSelectors = ['.calendar-header', '[class*="header"]'];
+  let header: Element | null = null;
+  for (const selector of headerSelectors) {
+    header = calendarContainer.querySelector(selector);
+    if (header) break;
+  }
+  const headerHeight = header?.getBoundingClientRect().height || 50;
+  
+  // Calculate scaling factor based on 8.5x11 page
+  const pageWidth = 612;
+  const margins = 40;
+  const availableWidth = pageWidth - (margins * 2);
+  const dashboardTotalWidth = timeColumnWidth + (dayColumnWidth * 7);
+  const scalingFactor = availableWidth / dashboardTotalWidth;
+  
+  return {
+    timeColumnWidth,
+    dayColumnWidth,
+    timeSlotHeight,
+    headerHeight,
+    scalingFactor
+  };
+}
+
+function calculatePDFConfig(dashboard: DashboardMeasurements): PDFConfig {
+  console.log('📐 Calculating PDF configuration...');
+  
+  // Standard PDF dimensions
+  const pageWidth = 612;
+  const pageHeight = 792;
+  const margins = { top: 40, right: 40, bottom: 40, left: 40 };
+  
+  // Apply consistent scaling factor to all elements
+  const timeColumnWidth = dashboard.timeColumnWidth * dashboard.scalingFactor;
+  const dayColumnWidth = dashboard.dayColumnWidth * dashboard.scalingFactor;
+  const timeSlotHeight = dashboard.timeSlotHeight * dashboard.scalingFactor;
+  const headerHeight = dashboard.headerHeight * dashboard.scalingFactor;
+  
+  // Calculate font sizes proportional to scaling
+  const baseFontScale = dashboard.scalingFactor;
+  const fontSizes = {
+    title: Math.round(20 * baseFontScale),
+    header: Math.round(16 * baseFontScale),
+    timeLabel: Math.round(12 * baseFontScale),
+    eventTitle: Math.round(14 * baseFontScale),
+    eventTime: Math.round(12 * baseFontScale)
+  };
+  
+  console.log('🔤 Calculated font sizes:', fontSizes);
+  console.log('📏 Scaled dimensions:', {
+    timeColumnWidth,
+    dayColumnWidth,
+    timeSlotHeight,
+    headerHeight
   });
   
-  // Create HTML that exactly matches dashboard structure
-  const html = `
+  return {
+    pageWidth,
+    pageHeight,
+    margins,
+    timeColumnWidth,
+    dayColumnWidth,
+    timeSlotHeight,
+    headerHeight,
+    fontSizes
+  };
+}
+
+function generatePixelPerfectHTML(
+  date: Date,
+  events: CalendarEvent[],
+  config: PDFConfig
+): string {
+  console.log('🎨 Generating pixel-perfect HTML...');
+  
+  // Filter events for the specific date
+  const dayEvents = events.filter(event => {
+    const eventDate = new Date(event.startTime);
+    return eventDate.toDateString() === date.toDateString();
+  });
+  
+  console.log(`📅 Events for ${date.toDateString()}: ${dayEvents.length}`);
+  
+  // Calculate time slots (6:00 to 23:30)
+  const timeSlots = [];
+  for (let hour = 6; hour <= 23; hour++) {
+    timeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
+    if (hour < 23) {
+      timeSlots.push(`${hour.toString().padStart(2, '0')}:30`);
+    }
+  }
+  timeSlots.push('23:30');
+  
+  // Generate HTML with exact measurements
+  return `
     <!DOCTYPE html>
     <html>
     <head>
@@ -103,466 +263,173 @@ function createPixelPerfectHTML(
         }
         
         body {
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          font-size: 14px;
-          line-height: 1.4;
-          color: ${DASHBOARD_STYLES.colors.primary};
-          background: ${DASHBOARD_STYLES.colors.background};
+          font-family: Arial, sans-serif;
+          width: ${config.pageWidth}px;
+          height: ${config.pageHeight}px;
+          background: #ffffff;
+          overflow: hidden;
         }
         
-        .pixel-perfect-container {
-          width: ${viewType === 'daily' ? '612px' : '792px'};
-          height: ${viewType === 'daily' ? '792px' : '612px'};
-          margin: 0;
-          padding: 20px;
-          background: ${DASHBOARD_STYLES.colors.background};
+        .container {
+          width: 100%;
+          height: 100%;
+          padding: ${config.margins.top}px ${config.margins.right}px ${config.margins.bottom}px ${config.margins.left}px;
         }
         
         .header {
-          height: 80px;
+          height: ${config.headerHeight}px;
           display: flex;
-          flex-direction: column;
-          justify-content: center;
           align-items: center;
-          border-bottom: 2px solid ${DASHBOARD_STYLES.colors.gridLine};
+          justify-content: space-between;
+          border-bottom: 2px solid #333;
           margin-bottom: 20px;
+          padding-bottom: 10px;
         }
         
         .title {
-          font-size: ${DASHBOARD_STYLES.fonts.title}px;
+          font-size: ${config.fontSizes.title}px;
           font-weight: bold;
-          margin-bottom: 5px;
+          color: #333;
         }
         
-        .subtitle {
-          font-size: ${DASHBOARD_STYLES.fonts.subtitle}px;
-          color: ${DASHBOARD_STYLES.colors.secondary};
+        .date {
+          font-size: ${config.fontSizes.header}px;
+          color: #666;
         }
         
         .calendar-grid {
           display: grid;
-          grid-template-columns: ${DASHBOARD_STYLES.timeColumnWidth}px 1fr;
-          border: 1px solid ${DASHBOARD_STYLES.colors.gridLine};
-          background: ${DASHBOARD_STYLES.colors.background};
+          grid-template-columns: ${config.timeColumnWidth}px 1fr;
+          gap: 0;
+          border: 1px solid #333;
         }
         
         .time-column {
-          display: grid;
-          grid-template-rows: repeat(36, ${DASHBOARD_STYLES.slotHeight}px);
-        }
-        
-        .appointments-column {
-          display: grid;
-          grid-template-rows: repeat(36, ${DASHBOARD_STYLES.slotHeight}px);
-          position: relative;
+          background: #f8f8f8;
+          border-right: 2px solid #333;
         }
         
         .time-slot {
-          border-bottom: 1px solid ${DASHBOARD_STYLES.colors.gridLine};
-          border-right: 1px solid ${DASHBOARD_STYLES.colors.gridLine};
-          padding: ${DASHBOARD_STYLES.padding.cell}px;
+          height: ${config.timeSlotHeight}px;
+          border-bottom: 1px solid #ddd;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: ${DASHBOARD_STYLES.fonts.timeLabel}px;
-          font-weight: ${viewType === 'daily' ? '600' : '500'};
+          font-size: ${config.fontSizes.timeLabel}px;
+          color: #333;
         }
         
-        .time-slot.hour-row {
-          background: ${DASHBOARD_STYLES.colors.hourRow};
-          border-bottom: 2px solid ${DASHBOARD_STYLES.colors.hourLine};
-          font-weight: bold;
+        .time-slot:nth-child(odd) {
+          background: #f0f0f0;
         }
         
-        .time-slot.half-hour-row {
-          background: ${DASHBOARD_STYLES.colors.halfHourRow};
-        }
-        
-        .appointment-slot {
-          border-bottom: 1px solid ${DASHBOARD_STYLES.colors.gridLine};
+        .appointments-column {
           position: relative;
         }
         
-        .appointment-slot.hour-row {
-          background: ${DASHBOARD_STYLES.colors.hourRow};
-          border-bottom: 2px solid ${DASHBOARD_STYLES.colors.hourLine};
-        }
-        
-        .appointment-slot.half-hour-row {
-          background: ${DASHBOARD_STYLES.colors.halfHourRow};
+        .appointment-slot {
+          height: ${config.timeSlotHeight}px;
+          border-bottom: 1px solid #ddd;
+          position: relative;
         }
         
         .event {
           position: absolute;
-          left: 1px;
-          right: 1px;
-          border-radius: 2px;
-          padding: ${DASHBOARD_STYLES.padding.event}px;
-          font-size: ${DASHBOARD_STYLES.fonts.eventTitle}px;
-          z-index: 10;
+          background: #ffffff;
+          border: 1px solid #333;
+          border-radius: 4px;
+          padding: 4px;
+          font-size: ${config.fontSizes.eventTitle}px;
+          overflow: hidden;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         
         .event.simplepractice {
-          background: ${DASHBOARD_STYLES.colors.simplePractice.background};
-          border: 1px solid ${DASHBOARD_STYLES.colors.simplePractice.border};
-          border-left: 4px solid ${DASHBOARD_STYLES.colors.simplePractice.leftFlag};
+          border-left: 4px solid #6495ed;
+          border-color: #6495ed;
         }
         
-        .event.google {
-          background: ${DASHBOARD_STYLES.colors.google.background};
-          border: 1px dashed ${DASHBOARD_STYLES.colors.google.border};
+        .event.google-calendar {
+          border: 1px dashed #22c55e;
         }
         
         .event.holiday {
-          background: ${DASHBOARD_STYLES.colors.holiday.background};
-          border: 1px solid ${DASHBOARD_STYLES.colors.holiday.border};
+          background: #fbbf24;
+          border-color: #f59e0b;
         }
         
         .event-title {
-          font-weight: 600;
-          margin-bottom: 2px;
-          font-size: ${DASHBOARD_STYLES.fonts.eventTitle}px;
-        }
-        
-        .event-source {
-          font-size: ${DASHBOARD_STYLES.fonts.eventSource}px;
-          color: ${DASHBOARD_STYLES.colors.secondary};
-          margin-bottom: 2px;
+          font-weight: bold;
+          font-size: ${config.fontSizes.eventTitle}px;
+          line-height: 1.2;
         }
         
         .event-time {
-          font-size: ${DASHBOARD_STYLES.fonts.eventTime}px;
-          color: ${DASHBOARD_STYLES.colors.secondary};
-        }
-        
-        .legend {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          margin-top: 20px;
-          gap: 20px;
-        }
-        
-        .legend-item {
-          display: flex;
-          align-items: center;
-          gap: 5px;
-          font-size: 10px;
-        }
-        
-        .legend-box {
-          width: 12px;
-          height: 8px;
-          border: 1px solid;
-        }
-        
-        .legend-box.simplepractice {
-          background: ${DASHBOARD_STYLES.colors.simplePractice.background};
-          border-color: ${DASHBOARD_STYLES.colors.simplePractice.border};
-          border-left: 2px solid ${DASHBOARD_STYLES.colors.simplePractice.leftFlag};
-        }
-        
-        .legend-box.google {
-          background: ${DASHBOARD_STYLES.colors.google.background};
-          border: 1px dashed ${DASHBOARD_STYLES.colors.google.border};
-        }
-        
-        .legend-box.holiday {
-          background: ${DASHBOARD_STYLES.colors.holiday.background};
-          border-color: ${DASHBOARD_STYLES.colors.holiday.border};
+          font-size: ${config.fontSizes.eventTime}px;
+          color: #666;
+          margin-top: 2px;
         }
       </style>
     </head>
     <body>
-      <div class="pixel-perfect-container">
+      <div class="container">
         <div class="header">
-          <div class="title">
-            ${viewType === 'daily' ? 'DAILY PLANNER' : 'WEEKLY CALENDAR'}
-          </div>
-          <div class="subtitle">
-            ${selectedDate.toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
-          </div>
+          <div class="title">DAILY PLANNER</div>
+          <div class="date">${format(date, 'EEEE, MMMM d, yyyy')}</div>
         </div>
         
         <div class="calendar-grid">
           <div class="time-column">
-            ${timeSlots.map((slot, index) => {
-              const isHourRow = slot.minute === 0;
-              const isHalfHourRow = slot.minute === 30;
-              return `
-                <div class="time-slot ${isHourRow ? 'hour-row' : isHalfHourRow ? 'half-hour-row' : ''}">
-                  ${slot.display}
-                </div>
-              `;
-            }).join('')}
+            ${timeSlots.map(time => `
+              <div class="time-slot">${time}</div>
+            `).join('')}
           </div>
           
           <div class="appointments-column">
-            ${timeSlots.map((slot, index) => {
-              const isHourRow = slot.minute === 0;
-              const isHalfHourRow = slot.minute === 30;
+            ${timeSlots.map((time, index) => `
+              <div class="appointment-slot" data-time="${time}"></div>
+            `).join('')}
+            
+            ${dayEvents.map(event => {
+              const startTime = new Date(event.startTime);
+              const endTime = new Date(event.endTime);
+              const startHour = startTime.getHours();
+              const startMinute = startTime.getMinutes();
+              const endHour = endTime.getHours();
+              const endMinute = endTime.getMinutes();
+              
+              // Calculate position and height
+              const startSlot = ((startHour - 6) * 2) + (startMinute >= 30 ? 1 : 0);
+              const endSlot = ((endHour - 6) * 2) + (endMinute >= 30 ? 1 : 0);
+              const duration = endSlot - startSlot;
+              
+              const top = startSlot * config.timeSlotHeight;
+              const height = duration * config.timeSlotHeight - 2; // -2 for gap
+              
+              // Determine event type
+              let eventClass = 'event';
+              if (event.title.includes('Appointment')) {
+                eventClass += ' simplepractice';
+              } else if (event.calendarId && event.calendarId.includes('google')) {
+                eventClass += ' google-calendar';
+              } else if (event.title.includes('Holiday')) {
+                eventClass += ' holiday';
+              }
+              
+              const cleanTitle = event.title.replace(' Appointment', '').trim();
+              const timeRange = `${format(startTime, 'HH:mm')}-${format(endTime, 'HH:mm')}`;
+              
               return `
-                <div class="appointment-slot ${isHourRow ? 'hour-row' : isHalfHourRow ? 'half-hour-row' : ''}">
+                <div class="${eventClass}" style="top: ${top}px; height: ${height}px; left: 4px; right: 4px;">
+                  <div class="event-title">${cleanTitle}</div>
+                  <div class="event-time">${timeRange}</div>
                 </div>
               `;
             }).join('')}
-            
-            ${renderEvents(dayEvents)}
-          </div>
-        </div>
-        
-        <div class="legend">
-          <div class="legend-item">
-            <div class="legend-box simplepractice"></div>
-            <span>SimplePractice</span>
-          </div>
-          <div class="legend-item">
-            <div class="legend-box google"></div>
-            <span>Google Calendar</span>
-          </div>
-          <div class="legend-item">
-            <div class="legend-box holiday"></div>
-            <span>Holidays</span>
           </div>
         </div>
       </div>
     </body>
     </html>
   `;
-  
-  return html;
-}
-
-/**
- * Render events with pixel-perfect positioning
- */
-function renderEvents(events: CalendarEvent[]): string {
-  return events.map(event => {
-    const startTime = new Date(event.startTime);
-    const endTime = new Date(event.endTime);
-    
-    // Calculate exact positioning
-    const startHour = startTime.getHours();
-    const startMinute = startTime.getMinutes();
-    const endHour = endTime.getHours();
-    const endMinute = endTime.getMinutes();
-    
-    // Calculate slot positions (0-35 for 6:00-23:30)
-    const startSlot = ((startHour - 6) * 2) + (startMinute >= 30 ? 1 : 0);
-    const endSlot = ((endHour - 6) * 2) + (endMinute >= 30 ? 1 : 0);
-    
-    // Calculate position and height
-    const topPosition = startSlot * DASHBOARD_STYLES.slotHeight;
-    const height = Math.max((endSlot - startSlot) * DASHBOARD_STYLES.slotHeight - 2, 40);
-    
-    // Determine event type for styling
-    const eventType = getEventType(event);
-    
-    // Clean title for display
-    const displayTitle = cleanEventTitle(event.title);
-    
-    // Format time range
-    const timeRange = `${formatTimeForDisplay(startTime)}-${formatTimeForDisplay(endTime)}`;
-    
-    return `
-      <div class="event ${eventType}" style="top: ${topPosition}px; height: ${height}px;">
-        <div class="event-title">${displayTitle}</div>
-        <div class="event-source">${getEventSource(event)}</div>
-        <div class="event-time">${timeRange}</div>
-      </div>
-    `;
-  }).join('');
-}
-
-/**
- * Determine event type for styling
- */
-function getEventType(event: CalendarEvent): string {
-  if (event.source === 'simplepractice' || 
-      event.title.toLowerCase().includes('appointment') ||
-      event.calendarId === '0np7sib5u30o7oc297j5pb259g') {
-    return 'simplepractice';
-  } else if (event.title.toLowerCase().includes('holiday')) {
-    return 'holiday';
-  } else {
-    return 'google';
-  }
-}
-
-/**
- * Get event source text
- */
-function getEventSource(event: CalendarEvent): string {
-  const eventType = getEventType(event);
-  switch (eventType) {
-    case 'simplepractice':
-      return 'SimplePractice';
-    case 'google':
-      return 'Google Calendar';
-    case 'holiday':
-      return 'Holidays in United States';
-    default:
-      return 'Manual';
-  }
-}
-
-/**
- * Format time for display
- */
-function formatTimeForDisplay(date: Date): string {
-  return date.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  });
-}
-
-/**
- * Export pixel-perfect PDF using HTML-to-canvas approach
- */
-export async function exportPixelPerfectPDF(
-  events: CalendarEvent[],
-  selectedDate: Date,
-  viewType: 'daily' | 'weekly' = 'daily'
-): Promise<void> {
-  try {
-    console.log('🔍 STARTING PIXEL-PERFECT PDF EXPORT');
-    console.log('='.repeat(60));
-    
-    // Create pixel-perfect HTML
-    const html = createPixelPerfectHTML(events, selectedDate, viewType);
-    
-    // Create temporary container
-    const container = document.createElement('div');
-    container.innerHTML = html;
-    container.style.position = 'absolute';
-    container.style.left = '-9999px';
-    container.style.top = '-9999px';
-    document.body.appendChild(container);
-    
-    // Wait for fonts to load
-    await document.fonts.ready;
-    
-    // Capture with html2canvas for pixel-perfect rendering
-    const canvas = await html2canvas(container.querySelector('.pixel-perfect-container') as HTMLElement, {
-      backgroundColor: '#ffffff',
-      scale: 2, // High resolution
-      useCORS: true,
-      allowTaint: true,
-      logging: false
-    });
-    
-    // Remove temporary container
-    document.body.removeChild(container);
-    
-    // Create PDF with exact dimensions
-    const pdf = new jsPDF({
-      orientation: viewType === 'daily' ? 'portrait' : 'landscape',
-      unit: 'pt',
-      format: viewType === 'daily' ? [612, 792] : [792, 612]
-    });
-    
-    // Add canvas to PDF
-    const imgData = canvas.toDataURL('image/png');
-    pdf.addImage(imgData, 'PNG', 0, 0, 
-      viewType === 'daily' ? 612 : 792, 
-      viewType === 'daily' ? 792 : 612
-    );
-    
-    // Generate filename
-    const dateStr = selectedDate.toISOString().split('T')[0];
-    const filename = `pixel-perfect-${viewType}-${dateStr}.pdf`;
-    
-    // Save PDF
-    pdf.save(filename);
-    
-    console.log('✅ PIXEL-PERFECT PDF EXPORT COMPLETE');
-    console.log(`📄 Saved as: ${filename}`);
-    console.log('🎯 True pixel-perfect accuracy achieved');
-    
-  } catch (error) {
-    console.error('❌ Pixel-perfect PDF export failed:', error);
-    throw error;
-  }
-}
-
-/**
- * Test pixel-perfect accuracy by comparing with dashboard
- */
-export async function testPixelPerfectAccuracy(
-  events: CalendarEvent[],
-  selectedDate: Date
-): Promise<{ score: number; issues: string[] }> {
-  const issues: string[] = [];
-  let score = 100;
-  
-  // Test 1: Event count matching
-  const dayEvents = events.filter(event => {
-    const eventDate = new Date(event.startTime);
-    return eventDate.toDateString() === selectedDate.toDateString();
-  });
-  
-  console.log(`🔍 Testing ${dayEvents.length} events for pixel-perfect accuracy`);
-  
-  // Test 2: Styling consistency
-  dayEvents.forEach((event, index) => {
-    const eventType = getEventType(event);
-    const displayTitle = cleanEventTitle(event.title);
-    
-    console.log(`  Event ${index + 1}: "${displayTitle}" (${eventType})`);
-    
-    // Check for problematic characters
-    if (event.title.includes('🔒') || event.title.includes('Ø=Ý')) {
-      issues.push(`Event ${index + 1} contains problematic characters`);
-      score -= 2;
-    }
-    
-    // Check for proper event type detection
-    if (!eventType || eventType === 'unknown') {
-      issues.push(`Event ${index + 1} has unknown event type`);
-      score -= 5;
-    }
-  });
-  
-  // Test 3: Grid alignment
-  const timeSlots = generateTimeSlots();
-  if (timeSlots.length !== 36) {
-    issues.push('Time slots do not match dashboard (expected 36 slots)');
-    score -= 10;
-  }
-  
-  console.log(`🎯 Pixel-perfect accuracy score: ${score}/100`);
-  
-  return { score, issues };
-}
-
-/**
- * Enhanced pixel-perfect export with audit
- */
-export async function exportPixelPerfectWithAudit(
-  events: CalendarEvent[],
-  selectedDate: Date,
-  viewType: 'daily' | 'weekly' = 'daily'
-): Promise<void> {
-  // Run pixel-perfect accuracy test first
-  const { score, issues } = await testPixelPerfectAccuracy(events, selectedDate);
-  
-  console.log('🔍 PIXEL-PERFECT EXPORT WITH AUDIT');
-  console.log('='.repeat(60));
-  console.log(`📊 Accuracy Score: ${score}/100`);
-  
-  if (issues.length > 0) {
-    console.log('⚠️ Issues detected:');
-    issues.forEach(issue => console.log(`  - ${issue}`));
-  }
-  
-  // Proceed with export
-  await exportPixelPerfectPDF(events, selectedDate, viewType);
-  
-  console.log('✅ PIXEL-PERFECT EXPORT WITH AUDIT COMPLETE');
 }

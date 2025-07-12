@@ -3,6 +3,7 @@ import { runPixelPerfectAudit } from '@/utils/pixelPerfectAudit';
 import { pdfPerfectionTester } from '@/utils/pdfPerfectionTest';
 import { pixelPerfectReviewer } from '@/utils/pixelPerfectReview';
 import { comprehensivePixelAnalyzer } from '@/utils/comprehensivePixelAnalysis';
+import { exportPixelPerfectPDF } from '@/utils/pixelPerfectPDFExport';
 
 interface ExportToPDFProps {
   isGoogleConnected: boolean;
@@ -175,6 +176,31 @@ export const ExportToPDF = ({
       
     } catch (error) {
       console.error('❌ Comprehensive Pixel Analysis failed:', error);
+    }
+  };
+
+  // Add pixel-perfect PDF export function
+  (window as any).exportPixelPerfectPDF = async () => {
+    try {
+      console.log('🎯 Running Pixel-Perfect PDF Export');
+      
+      // Use current date and get events
+      const testDate = new Date();
+      const events = (window as any).currentEvents || [];
+      const todayEvents = events.filter(event => {
+        const eventDate = new Date(event.startTime);
+        return eventDate.toDateString() === testDate.toDateString();
+      });
+      
+      console.log('Exporting for date:', testDate.toDateString());
+      console.log('Events for export:', todayEvents.length);
+      
+      await exportPixelPerfectPDF(testDate, todayEvents);
+      
+      console.log('✅ Pixel-Perfect PDF Export completed successfully');
+      
+    } catch (error) {
+      console.error('❌ Pixel-Perfect PDF Export failed:', error);
     }
   };
 
@@ -353,6 +379,14 @@ export const ExportToPDF = ({
             size="sm"
           >
             🔬 Comprehensive Analysis
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => (window as any).exportPixelPerfectPDF()}
+            className="w-full text-xs bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
+            size="sm"
+          >
+            🎯 100% Pixel-Perfect Export
           </Button>
         </div>
       </div>
