@@ -1,62 +1,53 @@
-import { TimeSlot } from '../types/calendar';
+/**
+ * Time slot generation utility for consistent time grid creation
+ */
 
-export const generateTimeSlots = (): TimeSlot[] => {
-  const timeSlots: TimeSlot[] = [];
+export function generateTimeSlots(): string[] {
+  const timeSlots: string[] = [];
   
-  // Generate working hours from 06:00 to 23:30
+  // Generate time slots from 06:00 to 23:30 in 30-minute increments
   for (let hour = 6; hour <= 23; hour++) {
-    for (let minute = 0; minute < 60; minute += 30) {
-      // Include 23:30 as the last slot
-      const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-      timeSlots.push({
-        time: timeString,
-        hour,
-        minute
-      });
-      
-      // Stop after 23:30
-      if (hour === 23 && minute === 30) {
-        break;
-      }
+    // Add the top of the hour (e.g., 06:00, 07:00, etc.)
+    timeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
+    
+    // Add the half hour (e.g., 06:30, 07:30, etc.)
+    if (hour < 23) { // Don't add 23:30 as the last slot
+      timeSlots.push(`${hour.toString().padStart(2, '0')}:30`);
     }
   }
   
+  // Add the final 23:30 slot
+  timeSlots.push('23:30');
+  
   return timeSlots;
-};
+}
 
-export const formatTime = (date: Date): string => {
-  return date.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  });
-};
-
-export const formatTime12Hour = (date: Date): string => {
-  return date.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
-  });
-};
-
-export const getTimeSlotIndex = (time: string): number => {
+export function getTimeSlotIndex(time: string): number {
   const timeSlots = generateTimeSlots();
-  return timeSlots.findIndex(slot => slot.time === time);
-};
+  return timeSlots.indexOf(time);
+}
 
-export const isEventInTimeSlot = (event: { startTime: Date; endTime: Date }, timeSlot: TimeSlot): boolean => {
-  const slotStart = new Date(event.startTime);
-  slotStart.setHours(timeSlot.hour, timeSlot.minute, 0, 0);
+export function calculateSlotPosition(startTime: Date, endTime: Date): { startSlot: number; endSlot: number } {
+  const startHour = startTime.getHours();
+  const startMinute = startTime.getMinutes();
+  const endHour = endTime.getHours();
+  const endMinute = endTime.getMinutes();
   
-  const slotEnd = new Date(slotStart);
-  slotEnd.setMinutes(slotStart.getMinutes() + 30);
+  // Calculate slot positions (each hour has 2 slots: :00 and :30)
+  const startSlot = ((startHour - 6) * 2) + (startMinute >= 30 ? 1 : 0);
+  const endSlot = ((endHour - 6) * 2) + (endMinute >= 30 ? 1 : 0);
   
-  return event.startTime < slotEnd && event.endTime > slotStart;
-};
+  return { startSlot, endSlot };
+}
 
-export const getEventDurationInSlots = (event: { startTime: Date; endTime: Date }): number => {
-  const durationMs = event.endTime.getTime() - event.startTime.getTime();
-  const durationMinutes = durationMs / (1000 * 60);
-  return Math.ceil(durationMinutes / 30);
-};
+export function formatTimeRange(startTime: Date, endTime: Date): string {
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: false 
+    });
+  };
+  
+  return `${formatTime(startTime)} - ${formatTime(endTime)}`;
+}

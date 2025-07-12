@@ -1,454 +1,360 @@
 /**
- * Pixel-Perfect PDF Export System
- * Uses exact dashboard measurements for 100% accuracy
+ * 100% Pixel-Perfect PDF Export System
+ * Uses exact dashboard measurements for perfect visual matching
  */
 
-import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { CalendarEvent } from '../types/calendar';
-import { format } from 'date-fns';
+import { pixelPerfectAuditSystem } from './pixelPerfectAuditSystem';
+import { cleanEventTitle } from './titleCleaner';
+import { generateTimeSlots } from './timeSlots';
 
-interface DashboardMeasurements {
-  timeColumnWidth: number;
-  dayColumnWidth: number;
-  timeSlotHeight: number;
-  headerHeight: number;
-  scalingFactor: number;
-}
-
-interface PDFConfig {
-  pageWidth: number;
-  pageHeight: number;
-  margins: { top: number; right: number; bottom: number; left: number };
-  timeColumnWidth: number;
-  dayColumnWidth: number;
-  timeSlotHeight: number;
-  headerHeight: number;
-  fontSizes: {
-    title: number;
-    header: number;
-    timeLabel: number;
-    eventTitle: number;
-    eventTime: number;
-  };
-}
-
-export async function exportPixelPerfectPDF(
-  date: Date,
-  events: CalendarEvent[]
-): Promise<void> {
+export const export100PercentPixelPerfectPDF = async (
+  weekStartDate: Date,
+  weekEndDate: Date,
+  events: CalendarEvent[] = []
+): Promise<void> => {
   try {
-    console.log('🎯 Starting Pixel-Perfect PDF Export');
-    console.log('📅 Date:', format(date, 'yyyy-MM-dd'));
-    console.log('📊 Events:', events.length);
-
+    console.log('🎯 Creating 100% pixel-perfect PDF export...');
+    
     // Extract exact dashboard measurements
-    const dashboardMeasurements = await extractDashboardMeasurements();
-    console.log('📏 Dashboard measurements:', dashboardMeasurements);
+    const measurements = await pixelPerfectAuditSystem.extractDashboardMeasurements();
+    const config = pixelPerfectAuditSystem.generatePixelPerfectConfig();
     
-    // Calculate PDF configuration based on dashboard
-    const pdfConfig = calculatePDFConfig(dashboardMeasurements);
-    console.log('📐 PDF configuration:', pdfConfig);
+    console.log('📏 Using exact dashboard measurements:', measurements);
     
-    // Generate pixel-perfect HTML
-    const html = generatePixelPerfectHTML(date, events, pdfConfig);
-    console.log('✅ Pixel-perfect HTML generated, length:', html.length);
+    // Filter events for the week
+    const weekEvents = filterWeekEvents(events, weekStartDate, weekEndDate);
     
-    // Create temporary container with exact PDF dimensions
-    const container = document.createElement('div');
-    container.innerHTML = html;
-    container.style.position = 'fixed';
-    container.style.left = '0px';
-    container.style.top = '0px';
-    container.style.width = `${pdfConfig.pageWidth}px`;
-    container.style.height = `${pdfConfig.pageHeight}px`;
-    container.style.backgroundColor = '#ffffff';
-    container.style.fontFamily = 'Arial, sans-serif';
-    container.style.zIndex = '9999';
-    container.style.overflow = 'visible';
-    container.style.display = 'block';
-    container.style.visibility = 'visible';
+    // Create PDF with exact dashboard configuration
+    const pdf = new jsPDF({
+      orientation: 'landscape',
+      unit: 'pt',
+      format: [config.pageWidth, config.pageHeight]
+    });
     
-    // Add to document
-    document.body.appendChild(container);
+    // Set font to match dashboard
+    pdf.setFont('helvetica');
     
-    // Wait for rendering and font loading
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    // Draw components with exact measurements
+    drawPixelPerfectHeader(pdf, weekStartDate, weekEndDate, config);
+    drawPixelPerfectLegend(pdf, config);
+    drawPixelPerfectGrid(pdf, config);
+    drawPixelPerfectEvents(pdf, weekEvents, weekStartDate, config);
     
-    // Capture with exact dimensions
-    const canvas = await html2canvas(container, {
-      scale: 2, // Use 2x scaling for better quality
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: '#ffffff',
-      width: pdfConfig.pageWidth,
-      height: pdfConfig.pageHeight,
-      logging: true,
-      foreignObjectRendering: true,
-      onclone: (clonedDoc) => {
-        console.log('📸 html2canvas cloned document successfully');
-        const clonedContainer = clonedDoc.querySelector('div');
-        if (clonedContainer) {
-          console.log('📸 Cloned container found:', clonedContainer.getBoundingClientRect());
-        }
+    // Save with timestamp
+    const fileName = `pixel-perfect-weekly-${formatDate(weekStartDate)}.pdf`;
+    pdf.save(fileName);
+    
+    // Run post-export audit
+    const auditResult = await pixelPerfectAuditSystem.runPixelPerfectAudit(config);
+    console.log(`✅ 100% Pixel-Perfect PDF Export Complete: ${auditResult.score}% accuracy`);
+    
+    // Display audit results
+    displayAuditResults(auditResult);
+    
+  } catch (error) {
+    console.error('❌ 100% Pixel-Perfect PDF export failed:', error);
+    throw error;
+  }
+};
+
+function drawPixelPerfectHeader(pdf: jsPDF, weekStart: Date, weekEnd: Date, config: any): void {
+  // Header background with exact measurements
+  pdf.setFillColor(255, 255, 255);
+  pdf.rect(config.gridStartX, config.margins.page, config.contentWidth, config.headerHeight, 'F');
+  
+  // Title with exact font size
+  pdf.setFontSize(config.fonts.title);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(0, 0, 0);
+  
+  const title = '100% PIXEL-PERFECT WEEKLY CALENDAR';
+  const titleWidth = pdf.getTextWidth(title);
+  const titleX = config.gridStartX + (config.contentWidth - titleWidth) / 2;
+  pdf.text(title, titleX, config.margins.page + 25);
+  
+  // Week info with exact font size
+  pdf.setFontSize(config.fonts.weekInfo);
+  pdf.setFont('helvetica', 'normal');
+  
+  const weekInfo = `${formatDate(weekStart)} - ${formatDate(weekEnd)}`;
+  const weekInfoWidth = pdf.getTextWidth(weekInfo);
+  const weekInfoX = config.gridStartX + (config.contentWidth - weekInfoWidth) / 2;
+  pdf.text(weekInfo, weekInfoX, config.margins.page + 50);
+}
+
+function drawPixelPerfectLegend(pdf: jsPDF, config: any): void {
+  const legendY = config.margins.page + config.headerHeight + 10;
+  
+  // Legend background
+  pdf.setFillColor(248, 249, 250);
+  pdf.rect(config.gridStartX, legendY, config.contentWidth, 35, 'F');
+  
+  // Legend items with exact colors
+  const legendItems = [
+    { label: 'SimplePractice', color: config.colors.simplePractice },
+    { label: 'Google Calendar', color: config.colors.google },
+    { label: 'Holidays', color: config.colors.holiday }
+  ];
+  
+  pdf.setFontSize(12);
+  pdf.setFont('helvetica', 'normal');
+  
+  const itemSpacing = config.contentWidth / legendItems.length;
+  
+  legendItems.forEach((item, index) => {
+    const itemX = config.gridStartX + (index * itemSpacing) + 20;
+    const itemY = legendY + 20;
+    
+    // Color indicator with exact colors
+    pdf.setFillColor(item.color);
+    pdf.rect(itemX, itemY - 8, 12, 8, 'F');
+    
+    // Label
+    pdf.setTextColor(0, 0, 0);
+    pdf.text(item.label, itemX + 18, itemY);
+  });
+}
+
+function drawPixelPerfectGrid(pdf: jsPDF, config: any): void {
+  const timeSlots = generateTimeSlots();
+  
+  // Grid background
+  pdf.setFillColor(255, 255, 255);
+  pdf.rect(config.gridStartX, config.gridStartY, config.totalGridWidth, config.gridHeight, 'F');
+  
+  // Draw time column with exact measurements
+  drawPixelPerfectTimeColumn(pdf, timeSlots, config);
+  
+  // Draw day columns with exact measurements
+  drawPixelPerfectDayColumns(pdf, config);
+  
+  // Draw grid lines with exact measurements
+  drawPixelPerfectGridLines(pdf, timeSlots, config);
+}
+
+function drawPixelPerfectTimeColumn(pdf: jsPDF, timeSlots: string[], config: any): void {
+  // Time column background
+  pdf.setFillColor(248, 249, 250);
+  pdf.rect(config.gridStartX, config.gridStartY, config.timeColumnWidth, config.gridHeight, 'F');
+  
+  // Time labels with exact font sizes
+  pdf.setTextColor(0, 0, 0);
+  
+  timeSlots.forEach((timeSlot, index) => {
+    const y = config.gridStartY + (index * config.timeSlotHeight) + (config.timeSlotHeight / 2) + 4;
+    const isHour = timeSlot.endsWith(':00');
+    
+    // Use exact dashboard font sizes
+    pdf.setFontSize(isHour ? config.fonts.timeHour : config.fonts.timeHalf);
+    pdf.setFont('helvetica', isHour ? 'bold' : 'normal');
+    
+    // Right-align time labels
+    const timeWidth = pdf.getTextWidth(timeSlot);
+    const timeX = config.gridStartX + config.timeColumnWidth - timeWidth - 10;
+    pdf.text(timeSlot, timeX, y);
+  });
+}
+
+function drawPixelPerfectDayColumns(pdf: jsPDF, config: any): void {
+  const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+  
+  days.forEach((day, index) => {
+    const dayX = config.gridStartX + config.timeColumnWidth + (index * config.dayColumnWidth);
+    
+    // Day header background
+    pdf.setFillColor(240, 240, 240);
+    pdf.rect(dayX, config.gridStartY - 30, config.dayColumnWidth, 30, 'F');
+    
+    // Day header text with exact font size
+    pdf.setFontSize(config.fonts.dayHeader);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(0, 0, 0);
+    
+    const dayWidth = pdf.getTextWidth(day);
+    const dayTextX = dayX + (config.dayColumnWidth - dayWidth) / 2;
+    pdf.text(day, dayTextX, config.gridStartY - 10);
+  });
+}
+
+function drawPixelPerfectGridLines(pdf: jsPDF, timeSlots: string[], config: any): void {
+  // Set exact grid line width
+  pdf.setLineWidth(config.borderWidths.grid);
+  pdf.setDrawColor(229, 231, 235);
+  
+  // Horizontal lines (time slots)
+  timeSlots.forEach((_, index) => {
+    const y = config.gridStartY + (index * config.timeSlotHeight);
+    pdf.line(config.gridStartX, y, config.gridStartX + config.totalGridWidth, y);
+  });
+  
+  // Vertical lines (day columns)
+  for (let i = 0; i <= 8; i++) {
+    const x = config.gridStartX + (i === 0 ? 0 : config.timeColumnWidth + ((i - 1) * config.dayColumnWidth));
+    pdf.line(x, config.gridStartY, x, config.gridStartY + config.gridHeight);
+  }
+}
+
+function drawPixelPerfectEvents(pdf: jsPDF, events: CalendarEvent[], weekStart: Date, config: any): void {
+  events.forEach(event => {
+    if (!event.startTime || !event.endTime) return;
+    
+    const eventStart = new Date(event.startTime);
+    const eventEnd = new Date(event.endTime);
+    
+    // Calculate position with exact measurements
+    const dayIndex = Math.floor((eventStart.getTime() - weekStart.getTime()) / (24 * 60 * 60 * 1000));
+    if (dayIndex < 0 || dayIndex > 6) return;
+    
+    const startHour = eventStart.getHours();
+    const startMinute = eventStart.getMinutes();
+    const endHour = eventEnd.getHours();
+    const endMinute = eventEnd.getMinutes();
+    
+    // Calculate slot positions
+    const startSlot = ((startHour - 6) * 2) + (startMinute >= 30 ? 1 : 0);
+    const endSlot = ((endHour - 6) * 2) + (endMinute >= 30 ? 1 : 0);
+    
+    if (startSlot < 0 || endSlot < 0) return;
+    
+    // Calculate dimensions with exact measurements
+    const eventX = config.gridStartX + config.timeColumnWidth + (dayIndex * config.dayColumnWidth) + config.margins.cell;
+    const eventY = config.gridStartY + (startSlot * config.timeSlotHeight) + config.margins.cell;
+    const eventWidth = config.dayColumnWidth - (config.margins.cell * 2);
+    const eventHeight = Math.max(config.timeSlotHeight - (config.margins.cell * 2), (endSlot - startSlot) * config.timeSlotHeight - (config.margins.cell * 2));
+    
+    // Draw event background with exact colors
+    const eventColor = getPixelPerfectEventColor(event.source, config);
+    pdf.setFillColor(eventColor.r, eventColor.g, eventColor.b);
+    pdf.rect(eventX, eventY, eventWidth, eventHeight, 'F');
+    
+    // Draw event border with exact width
+    pdf.setLineWidth(config.borderWidths.event);
+    pdf.setDrawColor(eventColor.r * 0.8, eventColor.g * 0.8, eventColor.b * 0.8);
+    pdf.rect(eventX, eventY, eventWidth, eventHeight, 'S');
+    
+    // Draw event text with exact font sizes
+    pdf.setFontSize(config.fonts.eventTitle);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(0, 0, 0);
+    
+    const cleanTitle = cleanEventTitle(event.title || '');
+    const titleLines = wrapTextPixelPerfect(pdf, cleanTitle, eventWidth - (config.margins.text * 2));
+    
+    titleLines.forEach((line, index) => {
+      if (index < 3) { // Limit to 3 lines
+        pdf.text(line, eventX + config.margins.text, eventY + 12 + (index * 12));
       }
     });
     
-    console.log('✅ Canvas captured:', canvas.width, 'x', canvas.height);
-    
-    // Remove temporary container
-    document.body.removeChild(container);
-    
-    // Create PDF with exact dimensions
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'pt',
-      format: [pdfConfig.pageWidth, pdfConfig.pageHeight],
-      compress: false
-    });
-    
-    // Add image with proper scaling compensation
-    const imgData = canvas.toDataURL('image/png', 1.0);
-    const actualWidth = canvas.width;
-    const actualHeight = canvas.height;
-    
-    // Calculate scaling to fit PDF page exactly
-    const scaleX = pdfConfig.pageWidth / actualWidth;
-    const scaleY = pdfConfig.pageHeight / actualHeight;
-    const scale = Math.min(scaleX, scaleY);
-    
-    const finalWidth = actualWidth * scale;
-    const finalHeight = actualHeight * scale;
-    
-    // Center the image on the page
-    const x = (pdfConfig.pageWidth - finalWidth) / 2;
-    const y = (pdfConfig.pageHeight - finalHeight) / 2;
-    
-    console.log('📐 PDF image scaling:', {
-      canvasSize: `${actualWidth}x${actualHeight}`,
-      pdfPageSize: `${pdfConfig.pageWidth}x${pdfConfig.pageHeight}`,
-      scale,
-      finalSize: `${finalWidth}x${finalHeight}`,
-      position: `${x}, ${y}`
-    });
-    
-    pdf.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight);
-    
-    // Save PDF
-    const filename = `Pixel_Perfect_Daily_${format(date, 'yyyy-MM-dd')}.pdf`;
-    pdf.save(filename);
-    
-    console.log('✅ Pixel-perfect PDF exported successfully:', filename);
-    
-  } catch (error) {
-    console.error('❌ Pixel-perfect PDF export failed:', error);
-    throw new Error(`Pixel-perfect PDF export failed: ${error.message}`);
-  }
-}
-
-async function extractDashboardMeasurements(): Promise<DashboardMeasurements> {
-  console.log('📏 Extracting dashboard measurements...');
-  
-  // Try multiple selectors to find calendar elements
-  const calendarSelectors = [
-    '.calendar-container',
-    '.weekly-calendar-grid',
-    '.daily-view',
-    'main',
-    '.content'
-  ];
-  
-  let calendarContainer: Element | null = null;
-  for (const selector of calendarSelectors) {
-    calendarContainer = document.querySelector(selector);
-    if (calendarContainer) {
-      console.log(`📍 Found calendar container: ${selector}`);
-      break;
+    // Draw event time with exact font size
+    if (titleLines.length < 3) {
+      pdf.setFontSize(config.fonts.eventTime);
+      pdf.setFont('helvetica', 'normal');
+      const timeStr = `${formatTime(eventStart)} - ${formatTime(eventEnd)}`;
+      pdf.text(timeStr, eventX + config.margins.text, eventY + eventHeight - 8);
     }
-  }
-  
-  if (!calendarContainer) {
-    console.warn('⚠️ Using document body as container');
-    calendarContainer = document.body;
-  }
-  
-  // Extract measurements with fallbacks
-  const timeColumnSelectors = ['.time-column', '[class*="time"]'];
-  let timeColumn: Element | null = null;
-  for (const selector of timeColumnSelectors) {
-    timeColumn = calendarContainer.querySelector(selector);
-    if (timeColumn) break;
-  }
-  const timeColumnWidth = timeColumn?.getBoundingClientRect().width || 80;
-  
-  const dayColumnSelectors = ['.day-column', '[class*="day"]'];
-  const dayColumns = calendarContainer.querySelectorAll(dayColumnSelectors.join(','));
-  const dayColumnWidth = dayColumns.length > 0 ? 
-    dayColumns[0].getBoundingClientRect().width : 137;
-  
-  const timeSlotSelectors = ['.time-slot', '[class*="slot"]'];
-  const timeSlots = calendarContainer.querySelectorAll(timeSlotSelectors.join(','));
-  const timeSlotHeight = timeSlots.length > 0 ?
-    timeSlots[0].getBoundingClientRect().height : 40;
-  
-  const headerSelectors = ['.calendar-header', '[class*="header"]'];
-  let header: Element | null = null;
-  for (const selector of headerSelectors) {
-    header = calendarContainer.querySelector(selector);
-    if (header) break;
-  }
-  const headerHeight = header?.getBoundingClientRect().height || 50;
-  
-  // Calculate scaling factor based on 8.5x11 page
-  const pageWidth = 612;
-  const margins = 40;
-  const availableWidth = pageWidth - (margins * 2);
-  const dashboardTotalWidth = timeColumnWidth + (dayColumnWidth * 7);
-  const scalingFactor = dashboardTotalWidth > 0 ? availableWidth / dashboardTotalWidth : 1;
-  
-  console.log('📐 Scaling calculation:', {
-    pageWidth,
-    margins,
-    availableWidth,
-    timeColumnWidth,
-    dayColumnWidth,
-    dashboardTotalWidth,
-    scalingFactor
   });
-  
-  return {
-    timeColumnWidth,
-    dayColumnWidth,
-    timeSlotHeight,
-    headerHeight,
-    scalingFactor
-  };
 }
 
-function calculatePDFConfig(dashboard: DashboardMeasurements): PDFConfig {
-  console.log('📐 Calculating PDF configuration...');
-  
-  // Standard PDF dimensions
-  const pageWidth = 612;
-  const pageHeight = 792;
-  const margins = { top: 40, right: 40, bottom: 40, left: 40 };
-  
-  // Apply consistent scaling factor to all elements
-  const timeColumnWidth = dashboard.timeColumnWidth * dashboard.scalingFactor;
-  const dayColumnWidth = dashboard.dayColumnWidth * dashboard.scalingFactor;
-  const timeSlotHeight = dashboard.timeSlotHeight * dashboard.scalingFactor;
-  const headerHeight = dashboard.headerHeight * dashboard.scalingFactor;
-  
-  // Calculate font sizes proportional to scaling but with minimum readable sizes
-  const baseFontScale = Math.max(dashboard.scalingFactor, 0.7); // Minimum scale factor
-  const fontSizes = {
-    title: Math.max(Math.round(20 * baseFontScale), 14),
-    header: Math.max(Math.round(16 * baseFontScale), 12),
-    timeLabel: Math.max(Math.round(12 * baseFontScale), 10),
-    eventTitle: Math.max(Math.round(14 * baseFontScale), 11),
-    eventTime: Math.max(Math.round(12 * baseFontScale), 10)
+function getPixelPerfectEventColor(source: string, config: any): { r: number; g: number; b: number } {
+  const colorMap = {
+    'simplepractice': hexToRgb(config.colors.simplePractice),
+    'google': hexToRgb(config.colors.google),
+    'manual': hexToRgb(config.colors.holiday),
+    'default': { r: 156, g: 163, b: 175 }
   };
   
-  console.log('🔤 Calculated font sizes:', fontSizes);
-  console.log('📏 Scaled dimensions:', {
-    timeColumnWidth,
-    dayColumnWidth,
-    timeSlotHeight,
-    headerHeight
-  });
-  
-  return {
-    pageWidth,
-    pageHeight,
-    margins,
-    timeColumnWidth,
-    dayColumnWidth,
-    timeSlotHeight,
-    headerHeight,
-    fontSizes
-  };
+  return colorMap[source] || colorMap.default;
 }
 
-function generatePixelPerfectHTML(
-  date: Date,
-  events: CalendarEvent[],
-  config: PDFConfig
-): string {
-  console.log('🎨 Generating pixel-perfect HTML...');
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : { r: 0, g: 0, b: 0 };
+}
+
+function wrapTextPixelPerfect(pdf: jsPDF, text: string, maxWidth: number): string[] {
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let currentLine = '';
   
-  // Filter events for the specific date
-  const dayEvents = events.filter(event => {
-    const eventDate = new Date(event.start_time);
-    return eventDate.toDateString() === date.toDateString();
-  });
-  
-  console.log(`📅 Events for ${date.toDateString()}: ${dayEvents.length}`);
-  
-  // Calculate time slots (6:00 to 23:30)
-  const timeSlots = [];
-  for (let hour = 6; hour <= 23; hour++) {
-    timeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
-    if (hour < 23) {
-      timeSlots.push(`${hour.toString().padStart(2, '0')}:30`);
+  words.forEach(word => {
+    const testLine = currentLine + (currentLine ? ' ' : '') + word;
+    const testWidth = pdf.getTextWidth(testLine);
+    
+    if (testWidth > maxWidth && currentLine) {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = testLine;
     }
+  });
+  
+  if (currentLine) {
+    lines.push(currentLine);
   }
-  timeSlots.push('23:30');
   
-  // Generate simple HTML structure
-  const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
-  const monthDay = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-  const year = date.getFullYear();
-  
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <style>
-        body {
-          font-family: Arial, sans-serif;
-          width: ${config.pageWidth}px;
-          height: ${config.pageHeight}px;
-          margin: 0;
-          padding: 20px;
-          background: white;
-          box-sizing: border-box;
-        }
-        
-        .header {
-          text-align: center;
-          border-bottom: 2px solid #333;
-          padding-bottom: 15px;
-          margin-bottom: 20px;
-        }
-        
-        .title {
-          font-size: ${config.fontSizes.title}px;
-          font-weight: bold;
-          margin-bottom: 5px;
-        }
-        
-        .date {
-          font-size: ${config.fontSizes.header}px;
-          color: #666;
-        }
-        
-        .time-grid {
-          display: grid;
-          grid-template-columns: 60px 1fr;
-          gap: 0;
-          border: 1px solid #333;
-          height: 600px;
-        }
-        
-        .time-column {
-          background: #f5f5f5;
-          border-right: 2px solid #333;
-        }
-        
-        .time-slot {
-          height: 17px;
-          border-bottom: 1px solid #ddd;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: ${config.fontSizes.timeLabel}px;
-          padding: 2px;
-        }
-        
-        .appointments-column {
-          position: relative;
-          background: white;
-        }
-        
-        .appointment {
-          position: absolute;
-          background: white;
-          border: 1px solid #666;
-          border-radius: 3px;
-          padding: 3px;
-          font-size: 10px;
-          overflow: hidden;
-          left: 2px;
-          right: 2px;
-        }
-        
-        .appointment.simplepractice {
-          border-left: 3px solid #6495ed;
-        }
-        
-        .appointment.google {
-          border: 1px dashed #22c55e;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="header">
-        <div class="title">DAILY PLANNER</div>
-        <div class="date">${dayName}, ${monthDay}, ${year}</div>
-      </div>
+  return lines;
+}
+
+function filterWeekEvents(events: CalendarEvent[], weekStart: Date, weekEnd: Date): CalendarEvent[] {
+  return (events || []).filter(event => {
+    if (!event?.startTime || !event?.endTime) return false;
+    
+    try {
+      const eventDate = new Date(event.startTime);
+      if (isNaN(eventDate.getTime())) return false;
       
-      <div class="time-grid">
-        <div class="time-column">
-          ${generateTimeSlots(config)}
-        </div>
-        <div class="appointments-column">
-          ${generateAppointments(dayEvents, config)}
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
-            ${timeSlots.map(time => `
-              <div class="time-slot">${time}</div>
-            `).join('')}
-          </div>
-          
-          <div class="appointments-column">
-            ${timeSlots.map((time, index) => `
-              <div class="appointment-slot" data-time="${time}"></div>
-            `).join('')}
-            
-            ${dayEvents.map(event => {
-              const startTime = new Date(event.startTime);
-              const endTime = new Date(event.endTime);
-              const startHour = startTime.getHours();
-              const startMinute = startTime.getMinutes();
-              const endHour = endTime.getHours();
-              const endMinute = endTime.getMinutes();
-              
-              // Calculate position and height
-              const startSlot = ((startHour - 6) * 2) + (startMinute >= 30 ? 1 : 0);
-              const endSlot = ((endHour - 6) * 2) + (endMinute >= 30 ? 1 : 0);
-              const duration = Math.max(endSlot - startSlot, 1); // Minimum 1 slot
-              
-              const top = startSlot * config.timeSlotHeight;
-              const height = Math.max(duration * config.timeSlotHeight - 2, config.timeSlotHeight - 2); // Minimum height
-              
-              // Determine event type
-              let eventClass = 'event';
-              if (event.title.includes('Appointment')) {
-                eventClass += ' simplepractice';
-              } else if (event.calendarId && event.calendarId.includes('google')) {
-                eventClass += ' google-calendar';
-              } else if (event.title.includes('Holiday')) {
-                eventClass += ' holiday';
-              }
-              
-              const cleanTitle = event.title.replace(' Appointment', '').trim();
-              const timeRange = `${format(startTime, 'HH:mm')}-${format(endTime, 'HH:mm')}`;
-              
-              return `
-                <div class="${eventClass}" style="top: ${top}px; height: ${height}px; left: 4px; right: 4px;">
-                  <div class="event-title">${cleanTitle}</div>
-                  <div class="event-time">${timeRange}</div>
-                </div>
-              `;
-            }).join('')}
-          </div>
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
+      return eventDate >= weekStart && eventDate <= weekEnd;
+    } catch (error) {
+      console.warn('Error filtering event:', event, error);
+      return false;
+    }
+  });
+}
+
+function formatDate(date: Date): string {
+  return date.toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric' 
+  });
+}
+
+function formatTime(date: Date): string {
+  return date.toLocaleTimeString('en-US', { 
+    hour: '2-digit', 
+    minute: '2-digit',
+    hour12: false 
+  });
+}
+
+function displayAuditResults(auditResult: any): void {
+  console.log('🎯 100% PIXEL-PERFECT AUDIT RESULTS:');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log(`📊 Pixel-Perfect Score: ${auditResult.score}%`);
+  console.log(`🔍 Inconsistencies Found: ${auditResult.inconsistencies.length}`);
+  console.log(`📅 Timestamp: ${auditResult.timestamp.toLocaleString()}`);
+  
+  if (auditResult.inconsistencies.length > 0) {
+    console.log('');
+    console.log('🚨 INCONSISTENCIES TO FIX:');
+    auditResult.inconsistencies.forEach((inc, index) => {
+      const icon = inc.severity === 'CRITICAL' ? '🚨' : inc.severity === 'MAJOR' ? '⚠️' : '💡';
+      console.log(`${icon} ${index + 1}. ${inc.property}: Dashboard(${inc.dashboardValue}) vs PDF(${inc.pdfValue}) - ${inc.fix}`);
+    });
+  }
+  
+  if (auditResult.score === 100) {
+    console.log('🎉 PERFECT SCORE ACHIEVED! 100% pixel-perfect accuracy!');
+  } else {
+    console.log(`🎯 Target: 100% | Current: ${auditResult.score}% | Improvement needed: ${100 - auditResult.score} points`);
+  }
+  
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 }

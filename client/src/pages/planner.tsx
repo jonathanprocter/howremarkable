@@ -15,8 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
 import { LoadingState } from '@/components/common/LoadingState';
 import { generateWeekDays } from '@/utils/dateUtils';
-import { extractDashboardStyles, logStyleComparison } from '@/utils/dashboardStyleExtractor';
-import { runPixelPerfectAudit } from '@/utils/pixelPerfectAudit';
+import { pixelPerfectAuditSystem } from '@/utils/pixelPerfectAuditSystem';
 import { auditSystem, AuditResults } from '@/utils/comprehensiveAuditSystem';
 import { exportExactGridPDF } from '@/utils/exactGridPDFExport';
 import { exportDailyToPDF } from '@/utils/dailyPDFExport';
@@ -27,6 +26,7 @@ import { exportTrulyPixelPerfectWeeklyPDF } from '@/utils/trulyPixelPerfectExpor
 import { exportExactWeeklySpec } from '@/utils/exactWeeklySpecExport';
 import { exportFixedDynamicDailyPlannerPDF } from '@/utils/fixedDynamicDailyPlannerPDF';
 import { exportAuditEnhancedPDF } from '@/utils/auditBasedPDFExport';
+import { export100PercentPixelPerfectPDF } from '@/utils/pixelPerfectPDFExport';
 import { DevLoginButton } from '../components/DevLoginButton';
 
 export default function Planner() {
@@ -255,6 +255,9 @@ export default function Planner() {
         case 'audit-enhanced':
           await exportAuditEnhancedPDF(currentWeek[0]?.date || new Date(), currentWeek[6]?.date || new Date(), allEvents);
           break;
+        case '100-percent-pixel-perfect':
+          await export100PercentPixelPerfectPDF(currentWeek[0]?.date || new Date(), currentWeek[6]?.date || new Date(), allEvents);
+          break;
         default:
           throw new Error('Unknown export type');
       }
@@ -270,7 +273,7 @@ export default function Planner() {
   const handleRunAudit = async () => {
     try {
       toast({ title: 'Running pixel-perfect audit...' });
-      const auditResults = await runPixelPerfectAudit();
+      const auditResults = await pixelPerfectAuditSystem.runPixelPerfectAudit();
       console.log('Audit results:', auditResults);
       toast({ title: 'Audit completed - check console for results' });
     } catch (error) {
@@ -677,6 +680,15 @@ export default function Planner() {
                 <CardTitle className="text-sm">Export Options</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleExportPDF('100-percent-pixel-perfect')}
+                  className="w-full justify-start bg-gradient-to-r from-emerald-100 to-green-100 hover:from-emerald-200 hover:to-green-200 border-emerald-400 text-emerald-900 font-bold"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  🎯 100% Pixel-Perfect Export
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
