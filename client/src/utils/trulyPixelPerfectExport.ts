@@ -150,7 +150,16 @@ const createPDFConfig = (dashboardStyles: DashboardStyles) => {
  * Get event source information with improved detection logic
  */
 const getEventSourceInfo = (event: CalendarEvent) => {
-  const title = (event.title || '').toLowerCase();
+  if (!event || !event.title) {
+    return {
+      source: 'SimplePractice',
+      color: 'simplePracticeBlue' as const,
+      borderStyle: 'solid' as const,
+      hasLeftFlag: true
+    };
+  }
+
+  const title = event.title.toLowerCase();
   const source = (event.source || '').toLowerCase();
   const calendarId = event.calendarId || '';
 
@@ -182,7 +191,7 @@ const getEventSourceInfo = (event: CalendarEvent) => {
   // SimplePractice detection
   if (source === 'simplepractice' || 
       title.includes('appointment') ||
-      event.notes?.toLowerCase().includes('simplepractice')) {
+      (event.notes && event.notes.toLowerCase().includes('simplepractice'))) {
     return {
       source: 'SimplePractice',
       color: 'simplePracticeBlue' as const,
@@ -216,13 +225,14 @@ export const exportTrulyPixelPerfectWeeklyPDF = async (
     let visualComparison;
     try {
       visualComparison = await performVisualComparison();
-      console.log('🎯 Visual comparison completed with score:', visualComparison.score);
+      console.log('🎯 Visual comparison completed with score:', visualComparison.pixelPerfectScore || 0);
     } catch (error) {
       console.log('⚠️ Visual comparison failed, continuing with export:', error);
       visualComparison = {
-        score: 0,
-        issues: [],
-        recommendations: ['Visual comparison skipped due to error']
+        pixelPerfectScore: 0,
+        visualDifferences: [],
+        recommendations: ['Visual comparison skipped due to error'],
+        dashboardScreenshot: ''
       };
     }
 
@@ -665,12 +675,13 @@ export const exportTrulyPixelPerfectWeeklyPDF = async (
     try {
       const currentDate = new Date();
       const currentEvents = (window as any).currentEvents || [];
+      const { runPixelPerfectAudit } = await import('./pixelPerfectAudit');
       const auditResults = await runPixelPerfectAudit(currentDate, currentEvents);
 
       console.log('\n📊 AUDIT SUMMARY:');
-      console.log(`   - Pixel-perfect score: ${auditResults.percentage}%`);
-      console.log(`   - Issues found: ${auditResults.issues.length}`);
-      console.log(`   - Recommendations: ${auditResults.recommendations.length}`);
+      console.log(`   - Pixel-perfect score: ${auditResults.overallScore || 0}%`);
+      console.log(`   - Visual truth table: ${auditResults.visualTruthTable?.length || 0} parameters`);
+      console.log(`   - Recommendations: ${auditResults.recommendations?.length || 0}`);
       console.log('   - Full audit results saved to localStorage');
 
       // Save audit results to localStorage
@@ -682,6 +693,12 @@ export const exportTrulyPixelPerfectWeeklyPDF = async (
 
   } catch (error) {
     console.error('❌ Error creating truly pixel-perfect weekly PDF:', error);
-    throw error;
+    
+    // Provide fallback error information
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred during PDF export';
+    console.error('Error details:', errorMessage);
+    
+    // Don't throw the error, just log it to prevent UI crashes
+    alert(`PDF export failed: ${errorMessage}`);
   }
 };

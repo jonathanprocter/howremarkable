@@ -23,13 +23,13 @@ export interface PixelComparisonResult {
 export const captureDashboardScreenshot = async (): Promise<string> => {
   // Try multiple possible selectors for the calendar container
   const possibleSelectors = [
-    '.calendar-container',
+    '.calendar-grid',
+    '.weekly-view',
     '.daily-view',
-    '.weekly-view', 
+    '.calendar-container',
     '.planner-content',
     '.main-content',
     '[data-testid="calendar-container"]',
-    '.calendar-grid',
     'main',
     '.container'
   ];
@@ -56,14 +56,15 @@ export const captureDashboardScreenshot = async (): Promise<string> => {
       allowTaint: true,
       scale: 1,
       logging: false,
-      width: calendarContainer.scrollWidth,
-      height: calendarContainer.scrollHeight
+      width: Math.max(calendarContainer.scrollWidth, 800),
+      height: Math.max(calendarContainer.scrollHeight, 600)
     });
 
     return canvas.toDataURL('image/png');
   } catch (error) {
     console.error('❌ Failed to capture dashboard screenshot:', error);
-    throw new Error(`Failed to capture dashboard screenshot: ${error}`);
+    // Return empty string instead of throwing to prevent export failure
+    return '';
   }
 };
 
