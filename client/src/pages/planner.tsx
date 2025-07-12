@@ -318,14 +318,37 @@ export default function Planner() {
                   />
                 ) : (
                   <DailyView
-                    date={selectedDate}
+                    selectedDate={selectedDate}
                     events={allEvents.filter(event => {
                       const eventDate = new Date(event.startTime);
                       return eventDate.toDateString() === selectedDate.toDateString();
                     })}
+                    dailyNotes=""
+                    onPreviousDay={() => navigateDay('prev')}
+                    onNextDay={() => navigateDay('next')}
+                    onBackToWeek={() => setViewMode('weekly')}
                     onEventClick={handleEventClick}
-                    onTimeSlotClick={handleTimeSlotClick}
+                    onUpdateEvent={(eventId, updates) => {
+                      updateEventMutation.mutate({ id: eventId, ...updates });
+                    }}
+                    onUpdateDailyNotes={(notes) => {
+                      // Handle daily notes update if needed
+                    }}
                     onEventMove={handleEventMove}
+                    onCreateEvent={(startTime, endTime) => {
+                      const newEvent: Partial<CalendarEvent> = {
+                        title: 'New Event',
+                        startTime,
+                        endTime,
+                        source: 'manual',
+                        color: '#3b82f6',
+                        description: ''
+                      };
+                      createEventMutation.mutate(newEvent);
+                    }}
+                    onDeleteEvent={(eventId) => {
+                      deleteEventMutation.mutate(eventId);
+                    }}
                   />
                 )}
               </CardContent>

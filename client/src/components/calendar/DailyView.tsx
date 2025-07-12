@@ -39,7 +39,7 @@ export const DailyView = ({
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
   const [noteTimers, setNoteTimers] = useState<{[key: string]: NodeJS.Timeout}>({});
 
-  // Get events for the selected date
+  // Get events for the selected date with null checks
   const dayEvents = events.filter(event => {
     if (!event || !event.startTime || !selectedDate) return false;
     try {
@@ -56,6 +56,18 @@ export const DailyView = ({
       return false;
     }
   });
+
+  // Null check for selectedDate before using
+  if (!selectedDate) {
+    console.warn('DailyView: selectedDate is undefined');
+    return (
+      <div className="planner-container daily-planner">
+        <div className="flex items-center justify-center h-64">
+          <p>Loading daily view...</p>
+        </div>
+      </div>
+    );
+  }
 
   console.log(`Daily View - Selected date: ${selectedDate.toDateString()}`);
   console.log(`Daily View - Total events: ${events.length}`);
