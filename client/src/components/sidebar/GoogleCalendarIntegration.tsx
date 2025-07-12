@@ -69,7 +69,7 @@ export const GoogleCalendarIntegration = ({
                 </Button>
               )}
             </div>
-            
+
             {calendars.length > 0 ? (
               <div className="max-h-32 overflow-y-auto space-y-1">
                 {calendars.map((calendar) => (
