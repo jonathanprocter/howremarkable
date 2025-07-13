@@ -348,20 +348,11 @@ html, body {
     height: fit-content;
 }
 
-/* FIXED CALENDAR GRID - SINGLE SOURCE OF TRUTH */
 .calendar-grid {
     display: grid;
-    grid-template-columns: 100px repeat(7, 1fr);
-    grid-template-rows: 50px repeat(36, 30px);
-    background: white;
-    height: fit-content;
-    width: 100%;
-    overflow: visible;
-    margin: 0;
-    padding: 0;
-    border: none;
-    border-bottom: 2px solid black;
-    border-left: 2px solid black;
+    grid-template-columns: 80px repeat(7, 1fr);
+    border: 2px solid black;
+    overflow: hidden;
     box-sizing: border-box;
 }
 
@@ -625,21 +616,14 @@ html, body {
 
 /* Weekly Calendar Grid Layout - Duplicate removed, using main definition above */
 
-/* UNIFIED CALENDAR CELL STYLING */
 .calendar-cell {
-    background: white;
     border-right: 1px solid black;
     border-bottom: 1px solid black;
     padding: 4px;
     text-align: center;
     font-size: 10px;
     font-weight: bold;
-    min-height: 30px;
-    max-height: 30px;
-    height: 30px;
-    box-sizing: border-box;
-    position: relative;
-    cursor: pointer;
+    background: white;
 }
 
 /* Header cells styling */
@@ -1065,9 +1049,6 @@ html, body {
     }
     .calendar-grid {
         font-size: 8px;
-        display: grid;
-        grid-template-columns: 100px repeat(7, 1fr);
-        grid-template-rows: 50px repeat(36, 30px);
     }
     .appointment-name {
         font-size: 5px;
