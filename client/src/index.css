@@ -896,6 +896,7 @@ html, body {
     display: grid;
     grid-template-rows: repeat(36, 60px); /* 36 slots for 6:00-23:30 */
     border-right: 2px solid black;
+    gap: 0;
 }
 
 .time-column .time-slot {
@@ -908,6 +909,8 @@ html, body {
     font-weight: bold;
     background: white;
     box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 .time-column .time-slot.hour {
@@ -920,6 +923,7 @@ html, body {
     display: grid;
     grid-template-rows: repeat(36, 60px); /* 36 slots for 6:00-23:30 */
     position: relative;
+    gap: 0;
 }
 
 .appointments-column .appointment {
@@ -944,6 +948,8 @@ html, body {
     position: relative;
     background: white;
     box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 .appointment-slot.hour {
