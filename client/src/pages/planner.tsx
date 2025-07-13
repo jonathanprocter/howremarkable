@@ -67,16 +67,17 @@ export default function Planner() {
     (window as any).authHookState = { user, isLoading: userLoading };
   }, [refreshAuth, queryClient, user, userLoading]);
 
-  // Initialize simple autonomous auth fix - run immediately and repeatedly
+  // Initialize simple autonomous auth fix - disable immediate check to prevent reload loops
   useEffect(() => {
     const runSimpleAuthCheck = async () => {
       try {
         const { SimpleAuthFix } = await import('@/utils/simpleAuthFix');
         const status = await SimpleAuthFix.testAuthenticationStatus();
         
-        // If not authenticated, try to fix
-        if (!status.isAuthenticated) {
+        // Only attempt fix if not authenticated and no reload has been attempted
+        if (!status.isAuthenticated && !SimpleAuthFix.hasAttemptedFix) {
           console.log('🔍 Authentication desync detected, attempting auto-fix...');
+          SimpleAuthFix.hasAttemptedFix = true;
           await SimpleAuthFix.fixAuthenticationNow();
         }
       } catch (error) {
@@ -84,11 +85,8 @@ export default function Planner() {
       }
     };
     
-    // Start immediately
-    runSimpleAuthCheck();
-    
-    // Run every 10 seconds for autonomous detection
-    const interval = setInterval(runSimpleAuthCheck, 10000);
+    // Run every 60 seconds for autonomous detection (less aggressive)
+    const interval = setInterval(runSimpleAuthCheck, 60000);
     
     return () => clearInterval(interval);
   }, []);
