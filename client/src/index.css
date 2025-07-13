@@ -718,7 +718,7 @@ html, body {
     background: #fafafa;
 }
 
-/* All-day event cells - restore normal borders but force 1px bottom */
+/* All-day event cells - ensure consistent borders with rest of grid */
 .calendar-cell.all-day-header {
     background: white;
     font-weight: bold;
@@ -726,8 +726,9 @@ html, body {
     color: black;
     text-align: center;
     border-bottom: 1px solid black !important; /* Force exactly 1px bottom border */
+    border-right: 2px solid black !important; /* Match TIME column right border */
     padding: 6px 2px;
-    border-right: 2px solid black;
+    box-shadow: none !important; /* Remove any box-shadow remnants */
 }
 
 .calendar-cell.all-day-slot {
@@ -735,6 +736,8 @@ html, body {
     min-height: 40px;
     padding: 4px;
     border-bottom: 1px solid black !important; /* Force exactly 1px bottom border */
+    border-right: 1px solid black !important; /* Consistent with regular grid cells */
+    box-shadow: none !important; /* Remove any box-shadow remnants */
 }
 
 /* Duplicate rules removed - using unified definitions above */
