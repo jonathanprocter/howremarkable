@@ -228,15 +228,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log("Session passport:", req.session.passport);
     console.log("Session cookie:", req.session.cookie);
 
+    const user = req.user as any;
+    const isAuthenticated = !!user;
+    const hasTokens = user && user.accessToken && user.refreshToken;
+    
+    console.log("Has access token:", !!user?.accessToken);
+    console.log("Has refresh token:", !!user?.refreshToken);
+    console.log("Access token preview:", user?.accessToken?.substring(0, 20) + "...");
+
     res.json({ 
-      authenticated: !!req.user,
-      user: req.user || null,
+      isAuthenticated,
+      hasTokens,
+      user: user ? { 
+        id: user.id,
+        email: user.email,
+        displayName: user.displayName,
+        hasAccessToken: !!user.accessToken,
+        hasRefreshToken: !!user.refreshToken,
+        accessTokenPreview: user.accessToken?.substring(0, 20) + "..."
+      } : null,
       debug: {
         sessionId: req.sessionID,
         hasSession: !!req.session,
-        hasPassport: !!req.session.passport
+        hasPassport: !!req.session.passport,
+        cookieSecure: req.session.cookie?.secure,
+        cookieMaxAge: req.session.cookie?.maxAge,
+        cookieDomain: req.session.cookie?.domain
       },
-      note: "To authenticate, visit /api/auth/google to start OAuth flow"
+      recommendations: !isAuthenticated ? [
+        "1. Click 'Force Google Reconnect' to start OAuth flow",
+        "2. Ensure you're logged into Google in this browser",
+        "3. Check if popup blockers are preventing OAuth window"
+      ] : !hasTokens ? [
+        "1. Tokens missing - try reconnecting to Google",
+        "2. Check if OAuth flow completed successfully"
+      ] : [
+        "✅ Authentication appears to be working correctly"
+      ]
     });
   });
 
@@ -588,9 +616,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const calendar = google.calendar({ version: 'v3' });
 
       // Get the calendar list first to fetch from all calendars
-      const calendarListResponse = await calendar.calendarList.list({
-        access_token: user.accessToken
-      });
+      let calendarListResponse;
+      try {
+        calendarListResponse = await calendar.calendarList.list({
+          access_token: user.accessToken
+        });
+      } catch (authError: any) {
+        console.log('❌ Calendar list auth error:', authError.message);
+        
+        // If we get 401, try to refresh the token
+        if (authError.code === 401 && user.refreshToken) {
+          console.log('🔄 Attempting to refresh access token...');
+          try {
+            const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+              },
+              body: new URLSearchParams({
+                client_id: process.env.GOOGLE_CLIENT_ID!,
+                client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+                refresh_token: user.refreshToken,
+                grant_type: 'refresh_token'
+              })
+            });
+
+            if (refreshResponse.ok) {
+              const tokenData = await refreshResponse.json();
+              console.log('✅ Token refreshed successfully');
+              
+              // Update user tokens in session
+              user.accessToken = tokenData.access_token;
+              if (tokenData.refresh_token) {
+                user.refreshToken = tokenData.refresh_token;
+              }
+              
+              // Save updated session
+              req.session.save((err) => {
+                if (err) console.error('Failed to save session:', err);
+              });
+              
+              // Retry the calendar list request
+              calendarListResponse = await calendar.calendarList.list({
+                access_token: user.accessToken
+              });
+              
+              console.log('✅ Calendar list retrieved after token refresh');
+            } else {
+              console.log('❌ Token refresh failed:', await refreshResponse.text());
+              return res.status(401).json({ 
+                error: 'Authentication failed. Please re-authenticate.',
+                needsReauth: true 
+              });
+            }
+          } catch (refreshError) {
+            console.error('❌ Token refresh error:', refreshError);
+            return res.status(401).json({ 
+              error: 'Authentication failed. Please re-authenticate.',
+              needsReauth: true 
+            });
+          }
+        } else {
+          return res.status(401).json({ 
+            error: 'Google Calendar authentication failed - tokens may be expired',
+            needsReauth: true 
+          });
+        }
+      }
 
       const calendars = (calendarListResponse.data.items || []).map(cal => ({
         id: cal.id || 'primary',
@@ -607,14 +699,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           console.log(`🔍 Fetching from calendar: ${cal.name} (${cal.id})`);
           
-          const response = await calendar.events.list({
-            calendarId: cal.id,
-            timeMin: start as string,
-            timeMax: end as string,
-            singleEvents: true,
-            orderBy: 'startTime',
-            access_token: user.accessToken
-          });
+          let response;
+          try {
+            response = await calendar.events.list({
+              calendarId: cal.id,
+              timeMin: start as string,
+              timeMax: end as string,
+              singleEvents: true,
+              orderBy: 'startTime',
+              access_token: user.accessToken
+            });
+          } catch (eventError: any) {
+            console.log(`❌ Events fetch error for ${cal.name}:`, eventError.message);
+            
+            // If we get 401 on event fetch, use the refreshed token
+            if (eventError.code === 401) {
+              console.log(`🔄 Retrying events fetch for ${cal.name} with current token...`);
+              response = await calendar.events.list({
+                calendarId: cal.id,
+                timeMin: start as string,
+                timeMax: end as string,
+                singleEvents: true,
+                orderBy: 'startTime',
+                access_token: user.accessToken
+              });
+            } else {
+              console.log(`⚠️ Skipping calendar ${cal.name} due to error:`, eventError.message);
+              continue;
+            }
+          }
 
           const events = response.data.items || [];
           

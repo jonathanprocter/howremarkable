@@ -1135,9 +1135,22 @@ export default function Planner() {
                         .then(res => res.json())
                         .then(data => {
                           console.log('Auth Status Response:', data);
+                          console.log('🔍 Full Auth Data:', {
+                            isAuthenticated: data.isAuthenticated,
+                            hasTokens: data.hasTokens,
+                            user: data.user,
+                            debug: data.debug,
+                            recommendations: data.recommendations
+                          });
+                          
+                          const status = data.isAuthenticated 
+                            ? (data.hasTokens ? 'Connected with tokens' : 'Connected but missing tokens')
+                            : 'Not connected';
+                          
                           toast({
-                            title: 'Auth Status',
-                            description: `Connected: ${data.isAuthenticated ? 'Yes' : 'No'}`
+                            title: 'Google Calendar Auth Status',
+                            description: `${status} - ${data.user?.email || 'No user'}`,
+                            variant: data.isAuthenticated && data.hasTokens ? 'default' : 'destructive'
                           });
                         })
                         .catch(err => {
@@ -1152,7 +1165,7 @@ export default function Planner() {
                     className="w-full bg-red-500 hover:bg-red-600 text-white"
                     size="sm"
                   >
-                    🚨 Fix Google Calendar Auth
+                    🚨 Check Auth Status
                   </Button>
                   <Button
                     onClick={() => {
