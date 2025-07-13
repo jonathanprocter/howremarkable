@@ -361,6 +361,7 @@ html, body {
     border: none;
     border-bottom: 2px solid black;
     border-left: 2px solid black;
+    box-sizing: border-box;
 }
 
 .time-header {
@@ -437,42 +438,7 @@ html, body {
     font-weight: bold;
 }
 
-.calendar-cell {
-    background: white;
-    border-right: 2px solid black;
-    border-bottom: 1px solid #ddd;
-    position: relative;
-    cursor: pointer;
-    min-height: 30px;
-    max-height: 30px;
-    height: 30px;
-    box-sizing: border-box;
-}
-
-/* Last column shouldn't have right border */
-.calendar-cell:nth-child(8n) {
-    border-right: none;
-}
-
-/* Light background for half-hour slots across all day columns */
-.calendar-cell.half-hour {
-    background: #f8f8f8;
-}
-
-.calendar-cell:last-child {
-    border-right: none;
-}
-
-
-
-.calendar-cell.hour {
-    border-bottom: 2px solid black;
-    background: #f0f0f0 !important; /* Gray background for hour rows across entire week */
-}
-
-.calendar-cell:hover {
-    background: #fafafa;
-}
+/* Calendar cell styles moved to unified definition below */
 
 .appointment {
     padding: 3px 4px;
@@ -656,25 +622,22 @@ html, body {
     text-align: left;
 }
 
-/* Weekly Calendar Grid Layout */
-.calendar-grid {
-    display: grid;
-    grid-template-columns: 80px repeat(7, 1fr);
-    border: 2px solid black;
-    overflow: hidden;
-    box-sizing: border-box;
-}
+/* Weekly Calendar Grid Layout - Duplicate removed, using main definition above */
 
 .calendar-cell {
+    background: white;
     border-right: 1px solid black;
     border-bottom: 1px solid black;
     padding: 4px;
     text-align: center;
     font-size: 10px;
     font-weight: bold;
-    background: white;
     min-height: 30px;
+    max-height: 30px;
+    height: 30px;
     box-sizing: border-box;
+    position: relative;
+    cursor: pointer;
 }
 
 /* Header cells styling */
@@ -698,6 +661,29 @@ html, body {
     border-right: 2px solid black;
 }
 
+/* Last column shouldn't have right border */
+.calendar-cell:nth-child(8n) {
+    border-right: none;
+}
+
+/* Light background for half-hour slots across all day columns */
+.calendar-cell.half-hour {
+    background: #f8f8f8;
+}
+
+.calendar-cell:last-child {
+    border-right: none;
+}
+
+.calendar-cell.hour {
+    border-bottom: 2px solid black;
+    background: #f0f0f0 !important; /* Gray background for hour rows across entire week */
+}
+
+.calendar-cell:hover {
+    background: #fafafa;
+}
+
 /* All-day event cells */
 .calendar-cell.all-day-header {
     background: white;
@@ -717,25 +703,7 @@ html, body {
     border-bottom: 2px solid black;
 }
 
-/* Hour row styling */
-.calendar-cell.hour {
-    background: #f0f0f0 !important;
-    border-bottom: 2px solid black;
-    font-size: 9px;
-    font-weight: bold;
-}
-
-/* Half-hour row styling */
-.calendar-cell.half-hour {
-    background: #f8f8f8;
-    font-size: 8px;
-    font-weight: normal;
-}
-
-/* Last column shouldn't have right border */
-.calendar-cell:nth-child(8n) {
-    border-right: none;
-}
+/* Duplicate rules removed - using unified definitions above */
 
 /* Event block styling for weekly calendar grid */
 .event-block {
