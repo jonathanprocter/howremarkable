@@ -67,32 +67,49 @@ export default function Planner() {
     (window as any).authHookState = { user, isLoading: userLoading };
   }, [refreshAuth, queryClient, user, userLoading]);
 
-  // Initialize autonomous audit system - run immediately and repeatedly
+  // Initialize simple autonomous auth fix - run immediately and repeatedly
   useEffect(() => {
-    // Start autonomous audit immediately
-    autonomousAuthAudit.autoDetectAndFix();
+    const runSimpleAuthCheck = async () => {
+      try {
+        const { SimpleAuthFix } = await import('@/utils/simpleAuthFix');
+        const status = await SimpleAuthFix.testAuthenticationStatus();
+        
+        // If not authenticated, try to fix
+        if (!status.isAuthenticated) {
+          console.log('🔍 Authentication desync detected, attempting auto-fix...');
+          await SimpleAuthFix.fixAuthenticationNow();
+        }
+      } catch (error) {
+        console.error('❌ Simple auth check failed:', error);
+      }
+    };
     
-    // Run every 5 seconds for rapid detection
-    const interval = setInterval(() => {
-      autonomousAuthAudit.autoDetectAndFix();
-    }, 5000);
+    // Start immediately
+    runSimpleAuthCheck();
+    
+    // Run every 10 seconds for autonomous detection
+    const interval = setInterval(runSimpleAuthCheck, 10000);
     
     return () => clearInterval(interval);
   }, []);
 
   // Manual auth fix handler
   const handleManualAuthFix = async () => {
-    console.log('🔄 Manual authentication audit triggered');
+    console.log('🔄 Manual authentication fix triggered');
     try {
-      const result = await autonomousAuthAudit.runComprehensiveAudit();
-      if (result?.fixed) {
+      const { SimpleAuthFix } = await import('@/utils/simpleAuthFix');
+      const fixed = await SimpleAuthFix.fixAuthenticationNow();
+      if (fixed) {
         console.log('✅ Authentication fixed successfully');
+        // Refresh the page to sync everything
         window.location.reload();
       } else {
-        console.log('❌ Authentication issues remain');
+        console.log('❌ Authentication fix in progress...');
       }
     } catch (error) {
-      console.error('❌ Auth audit failed:', error);
+      console.error('❌ Auth fix failed:', error);
+      // Fallback: Just reload the page
+      window.location.reload();
     }
   };
 

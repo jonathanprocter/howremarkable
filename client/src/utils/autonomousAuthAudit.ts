@@ -145,6 +145,7 @@ export class AutonomousAuthAudit {
   }
 
   private async autoFixIssues(issues: string[]): Promise<void> {
+    console.log('🔧 Auto-fixing issues:', issues);
     for (const issue of issues) {
       switch (issue) {
         case 'FRONTEND_SYNC_ISSUE':
@@ -153,6 +154,8 @@ export class AutonomousAuthAudit {
         case 'QUERY_SYNC_ISSUE':
           await this.fixQuerySync();
           break;
+        default:
+          console.log(`Unknown issue type: ${issue}`);
       }
     }
   }
