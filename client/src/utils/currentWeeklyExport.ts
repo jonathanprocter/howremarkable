@@ -32,13 +32,17 @@ export interface CurrentWeeklyExportConfig {
   };
 }
 
+// Calculate perfect centering: 
+// Total grid width = timeColumnWidth + (7 * dayColumnWidth) = 60 + (7 * 100) = 760px
+// Available space = pageWidth - totalGridWidth = 792 - 760 = 32px
+// Perfect margins = 32px / 2 = 16px
 const CURRENT_WEEKLY_CONFIG: CurrentWeeklyExportConfig = {
   pageWidth: 792, // 11" landscape
   pageHeight: 612, // 8.5" landscape
-  margins: 30, // Increased for better centering
+  margins: 16, // Perfect centering: (792 - 760) / 2 = 16
   headerHeight: 40,
   timeColumnWidth: 60,
-  dayColumnWidth: 101, // (792 - 30*2 - 60) / 7 = 101.7, proper fit for Sunday
+  dayColumnWidth: 100, // Clean 100px for 7 days = 700px total
   timeSlotHeight: 14,
   fonts: {
     title: 16,
