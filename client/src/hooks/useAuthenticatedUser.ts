@@ -69,6 +69,8 @@ export const useAuthenticatedUser = (): UseAuthenticatedUserReturn => {
         setUser(authData.user);
       } else {
         console.log('❌ User not authenticated after all attempts');
+        console.log('💡 TIP: If backend has authenticated session, try fixSessionNow() in console');
+        console.log('💡 TIP: Or click the "FIX AUTHENTICATION NOW" button if visible');
         setUser(null);
       }
     } catch (err) {

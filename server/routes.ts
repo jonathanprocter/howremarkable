@@ -15,10 +15,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // Configure Google OAuth2 Strategy - Use the actual current domain
-  // The error shows the current domain as: 8dd562d7-fb4c-4966-813d-5a9539b6da21-00-3jakdewsp4cjj.kirk.replit.dev
-  const currentDomain = '8dd562d7-fb4c-4966-813d-5a9539b6da21-00-3jakdewsp4cjj.kirk.replit.dev';
-  const baseURL = `https://${currentDomain}`;
+  // Configure Google OAuth2 Strategy - Use dynamic domain detection
+  const getReplitDomain = () => {
+    // Use the proper Replit domain from environment
+    if (process.env.REPLIT_DEV_DOMAIN) return process.env.REPLIT_DEV_DOMAIN;
+    if (process.env.REPLIT_DOMAINS) return process.env.REPLIT_DOMAINS;
+    
+    // Fallback to constructed domain
+    if (process.env.REPL_SLUG) return `${process.env.REPL_SLUG}.replit.dev`;
+    if (process.env.REPL_ID) return `${process.env.REPL_ID}.replit.dev`;
+    
+    return 'localhost:3000';
+  };
+  
+  const currentDomain = getReplitDomain();
+  const baseURL = currentDomain.includes('localhost') ? `http://${currentDomain}` : `https://${currentDomain}`;
   const callbackURL = `${baseURL}/api/auth/google/callback`;
   
   console.log("🔧 OAuth Configuration:");
