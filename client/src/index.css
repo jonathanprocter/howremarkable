@@ -706,28 +706,18 @@ html, body {
 }
 
 /* Make the top of 6:00 AM row bold across entire week - match header thickness */
-.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(9),
-.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(10),
-.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(11),
-.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(12),
-.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(13),
-.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(14),
-.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(15),
-.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(16) {
+.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(17),
+.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(18),
+.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(19),
+.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(20),
+.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(21),
+.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(22),
+.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(23),
+.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(24) {
     border-top: 3px solid black !important;
 }
 
-/* Ensure ALL DAY section has proper top border connection */
-.weekly-calendar .calendar-grid::after {
-    content: "";
-    position: absolute;
-    top: 50px; /* Just below main header */
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: black;
-    z-index: 5;
-}
+/* Removed pseudo-element that was creating duplicate line */
 
 
 
