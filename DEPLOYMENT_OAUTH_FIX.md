@@ -4,8 +4,8 @@
 Your app was trying to use hardcoded URLs for Google OAuth authentication, causing authentication failures when deployed to different domains.
 
 ## Solution Applied
-1. **Dynamic URL Detection**: Updated OAuth configuration to automatically detect the current domain using `process.env.REPLIT_DOMAINS`
-2. **Current Domain**: `ed4c6ee6-c0f6-458f-9eac-1eadf0569a2c-00-387t3f5z7i1mm.kirk.replit.dev`
+1. **Updated OAuth Configuration**: Fixed OAuth configuration to use the current active domain
+2. **Current Domain**: `8dd562d7-fb4c-4966-813d-5a9539b6da21-00-3jakdewsp4cjj.kirk.replit.dev`
 
 ## Required Google Cloud Console Configuration
 
@@ -25,12 +25,12 @@ Add these EXACT URLs to your OAuth configuration:
 
 **Authorized JavaScript origins:**
 ```
-https://ed4c6ee6-c0f6-458f-9eac-1eadf0569a2c-00-387t3f5z7i1mm.kirk.replit.dev
+https://8dd562d7-fb4c-4966-813d-5a9539b6da21-00-3jakdewsp4cjj.kirk.replit.dev
 ```
 
 **Authorized redirect URIs:**
 ```
-https://ed4c6ee6-c0f6-458f-9eac-1eadf0569a2c-00-387t3f5z7i1mm.kirk.replit.dev/api/auth/google/callback
+https://8dd562d7-fb4c-4966-813d-5a9539b6da21-00-3jakdewsp4cjj.kirk.replit.dev/api/auth/google/callback
 ```
 
 ### 4. Verify APIs Are Enabled

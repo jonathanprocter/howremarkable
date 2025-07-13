@@ -13,17 +13,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // Configure Google OAuth2 Strategy - Use dynamic URL based on environment
-  const baseURL = process.env.REPLIT_DOMAINS ? 
-    `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : 
-    'https://HowreMarkable.replit.app';
+  // Configure Google OAuth2 Strategy - Use the actual current domain
+  // The error shows the current domain as: 8dd562d7-fb4c-4966-813d-5a9539b6da21-00-3jakdewsp4cjj.kirk.replit.dev
+  const currentDomain = '8dd562d7-fb4c-4966-813d-5a9539b6da21-00-3jakdewsp4cjj.kirk.replit.dev';
+  const baseURL = `https://${currentDomain}`;
   const callbackURL = `${baseURL}/api/auth/google/callback`;
   
   console.log("🔧 OAuth Configuration:");
   console.log("- Callback URL:", callbackURL);
   console.log("- Environment:", process.env.NODE_ENV || 'development');
   console.log("- Base URL:", baseURL);
-  console.log("- REPLIT_DOMAINS:", process.env.REPLIT_DOMAINS);
+  console.log("- Current Domain:", currentDomain);
   
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID!,
