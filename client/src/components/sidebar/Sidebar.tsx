@@ -80,7 +80,11 @@ export const Sidebar = ({
       <div className="mt-4 p-4 bg-red-100 border border-red-500 rounded">
         <h3 className="font-bold text-red-800">🔧 AUTHENTICATION DEBUG PANEL</h3>
         <p className="text-sm text-red-700">This should be visible - if you can see this, the component is working!</p>
-        <AuthAuditSystem />
+        <div className="mt-2">
+          <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+            Test Button - Google OAuth Fix
+          </button>
+        </div>
       </div>
     </div>
   );
