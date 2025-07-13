@@ -306,11 +306,14 @@ export const WeeklyCalendarGrid = ({
                   const eventEnd = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
                   const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
                   // Use exact duration: 30px per 30-minute slot = 1px per minute
-                  const appointmentHeight = Math.max(durationMinutes - 2, 28); // Subtract 2px for borders, minimum 28px
+                  const appointmentHeight = Math.max(durationMinutes, 30); // 1px per minute, minimum 30px
                   
-                  // Debug logging for duration
-                  if (event.title.includes('Angelica') || event.title.includes('Dan') || event.title.includes('Sherrifa')) {
-                    console.log(`${event.title}: ${durationMinutes} minutes -> ${appointmentHeight}px height`);
+                  // Debug logging for ALL events to see what's happening
+                  console.log(`📊 ${event.title}: ${durationMinutes} minutes -> ${appointmentHeight}px height (Start: ${eventStart.toLocaleTimeString()}, End: ${eventEnd.toLocaleTimeString()})`);
+                  
+                  // Additional debug for specific problem events
+                  if (event.title.includes('Angelica') || event.title.includes('Dan') || event.title.includes('Sherrifa') || event.title.includes('Blake')) {
+                    console.log(`🔍 DETAILED: ${event.title}: ${durationMinutes} minutes -> ${appointmentHeight}px height`);
                   }
 
                   return (
@@ -335,7 +338,9 @@ export const WeeklyCalendarGrid = ({
                         height: `${appointmentHeight}px`,
                         top: '0px',
                         left: '4px',
-                        zIndex: 10
+                        zIndex: 10,
+                        minHeight: `${appointmentHeight}px`,
+                        maxHeight: `${appointmentHeight}px`
                       }}
                       draggable={event.source === 'google'}
                       onDragStart={(e) => handleDragStart(e, event)}

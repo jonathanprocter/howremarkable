@@ -542,10 +542,10 @@ html, body {
     border-radius: 0 !important;
 }
 
-/* Height classes for different durations */
-.appointment.duration-30 { height: 26px; }
-.appointment.duration-60 { height: 56px; }
-.appointment.duration-90 { height: 86px; }
+/* Height classes for different durations - REMOVED to allow dynamic sizing */
+/* .appointment.duration-30 { height: 26px; } */
+/* .appointment.duration-60 { height: 56px; } */
+/* .appointment.duration-90 { height: 86px; } */
 
 /* Daily View Appointment Layout - simplified structure */
 .appointment-layout {
@@ -819,7 +819,10 @@ html, body {
     width: 100%;
     min-width: 0;
     text-align: left;
-    max-height: 100%;
+    /* Remove max-height constraint to allow proper duration sizing */
+    min-height: 30px;
+    /* Override any CSS height constraints to allow dynamic sizing */
+    height: auto !important;
 }
 
 .event-in-grid.appointment {
