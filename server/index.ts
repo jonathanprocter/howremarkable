@@ -46,13 +46,13 @@ app.use(session({
   store: sessionStore,
   secret: process.env.SESSION_SECRET || 'remarkable-planner-secret-key-2025',
   resave: true, // Force save session to ensure persistence
-  saveUninitialized: true, // Create sessions for anonymous users to enable consistent session IDs
+  saveUninitialized: false, // Don't create sessions for anonymous users
   rolling: false, // Don't reset expiration to avoid session ID changes
   name: 'remarkable.sid', // Use unique session name
   cookie: {
     secure: false, // Must be false for HTTP in development
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days for persistent login
-    httpOnly: false, // Allow client-side access
+    httpOnly: true, // Secure cookie handling
     sameSite: 'lax', // Use lax for better compatibility
     path: '/', // Ensure cookie is sent for all paths
     domain: undefined // Let browser set domain automatically

@@ -172,7 +172,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         req.session.passport = { user: user };
         req.user = user;
 
-        // Force session save with extended timeout
+        // Force session save with callback
         req.session.save((saveErr) => {
           if (saveErr) {
             console.error("Session save error:", saveErr);
@@ -182,11 +182,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log("✅ Session saved successfully");
           console.log("✅ Final session check - User:", !!req.user);
           console.log("✅ Final session check - Passport:", !!req.session.passport);
+          console.log("✅ Session ID:", req.sessionID);
           
-          // Longer delay to ensure session persistence
-          setTimeout(() => {
-            res.redirect("/?connected=true");
-          }, 500);
+          // Redirect immediately after successful save
+          res.redirect("/?connected=true");
         });
       });
     })(req, res, next);
@@ -370,12 +369,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('Session passport user:', !!req.session?.passport?.user);
     console.log('Session ID:', req.sessionID);
 
-    // Force session reload if needed
-    if (!req.user && req.session?.passport?.user) {
-      req.user = req.session.passport.user;
+    // Force session reload and check if user is authenticated
+    if (!req.user && req.isAuthenticated && req.isAuthenticated()) {
+      // If passport says we're authenticated but req.user is missing, reload from session
+      if (req.session?.passport?.user) {
+        req.user = req.session.passport.user;
+      }
     }
 
-    // Check both req.user and session passport user with more thorough checking
+    // Check authentication using passport's built-in method first
+    if (req.isAuthenticated && req.isAuthenticated()) {
+      console.log('✅ User authenticated via passport:', req.user?.email);
+      return next();
+    }
+
+    // Fallback: Check both req.user and session passport user
     let user = req.user || req.session?.passport?.user;
     
     // Handle nested user object in passport session
@@ -384,25 +392,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       user = passportData.user || passportData;
     }
 
-    // Additional check for user in session data
-    if (!user && req.session) {
-      // Try to find user data in any session property
-      for (const key in req.session) {
-        if (req.session[key] && typeof req.session[key] === 'object' && req.session[key].user) {
-          user = req.session[key].user;
-          break;
-        }
-      }
-    }
-
     if (!user || !user.id) {
       console.log('No authenticated user found');
       console.log('Session data:', JSON.stringify(req.session, null, 2));
       return res.status(401).json({ 
-        error: 'Session authentication required. Please login first.',
+        error: 'Authentication required. Please login with Google.',
         sessionId: req.sessionID,
         hasSession: !!req.session,
-        needsAuth: true
+        needsAuth: true,
+        redirectToAuth: '/api/auth/google'
       });
     }
 
