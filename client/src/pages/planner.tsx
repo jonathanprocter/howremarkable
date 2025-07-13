@@ -153,13 +153,36 @@ export default function Planner() {
 
   // Make test functions available globally for debugging (after allEvents is defined)
   useEffect(() => {
+    // Create comprehensive test function with detailed logging
     (window as any).testDailyExport = async () => {
       try {
-        console.log('🧪 Testing daily PDF export...');
-        await exportDailyToPDF(selectedDate, allEvents);
-        console.log('✅ Test daily export completed');
+        console.log('🧪 === DAILY PDF EXPORT TEST STARTING ===');
+        console.log('📊 Test environment:', {
+          selectedDate: selectedDate.toDateString(),
+          allEventsCount: allEvents.length,
+          eventsForSelectedDate: allEvents.filter(e => {
+            const eventDate = new Date(e.startTime);
+            return eventDate.toDateString() === selectedDate.toDateString();
+          }).length
+        });
+
+        // Test if the function exists
+        if (typeof exportDailyToPDF === 'function') {
+          console.log('✅ exportDailyToPDF function is available');
+          
+          // Call the function
+          await exportDailyToPDF(selectedDate, allEvents);
+          console.log('✅ Test daily export completed successfully');
+        } else {
+          console.error('❌ exportDailyToPDF function not found');
+          console.log('Available imports:', { exportDailyToPDF: typeof exportDailyToPDF });
+        }
       } catch (error) {
         console.error('❌ Test daily export failed:', error);
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack?.split('\n')?.slice(0, 5)
+        });
       }
     };
 
@@ -172,6 +195,27 @@ export default function Planner() {
         console.error('❌ Test dynamic daily export failed:', error);
       }
     };
+
+    // Test button click handler for debugging
+    (window as any).testButtonClick = async () => {
+      try {
+        console.log('🧪 Testing button click handler...');
+        console.log('🚀 Starting PDF export: daily');
+        console.log('📅 Selected date:', selectedDate.toDateString());
+        console.log('📊 Total events:', allEvents.length);
+        
+        await exportDailyToPDF(selectedDate, allEvents);
+        console.log('✅ Button click test completed');
+      } catch (error) {
+        console.error('❌ Button click test failed:', error);
+      }
+    };
+
+    console.log('🎯 Test functions registered:', {
+      testDailyExport: typeof (window as any).testDailyExport,
+      testDynamicDailyExport: typeof (window as any).testDynamicDailyExport,
+      testButtonClick: typeof (window as any).testButtonClick
+    });
   }, [selectedDate, allEvents]);
 
   // Event mutations
