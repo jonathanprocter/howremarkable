@@ -379,6 +379,10 @@ export default function Planner() {
         case 'weekly':
           await exportExactGridPDF(currentWeek, allEvents);
           break;
+        case 'current-weekly':
+          const { exportCurrentWeeklyView } = await import('../utils/currentWeeklyExport');
+          await exportCurrentWeeklyView(allEvents, currentWeek[0]?.date || new Date(), currentWeek[6]?.date || new Date());
+          break;
         case 'daily':
           console.log('🎯 DAILY PDF EXPORT STARTING...');
           await exportDailyToPDF(selectedDate, allEvents);
@@ -957,6 +961,15 @@ export default function Planner() {
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Weekly PDF
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleExportPDF('current-weekly')}
+                  className="w-full justify-start bg-blue-50 hover:bg-blue-100 border-blue-300"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  📊 Current Weekly Layout
                 </Button>
                 <Button
                   variant="outline"
