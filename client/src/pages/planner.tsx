@@ -211,11 +211,72 @@ export default function Planner() {
       }
     };
 
+    // Add simple PDF test function
+    (window as any).testSimplePDF = async () => {
+      try {
+        console.log('🧪 Testing Simple PDF Export');
+        const { exportSimplePDF } = await import('../utils/simplePDFExport');
+        
+        // Filter events for selected date
+        const todayEvents = allEvents.filter(event => {
+          const eventDate = new Date(event.startTime);
+          return eventDate.toDateString() === selectedDate.toDateString();
+        });
+        
+        console.log('📊 Events for selected date:', todayEvents.length);
+        
+        await exportSimplePDF(selectedDate, todayEvents);
+        console.log('✅ Simple PDF test completed successfully');
+      } catch (error) {
+        console.error('❌ Simple PDF test failed:', error);
+      }
+    };
+
+    // Add direct PDF export test
+    (window as any).testDirectPDF = async () => {
+      try {
+        console.log('🧪 Testing Direct Daily PDF Export');
+        console.log('📅 Selected date:', selectedDate.toDateString());
+        console.log('📊 All events:', allEvents.length);
+        
+        // Call the actual export function directly
+        await handleExportPDF('daily');
+        console.log('✅ Direct PDF test completed successfully');
+      } catch (error) {
+        console.error('❌ Direct PDF test failed:', error);
+      }
+    };
+
     console.log('🎯 Test functions registered:', {
       testDailyExport: typeof (window as any).testDailyExport,
       testDynamicDailyExport: typeof (window as any).testDynamicDailyExport,
-      testButtonClick: typeof (window as any).testButtonClick
+      testButtonClick: typeof (window as any).testButtonClick,
+      testSimplePDF: typeof (window as any).testSimplePDF,
+      testDirectPDF: typeof (window as any).testDirectPDF
     });
+
+    // Run automatic tests when events are loaded
+    if (allEvents.length > 0) {
+      setTimeout(() => {
+        console.log('🚀 AUTOMATIC TESTING INITIATED');
+        console.log('📊 Environment check:', {
+          selectedDate: selectedDate.toDateString(),
+          allEventsCount: allEvents.length,
+          filteredEventsCount: allEvents.filter(e => {
+            const eventDate = new Date(e.startTime);
+            return eventDate.toDateString() === selectedDate.toDateString();
+          }).length
+        });
+
+        // Test simple PDF export first
+        (window as any).testSimplePDF();
+        
+        // Test direct PDF export after delay
+        setTimeout(() => {
+          (window as any).testDirectPDF();
+        }, 2000);
+      }, 1000);
+    }
   }, [selectedDate, allEvents]);
 
   // Event mutations
