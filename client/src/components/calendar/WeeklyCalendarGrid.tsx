@@ -151,16 +151,23 @@ export const WeeklyCalendarGrid = ({
       return { height: '40px', marginBottom: '2px', zIndex: 20 };
     }
     
-    const duration = getEventDurationInSlots({ startTime, endTime });
-    // Calculate precise height based on actual duration
+    // Calculate actual duration in minutes
     const actualDurationMs = endTime.getTime() - startTime.getTime();
-    const actualDurationHours = actualDurationMs / (1000 * 60 * 60);
-    const slotHeight = 40; // 40px per 30-minute slot
-    const preciseHeight = Math.min(duration * slotHeight, actualDurationHours * 2 * slotHeight);
+    const actualDurationMinutes = actualDurationMs / (1000 * 60);
+    
+    // Each time slot is 30 minutes and 40px tall
+    const slotHeight = 40;
+    const minutesPerSlot = 30;
+    
+    // Calculate precise height based on actual duration
+    // If appointment is 50 minutes, it should be 50/30 * 40 = 66.67px
+    // If appointment is 60 minutes, it should be 60/30 * 40 = 80px
+    // If appointment is 30 minutes, it should be 30/30 * 40 = 40px
+    const preciseHeight = Math.max((actualDurationMinutes / minutesPerSlot) * slotHeight, 20);
 
     return {
-      height: `${preciseHeight}px`,
-      marginBottom: duration > 1 ? '0px' : '2px',
+      height: `${Math.round(preciseHeight)}px`,
+      marginBottom: actualDurationMinutes > 30 ? '0px' : '2px',
       zIndex: 20 // Ensure events appear above other elements
     };
   }
@@ -263,15 +270,13 @@ export const WeeklyCalendarGrid = ({
                 return false;
               }
               
-              const slotStart = new Date(day.date);
-              slotStart.setHours(timeSlot.hour, timeSlot.minute, 0, 0);
-
-              // Check if this is the exact start time slot for the event
+              // Check if this event starts in this exact time slot
               const eventStartMinutes = eventStart.getHours() * 60 + eventStart.getMinutes();
               const slotStartMinutes = timeSlot.hour * 60 + timeSlot.minute;
+              const slotEndMinutes = slotStartMinutes + 30;
 
-              // Return true only if this is the first slot that contains the event start time
-              return eventStartMinutes >= slotStartMinutes && eventStartMinutes < slotStartMinutes + 30;
+              // Return true only if the event starts within this 30-minute slot
+              return eventStartMinutes >= slotStartMinutes && eventStartMinutes < slotEndMinutes;
             };
 
             return (
