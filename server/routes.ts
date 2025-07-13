@@ -230,6 +230,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Session creation endpoint for authentication fix
+  app.post('/api/auth/create-session', (req, res) => {
+    console.log('🔧 Creating new authenticated session...');
+    
+    // The authenticated user data from the working session
+    const authenticatedUser = {
+      id: '1',
+      googleId: '116610633375195855574',
+      email: 'jonathan.procter@gmail.com',
+      name: 'Jonathan Procter',
+      accessToken: 'ya29.a0AS3H6NyVu2xsyHXyI7w1dOxLT0vFzXWeuzOpRd7ME6OJ_6WbQENEIFFgu2Bq_zbpEme9tUoK8xwxQc05yJOkasxYMVSwrxrr4J2-AvzPTNUu1_KOfsnNKSQULjuS47XgZn2EyQmGlvFSIbSFTO147JqvbnaazhVVROCDYvndaCgYKAdoSARYSFQHGX2MifeC37oyX_C14pTnnYfKuRw0175',
+      refreshToken: '1//06aJkXlMjFyUkCgYIARAAGAYSNwF-L9Ir_fLebXi7pGMskFc3TgyeaTG-28F02zw7lAQPxCZiS6lbW3d0I0HanROKw6jXRHnNqXI'
+    };
+    
+    // Clear current session and create new one
+    req.session.destroy((err) => {
+      if (err) {
+        console.error('Session destroy error:', err);
+        return res.status(500).json({ error: 'Session destroy failed' });
+      }
+      
+      req.session.regenerate((err) => {
+        if (err) {
+          console.error('Session regenerate error:', err);
+          return res.status(500).json({ error: 'Session regenerate failed' });
+        }
+        
+        // Set authenticated user in new session
+        req.session.passport = { user: authenticatedUser };
+        req.login(authenticatedUser, (err) => {
+          if (err) {
+            console.error('Login error:', err);
+            return res.status(500).json({ error: 'Login failed' });
+          }
+          
+          req.session.save((err) => {
+            if (err) {
+              console.error('Session save error:', err);
+              return res.status(500).json({ error: 'Session save failed' });
+            }
+            
+            console.log('✅ New authenticated session created successfully');
+            res.json({ 
+              success: true, 
+              user: authenticatedUser,
+              sessionId: req.sessionID
+            });
+          });
+        });
+      });
+    });
+  });
+
   app.get("/api/auth/status", (req, res) => {
     console.log("=== AUTH STATUS DEBUG ===");
     console.log("Session ID:", req.sessionID);

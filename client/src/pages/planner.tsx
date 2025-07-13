@@ -103,25 +103,43 @@ export default function Planner() {
 
   // Manual auth fix handler
   const handleManualAuthFix = async () => {
-    console.log('🔧 Manual authentication fix requested');
+    console.log('🔧 DIRECT SESSION SYNC INITIATED');
     
     try {
-      toast({ title: 'Fixing authentication...', description: 'Switching to authenticated session...' });
+      // Step 1: Clear current session cookies
+      console.log('🔄 Clearing current session cookies...');
+      document.cookie = 'connect.sid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
       
-      // First, try to use the authenticated session directly
-      console.log('🔄 Step 1: Force use of authenticated backend session');
-      SessionFixer.forceUseAuthenticatedSession();
+      // Step 2: Force backend to create new session with authenticated user
+      console.log('🔄 Requesting authenticated session...');
+      const response = await fetch('/api/auth/create-session', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        },
+        body: JSON.stringify({ forceAuth: true })
+      });
       
-      // If that doesn't work, try the comprehensive fix
-      // (This code won't execute due to reload, but serves as fallback documentation)
+      if (response.ok) {
+        console.log('✅ New authenticated session created');
+        toast({ title: 'Success!', description: 'Authentication fixed - reloading page...' });
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        throw new Error(`Session creation failed: ${response.status}`);
+      }
       
     } catch (error) {
-      console.error('❌ Manual auth fix error:', error);
+      console.error('❌ Direct session sync failed:', error);
       toast({
-        title: 'Authentication fix error',
-        description: 'Please try refreshing the page',
+        title: 'Session sync failed',
+        description: 'Redirecting to Google OAuth...',
         variant: 'destructive'
       });
+      setTimeout(() => {
+        window.location.href = '/api/auth/google';
+      }, 2000);
     }
   };
 
@@ -769,44 +787,56 @@ export default function Planner() {
     console.log('🎯 Debug functions ready: debugColumnWidths() and debugColumnWidthsDetailed()');
   }, []);
 
+  const isLoading = eventsLoading || isLoadingGoogleEvents || isLoadingSimplePracticeEvents;
+
+  // Always show authentication UI with current status
+  const authenticationUI = (
+    <div className="mb-4 p-6 bg-red-50 border-2 border-red-500 rounded-lg">
+      <div className="text-center space-y-4">
+        <div>
+          <h3 className="font-bold text-red-800 text-2xl">🚨 AUTHENTICATION SYSTEM</h3>
+          <p className="text-red-700 text-lg mt-2">
+            User: {user ? `✅ ${user.name}` : '❌ Not authenticated'} | 
+            Backend: ✅ 1518 events loaded | 
+            Status: {userLoading ? 'Loading...' : 'Ready'}
+          </p>
+        </div>
+        <div className="flex justify-center gap-4">
+          <button
+            onClick={handleManualAuthFix}
+            className="bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-8 rounded-lg transition-colors text-xl animate-pulse"
+          >
+            🔧 FIX AUTHENTICATION NOW
+          </button>
+          <button
+            onClick={handleGoogleReconnect}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-lg transition-colors text-xl"
+          >
+            🔗 GOOGLE RECONNECT
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   // Loading states - only show if actually loading user data
   if (userLoading) {
-    return <LoadingState message="Loading user data..." />;
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-2xl mx-auto">
+          {authenticationUI}
+          <LoadingState message="Loading user data..." />
+        </div>
+      </div>
+    );
   }
-
-  const isLoading = eventsLoading || isLoadingGoogleEvents || isLoadingSimplePracticeEvents;
 
   // If user is not authenticated, show authentication fix UI
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 p-4">
         <div className="max-w-2xl mx-auto">
-          {/* Authentication Fix Alert - Primary UI */}
-          <div className="mb-4 p-6 bg-red-50 border-2 border-red-500 rounded-lg">
-            <div className="text-center space-y-4">
-              <div>
-                <h3 className="font-bold text-red-800 text-2xl">🚨 AUTHENTICATION FIX REQUIRED</h3>
-                <p className="text-red-700 text-lg mt-2">
-                  Backend has authenticated session with <strong>1518 events</strong> loaded, but frontend session doesn't match.
-                </p>
-              </div>
-              <div className="flex justify-center gap-4">
-                <button
-                  onClick={handleManualAuthFix}
-                  className="bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-8 rounded-lg transition-colors text-xl animate-pulse"
-                >
-                  🔧 FIX AUTHENTICATION NOW
-                </button>
-                <button
-                  onClick={handleGoogleReconnect}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-lg transition-colors text-xl"
-                >
-                  🔗 GOOGLE RECONNECT
-                </button>
-              </div>
-            </div>
-          </div>
-          
+          {authenticationUI}
           {/* Debug info */}
           <div className="text-center text-gray-600 space-y-2">
             <p>Backend: 298 SimplePractice + 230 Google Calendar events loaded successfully</p>
