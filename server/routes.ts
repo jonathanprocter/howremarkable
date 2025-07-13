@@ -19,7 +19,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   console.log("🔧 OAuth Configuration:");
   console.log("- Callback URL:", callbackURL);
-  console.log("- Environment:", isDevelopment ? 'Development' : 'Production');
+  console.log("- Environment: Production (forced)");
   console.log("- Base URL:", baseURL);
   
   passport.use(new GoogleStrategy({
