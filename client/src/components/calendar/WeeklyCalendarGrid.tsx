@@ -155,20 +155,29 @@ export const WeeklyCalendarGrid = ({
     const actualDurationMs = endTime.getTime() - startTime.getTime();
     const actualDurationMinutes = actualDurationMs / (1000 * 60);
     
-    // Each time slot is exactly 30 minutes and 40px tall
-    // This gives us 40px / 30min = 1.333... pixels per minute
-    const pixelsPerMinute = 40 / 30; // 1.333 pixels per minute
+    // Each time slot is 30 minutes and 40px tall (including borders)
+    // For precise height: 30 minutes = 40px, so 1 minute = 40/30 = 1.333px
+    let calculatedHeight;
     
-    // Calculate exact height based on duration in minutes
-    const exactHeight = actualDurationMinutes * pixelsPerMinute;
-    
-    // Ensure minimum height of 20px for very short events
-    const finalHeight = Math.max(exactHeight, 20);
+    if (actualDurationMinutes <= 30) {
+      // For 30 minutes or less, use exactly one slot height
+      calculatedHeight = 40;
+    } else if (actualDurationMinutes <= 60) {
+      // For 31-60 minutes, use exactly two slot heights  
+      calculatedHeight = 80;
+    } else if (actualDurationMinutes <= 90) {
+      // For 61-90 minutes, use exactly three slot heights
+      calculatedHeight = 120;
+    } else {
+      // For longer durations, calculate proportionally
+      const slots = Math.ceil(actualDurationMinutes / 30);
+      calculatedHeight = slots * 40;
+    }
 
     return {
-      height: `${Math.round(finalHeight)}px`,
+      height: `${calculatedHeight}px`,
       marginBottom: actualDurationMinutes > 30 ? '0px' : '2px',
-      zIndex: 20 // Ensure events appear above other elements
+      zIndex: 20
     };
   }
 
