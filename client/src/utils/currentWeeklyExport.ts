@@ -35,17 +35,17 @@ export interface CurrentWeeklyExportConfig {
 const CURRENT_WEEKLY_CONFIG: CurrentWeeklyExportConfig = {
   pageWidth: 792, // 11" landscape
   pageHeight: 612, // 8.5" landscape
-  margins: 20,
+  margins: 30, // Increased for better centering
   headerHeight: 40,
   timeColumnWidth: 60,
-  dayColumnWidth: 103, // (792 - 20*2 - 60) / 7 = 103.14, rounded to ensure Sunday fits
+  dayColumnWidth: 101, // (792 - 30*2 - 60) / 7 = 101.7, proper fit for Sunday
   timeSlotHeight: 14,
   fonts: {
     title: 16,
     weekInfo: 12,
     dayHeader: 9,
     timeLabel: 7,
-    eventTitle: 7, // Increased for better readability
+    eventTitle: 8, // Increased for better readability
     eventTime: 6,
   },
 };
@@ -183,12 +183,19 @@ const drawCurrentWeeklyGrid = (pdf: jsPDF, events: CalendarEvent[], weekStart: D
       pdf.setLineWidth(0.5);
       pdf.line(dayX, y, dayX + dayColumnWidth, y);
       
-      // Vertical separators
+      // Vertical separators - fix Sunday column line
       if (day > 0) {
         pdf.setDrawColor(150, 150, 150);
         pdf.setLineWidth(1);
         pdf.line(dayX, gridStartY, dayX, timeGridStartY + totalSlots * timeSlotHeight);
       }
+    }
+    
+    // Draw final vertical line for Sunday column right edge
+    const sundayRightX = margins + timeColumnWidth + 7 * dayColumnWidth;
+    pdf.setDrawColor(150, 150, 150);
+    pdf.setLineWidth(1);
+    pdf.line(sundayRightX, gridStartY, sundayRightX, timeGridStartY + totalSlots * timeSlotHeight);
     }
     
     // Time label - centered both vertically and horizontally
@@ -318,15 +325,24 @@ const drawEventWithCurrentStyling = (
     pdf.rect(x, y, width, height, 'S');
   }
   
-  // Event text
+  // Event text - dynamic sizing based on height
   pdf.setTextColor(0, 0, 0);
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(fonts.eventTitle);
+  
+  // Dynamic font size based on event height
+  let fontSize = fonts.eventTitle;
+  if (height <= 20) {
+    fontSize = Math.max(5, fontSize - 2); // Smaller font for short events
+  } else if (height <= 30) {
+    fontSize = Math.max(6, fontSize - 1); // Slightly smaller for medium events
+  }
+  
+  pdf.setFontSize(fontSize);
   
   const eventTitle = cleanEventTitle(event.title);
   const maxWidth = width - 8;
   
-  // Wrap text to fit
+  // Wrap text to fit with dynamic line height
   const words = eventTitle.split(' ');
   let lines: string[] = [];
   let currentLine = '';
@@ -351,10 +367,11 @@ const drawEventWithCurrentStyling = (
     lines.push(currentLine);
   }
   
-  // Draw event title lines
-  const maxLines = Math.floor((height - 10) / 9);
+  // Draw event title lines with dynamic line height
+  const lineHeight = Math.max(6, fontSize * 1.2);
+  const maxLines = Math.floor((height - 10) / lineHeight);
   lines.slice(0, maxLines).forEach((line, index) => {
-    pdf.text(line, x + 4, y + 8 + index * 9);
+    pdf.text(line, x + 4, y + 6 + index * lineHeight);
   });
   
   // Draw grey separator line (like in dashboard)
