@@ -14,7 +14,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use(passport.session());
 
   // Configure Google OAuth2 Strategy - Use current Replit domain
-  const baseURL = `https://${process.env.REPLIT_DEV_DOMAIN}`;
+  const baseURL = 'https://8dd562d7-fb4c-4966-813d-5a9539b6da21-00-3jakdewsp4cjj.kirk.replit.dev';
   const callbackURL = `${baseURL}/api/auth/google/callback`;
   
   console.log("🔧 OAuth Configuration:");
