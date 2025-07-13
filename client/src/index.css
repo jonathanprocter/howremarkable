@@ -874,7 +874,7 @@ html, body {
 /* All-Day Events Section Styling */
 .all-day-section {
     padding: 10px 20px;
-    border-bottom: 2px solid black;
+    border-bottom: 1px solid black;
     background: #f8f8f8;
 }
 
