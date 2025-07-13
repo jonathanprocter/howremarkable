@@ -368,8 +368,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('Calendar events requested - checking authentication...');
     console.log('Session user:', !!req.user);
     console.log('Session passport user:', !!req.session?.passport?.user);
+    console.log('Session ID:', req.sessionID);
 
-    // Check both req.user and session passport user
+    // Force session reload if needed
+    if (!req.user && req.session?.passport?.user) {
+      req.user = req.session.passport.user;
+    }
+
+    // Check both req.user and session passport user with more thorough checking
     let user = req.user || req.session?.passport?.user;
     
     // Handle nested user object in passport session
@@ -378,8 +384,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       user = passportData.user || passportData;
     }
 
+    // Additional check for user in session data
+    if (!user && req.session) {
+      // Try to find user data in any session property
+      for (const key in req.session) {
+        if (req.session[key] && typeof req.session[key] === 'object' && req.session[key].user) {
+          user = req.session[key].user;
+          break;
+        }
+      }
+    }
+
     if (!user || !user.id) {
       console.log('No authenticated user found');
+      console.log('Session data:', JSON.stringify(req.session, null, 2));
       return res.status(401).json({ 
         error: 'Session authentication required. Please login first.',
         sessionId: req.sessionID,

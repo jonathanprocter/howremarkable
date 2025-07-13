@@ -45,7 +45,7 @@ sessionStore.on('disconnect', () => {
 app.use(session({
   store: sessionStore,
   secret: process.env.SESSION_SECRET || 'remarkable-planner-secret-key-2025',
-  resave: false, // Don't save session if unmodified
+  resave: true, // Force save session to ensure persistence
   saveUninitialized: true, // Create sessions for anonymous users to enable consistent session IDs
   rolling: false, // Don't reset expiration to avoid session ID changes
   name: 'remarkable.sid', // Use unique session name
