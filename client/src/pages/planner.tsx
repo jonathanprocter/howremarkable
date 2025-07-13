@@ -1113,6 +1113,60 @@ export default function Planner() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Google Authentication Debug Panel */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm text-red-800">🔧 Google Auth Debug</CardTitle>
+              </CardHeader>
+              <CardContent className="bg-red-50 p-4 rounded">
+                <div className="space-y-2">
+                  <p className="text-sm text-red-700">If you can see this, the component is working!</p>
+                  <Button
+                    onClick={() => {
+                      console.log('🔥 GOOGLE AUTH DEBUG CLICKED');
+                      console.log('Current user:', user);
+                      console.log('Google Calendar Data:', googleCalendarData);
+                      console.log('Google Calendar Error:', googleCalendarError);
+                      console.log('Access token status:', document.cookie.includes('access_token'));
+                      
+                      // Try to check authentication status
+                      fetch('/api/auth/status')
+                        .then(res => res.json())
+                        .then(data => {
+                          console.log('Auth Status Response:', data);
+                          toast({
+                            title: 'Auth Status',
+                            description: `Connected: ${data.isAuthenticated ? 'Yes' : 'No'}`
+                          });
+                        })
+                        .catch(err => {
+                          console.error('Auth Status Error:', err);
+                          toast({
+                            title: 'Auth Status Error',
+                            description: err.message,
+                            variant: 'destructive'
+                          });
+                        });
+                    }}
+                    className="w-full bg-red-500 hover:bg-red-600 text-white"
+                    size="sm"
+                  >
+                    🚨 Fix Google Calendar Auth
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      console.log('🔄 FORCING GOOGLE RECONNECT');
+                      window.location.href = '/api/auth/google';
+                    }}
+                    className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+                    size="sm"
+                  >
+                    🔗 Force Google Reconnect
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
