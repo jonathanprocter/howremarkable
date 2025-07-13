@@ -464,7 +464,7 @@ html, body {
 .appointment-name {
     font-size: 8px;
     line-height: 1.1;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
     text-transform: uppercase;
     font-weight: bold;
     word-wrap: break-word;
@@ -472,6 +472,7 @@ html, body {
     hyphens: auto;
     white-space: normal;
     overflow: visible;
+    max-width: 100%;
 }
 
 .appointment-time {
@@ -795,9 +796,11 @@ html, body {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    padding: 2px 4px;
-    overflow: hidden;
+    padding: 3px 5px;
+    overflow: visible;
     text-overflow: clip;
+    min-height: 38px;
+    width: 100%;
 }
 
 .event-in-grid.appointment {
