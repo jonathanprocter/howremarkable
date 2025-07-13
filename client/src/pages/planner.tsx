@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { CalendarEvent, CalendarDay, ViewMode, CalendarState } from '@/types/calendar';
-import { WeeklyPlannerView } from '@/components/calendar/WeeklyPlannerView';
+import { WeeklyCalendarGrid } from '@/components/calendar/WeeklyCalendarGrid';
 import { DailyView } from '@/components/calendar/DailyView';
 import { CalendarLegend } from '@/components/calendar/CalendarLegend';
 import { Button } from '@/components/ui/button';
@@ -492,7 +492,7 @@ export default function Planner() {
                     <span className="ml-2">Loading calendar...</span>
                   </div>
                 ) : viewMode === 'weekly' ? (
-                  <WeeklyPlannerView
+                  <WeeklyCalendarGrid
                     week={currentWeek}
                     events={allEvents}
                     onDayClick={handleDayClick}

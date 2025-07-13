@@ -55,16 +55,25 @@ export const WeeklyCalendarGrid = ({
 
   const getAllDayEventsForDate = (date: Date) => {
     return events.filter(event => {
-      const eventDate = new Date(event.startTime);
+      // Ensure dates are properly parsed
+      const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+      const endTime = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
+      
+      // Skip invalid dates
+      if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+        return false;
+      }
+      
+      const eventDate = startTime;
 
       // Check if backend marked it as all-day
       const isMarkedAllDay = (event as any).isAllDay;
 
       // Check if event is all-day by looking at duration and time patterns
-      const duration = event.endTime.getTime() - event.startTime.getTime();
+      const duration = endTime.getTime() - startTime.getTime();
       const hours = duration / (1000 * 60 * 60);
-      const startHour = event.startTime.getHours();
-      const startMinute = event.startTime.getMinutes();
+      const startHour = startTime.getHours();
+      const startMinute = startTime.getMinutes();
       const isFullDay = startHour === 0 && startMinute === 0 && (hours === 24 || hours % 24 === 0);
       const isAllDayEvent = isMarkedAllDay || isFullDay || hours >= 20;
 
@@ -73,7 +82,7 @@ export const WeeklyCalendarGrid = ({
       // For all-day events, check if the date falls within the event range
       const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
       const eventStartOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
-      const eventEndDate = new Date(event.endTime);
+      const eventEndDate = endTime;
       const eventEndOnly = new Date(eventEndDate.getFullYear(), eventEndDate.getMonth(), eventEndDate.getDate());
 
       return dateOnly >= eventStartOnly && dateOnly < eventEndOnly;
@@ -82,14 +91,23 @@ export const WeeklyCalendarGrid = ({
 
   const getEventsForTimeSlot = (date: Date, timeSlot: { time: string; hour: number; minute: number }) => {
     return events.filter(event => {
-      const eventDate = new Date(event.startTime);
+      // Ensure dates are properly parsed
+      const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+      const endTime = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
+      
+      // Skip invalid dates
+      if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+        return false;
+      }
+      
+      const eventDate = startTime;
 
       // Filter out all-day events from time slots
       const isMarkedAllDay = (event as any).isAllDay;
-      const duration = event.endTime.getTime() - event.startTime.getTime();
+      const duration = endTime.getTime() - startTime.getTime();
       const hours = duration / (1000 * 60 * 60);
-      const startHour = event.startTime.getHours();
-      const startMinute = event.startTime.getMinutes();
+      const startHour = startTime.getHours();
+      const startMinute = startTime.getMinutes();
       const isFullDay = startHour === 0 && startMinute === 0 && (hours === 24 || hours % 24 === 0);
       const isAllDayEvent = isMarkedAllDay || isFullDay || hours >= 20;
 
@@ -99,14 +117,23 @@ export const WeeklyCalendarGrid = ({
       // For timed events, use simple date string comparison
       if (eventDate.toDateString() !== date.toDateString()) return false;
 
-      return isEventInTimeSlot(event, timeSlot);
+      return isEventInTimeSlot({ startTime, endTime }, timeSlot);
     });
   };
 
   const getEventStyle = (event: CalendarEvent) => {
-    const duration = getEventDurationInSlots(event);
+    // Ensure dates are properly parsed
+    const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+    const endTime = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
+    
+    // Skip invalid dates
+    if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+      return { height: '40px', marginBottom: '2px', zIndex: 20 };
+    }
+    
+    const duration = getEventDurationInSlots({ startTime, endTime });
     // Calculate precise height based on actual duration
-    const actualDurationMs = event.endTime.getTime() - event.startTime.getTime();
+    const actualDurationMs = endTime.getTime() - startTime.getTime();
     const actualDurationHours = actualDurationMs / (1000 * 60 * 60);
     const slotHeight = 40; // 40px per 30-minute slot
     const preciseHeight = Math.min(duration * slotHeight, actualDurationHours * 2 * slotHeight);
@@ -209,7 +236,13 @@ export const WeeklyCalendarGrid = ({
           {week.map((day, dayIndex) => {
             const slotEvents = getEventsForTimeSlot(day.date, timeSlot);
             const isFirstSlotOfEvent = (event: CalendarEvent) => {
-              const eventStart = new Date(event.startTime);
+              const eventStart = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+              
+              // Skip invalid dates
+              if (isNaN(eventStart.getTime())) {
+                return false;
+              }
+              
               const slotStart = new Date(day.date);
               slotStart.setHours(timeSlot.hour, timeSlot.minute, 0, 0);
 
@@ -263,15 +296,25 @@ export const WeeklyCalendarGrid = ({
                         {cleanEventTitle(event.title)}
                       </div>
                       <div className="appointment-time">
-                        {event.startTime.toLocaleTimeString('en-US', { 
-                          hour: '2-digit', 
-                          minute: '2-digit', 
-                          hour12: false 
-                        })} - {event.endTime.toLocaleTimeString('en-US', { 
-                          hour: '2-digit', 
-                          minute: '2-digit', 
-                          hour12: false 
-                        })}
+                        {(() => {
+                          const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+                          const endTime = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
+                          
+                          // Skip invalid dates
+                          if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+                            return 'Invalid time';
+                          }
+                          
+                          return `${startTime.toLocaleTimeString('en-US', { 
+                            hour: '2-digit', 
+                            minute: '2-digit', 
+                            hour12: false 
+                          })} - ${endTime.toLocaleTimeString('en-US', { 
+                            hour: '2-digit', 
+                            minute: '2-digit', 
+                            hour12: false 
+                          })}`;
+                        })()}
                       </div>
                     </div>
                   );
