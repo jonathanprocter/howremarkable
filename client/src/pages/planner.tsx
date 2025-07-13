@@ -66,6 +66,8 @@ export default function Planner() {
     refetchInterval: 30 * 60 * 1000, // 30 minutes
   });
 
+
+
    // SimplePractice calendar data
    const { data: simplePracticeData, isLoading: isLoadingSimplePracticeEvents, error: simplePracticeError } = useQuery({
     queryKey: ['/api/simplepractice/events'],
@@ -149,6 +151,29 @@ export default function Planner() {
     calendarsFound: simplePracticeCalendars.length
   });
 
+  // Make test functions available globally for debugging (after allEvents is defined)
+  useEffect(() => {
+    (window as any).testDailyExport = async () => {
+      try {
+        console.log('🧪 Testing daily PDF export...');
+        await exportDailyToPDF(selectedDate, allEvents);
+        console.log('✅ Test daily export completed');
+      } catch (error) {
+        console.error('❌ Test daily export failed:', error);
+      }
+    };
+
+    (window as any).testDynamicDailyExport = async () => {
+      try {
+        console.log('🧪 Testing dynamic daily PDF export...');
+        await exportDynamicDailyPlannerPDF(selectedDate, allEvents);
+        console.log('✅ Test dynamic daily export completed');
+      } catch (error) {
+        console.error('❌ Test dynamic daily export failed:', error);
+      }
+    };
+  }, [selectedDate, allEvents]);
+
   // Event mutations
   const createEventMutation = useMutation({
     mutationFn: (eventData: Partial<CalendarEvent>) => 
@@ -228,6 +253,10 @@ export default function Planner() {
   // Export handlers
   const handleExportPDF = async (exportType: string) => {
     try {
+      console.log(`🚀 Starting PDF export: ${exportType}`);
+      console.log(`📅 Selected date: ${selectedDate.toDateString()}`);
+      console.log(`📊 Total events: ${allEvents.length}`);
+      
       toast({ title: 'Generating PDF export...' });
 
       switch (exportType) {
@@ -235,7 +264,9 @@ export default function Planner() {
           await exportExactGridPDF(currentWeek, allEvents);
           break;
         case 'daily':
+          console.log('🎯 DAILY PDF EXPORT STARTING...');
           await exportDailyToPDF(selectedDate, allEvents);
+          console.log('✅ Daily PDF export completed');
           break;
         case 'weekly-package':
           await exportWeeklyPackage(currentWeek, allEvents);
@@ -250,7 +281,9 @@ export default function Planner() {
           await exportExactWeeklySpec(currentWeek[0]?.date || new Date(), currentWeek[6]?.date || new Date(), allEvents);
           break;
         case 'dynamic-daily':
+          console.log('🎯 DYNAMIC DAILY PDF EXPORT STARTING...');
           await exportDynamicDailyPlannerPDF(selectedDate, allEvents);
+          console.log('✅ Dynamic daily PDF export completed');
           break;
         case 'audit-enhanced':
           await exportAuditEnhancedPDF(currentWeek[0]?.date || new Date(), currentWeek[6]?.date || new Date(), allEvents);
@@ -264,7 +297,8 @@ export default function Planner() {
 
       toast({ title: 'PDF export completed successfully' });
     } catch (error) {
-      console.error('Export failed:', error);
+      console.error('❌ Export failed:', error);
+      console.error('Error details:', error?.message || 'Unknown error');
       toast({ title: 'Export failed', variant: 'destructive' });
     }
   };
