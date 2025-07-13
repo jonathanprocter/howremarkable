@@ -661,14 +661,19 @@ html, body {
     line-height: 1.1;
 }
 
-/* Time cells styling */
+/* Time cells styling - match appointment font style but bold and centered */
 .calendar-cell.time-cell {
     background: white;
     font-size: 8px;
+    font-weight: bold;
     text-align: center;
     padding: 2px;
     color: black;
     border-right: 2px solid black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
 }
 
 /* Last column should have right border for complete grid */
