@@ -685,15 +685,33 @@ html, body {
     background: #f0f0f0 !important; /* Gray background for hour rows across entire week */
 }
 
-/* Remove top border from the first hour row (6:00 AM) since we'll add it with ::before */
-.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(17) {
+/* Remove top border from ALL cells in the first hour row (6:00 AM) since we'll add it with ::before */
+.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(17),
+.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(18),
+.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(19),
+.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(20),
+.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(21),
+.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(22),
+.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(23),
+.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(24) {
     border-top: none;
 }
 
 /* Ensure half-hour slots are white */
 .calendar-cell.half-hour {
     background: white !important;
-    border-bottom: 1px solid black;
+}
+
+/* Remove bottom border from 6:00 AM half-hour slots to keep them clean */
+.weekly-calendar .calendar-grid > .calendar-cell.half-hour:nth-child(25),
+.weekly-calendar .calendar-grid > .calendar-cell.half-hour:nth-child(26),
+.weekly-calendar .calendar-grid > .calendar-cell.half-hour:nth-child(27),
+.weekly-calendar .calendar-grid > .calendar-cell.half-hour:nth-child(28),
+.weekly-calendar .calendar-grid > .calendar-cell.half-hour:nth-child(29),
+.weekly-calendar .calendar-grid > .calendar-cell.half-hour:nth-child(30),
+.weekly-calendar .calendar-grid > .calendar-cell.half-hour:nth-child(31),
+.weekly-calendar .calendar-grid > .calendar-cell.half-hour:nth-child(32) {
+    border-bottom: none;
 }
 
 /* Special styling for 6:00 AM row to extend across entire grid */
