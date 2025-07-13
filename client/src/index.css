@@ -953,6 +953,11 @@ html, body {
 }
 
 .appointment-slot.hour {
+    background: #f0f0f0;
+    border-bottom: 2px solid black;
+}
+
+.appointment-slot.hour {
     border-bottom: 2px solid black;
 }
 
