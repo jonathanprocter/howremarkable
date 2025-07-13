@@ -360,7 +360,7 @@ html, body {
     margin: 0;
     padding: 0;
     border: 2px solid black; /* Add complete border around entire grid */
-    border-top: 1px solid black; /* Thinner top border for 6:00 AM line */
+    border-top: 3px solid black; /* Bold top border for 6:00 AM line matching header thickness */
     box-sizing: border-box;
     position: relative;
 }
@@ -664,7 +664,7 @@ html, body {
 /* Time cells styling - match appointment font style but bold and centered */
 .calendar-cell.time-cell {
     background: white;
-    font-size: 8px;
+    font-size: 5px;
     font-weight: bold;
     text-align: center;
     padding: 2px;
@@ -674,6 +674,7 @@ html, body {
     align-items: center;
     justify-content: center;
     font-family: inherit;
+    line-height: 1.0;
 }
 
 /* Last column should have right border for complete grid */
