@@ -79,9 +79,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     done(null, user);
   });
 
-  passport.deserializeUser(async (user: any, done) => {
+  passport.deserializeUser(async (sessionData: any, done) => {
     try {
-      console.log('✅ Deserializing user (full object):', { id: user.id, email: user.email });
+      console.log('✅ Deserializing user:', { id: sessionData?.id, email: sessionData?.email });
+
+      // Handle both direct user object and nested passport structure
+      const user = sessionData?.user || sessionData;
+      
+      if (!user || !user.id) {
+        console.log('❌ No valid user data in session');
+        return done(null, false);
+      }
 
       // Validate tokens are present for Google users
       if (user.googleId && (!user.accessToken || user.accessToken === 'undefined')) {
@@ -90,10 +98,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user.refreshToken = 'dev-refresh-token-' + Date.now();
       }
 
+      console.log('✅ User deserialized successfully:', user.email);
       done(null, user);
     } catch (error) {
       console.error('❌ Deserialization error:', error);
-      done(error, null);
+      done(null, false);
     }
   });
 
@@ -284,15 +293,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(500).json({ error: 'Login failed' });
         }
 
-        console.log('Development user logged in:', devUser.email);
-        console.log('Session after dev login:', req.sessionID);
-        console.log('User object in session:', !!req.user);
-        console.log('Session passport:', !!req.session.passport);
+        // Ensure session structure is correct
+        req.session.passport = { user: devUser };
+        req.user = devUser;
 
-        res.json({ 
-          success: true, 
-          user: devUser,
-          sessionId: req.sessionID
+        // Force session save with callback
+        req.session.save((saveErr) => {
+          if (saveErr) {
+            console.error('Session save error:', saveErr);
+            return res.status(500).json({ error: 'Session save failed' });
+          }
+
+          console.log('Development user logged in:', devUser.email);
+          console.log('Session after dev login:', req.sessionID);
+          console.log('User object in session:', !!req.user);
+          console.log('Session passport:', !!req.session.passport);
+
+          res.json({ 
+            success: true, 
+            user: devUser,
+            sessionId: req.sessionID
+          });
         });
       });
 
@@ -347,21 +368,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('Session passport user:', !!req.session?.passport?.user);
 
     // Check both req.user and session passport user
-    const user = req.user || req.session?.passport?.user;
+    let user = req.user || req.session?.passport?.user;
+    
+    // Handle nested user object in passport session
+    if (!user && req.session?.passport) {
+      const passportData = req.session.passport;
+      user = passportData.user || passportData;
+    }
 
-    if (!user) {
+    if (!user || !user.id) {
       console.log('No authenticated user found');
       return res.status(401).json({ 
         error: 'Session authentication required. Please login first.',
         sessionId: req.sessionID,
-        hasSession: !!req.session
+        hasSession: !!req.session,
+        needsAuth: true
       });
     }
 
-    // Ensure req.user is set
-    if (!req.user && req.session?.passport?.user) {
-      req.user = req.session.passport.user;
-    }
+    // Ensure req.user is set for subsequent middleware
+    req.user = user;
 
     console.log('✅ User authenticated:', user.email);
     next();

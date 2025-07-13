@@ -58,17 +58,17 @@ export default function Planner() {
     setCurrentWeek(week);
   }, [selectedDate]);
 
-  // Fetch events - only require auth for database events
+  // Fetch events - allow without authentication for calendar access
   const { data: events = [], isLoading: eventsLoading, error: eventsError } = useQuery({
     queryKey: ['/api/events'],
-    enabled: !!user, // Only fetch if user is authenticated
+    enabled: true, // Always try to fetch events
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 30 * 60 * 1000, // 30 minutes
   });
 
 
 
-   // SimplePractice calendar data - only if user is authenticated
+   // SimplePractice calendar data - try to fetch regardless of app authentication
    const { data: simplePracticeData, isLoading: isLoadingSimplePracticeEvents, error: simplePracticeError } = useQuery({
     queryKey: ['/api/simplepractice/events'],
     queryFn: async () => {
@@ -83,7 +83,7 @@ export default function Planner() {
     retry: 1,
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    enabled: !!user, // Only run when user is authenticated for calendar access
+    enabled: true, // Always try to fetch calendar events
   });
 
   // Extract SimplePractice events safely with comprehensive error handling
@@ -111,7 +111,7 @@ export default function Planner() {
     }
   }, [simplePracticeData]);
 
-  // Google Calendar data - only if user is authenticated
+  // Google Calendar data - try to fetch regardless of app authentication
   const { data: googleCalendarData, isLoading: isLoadingGoogleEvents, error: googleCalendarError } = useQuery({
     queryKey: ['/api/calendar/events'],
     queryFn: async () => {
@@ -126,7 +126,7 @@ export default function Planner() {
     retry: 1,
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    enabled: !!user, // Only run when user is authenticated for calendar access
+    enabled: true, // Always try to fetch calendar events
   });
 
   const googleEvents = Array.isArray(googleCalendarData?.events) ? googleCalendarData.events : [];
