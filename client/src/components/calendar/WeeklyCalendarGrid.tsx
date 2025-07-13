@@ -248,7 +248,8 @@ export const WeeklyCalendarGrid = ({
           {/* Time column */}
           <div className={cn(
             "calendar-cell time-cell",
-            timeSlot.minute === 0 ? "hour" : "half-hour"
+            timeSlot.minute === 0 ? "hour" : "half-hour",
+            slotIndex === 0 ? "first-time-slot" : ""
           )}>
             {timeSlot.time}
           </div>
@@ -278,7 +279,8 @@ export const WeeklyCalendarGrid = ({
                 key={dayIndex}
                 className={cn(
                   "calendar-cell",
-                  timeSlot.minute === 0 ? "hour" : "half-hour"
+                  timeSlot.minute === 0 ? "hour" : "half-hour",
+                  slotIndex === 0 ? "first-time-slot" : ""
                 )}
                 onClick={() => onTimeSlotClick(day.date, timeSlot.time)}
                 onDragOver={handleDragOver}

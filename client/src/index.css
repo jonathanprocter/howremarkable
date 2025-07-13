@@ -705,8 +705,8 @@ html, body {
     border-top: 1px solid black;
 }
 
-/* Make the top of 6:00 AM row bold across entire week - target ALL cells in first time slot row */
-.weekly-calendar .calendar-grid .contents:first-child .calendar-cell {
+/* Make the top of 6:00 AM row bold across entire week - target all cells with first-time-slot class */
+.weekly-calendar .calendar-cell.first-time-slot {
     border-top: 3px solid black !important;
 }
 
