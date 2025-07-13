@@ -160,6 +160,7 @@ export const WeeklyCalendarGrid = ({
 
     return {
       height: `${preciseHeight}px`,
+      marginTop: '-1px', // Move appointments up by 1px to align with time slot tops
       marginBottom: duration > 1 ? '0px' : '2px',
       zIndex: 20 // Ensure events appear above other elements
     };
