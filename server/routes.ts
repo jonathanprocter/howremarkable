@@ -14,6 +14,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use(passport.session());
 
   // Configure Google OAuth2 Strategy
+  console.log("🔧 OAuth Configuration:");
+  console.log("- Callback URL: https://HowreMarkable.replit.app/api/auth/google/callback");
+  console.log("- Environment: Production");
+  
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID!,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
@@ -133,7 +137,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/auth/google/callback", (req, res, next) => {
-    console.log("Google OAuth callback received", req.query);
+    console.log("🔗 Google OAuth callback received on:", req.get('host'));
+    console.log("🔗 Full callback URL:", `${req.protocol}://${req.get('host')}${req.originalUrl}`);
+    console.log("🔗 Query params:", req.query);
 
     if (req.query.error) {
       const error = req.query.error as string;
