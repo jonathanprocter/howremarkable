@@ -685,6 +685,11 @@ html, body {
     background: #f0f0f0 !important; /* Gray background for hour rows across entire week */
 }
 
+/* Remove top border from the first hour row (6:00 AM) since we'll add it with ::before */
+.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(17) {
+    border-top: none;
+}
+
 /* Ensure half-hour slots are white */
 .calendar-cell.half-hour {
     background: white !important;
@@ -696,11 +701,11 @@ html, body {
     border-top: 1px solid black;
 }
 
-/* Make the first hour row (6:00 AM) extend across entire grid */
+/* Make the 6:00 AM row have bold line at the TOP of the row extending across entire grid */
 .weekly-calendar .calendar-grid::before {
     content: "";
     position: absolute;
-    top: 92px; /* Just below header and all-day section */
+    top: 92px; /* At the very top of the 6:00 AM row */
     left: 0;
     right: 0;
     height: 1px;
