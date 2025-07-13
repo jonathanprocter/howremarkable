@@ -808,12 +808,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = req.user || req.session?.passport?.user;
       
       if (!user) {
-        console.log('❌ No authenticated user found for events endpoint');
-        return res.status(401).json({ 
-          error: "Authentication required", 
-          message: "Please authenticate to access events",
-          authUrl: "/api/auth/google"
-        });
+        console.log('❌ No authenticated user found for events endpoint - returning empty events array');
+        return res.json([]); // Return empty array instead of error for unauthenticated users
       }
 
       const userId = parseInt(user.id);

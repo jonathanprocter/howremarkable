@@ -58,17 +58,17 @@ export default function Planner() {
     setCurrentWeek(week);
   }, [selectedDate]);
 
-  // Fetch events
+  // Fetch events - only require auth for database events
   const { data: events = [], isLoading: eventsLoading, error: eventsError } = useQuery({
     queryKey: ['/api/events'],
-    enabled: !!user,
+    enabled: !!user, // Only fetch if user is authenticated
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 30 * 60 * 1000, // 30 minutes
   });
 
 
 
-   // SimplePractice calendar data
+   // SimplePractice calendar data - only if user is authenticated
    const { data: simplePracticeData, isLoading: isLoadingSimplePracticeEvents, error: simplePracticeError } = useQuery({
     queryKey: ['/api/simplepractice/events'],
     queryFn: async () => {
@@ -83,14 +83,14 @@ export default function Planner() {
     retry: 1,
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    enabled: !!user, // Only run when user is authenticated
+    enabled: !!user, // Only run when user is authenticated for calendar access
   });
 
   // Extract SimplePractice events safely
   const simplePracticeEvents = Array.isArray(simplePracticeData?.events) ? simplePracticeData.events : [];
   const simplePracticeCalendars = Array.isArray(simplePracticeData?.calendars) ? simplePracticeData.calendars : [];
 
-  // Google Calendar data with error handling
+  // Google Calendar data - only if user is authenticated
   const { data: googleCalendarData, isLoading: isLoadingGoogleEvents, error: googleCalendarError } = useQuery({
     queryKey: ['/api/calendar/events'],
     queryFn: async () => {
@@ -105,6 +105,7 @@ export default function Planner() {
     retry: 1,
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !!user, // Only run when user is authenticated for calendar access
   });
 
   const googleEvents = Array.isArray(googleCalendarData?.events) ? googleCalendarData.events : [];
@@ -323,6 +324,15 @@ export default function Planner() {
   };
 
   const handleTimeSlotClick = (date: Date, time: string) => {
+    if (!user) {
+      toast({ 
+        title: 'Authentication Required', 
+        description: 'Please authenticate with Google to create events',
+        variant: 'destructive' 
+      });
+      return;
+    }
+
     const [hours, minutes] = time.split(':').map(Number);
     const startTime = new Date(date);
     startTime.setHours(hours, minutes, 0, 0);
@@ -468,6 +478,15 @@ export default function Planner() {
 
   // Sync handlers
   const handleSyncCalendarEvents = async () => {
+    if (!user) {
+      toast({ 
+        title: 'Authentication Required', 
+        description: 'Please authenticate with Google Calendar first',
+        variant: 'destructive' 
+      });
+      return;
+    }
+
     try {
       toast({ title: 'Syncing calendar events...' });
 
@@ -517,24 +536,9 @@ export default function Planner() {
     setSelectedDate(newDate);
   };
 
-  // Loading states
+  // Loading states - only show if actually loading user data
   if (userLoading) {
-    return <LoadingState message="Loading user authentication..." />;
-  }
-
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Card className="w-96">
-          <CardHeader>
-            <CardTitle>Authentication Required</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>Please log in to access the planner.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <LoadingState message="Loading user data..." />;
   }
 
   const isLoading = eventsLoading || isLoadingGoogleEvents || isLoadingSimplePracticeEvents;
@@ -711,28 +715,43 @@ export default function Planner() {
                   <Button 
                     variant="outline" 
                     onClick={() => {
-                      queryClient.invalidateQueries({ queryKey: ['/api/events'] });
-                      queryClient.invalidateQueries({ queryKey: ['/api/calendar/events'] });
+                      if (user) {
+                        queryClient.invalidateQueries({ queryKey: ['/api/events'] });
+                        queryClient.invalidateQueries({ queryKey: ['/api/calendar/events'] });
+                      }
                     }}
                     className="w-full"
                     size="sm"
                   >
                     Refresh Events
                   </Button>
-                  <Button 
-                    onClick={handleSyncCalendarEvents}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white"
-                    size="sm"
-                  >
-                    Sync Calendar Events
-                  </Button>
-                  <Button
-                    onClick={() => window.location.href = '/api/auth/google'}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                    size="sm"
-                  >
-                    Connect Real Google Account
-                  </Button>
+                  {user ? (
+                    <>
+                      <Button 
+                        onClick={handleSyncCalendarEvents}
+                        className="w-full bg-green-600 hover:bg-green-700 text-white"
+                        size="sm"
+                      >
+                        Sync Calendar Events
+                      </Button>
+                      <div className="text-xs text-green-600 text-center">
+                        ✅ Calendar Connected: {user.email}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        onClick={() => window.location.href = '/api/auth/google'}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                        size="sm"
+                      >
+                        Connect Google Calendar
+                      </Button>
+                      <div className="text-xs text-gray-500 text-center">
+                        Connect for calendar access & event creation
+                      </div>
+                    </>
+                  )}
                   <DevLoginButton />
                 </div>
               </CardContent>
