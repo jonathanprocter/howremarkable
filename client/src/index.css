@@ -718,23 +718,26 @@ html, body {
     background: #fafafa;
 }
 
-/* All-day event cells - ensure exactly 1px borders to match time slots */
+/* All-day event cells - reset all borders then add exactly 1px bottom border */
 .calendar-cell.all-day-header {
     background: white;
     font-weight: bold;
     font-size: 8px;
     color: black;
     text-align: center;
-    border-bottom: 1px solid black !important; /* Override header-cell 2px border */
+    border: none !important; /* Remove all inherited borders */
+    border-bottom: 1px solid black !important; /* Add only 1px bottom border */
+    border-right: 2px solid black !important; /* Keep right border for grid structure */
     padding: 6px 2px;
-    border-right: 2px solid black;
 }
 
 .calendar-cell.all-day-slot {
     background: white;
     min-height: 40px;
     padding: 4px;
-    border-bottom: 1px solid black !important; /* Force 1px to match time slots */
+    border: none !important; /* Remove all inherited borders */
+    border-bottom: 1px solid black !important; /* Add only 1px bottom border */
+    border-right: 1px solid black !important; /* Keep right border for grid structure */
 }
 
 /* Duplicate rules removed - using unified definitions above */
