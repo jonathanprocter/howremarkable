@@ -196,7 +196,6 @@ const drawCurrentWeeklyGrid = (pdf: jsPDF, events: CalendarEvent[], weekStart: D
     pdf.setDrawColor(150, 150, 150);
     pdf.setLineWidth(1);
     pdf.line(sundayRightX, gridStartY, sundayRightX, timeGridStartY + totalSlots * timeSlotHeight);
-    }
     
     // Time label - centered both vertically and horizontally
     pdf.setFontSize(fonts.timeLabel);
