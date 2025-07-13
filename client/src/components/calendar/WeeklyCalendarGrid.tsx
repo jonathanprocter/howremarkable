@@ -304,10 +304,13 @@ export const WeeklyCalendarGrid = ({
                   const eventStart = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
                   const eventEnd = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
                   const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
-                  // Use exact duration: 1 minute = 1px (30px per 30-minute slot = 1px per minute)
-                  const exactHeight = Math.max(durationMinutes, 26); // 1px per minute, minimum 26px
-                  // Calculate appointment height based on exact duration (30px per 30-minute slot)
-                  const appointmentHeight = Math.max(exactHeight - 4, 26); // Subtract 4px for borders, minimum 26px
+                  // Use exact duration: 30px per 30-minute slot = 1px per minute
+                  const appointmentHeight = Math.max(durationMinutes, 30); // 1px per minute, minimum 30px for half-hour
+                  
+                  // Debug logging for duration
+                  if (event.title.includes('Angelica') || event.title.includes('Dan') || event.title.includes('Sherrifa')) {
+                    console.log(`${event.title}: ${durationMinutes} minutes -> ${appointmentHeight}px height`);
+                  }
 
                   return (
                     <div
@@ -329,7 +332,7 @@ export const WeeklyCalendarGrid = ({
                         position: 'absolute',
                         width: 'calc(100% - 8px)',
                         height: `${appointmentHeight}px`,
-                        top: '2px',
+                        top: '0px',
                         left: '4px',
                         zIndex: 10
                       }}
