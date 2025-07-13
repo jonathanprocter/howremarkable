@@ -718,7 +718,7 @@ html, body {
     background: #fafafa;
 }
 
-/* All-day event cells - reset all borders then add exactly 1px bottom border */
+/* All-day event cells - use box-shadow to create exact 1px line */
 .calendar-cell.all-day-header {
     background: white;
     font-weight: bold;
@@ -726,8 +726,7 @@ html, body {
     color: black;
     text-align: center;
     border: none !important; /* Remove all inherited borders */
-    border-bottom: 1px solid black !important; /* Add only 1px bottom border */
-    border-right: 2px solid black !important; /* Keep right border for grid structure */
+    box-shadow: 0 1px 0 0 black, 2px 0 0 0 black inset !important; /* 1px bottom line + right border */
     padding: 6px 2px;
 }
 
@@ -736,8 +735,7 @@ html, body {
     min-height: 40px;
     padding: 4px;
     border: none !important; /* Remove all inherited borders */
-    border-bottom: 1px solid black !important; /* Add only 1px bottom border */
-    border-right: 1px solid black !important; /* Keep right border for grid structure */
+    box-shadow: 0 1px 0 0 black, 1px 0 0 0 black inset !important; /* 1px bottom line + right border */
 }
 
 /* Duplicate rules removed - using unified definitions above */
