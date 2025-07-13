@@ -148,38 +148,20 @@ export const WeeklyCalendarGrid = ({
     
     // Skip invalid dates
     if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
-      return { height: '30px', marginBottom: '1px', zIndex: 20 };
+      return { height: '40px', marginBottom: '2px', zIndex: 20 };
     }
     
-    // Calculate actual duration in minutes
+    const duration = getEventDurationInSlots({ startTime, endTime });
+    // Calculate precise height based on actual duration
     const actualDurationMs = endTime.getTime() - startTime.getTime();
-    const actualDurationMinutes = actualDurationMs / (1000 * 60);
-    
-    // Each time slot is exactly 30 minutes and 30px tall
-    // Calculate height based on exact 30-minute increments
-    let calculatedHeight;
-    
-    if (actualDurationMinutes <= 30) {
-      // 30 minutes or less = exactly one slot (30px)
-      calculatedHeight = 30;
-    } else if (actualDurationMinutes <= 60) {
-      // 31-60 minutes = exactly two slots (60px)
-      calculatedHeight = 60;
-    } else if (actualDurationMinutes <= 90) {
-      // 61-90 minutes = exactly three slots (90px)
-      calculatedHeight = 90;
-    } else {
-      // For longer durations, use exact 30-minute increments
-      const slots = Math.ceil(actualDurationMinutes / 30);
-      calculatedHeight = slots * 30;
-    }
+    const actualDurationHours = actualDurationMs / (1000 * 60 * 60);
+    const slotHeight = 40; // 40px per 30-minute slot
+    const preciseHeight = Math.min(duration * slotHeight, actualDurationHours * 2 * slotHeight);
 
     return {
-      height: `${calculatedHeight}px`,
-      marginBottom: '1px',
-      zIndex: 20,
-      maxHeight: `${calculatedHeight}px`,
-      overflow: 'hidden'
+      height: `${preciseHeight}px`,
+      marginBottom: duration > 1 ? '0px' : '2px',
+      zIndex: 20 // Ensure events appear above other elements
     };
   }
 

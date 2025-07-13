@@ -350,19 +350,17 @@ html, body {
 
 .calendar-grid {
     display: grid;
-    grid-template-columns: 80px repeat(7, 110px);
-    grid-template-rows: 50px repeat(36, 30px);
+    grid-template-columns: 80px repeat(7, 1fr);
+    grid-template-rows: 50px repeat(36, 40px);
     background: white;
     height: fit-content;
-    width: fit-content;
-    max-width: none;
+    width: 100%;
     overflow: visible;
     margin: 0;
     padding: 0;
     border: none;
     border-bottom: 2px solid black;
     border-left: 2px solid black;
-    box-sizing: border-box;
 }
 
 .time-header {
