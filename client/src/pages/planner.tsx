@@ -133,7 +133,7 @@ export default function Planner() {
     const eventDates = allEvents.map(e => new Date(e.startTime)).sort((a, b) => a.getTime() - b.getTime());
     const earliestDate = eventDates[0];
     const latestDate = eventDates[eventDates.length - 1];
-    
+
     console.log('📅 Your appointments date range:', {
       earliest: earliestDate?.toDateString(),
       latest: latestDate?.toDateString(),
@@ -169,7 +169,7 @@ export default function Planner() {
         // Test if the function exists
         if (typeof exportDailyToPDF === 'function') {
           console.log('✅ exportDailyToPDF function is available');
-          
+
           // Call the function
           await exportDailyToPDF(selectedDate, allEvents);
           console.log('✅ Test daily export completed successfully');
@@ -203,7 +203,7 @@ export default function Planner() {
         console.log('🚀 Starting PDF export: daily');
         console.log('📅 Selected date:', selectedDate.toDateString());
         console.log('📊 Total events:', allEvents.length);
-        
+
         await exportDailyToPDF(selectedDate, allEvents);
         console.log('✅ Button click test completed');
       } catch (error) {
@@ -216,15 +216,15 @@ export default function Planner() {
       try {
         console.log('🧪 Testing Simple PDF Export');
         const { exportSimplePDF } = await import('../utils/simplePDFExport');
-        
+
         // Filter events for selected date
         const todayEvents = allEvents.filter(event => {
           const eventDate = new Date(event.startTime);
           return eventDate.toDateString() === selectedDate.toDateString();
         });
-        
+
         console.log('📊 Events for selected date:', todayEvents.length);
-        
+
         await exportSimplePDF(selectedDate, todayEvents);
         console.log('✅ Simple PDF test completed successfully');
       } catch (error) {
@@ -238,7 +238,7 @@ export default function Planner() {
         console.log('🧪 Testing Direct Daily PDF Export');
         console.log('📅 Selected date:', selectedDate.toDateString());
         console.log('📊 All events:', allEvents.length);
-        
+
         // Call the actual export function directly
         await handleExportPDF('daily');
         console.log('✅ Direct PDF test completed successfully');
@@ -270,7 +270,7 @@ export default function Planner() {
 
         // Test simple PDF export first
         (window as any).testSimplePDF();
-        
+
         // Test direct PDF export after delay
         setTimeout(() => {
           (window as any).testDirectPDF();
@@ -361,7 +361,7 @@ export default function Planner() {
       console.log(`🚀 Starting PDF export: ${exportType}`);
       console.log(`📅 Selected date: ${selectedDate.toDateString()}`);
       console.log(`📊 Total events: ${allEvents.length}`);
-      
+
       toast({ title: 'Generating PDF export...' });
 
       switch (exportType) {
@@ -426,7 +426,7 @@ export default function Planner() {
       toast({ title: 'Running comprehensive audit system...' });
       const auditResults = await auditSystem.runFullAudit(allEvents);
       console.log('🎯 Comprehensive Audit Results:', auditResults);
-      
+
       // Display results in toast
       toast({ 
         title: `Audit Complete - Score: ${auditResults.pixelPerfectScore}%`,
@@ -435,7 +435,7 @@ export default function Planner() {
 
       // Export results to localStorage
       auditSystem.exportAuditResults(auditResults);
-      
+
     } catch (error) {
       console.error('Comprehensive audit failed:', error);
       toast({ title: 'Comprehensive audit failed', variant: 'destructive' });
@@ -445,21 +445,21 @@ export default function Planner() {
   const handleTestExports = async () => {
     try {
       toast({ title: 'Running comprehensive audit demo with automatic fixes...' });
-      
+
       // Import the audit system demo
       const { auditSystemDemo } = await import('@/utils/auditSystemDemo');
-      
+
       // Run comprehensive demo with automatic fixes
       await auditSystemDemo.runComprehensiveDemo(allEvents);
-      
+
       // Get results
       const results = auditSystemDemo.getResults();
-      
+
       toast({ 
         title: `Audit Demo Complete - Score: ${results.originalScore}% → ${results.finalScore}%`,
         description: `Improvement: +${results.improvement}%. Implemented ${results.fixes.length} fixes. Check console for details.`
       });
-      
+
     } catch (error) {
       console.error('Audit demo failed:', error);
       toast({ title: 'Audit demo failed', variant: 'destructive' });

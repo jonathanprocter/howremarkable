@@ -1,9 +1,12 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from './ui/button';
 
 export function DevLoginButton() {
+  const [isLogging, setIsLogging] = useState(false);
+
   const handleDevLogin = async () => {
+    setIsLogging(true);
     try {
       const response = await fetch('/api/auth/dev-login', {
         method: 'POST',
@@ -16,23 +19,27 @@ export function DevLoginButton() {
       if (response.ok) {
         const data = await response.json();
         console.log('✅ Development login successful:', data);
-        // Reload page to update authentication state
-        window.location.reload();
+        // Small delay to ensure session is saved
+        setTimeout(() => {
+          window.location.reload();
+        }, 200);
       } else {
         console.error('❌ Development login failed');
+        setIsLogging(false);
       }
     } catch (error) {
       console.error('❌ Development login error:', error);
+      setIsLogging(false);
     }
   };
 
   return (
     <Button 
       onClick={handleDevLogin}
-      variant="outline"
-      className="mb-4"
+      disabled={isLogging}
+      className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
     >
-      🔧 Dev Login
+      {isLogging ? '🔄 Logging in...' : '🔧 Quick Login'}
     </Button>
   );
 }

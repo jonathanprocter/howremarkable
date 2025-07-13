@@ -164,7 +164,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log("Session user after save:", !!req.user);
             console.log("Session passport after save:", !!req.session.passport);
           }
-          res.redirect("/?connected=true");
+          // Add small delay to ensure session is fully saved
+          setTimeout(() => {
+            res.redirect("/?connected=true");
+          }, 100);
         });
       });
     })(req, res, next);
