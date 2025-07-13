@@ -706,7 +706,7 @@ html, body {
 }
 
 /* Make the top of 6:00 AM row bold across entire week - target ALL cells in first time slot row */
-.weekly-calendar .calendar-grid .contents:first-of-type .calendar-cell {
+.weekly-calendar .calendar-grid .contents:first-child .calendar-cell {
     border-top: 3px solid black !important;
 }
 
