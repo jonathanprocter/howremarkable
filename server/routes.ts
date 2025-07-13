@@ -6,6 +6,8 @@ import { insertEventSchema, insertDailyNotesSchema } from "@shared/schema";
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { google } from "googleapis";
+import { setupAuditRoutes } from "./audit-system";
+import { setupAuthenticationFix } from "./auth-fix";
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
@@ -1083,6 +1085,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   });
+
+  // Setup comprehensive authentication fix
+  setupAuthenticationFix(app);
+
+  // Setup comprehensive audit system routes
+  setupAuditRoutes(app);
 
   const httpServer = createServer(app);
 

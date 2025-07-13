@@ -3,6 +3,7 @@ import { GoogleCalendarIntegration } from './GoogleCalendarIntegration';
 import { QuickActions } from './QuickActions';
 import { ExportToPDF } from './ExportToPDF';
 import { DailyNotes } from './DailyNotes';
+import { AuthAuditSystem } from './AuthAuditSystem';
 import { CalendarState } from '../../types/calendar';
 
 interface SidebarProps {
@@ -75,6 +76,8 @@ export const Sidebar = ({
         notes={dailyNotes}
         onSaveNotes={onSaveNotes}
       />
+      
+      <AuthAuditSystem />
     </div>
   );
 };
