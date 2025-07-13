@@ -661,6 +661,11 @@ html, body {
     line-height: 1.1;
 }
 
+/* Override header cell border for ALL DAY cells specifically */
+.calendar-cell.header-cell.all-day-header {
+    border-bottom: 1px solid black !important; /* Override header-cell 2px border */
+}
+
 /* Time cells styling - match daily appointment time font size but bold and centered */
 .calendar-cell.time-cell {
     background: white;
