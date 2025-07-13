@@ -360,7 +360,7 @@ html, body {
     margin: 0;
     padding: 0;
     border: 2px solid black; /* Add complete border around entire grid */
-    border-top: 3px solid black; /* Bold top border for 6:00 AM line matching header thickness */
+    border-top: 1px solid black; /* Normal top border for ALL DAY header */
     box-sizing: border-box;
     position: relative;
 }
@@ -661,10 +661,10 @@ html, body {
     line-height: 1.1;
 }
 
-/* Time cells styling - match appointment font style but bold and centered */
+/* Time cells styling - match daily appointment time font size but bold and centered */
 .calendar-cell.time-cell {
     background: white;
-    font-size: 5px;
+    font-size: 10px;
     font-weight: bold;
     text-align: center;
     padding: 2px;
