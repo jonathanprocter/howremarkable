@@ -43,7 +43,7 @@ export const Sidebar = ({
   const dailyNotes = state.dailyNotes[currentDateString] || '';
 
   return (
-    <div className="w-64 bg-gray-50 p-4 border-r border-gray-200">
+    <div className="w-64 bg-gray-50 p-4 border-r border-gray-200 overflow-y-auto h-full">
       <MiniCalendar
         currentDate={state.currentDate}
         selectedDate={state.selectedDate}
@@ -77,7 +77,9 @@ export const Sidebar = ({
         onSaveNotes={onSaveNotes}
       />
       
-      <AuthAuditSystem />
+      <div className="mt-4">
+        <AuthAuditSystem />
+      </div>
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+// import { Badge } from "@/components/ui/badge";
 import { AlertCircle, CheckCircle, AlertTriangle, RefreshCw, Settings } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
@@ -39,6 +39,7 @@ export function AuthAuditSystem() {
       
       if (response.ok) {
         setAuditResults(data);
+        console.log('Audit results:', data);
         toast({
           title: "Audit Complete",
           description: `Found ${data.summary.failed} issues, ${data.summary.warnings} warnings`,
@@ -47,6 +48,7 @@ export function AuthAuditSystem() {
         throw new Error(data.error || 'Audit failed');
       }
     } catch (error) {
+      console.error('Audit error:', error);
       toast({
         title: "Audit Failed",
         description: error instanceof Error ? error.message : 'Unknown error',
@@ -111,17 +113,15 @@ export function AuthAuditSystem() {
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Settings className="w-5 h-5" />
-          Authentication Audit System
-        </CardTitle>
-        <CardDescription>
-          Comprehensive authentication and system health diagnostics
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <div className="w-full mt-4 p-4 border rounded-lg bg-white">
+      <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
+        <Settings className="w-5 h-5" />
+        Authentication Audit System
+      </h3>
+      <p className="text-sm text-gray-600 mb-4">
+        Comprehensive authentication and system health diagnostics
+      </p>
+      <div className="space-y-4">
         <div className="flex gap-2">
           <Button 
             onClick={runComprehensiveAudit}
@@ -191,9 +191,9 @@ export function AuthAuditSystem() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{result.component}</span>
-                      <Badge className={getStatusColor(result.status)}>
+                      <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(result.status)}`}>
                         {result.status}
-                      </Badge>
+                      </span>
                     </div>
                     <div className="text-sm text-gray-600">{result.message}</div>
                     {result.fix && (
@@ -223,7 +223,7 @@ export function AuthAuditSystem() {
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
