@@ -546,7 +546,7 @@ export default function Planner() {
 
   return (
     <div className="min-h-screen bg-background p-4">
-      <div className="max-w-[1404px] mx-auto">
+      <div className="w-full mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
