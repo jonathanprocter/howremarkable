@@ -300,6 +300,13 @@ export const WeeklyCalendarGrid = ({
                   const isSimplePractice = eventSourceClass.includes('simplepractice');
                   const isGoogle = eventSourceClass.includes('google');
 
+                  // Calculate appointment height based on duration
+                  const eventStart = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+                  const eventEnd = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
+                  const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
+                  const durationSlots = Math.ceil(durationMinutes / 30); // Each slot is 30 minutes
+                  const appointmentHeight = Math.max(durationSlots * 30 - 4, 26); // 30px per slot minus 4px for borders, minimum 26px
+
                   return (
                     <div
                       key={eventIndex}
@@ -314,10 +321,12 @@ export const WeeklyCalendarGrid = ({
                       )}
                       style={{
                         ...getEventStyle(event),
-                        position: 'relative',
-                        width: '100%',
-                        minHeight: '20px',
-                        top: '2px' // Move appointments slightly down from cell top
+                        position: 'absolute',
+                        width: 'calc(100% - 8px)',
+                        height: `${appointmentHeight}px`,
+                        top: '2px',
+                        left: '4px',
+                        zIndex: 10
                       }}
                       draggable={event.source === 'google'}
                       onDragStart={(e) => handleDragStart(e, event)}

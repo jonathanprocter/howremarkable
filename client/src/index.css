@@ -642,6 +642,7 @@ html, body {
     background: white;
     min-height: 30px;
     box-sizing: border-box;
+    position: relative; /* Enable absolute positioning for appointments */
 }
 
 /* Header cells styling */
@@ -783,9 +784,15 @@ html, body {
     color: #92400e;
 }
 
-/* Event in grid appointments - ensure white backgrounds */
+/* Event in grid appointments - ensure white backgrounds and proper sizing */
 .event-in-grid {
     background: #FFFFFF !important;
+    border-radius: 0 !important;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 2px 4px;
 }
 
 .event-in-grid.appointment {
@@ -794,14 +801,22 @@ html, body {
 
 .event-in-grid.appointment.simplepractice {
     background: #FFFFFF !important;
+    border: 1px solid #6495ED !important;
+    border-left: 4px solid #6495ED !important;
+    color: #1e3a8a !important;
 }
 
 .event-in-grid.appointment.google-calendar {
     background: #FFFFFF !important;
+    border: 2px dashed #666 !important;
+    color: black !important;
 }
 
 .event-in-grid.appointment.personal {
     background: #FFFFFF !important;
+    border: 2px solid #999 !important;
+    border-style: double !important;
+    color: black !important;
 }
 
 .event-block.all-day {
