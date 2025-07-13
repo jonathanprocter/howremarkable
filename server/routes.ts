@@ -146,28 +146,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.redirect("/?error=auth_failed&details=no_user");
       }
 
-      req.logIn(user, (err) => {
+      req.logIn(user, { session: true }, (err) => {
         if (err) {
           console.error("Login error:", err);
           return res.redirect("/?error=auth_failed&details=" + encodeURIComponent(err.message));
         }
+        
         console.log("Google OAuth callback successful - User logged in:", user.email);
-        console.log("Session after login:", req.sessionID);
-        console.log("User object in session:", !!req.user);
+        console.log("Session ID:", req.sessionID);
+        console.log("User in req.user:", !!req.user);
+        console.log("Session passport:", !!req.session.passport);
 
-        // Force session save before redirect with additional verification
+        // Manually ensure session data is set correctly
+        req.session.passport = { user: user };
+        req.user = user;
+
+        // Force session save with extended timeout
         req.session.save((saveErr) => {
           if (saveErr) {
             console.error("Session save error:", saveErr);
-          } else {
-            console.log("Session saved successfully");
-            console.log("Session user after save:", !!req.user);
-            console.log("Session passport after save:", !!req.session.passport);
+            return res.redirect("/?error=session_save_failed");
           }
-          // Add small delay to ensure session is fully saved
+          
+          console.log("✅ Session saved successfully");
+          console.log("✅ Final session check - User:", !!req.user);
+          console.log("✅ Final session check - Passport:", !!req.session.passport);
+          
+          // Longer delay to ensure session persistence
           setTimeout(() => {
             res.redirect("/?connected=true");
-          }, 100);
+          }, 500);
         });
       });
     })(req, res, next);
@@ -259,47 +267,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('🔍 Session Debug [POST /api/auth/dev-login]: User=' + (req.user ? 'true' : 'false') + ', Session=' + req.sessionID?.substring(0, 8) + '...');
 
-    // Create a development user with valid tokens
-    const devUser = {
+      // Create a development user with valid tokens
+      const devUser = {
+        id: '8',
+        googleId: 'dev-google-id',
+        email: 'dev@test.com',
+        name: 'Development User',
+        accessToken: 'dev-access-token-' + Date.now(),
+        refreshToken: 'dev-refresh-token-' + Date.now()
+      };
+
+      // Store user in session manually
+      req.session.passport = {
+        user: devUser
+      };
+
+      // Also set req.user directly
+      req.user = devUser;
+
+      // Save session
+      req.session.save((err) => {
+        if (err) {
+          console.error('Session save error:', err);
+          return res.status(500).json({ error: 'Failed to save session' });
+        }
+
+        console.log('Development user logged in:', devUser.email);
+        console.log('Session after dev login:', req.sessionID);
+        console.log('User object in session:', !!req.user);
+
+        res.json({ 
+          success: true, 
+          user: devUser,
+          sessionId: req.sessionID
+        });
+      });
+
+    } catch (error) {
+      console.error('Dev login error:', error);
+      res.status(500).json({ error: 'Login failed' });
+    }
+  });
+
+  // Simple login endpoint for testing
+  app.get("/api/auth/test-login", (req, res) => {
+    const testUser = {
       id: '8',
-      googleId: 'dev-google-id',
+      googleId: 'test-google-id',
       email: 'dev@test.com',
-      name: 'Development User',
-      accessToken: 'dev-access-token-' + Date.now(),
-      refreshToken: 'dev-refresh-token-' + Date.now()
+      name: 'Test User',
+      accessToken: 'test-access-token-' + Date.now(),
+      refreshToken: 'test-refresh-token-' + Date.now()
     };
 
-    // Store user in session manually
-    req.session.passport = {
-      user: devUser
-    };
-
-    // Also set req.user directly
-    req.user = devUser;
-
-    // Save session
-    req.session.save((err) => {
+    req.logIn(testUser, { session: true }, (err) => {
       if (err) {
-        console.error('Session save error:', err);
-        return res.status(500).json({ error: 'Failed to save session' });
+        console.error('Test login error:', err);
+        return res.status(500).json({ error: 'Test login failed', details: err.message });
       }
 
-      console.log('Development user logged in:', devUser.email);
-      console.log('Session after dev login:', req.sessionID);
-      console.log('User object in session:', !!req.user);
+      // Ensure session data is set
+      req.session.passport = { user: testUser };
+      req.user = testUser;
 
-      res.json({ 
-        success: true, 
-        user: devUser,
-        sessionId: req.sessionID
+      req.session.save((saveErr) => {
+        if (saveErr) {
+          console.error('Test session save error:', saveErr);
+          return res.status(500).json({ error: 'Session save failed' });
+        }
+
+        console.log('✅ Test user logged in successfully:', testUser.email);
+        res.json({ 
+          success: true, 
+          user: testUser,
+          sessionId: req.sessionID,
+          message: 'Test login successful'
+        });
       });
     });
-
-  } catch (error) {
-    console.error('Dev login error:', error);
-    res.status(500).json({ error: 'Login failed' });
-  }
-});
+  });
 
   // Middleware to ensure authentication for calendar routes
   const requireAuth = (req: any, res: any, next: any) => {
