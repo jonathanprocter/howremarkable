@@ -463,8 +463,8 @@ html, body {
 
 .appointment-name {
     font-size: 8px;
-    line-height: 1.2;
-    margin-bottom: 8px;
+    line-height: 1.1;
+    margin-bottom: 0;
     text-transform: uppercase;
     font-weight: bold;
     word-break: break-word;
@@ -476,6 +476,14 @@ html, body {
     width: 100%;
     display: block;
     text-align: left;
+    flex-grow: 1;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+}
+
+.appointment-spacer {
+    height: 4px;
+    flex-shrink: 0;
 }
 
 .appointment-time {
@@ -485,6 +493,7 @@ html, body {
     line-height: 1.0;
     white-space: normal;
     text-align: left;
+    margin-top: 0;
 }
 
 /* Daily view appointment time - much larger font */
@@ -802,11 +811,12 @@ html, body {
     justify-content: flex-start;
     align-items: flex-start;
     padding: 3px 5px;
-    overflow: visible;
+    overflow: hidden;
     text-overflow: clip;
     width: 100%;
     min-width: 0;
     text-align: left;
+    max-height: 100%;
 }
 
 .event-in-grid.appointment {

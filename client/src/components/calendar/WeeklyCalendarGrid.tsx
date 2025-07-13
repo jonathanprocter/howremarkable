@@ -306,11 +306,8 @@ export const WeeklyCalendarGrid = ({
                   const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
                   // Use exact duration: 1 minute = 1px (30px per 30-minute slot = 1px per minute)
                   const exactHeight = Math.max(durationMinutes, 26); // 1px per minute, minimum 26px
-                  // Add extra height for text wrapping if title is long and for spacing
-                  const titleLength = cleanEventTitle(event.title).length;
-                  const extraHeightForWrapping = titleLength > 18 ? Math.ceil(titleLength / 18) * 10 : 0;
-                  const extraSpacingHeight = 8; // Add space for the gap between name and time
-                  const appointmentHeight = Math.max(exactHeight - 4 + extraHeightForWrapping + extraSpacingHeight, 36); // Subtract 4px for borders, add wrap space and spacing, minimum 36px
+                  // Calculate appointment height based on exact duration (30px per 30-minute slot)
+                  const appointmentHeight = Math.max(exactHeight - 4, 26); // Subtract 4px for borders, minimum 26px
 
                   return (
                     <div
@@ -346,6 +343,7 @@ export const WeeklyCalendarGrid = ({
                       <div className="appointment-name">
                         {cleanEventTitle(event.title)}
                       </div>
+                      <div className="appointment-spacer"></div>
                       <div className="appointment-time">
                         {(() => {
                           const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
