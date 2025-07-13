@@ -67,13 +67,34 @@ export default function Planner() {
     (window as any).authHookState = { user, isLoading: userLoading };
   }, [refreshAuth, queryClient, user, userLoading]);
 
-  // Initialize autonomous audit system
+  // Initialize autonomous audit system - run immediately and repeatedly
   useEffect(() => {
-    // Start autonomous audit after component mounts
-    setTimeout(() => {
+    // Start autonomous audit immediately
+    autonomousAuthAudit.autoDetectAndFix();
+    
+    // Run every 5 seconds for rapid detection
+    const interval = setInterval(() => {
       autonomousAuthAudit.autoDetectAndFix();
-    }, 3000);
+    }, 5000);
+    
+    return () => clearInterval(interval);
   }, []);
+
+  // Manual auth fix handler
+  const handleManualAuthFix = async () => {
+    console.log('🔄 Manual authentication audit triggered');
+    try {
+      const result = await autonomousAuthAudit.runComprehensiveAudit();
+      if (result?.fixed) {
+        console.log('✅ Authentication fixed successfully');
+        window.location.reload();
+      } else {
+        console.log('❌ Authentication issues remain');
+      }
+    } catch (error) {
+      console.error('❌ Auth audit failed:', error);
+    }
+  };
 
   // State management
   const [viewMode, setViewMode] = useState<ViewMode>('weekly');
@@ -699,6 +720,22 @@ export default function Planner() {
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="w-full mx-auto">
+        {/* Authentication Fix Alert - Always visible */}
+        <div className="mb-4 p-4 bg-red-50 border-2 border-red-500 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-red-800 text-lg">🚨 AUTHENTICATION AUTO-FIX SYSTEM</h3>
+              <p className="text-red-700">System is running every 5 seconds. Click below for immediate fix.</p>
+            </div>
+            <button
+              onClick={handleManualAuthFix}
+              className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-colors text-lg"
+            >
+              🔧 FIX AUTHENTICATION NOW
+            </button>
+          </div>
+        </div>
+
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
