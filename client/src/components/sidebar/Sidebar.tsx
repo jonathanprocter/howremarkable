@@ -77,7 +77,9 @@ export const Sidebar = ({
         onSaveNotes={onSaveNotes}
       />
       
-      <div className="mt-4">
+      <div className="mt-4 p-4 bg-red-100 border border-red-500 rounded">
+        <h3 className="font-bold text-red-800">🔧 AUTHENTICATION DEBUG PANEL</h3>
+        <p className="text-sm text-red-700">This should be visible - if you can see this, the component is working!</p>
         <AuthAuditSystem />
       </div>
     </div>
