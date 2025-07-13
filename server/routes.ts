@@ -13,11 +13,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // Configure Google OAuth2 Strategy
-  const isDevelopment = process.env.REPLIT_DEV_DOMAIN || process.env.NODE_ENV === 'development';
-  const baseURL = isDevelopment 
-    ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
-    : 'https://HowreMarkable.replit.app';
+  // Configure Google OAuth2 Strategy - ALWAYS use production URL
+  const baseURL = 'https://HowreMarkable.replit.app';
   const callbackURL = `${baseURL}/api/auth/google/callback`;
   
   console.log("🔧 OAuth Configuration:");
