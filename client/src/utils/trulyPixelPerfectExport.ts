@@ -59,12 +59,13 @@ const createPDFConfig = (dashboardStyles: DashboardStyles) => {
   // Optimized dimensions for exact 110px day columns
   const pageWidth = 910;
   const pageHeight = 842;
-  const margin = Math.max(dashboardStyles?.spacing?.margin || 20, 20);
+  const margin = 30; // Fixed margin to ensure exact 110px day columns (matches exactGridPDFExport)
 
   // Calculate content area based on dashboard proportions
   const contentWidth = pageWidth - (2 * margin);
   const timeColumnWidth = dashboardStyles?.timeColumnWidth || 80; // Use exact dashboard value
-  const dayColumnWidth = 110; // Fixed to match exact dashboard measurement
+  const availableForDays = contentWidth - timeColumnWidth;
+  const dayColumnWidth = Math.floor(availableForDays / 7); // Should be exactly 110px
 
   return {
     // Page setup
