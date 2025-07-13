@@ -148,14 +148,14 @@ export const WeeklyCalendarGrid = ({
     
     // Skip invalid dates
     if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
-      return { height: '40px', marginBottom: '2px', zIndex: 20 };
+      return { height: '30px', marginBottom: '2px', zIndex: 20 };
     }
     
     const duration = getEventDurationInSlots({ startTime, endTime });
     // Calculate precise height based on actual duration
     const actualDurationMs = endTime.getTime() - startTime.getTime();
     const actualDurationHours = actualDurationMs / (1000 * 60 * 60);
-    const slotHeight = 40; // 40px per 30-minute slot
+    const slotHeight = 30; // 30px per 30-minute slot
     const preciseHeight = Math.min(duration * slotHeight, actualDurationHours * 2 * slotHeight);
 
     return {
