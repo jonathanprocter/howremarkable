@@ -28,6 +28,7 @@ import { exportFixedDynamicDailyPlannerPDF } from '@/utils/fixedDynamicDailyPlan
 import { exportAuditEnhancedPDF } from '@/utils/auditBasedPDFExport';
 import { export100PercentPixelPerfectPDF } from '@/utils/pixelPerfectPDFExport';
 import { DevLoginButton } from '../components/DevLoginButton';
+import { autonomousAuthAudit } from '../utils/autonomousAuthAudit';
 
 export default function Planner() {
   const { user, isLoading: userLoading, refetch: refetchAuth } = useAuthenticatedUser();
@@ -62,6 +63,16 @@ export default function Planner() {
   // Make auth refresh available globally for debugging
   useEffect(() => {
     (window as any).refreshAuth = refreshAuth;
+    (window as any).queryClient = queryClient;
+    (window as any).authHookState = { user, isLoading: userLoading };
+  }, [refreshAuth, queryClient, user, userLoading]);
+
+  // Initialize autonomous audit system
+  useEffect(() => {
+    // Start autonomous audit after component mounts
+    setTimeout(() => {
+      autonomousAuthAudit.autoDetectAndFix();
+    }, 3000);
   }, []);
 
   // State management

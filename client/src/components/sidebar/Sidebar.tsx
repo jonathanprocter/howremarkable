@@ -78,11 +78,22 @@ export const Sidebar = ({
       />
       
       <div className="mt-4 p-4 bg-red-100 border border-red-500 rounded">
-        <h3 className="font-bold text-red-800">🔧 AUTHENTICATION DEBUG PANEL</h3>
-        <p className="text-sm text-red-700">This should be visible - if you can see this, the component is working!</p>
+        <h3 className="font-bold text-red-800">🚨 AUTHENTICATION AUTO-FIX</h3>
+        <p className="text-sm text-red-700">Click to automatically detect and fix authentication sync issues</p>
         <div className="mt-2">
-          <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-            Test Button - Google OAuth Fix
+          <button 
+            onClick={async () => {
+              console.log('🔄 Manual authentication audit triggered');
+              const result = await (window as any).autonomousAuthAudit?.runComprehensiveAudit();
+              if (result?.fixed) {
+                console.log('✅ Authentication fixed successfully');
+              } else {
+                console.log('❌ Authentication issues remain');
+              }
+            }}
+            className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded transition-colors"
+          >
+            🔧 Auto-Fix Authentication Now
           </button>
         </div>
       </div>
