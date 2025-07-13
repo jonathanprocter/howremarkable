@@ -286,7 +286,14 @@ export const WeeklyCalendarGrid = ({
                 onDrop={(e) => handleDrop(e, day.date, timeSlot)}
               >
                 {slotEvents.map((event, eventIndex) => {
-                  if (!isFirstSlotOfEvent(event)) return null;
+                  const isFirstSlot = isFirstSlotOfEvent(event);
+                  
+                  // Debug log for troubleshooting
+                  if (slotEvents.length > 0 && eventIndex === 0) {
+                    console.log(`Rendering event ${event.title} at ${timeSlot.time} - isFirstSlot: ${isFirstSlot}`);
+                  }
+                  
+                  if (!isFirstSlot) return null;
 
                   const eventSourceClass = getEventSourceClass(event);
                   const isSimplePractice = eventSourceClass.includes('simplepractice');
@@ -304,7 +311,17 @@ export const WeeklyCalendarGrid = ({
                          event.title.toLowerCase().includes('phone call')) ? "google-calendar" :
                         "simplepractice"
                       )}
-                      style={getEventStyle(event)}
+                      style={{
+                        ...getEventStyle(event),
+                        border: '2px solid red', // Debug: Add visible border
+                        backgroundColor: 'yellow', // Debug: Add visible background
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        minHeight: '30px',
+                        zIndex: 10
+                      }}
                       draggable={event.source === 'google'}
                       onDragStart={(e) => handleDragStart(e, event)}
                       onClick={(e) => {
