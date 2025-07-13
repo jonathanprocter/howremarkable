@@ -38,15 +38,15 @@ const CURRENT_WEEKLY_CONFIG: CurrentWeeklyExportConfig = {
   margins: 20,
   headerHeight: 40,
   timeColumnWidth: 60,
-  dayColumnWidth: 102, // (792 - 20*2 - 60) / 7 = 102
+  dayColumnWidth: 103, // (792 - 20*2 - 60) / 7 = 103.14, rounded to ensure Sunday fits
   timeSlotHeight: 14,
   fonts: {
     title: 16,
     weekInfo: 12,
     dayHeader: 9,
     timeLabel: 7,
-    eventTitle: 6,
-    eventTime: 5,
+    eventTitle: 7, // Increased for better readability
+    eventTime: 6,
   },
 };
 
@@ -167,23 +167,15 @@ const drawCurrentWeeklyGrid = (pdf: jsPDF, events: CalendarEvent[], weekStart: D
     const minute = (slot % 2) * 30;
     const isHourSlot = minute === 0;
     
-    // Time slot background (grey for top-of-hour, white for half-hour)
-    pdf.setFillColor(isHourSlot ? 240 : 248, isHourSlot ? 240 : 248, isHourSlot ? 240 : 248);
+    // Time slot background - darker for top-of-hour, white for half-hour
+    const timeSlotColor = isHourSlot ? 230 : 255; // Darker grey for top-of-hour, white for half-hour
+    pdf.setFillColor(timeSlotColor, timeSlotColor, timeSlotColor);
     pdf.rect(margins, y, timeColumnWidth, timeSlotHeight, 'F');
     
-    // Time label
-    pdf.setFontSize(fonts.timeLabel);
-    pdf.setFont('helvetica', isHourSlot ? 'bold' : 'normal');
-    pdf.setTextColor(0, 0, 0);
-    
-    const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-    const timeWidth = pdf.getTextWidth(timeStr);
-    pdf.text(timeStr, margins + timeColumnWidth - timeWidth - 5, y + timeSlotHeight / 2 + 2);
-    
-    // Day columns background (white)
+    // Day columns background - same as time slots (darker for top-of-hour, white for half-hour)
     for (let day = 0; day < 7; day++) {
       const dayX = margins + timeColumnWidth + day * dayColumnWidth;
-      pdf.setFillColor(255, 255, 255);
+      pdf.setFillColor(timeSlotColor, timeSlotColor, timeSlotColor);
       pdf.rect(dayX, y, dayColumnWidth, timeSlotHeight, 'F');
       
       // Grid lines
@@ -198,7 +190,22 @@ const drawCurrentWeeklyGrid = (pdf: jsPDF, events: CalendarEvent[], weekStart: D
         pdf.line(dayX, gridStartY, dayX, timeGridStartY + totalSlots * timeSlotHeight);
       }
     }
+    
+    // Time label - centered both vertically and horizontally
+    pdf.setFontSize(fonts.timeLabel);
+    pdf.setFont('helvetica', isHourSlot ? 'bold' : 'normal');
+    pdf.setTextColor(0, 0, 0);
+    
+    const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+    const timeX = margins + timeColumnWidth / 2;
+    const timeY = y + timeSlotHeight / 2 + 2;
+    pdf.text(timeStr, timeX, timeY, { align: 'center' });
   }
+  
+  // Draw vertical line between time column and Monday column
+  pdf.setDrawColor(150, 150, 150);
+  pdf.setLineWidth(2);
+  pdf.line(margins + timeColumnWidth, gridStartY, margins + timeColumnWidth, timeGridStartY + totalSlots * timeSlotHeight);
   
   // Draw events
   drawCurrentWeeklyEvents(pdf, events, weekStart, timeGridStartY);
@@ -242,9 +249,9 @@ const drawCurrentWeeklyEvents = (pdf: jsPDF, events: CalendarEvent[], weekStart:
     const x = margins + timeColumnWidth + adjustedDay * dayColumnWidth + 2;
     const y = gridStartY + slotIndex * timeSlotHeight + 2;
     
-    // Calculate height based on duration
+    // Calculate height based on duration - ensure minimum height for readability
     const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
-    const height = Math.max((durationMinutes / 30) * timeSlotHeight - 4, timeSlotHeight - 4);
+    const height = Math.max((durationMinutes / 30) * timeSlotHeight - 4, 18); // Minimum 18px height for readability
     
     const width = dayColumnWidth - 4;
     
@@ -345,10 +352,18 @@ const drawEventWithCurrentStyling = (
   }
   
   // Draw event title lines
-  const maxLines = Math.floor((height - 10) / 8);
+  const maxLines = Math.floor((height - 10) / 9);
   lines.slice(0, maxLines).forEach((line, index) => {
-    pdf.text(line, x + 4, y + 8 + index * 8);
+    pdf.text(line, x + 4, y + 8 + index * 9);
   });
+  
+  // Draw grey separator line (like in dashboard)
+  if (height > 18) {
+    const separatorY = y + height - 10;
+    pdf.setDrawColor(180, 180, 180);
+    pdf.setLineWidth(0.5);
+    pdf.line(x + 2, separatorY, x + width - 2, separatorY);
+  }
   
   // Draw time if there's space
   if (height > 16) {
