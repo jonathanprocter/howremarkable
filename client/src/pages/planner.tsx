@@ -277,28 +277,8 @@ export default function Planner() {
       testDirectPDF: typeof (window as any).testDirectPDF
     });
 
-    // Run automatic tests when events are loaded
-    if (allEvents.length > 0) {
-      setTimeout(() => {
-        console.log('🚀 AUTOMATIC TESTING INITIATED');
-        console.log('📊 Environment check:', {
-          selectedDate: selectedDate.toDateString(),
-          allEventsCount: allEvents.length,
-          filteredEventsCount: allEvents.filter(e => {
-            const eventDate = new Date(e.startTime);
-            return eventDate.toDateString() === selectedDate.toDateString();
-          }).length
-        });
-
-        // Test simple PDF export first
-        (window as any).testSimplePDF();
-
-        // Test direct PDF export after delay
-        setTimeout(() => {
-          (window as any).testDirectPDF();
-        }, 2000);
-      }, 1000);
-    }
+    // Automatic testing disabled to prevent export loops
+    // Test functions available via window.testSimplePDF(), window.testDirectPDF(), etc.
   }, [selectedDate, allEvents]);
 
   // Event mutations
