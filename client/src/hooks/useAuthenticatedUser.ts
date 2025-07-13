@@ -28,27 +28,47 @@ export const useAuthenticatedUser = (): UseAuthenticatedUserReturn => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-      const response = await fetch('/api/auth/status', {
-        signal: controller.signal,
-        credentials: 'include', // Include cookies for session authentication
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      // Try multiple times to get authentication status
+      let authData = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const response = await fetch('/api/auth/status', {
+            signal: controller.signal,
+            credentials: 'include', // Include cookies for session authentication
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache',
+            },
+          });
 
-      clearTimeout(timeoutId);
+          clearTimeout(timeoutId);
 
-      if (!response.ok) {
-        throw new Error(`Authentication check failed: ${response.status}`);
+          if (!response.ok) {
+            throw new Error(`Authentication check failed: ${response.status}`);
+          }
+
+          authData = await response.json();
+          console.log(`🔍 Auth attempt ${attempt + 1}:`, authData);
+          
+          if (authData.isAuthenticated && authData.user) {
+            break; // Found valid authentication
+          }
+          
+          // Wait before retry
+          if (attempt < 2) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+        } catch (attemptError) {
+          console.warn(`Auth attempt ${attempt + 1} failed:`, attemptError);
+          if (attempt === 2) throw attemptError;
+        }
       }
 
-      const authData = await response.json();
-
-      if (authData.isAuthenticated && authData.user) {
+      if (authData && authData.isAuthenticated && authData.user) {
         console.log('✅ User authenticated:', authData.user.email);
         setUser(authData.user);
       } else {
-        console.log('❌ User not authenticated');
+        console.log('❌ User not authenticated after all attempts');
         setUser(null);
       }
     } catch (err) {

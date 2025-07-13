@@ -77,19 +77,33 @@ export default function Planner() {
   const handleManualAuthFix = async () => {
     console.log('🔄 Manual authentication fix triggered');
     try {
-      const { SimpleAuthFix } = await import('@/utils/simpleAuthFix');
-      const fixed = await SimpleAuthFix.fixAuthenticationNow();
-      if (fixed) {
-        console.log('✅ Authentication fixed successfully');
-        // Refresh the page to sync everything
-        window.location.reload();
+      // First try to refresh the auth hook
+      await refreshAuth();
+      
+      // If still not authenticated, try session sync
+      if (!user) {
+        const { SessionSync } = await import('@/utils/sessionSync');
+        await SessionSync.forceSessionSync();
       } else {
-        console.log('❌ Authentication fix in progress...');
+        console.log('✅ Authentication already working after refresh');
       }
     } catch (error) {
       console.error('❌ Auth fix failed:', error);
-      // Fallback: Just reload the page
-      window.location.reload();
+      // Fallback: Start fresh Google OAuth
+      window.location.href = '/api/auth/google';
+    }
+  };
+
+  // Google OAuth reconnect handler
+  const handleGoogleReconnect = async () => {
+    console.log('🔄 Google OAuth reconnect triggered');
+    try {
+      const { SessionSync } = await import('@/utils/sessionSync');
+      await SessionSync.startGoogleOAuth();
+    } catch (error) {
+      console.error('❌ Google OAuth failed:', error);
+      // Direct redirect fallback
+      window.location.href = '/api/auth/google';
     }
   };
 
@@ -721,15 +735,23 @@ export default function Planner() {
         <div className="mb-4 p-4 bg-red-50 border-2 border-red-500 rounded-lg">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-bold text-red-800 text-lg">🚨 AUTHENTICATION AUTO-FIX SYSTEM</h3>
-              <p className="text-red-700">System is running every 5 seconds. Click below for immediate fix.</p>
+              <h3 className="font-bold text-red-800 text-lg">🚨 AUTHENTICATION SYSTEM</h3>
+              <p className="text-red-700">Session synchronization issue detected. Use one of the buttons below to fix authentication.</p>
             </div>
-            <button
-              onClick={handleManualAuthFix}
-              className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-colors text-lg"
-            >
-              🔧 FIX AUTHENTICATION NOW
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={handleManualAuthFix}
+                className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-colors text-lg"
+              >
+                🔧 FIX AUTHENTICATION NOW
+              </button>
+              <button
+                onClick={handleGoogleReconnect}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors text-lg"
+              >
+                🔗 GOOGLE RECONNECT
+              </button>
+            </div>
           </div>
         </div>
 
