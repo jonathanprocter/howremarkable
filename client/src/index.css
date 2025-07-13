@@ -350,12 +350,12 @@ html, body {
 
 .calendar-grid {
     display: grid;
-    grid-template-columns: 80px repeat(7, 1fr);
+    grid-template-columns: 80px repeat(7, 110px);
     grid-template-rows: 50px repeat(36, 30px);
     background: white;
     height: fit-content;
-    width: 100%;
-    max-width: 100%;
+    width: fit-content;
+    max-width: none;
     overflow: visible;
     margin: 0;
     padding: 0;
