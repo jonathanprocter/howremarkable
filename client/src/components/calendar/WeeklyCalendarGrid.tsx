@@ -202,7 +202,8 @@ export const WeeklyCalendarGrid = ({
 
 
   return (
-    <div className="calendar-grid">
+    <div className="weekly-calendar">
+      <div className="calendar-grid">
       {/* Headers */}
       <div className="calendar-cell header-cell">
         TIME
@@ -354,6 +355,7 @@ export const WeeklyCalendarGrid = ({
           })}
         </div>
       ))}
+    </div>
     </div>
   );
 };

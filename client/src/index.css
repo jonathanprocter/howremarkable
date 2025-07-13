@@ -348,7 +348,8 @@ html, body {
     height: fit-content;
 }
 
-.calendar-grid {
+/* Weekly calendar grid - only apply to weekly view */
+.weekly-calendar .calendar-grid {
     display: grid;
     grid-template-columns: 100px repeat(7, minmax(0, 1fr));
     grid-template-rows: 50px repeat(36, 30px);
@@ -624,8 +625,8 @@ html, body {
 
 /* Weekly Calendar Grid Layout - Duplicate removed, using main definition above */
 
-/* Force equal column widths for header cells only */
-.calendar-grid > .calendar-cell.header-cell:nth-child(n+2):nth-child(-n+8) {
+/* Force equal column widths for header cells only in weekly view */
+.weekly-calendar .calendar-grid > .calendar-cell.header-cell:nth-child(n+2):nth-child(-n+8) {
     width: auto;
     flex: 1 1 0;
     min-width: 0;
