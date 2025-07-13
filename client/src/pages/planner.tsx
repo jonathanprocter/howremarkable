@@ -567,6 +567,62 @@ export default function Planner() {
   // Make debug function available globally
   React.useEffect(() => {
     (window as any).debugColumnWidths = debugColumnWidths;
+    
+    // Inline detailed debug function
+    (window as any).debugColumnWidthsDetailed = function() {
+      console.log('=== DETAILED COLUMN WIDTH DEBUG ===');
+      
+      const calendarGrid = document.querySelector('.calendar-grid');
+      if (!calendarGrid) {
+        console.error('❌ Calendar grid not found');
+        return;
+      }
+      
+      console.log('✅ Calendar grid found');
+      
+      const gridStyle = window.getComputedStyle(calendarGrid);
+      console.log('Grid template columns:', gridStyle.gridTemplateColumns);
+      console.log('Grid width:', gridStyle.width);
+      console.log('Grid display:', gridStyle.display);
+      
+      const headerCells = document.querySelectorAll('.calendar-cell.header-cell');
+      console.log(`📊 Found ${headerCells.length} header cells`);
+      
+      const measurements = [];
+      headerCells.forEach((cell, index) => {
+        const rect = cell.getBoundingClientRect();
+        const measurement = {
+          index,
+          text: cell.textContent.trim(),
+          width: rect.width,
+          left: rect.left,
+          right: rect.right
+        };
+        measurements.push(measurement);
+        console.log(`Cell ${index} (${cell.textContent.trim()}): ${rect.width.toFixed(2)}px`);
+      });
+      
+      // Calculate statistics for day columns (skip TIME column)
+      const dayColumns = measurements.slice(1);
+      const dayWidths = dayColumns.map(m => m.width);
+      const minWidth = Math.min(...dayWidths);
+      const maxWidth = Math.max(...dayWidths);
+      const avgWidth = dayWidths.reduce((a, b) => a + b, 0) / dayWidths.length;
+      
+      console.log('📈 STATISTICS:');
+      console.log(`Min width: ${minWidth.toFixed(2)}px`);
+      console.log(`Max width: ${maxWidth.toFixed(2)}px`);
+      console.log(`Average width: ${avgWidth.toFixed(2)}px`);
+      console.log(`Width difference: ${(maxWidth - minWidth).toFixed(2)}px`);
+      
+      const tolerance = 1;
+      const isEqual = (maxWidth - minWidth) <= tolerance;
+      console.log(`${isEqual ? '✅' : '❌'} Columns are ${isEqual ? 'equal' : 'unequal'}`);
+      
+      return measurements;
+    };
+    
+    console.log('🎯 Debug functions ready: debugColumnWidths() and debugColumnWidthsDetailed()');
   }, []);
 
   // Loading states - only show if actually loading user data
