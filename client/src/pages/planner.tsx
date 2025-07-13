@@ -39,7 +39,7 @@ export default function Planner() {
   const [selectedDate, setSelectedDate] = useState<Date>(() => {
     try {
       // Start at a date in 2024 where SimplePractice appointments should be visible
-      return new Date(2024, 6, 1); // July 1, 2024
+      return new Date(2024, 4, 6); // May 6, 2024 (month is 0-indexed)
     } catch (error) {
       console.warn('Failed to create initial date, using fallback');
       return new Date(Date.now());

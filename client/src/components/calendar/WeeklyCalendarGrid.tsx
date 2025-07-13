@@ -24,11 +24,20 @@ export const WeeklyCalendarGrid = ({
   const timeSlots = generateTimeSlots();
 
   const handleDragStart = (e: React.DragEvent, event: CalendarEvent) => {
+    // Ensure dates are properly parsed
+    const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+    const endTime = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
+    
+    // Skip invalid dates
+    if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+      return;
+    }
+    
     e.dataTransfer.setData('text/plain', JSON.stringify({
       eventId: event.id,
-      originalStartTime: event.startTime.toISOString(),
-      originalEndTime: event.endTime.toISOString(),
-      duration: event.endTime.getTime() - event.startTime.getTime()
+      originalStartTime: startTime.toISOString(),
+      originalEndTime: endTime.toISOString(),
+      duration: endTime.getTime() - startTime.getTime()
     }));
   };
 
@@ -90,7 +99,7 @@ export const WeeklyCalendarGrid = ({
   };
 
   const getEventsForTimeSlot = (date: Date, timeSlot: { time: string; hour: number; minute: number }) => {
-    return events.filter(event => {
+    const filteredEvents = events.filter(event => {
       // Ensure dates are properly parsed
       const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
       const endTime = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
@@ -115,10 +124,21 @@ export const WeeklyCalendarGrid = ({
       if (isAllDayEvent) return false;
 
       // For timed events, use simple date string comparison
-      if (eventDate.toDateString() !== date.toDateString()) return false;
+      const eventDateStr = eventDate.toDateString();
+      const targetDateStr = date.toDateString();
+      
+      if (eventDateStr !== targetDateStr) return false;
 
       return isEventInTimeSlot({ startTime, endTime }, timeSlot);
     });
+    
+    // Debug logging for troubleshooting
+    if (filteredEvents.length > 0) {
+      console.log(`Found ${filteredEvents.length} events for ${date.toDateString()} at ${timeSlot.time}`, 
+        filteredEvents.map(e => ({ title: e.title, start: new Date(e.startTime).toLocaleString() })));
+    }
+    
+    return filteredEvents;
   };
 
   const getEventStyle = (event: CalendarEvent) => {
