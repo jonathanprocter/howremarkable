@@ -699,7 +699,7 @@ html, body {
     border-top: 1px solid black;
 }
 
-/* Make the top of 6:00 AM row bold across entire week */
+/* Make the top of 6:00 AM row bold across entire week - match header thickness */
 .weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(17),
 .weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(18),
 .weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(19),
@@ -708,7 +708,7 @@ html, body {
 .weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(22),
 .weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(23),
 .weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(24) {
-    border-top: 2px solid black !important;
+    border-top: 3px solid black !important;
 }
 
 /* Ensure ALL DAY section has proper top border connection */
