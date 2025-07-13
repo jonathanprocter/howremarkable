@@ -670,10 +670,7 @@ html, body {
     border-right: none;
 }
 
-/* Light background for half-hour slots across all day columns */
-.calendar-cell.half-hour {
-    background: #f8f8f8;
-}
+
 
 .calendar-cell:last-child {
     border-right: none;
@@ -682,6 +679,11 @@ html, body {
 .calendar-cell.hour {
     border-bottom: 2px solid black;
     background: #f0f0f0 !important; /* Gray background for hour rows across entire week */
+}
+
+/* Ensure half-hour slots are white */
+.calendar-cell.half-hour {
+    background: white !important;
 }
 
 .calendar-cell:hover {
