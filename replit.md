@@ -773,6 +773,13 @@ The application uses three main entities:
   - **Mathematical Validation**: Verified calculations: (910 - 60) / 7 = 850 / 7 = 110px day columns (after margins and time column)
   - **Audit System Integration**: Enhanced audit validation to detect and prevent future dimension calculation issues
   - **RESULT**: PDF exports now generate exact 110px day columns matching dashboard measurements for perfect pixel-perfect accuracy
+- July 13, 2025. **ALL DAY LINE THICKNESS FIX**: Successfully resolved persistent thick line issue in weekly calendar grid:
+  - **Root Cause Identified**: ALL DAY cells were inheriting 2px border from header-cell class, creating visually thick line
+  - **Complete Border Removal**: Set `border-bottom: 0px !important` for all ALL DAY cells to eliminate thick line entirely
+  - **Grid Structure Maintained**: Preserved right borders for proper grid alignment while removing problematic bottom borders
+  - **Multiple CSS Override Approach**: Applied targeted CSS overrides to both `.all-day-header` and `.all-day-slot` classes
+  - **User Confirmed Success**: Thick ALL DAY line completely eliminated, achieving desired visual consistency
+  - **RESULT**: Clean weekly calendar grid with no thick horizontal lines disrupting the layout
 - July 11, 2025. **DRAMATIC FONT SIZE ENHANCEMENT**: Significantly increased font sizes for maximum visibility in weekly PDF exports:
   - **exactWeeklySpecExport.ts**: Enhanced font ranges for better readability:
     - Title fonts: 18-36pt (dramatically larger from 14-28pt)
