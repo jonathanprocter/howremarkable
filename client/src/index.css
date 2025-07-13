@@ -718,24 +718,23 @@ html, body {
     background: #fafafa;
 }
 
-/* All-day event cells - use box-shadow to create exact 1px line */
+/* All-day event cells - restore normal borders but force 1px bottom */
 .calendar-cell.all-day-header {
     background: white;
     font-weight: bold;
     font-size: 8px;
     color: black;
     text-align: center;
-    border: none !important; /* Remove all inherited borders */
-    box-shadow: 0 1px 0 0 black, 2px 0 0 0 black inset !important; /* 1px bottom line + right border */
+    border-bottom: 1px solid black !important; /* Force exactly 1px bottom border */
     padding: 6px 2px;
+    border-right: 2px solid black;
 }
 
 .calendar-cell.all-day-slot {
     background: white;
     min-height: 40px;
     padding: 4px;
-    border: none !important; /* Remove all inherited borders */
-    box-shadow: 0 1px 0 0 black, 1px 0 0 0 black inset !important; /* 1px bottom line + right border */
+    border-bottom: 1px solid black !important; /* Force exactly 1px bottom border */
 }
 
 /* Duplicate rules removed - using unified definitions above */
