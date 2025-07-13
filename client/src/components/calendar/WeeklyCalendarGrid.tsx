@@ -214,7 +214,7 @@ export const WeeklyCalendarGrid = ({
           className="calendar-cell header-cell"
           onClick={() => onDayClick(day.date)}
         >
-          {day.dayOfWeek.substring(0, 3).toUpperCase()} {formatDateShort(day.date)}
+          {day.dayOfWeek} {day.date.getMonth() + 1}/{day.date.getDate()}/{day.date.getFullYear()}
         </div>
       ))}
 

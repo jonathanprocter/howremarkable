@@ -646,11 +646,14 @@ html, body {
 .calendar-cell.header-cell {
     background: white;
     font-weight: bold;
-    font-size: 8px;
+    font-size: 7px;
     color: black;
     text-align: center;
     border-bottom: 2px solid black;
     padding: 6px 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Time cells styling */
@@ -673,13 +676,14 @@ html, body {
 /* Removed - keep all borders for complete grid */
 
 .calendar-cell.hour {
-    border-bottom: 2px solid black;
+    border-top: 2px solid black;
     background: #f0f0f0 !important; /* Gray background for hour rows across entire week */
 }
 
 /* Ensure half-hour slots are white */
 .calendar-cell.half-hour {
     background: white !important;
+    border-bottom: 2px solid black;
 }
 
 .calendar-cell:hover {
