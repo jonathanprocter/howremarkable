@@ -705,8 +705,8 @@ html, body {
     border-top: 1px solid black;
 }
 
-/* Make the top of 6:00 AM row bold across entire week - match header thickness */
-.weekly-calendar .calendar-grid > .calendar-cell:nth-child(17),
+/* Make the top of 6:00 AM row bold across entire week - match 7:00 AM thickness */
+.weekly-calendar .calendar-grid > .calendar-cell.time-cell:nth-child(17),
 .weekly-calendar .calendar-grid > .calendar-cell:nth-child(18),
 .weekly-calendar .calendar-grid > .calendar-cell:nth-child(19),
 .weekly-calendar .calendar-grid > .calendar-cell:nth-child(20),
