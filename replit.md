@@ -911,6 +911,12 @@ The application uses three main entities:
   - **Root Cause Resolution**: Fixed missing exportDynamicDailyPlannerPDF function causing "html is not defined" errors
   - **Simplified Export System**: Created simplePDFExport.ts bypassing complex testing infrastructure causing HTML generation failures
   - **Immediate Testing Solution**: Added "Test Simple PDF Export" button (green) in sidebar for instant functionality verification
+- July 13, 2025. **APPOINTMENT ALIGNMENT AND TEXT WRAPPING FIXES**: Implementing comprehensive fixes for appointment display issues:
+  - **Alignment Fix**: Changed appointment positioning from top: 2px to top: 0px for proper time slot alignment
+  - **Duration Calculation**: Restored proper duration calculation with durationMinutes - 2px for borders
+  - **Text Wrapping System**: Created comprehensive textWrappers.ts utility with wrapText function for multi-line appointment names
+  - **Visual Separation**: Added border-bottom to appointment names and increased spacer height for better visual separation between name and time
+  - **Enhanced Padding**: Increased appointment padding from 3px to 4px for better text containment
 - July 12, 2025. **COMPREHENSIVE AUDIT SYSTEM IMPLEMENTATION**: Implemented complete audit infrastructure for pixel-perfect PDF export validation:
   - **Comprehensive Audit System (comprehensiveAuditSystem.ts)**: Created advanced audit infrastructure with DOM-based measurement extraction and PDF configuration comparison
   - **Audit Report Generator (auditReportGenerator.ts)**: Developed comprehensive testing framework with layout tests, export functionality validation, and detailed scoring system

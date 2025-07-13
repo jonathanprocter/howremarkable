@@ -1,6 +1,7 @@
 import { generateTimeSlots, getEventDurationInSlots, isEventInTimeSlot } from '../../utils/timeSlots';
 import { formatDateShort } from '../../utils/dateUtils';
 import { cleanEventTitle } from '../../utils/textCleaner';
+import { wrapText } from '../../utils/textWrappers';
 import { CalendarEvent, CalendarDay } from '../../types/calendar';
 import { cn } from '@/lib/utils';
 
@@ -305,7 +306,7 @@ export const WeeklyCalendarGrid = ({
                   const eventEnd = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
                   const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
                   // Use exact duration: 30px per 30-minute slot = 1px per minute
-                  const appointmentHeight = Math.max(durationMinutes, 30); // 1px per minute, minimum 30px for half-hour
+                  const appointmentHeight = Math.max(durationMinutes - 2, 28); // Subtract 2px for borders, minimum 28px
                   
                   // Debug logging for duration
                   if (event.title.includes('Angelica') || event.title.includes('Dan') || event.title.includes('Sherrifa')) {
@@ -344,7 +345,9 @@ export const WeeklyCalendarGrid = ({
                       }}
                     >
                       <div className="appointment-name">
-                        {cleanEventTitle(event.title)}
+                        {wrapText(cleanEventTitle(event.title), 18).map((line, index) => (
+                          <div key={index}>{line}</div>
+                        ))}
                       </div>
                       <div className="appointment-spacer"></div>
                       <div className="appointment-time">

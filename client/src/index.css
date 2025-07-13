@@ -479,10 +479,12 @@ html, body {
     flex-grow: 1;
     word-wrap: break-word;
     overflow-wrap: anywhere;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
 }
 
 .appointment-spacer {
-    height: 4px;
+    height: 6px;
     flex-shrink: 0;
 }
 
@@ -494,6 +496,7 @@ html, body {
     white-space: normal;
     text-align: left;
     margin-top: 0;
+    padding-top: 2px;
 }
 
 /* Daily view appointment time - much larger font */
@@ -810,7 +813,7 @@ html, body {
     flex-direction: column;
     justify-content: flex-start;
     align-items: flex-start;
-    padding: 3px 5px;
+    padding: 4px 6px;
     overflow: hidden;
     text-overflow: clip;
     width: 100%;
