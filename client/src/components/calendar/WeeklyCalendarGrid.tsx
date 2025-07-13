@@ -300,12 +300,13 @@ export const WeeklyCalendarGrid = ({
                   const isSimplePractice = eventSourceClass.includes('simplepractice');
                   const isGoogle = eventSourceClass.includes('google');
 
-                  // Calculate appointment height based on duration
+                  // Calculate appointment height based on exact duration
                   const eventStart = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
                   const eventEnd = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
                   const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
-                  const durationSlots = Math.ceil(durationMinutes / 30); // Each slot is 30 minutes
-                  const appointmentHeight = Math.max(durationSlots * 30 - 4, 26); // 30px per slot minus 4px for borders, minimum 26px
+                  // Use exact duration: 1 minute = 1px (30px per 30-minute slot = 1px per minute)
+                  const exactHeight = Math.max(durationMinutes, 26); // 1px per minute, minimum 26px
+                  const appointmentHeight = Math.max(exactHeight - 4, 26); // Subtract 4px for borders, minimum 26px
 
                   return (
                     <div
@@ -314,9 +315,12 @@ export const WeeklyCalendarGrid = ({
                         "event-in-grid appointment",
                         event.calendarId === 'en.usa#holiday@group.v.calendar.google.com' ? "personal" : 
                         (event.title.toLowerCase().includes('haircut') ||
+                         event.title.toLowerCase().includes('hair and beard') ||
                          event.title.toLowerCase().includes('dan re:') ||
+                         event.title.toLowerCase().includes('supervision') ||
                          event.title.toLowerCase().includes('blake') ||
-                         event.title.toLowerCase().includes('phone call')) ? "google-calendar" :
+                         event.title.toLowerCase().includes('phone call') ||
+                         event.title.toLowerCase().includes('call with')) ? "google-calendar" :
                         "simplepractice"
                       )}
                       style={{
