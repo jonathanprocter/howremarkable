@@ -813,7 +813,7 @@ html, body {
     flex-direction: column;
     justify-content: flex-start;
     align-items: flex-start;
-    padding: 2px 4px; /* Optimized padding for content fitting */
+    padding: 1px 3px; /* Minimal padding for 30-minute appointments */
     overflow: hidden;
     text-overflow: clip;
     width: 100%;

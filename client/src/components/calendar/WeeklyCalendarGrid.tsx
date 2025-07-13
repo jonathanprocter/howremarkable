@@ -361,20 +361,30 @@ export const WeeklyCalendarGrid = ({
                       }}
                     >
                       <div className="appointment-name" style={{ 
-                        fontSize: durationMinutes <= 30 ? '8px' : '9px',
+                        fontSize: durationMinutes <= 30 ? '7px' : '9px',
                         lineHeight: durationMinutes <= 30 ? '1.0' : '1.1',
-                        fontWeight: 'bold'
+                        fontWeight: 'bold',
+                        height: durationMinutes <= 30 ? '12px' : 'auto',
+                        overflow: 'hidden',
+                        whiteSpace: durationMinutes <= 30 ? 'nowrap' : 'normal',
+                        textOverflow: durationMinutes <= 30 ? 'ellipsis' : 'clip'
                       }}>
-                        {wrapText(cleanEventTitle(event.title), durationMinutes <= 30 ? 16 : 18).map((line, index) => (
-                          <div key={index}>{line}</div>
-                        ))}
+                        {durationMinutes <= 30 ? 
+                          cleanEventTitle(event.title) :
+                          wrapText(cleanEventTitle(event.title), 18).map((line, index) => (
+                            <div key={index}>{line}</div>
+                          ))
+                        }
                       </div>
                       <div className="appointment-spacer" style={{ 
-                        height: durationMinutes <= 30 ? '1px' : '2px'
+                        height: durationMinutes <= 30 ? '1px' : '2px',
+                        borderBottom: '1px solid #ccc',
+                        margin: durationMinutes <= 30 ? '1px 0' : '2px 0'
                       }}></div>
                       <div className="appointment-time" style={{ 
-                        fontSize: durationMinutes <= 30 ? '7px' : '8px',
-                        lineHeight: '1.0'
+                        fontSize: durationMinutes <= 30 ? '6px' : '8px',
+                        lineHeight: '1.0',
+                        height: durationMinutes <= 30 ? '10px' : 'auto'
                       }}>
                         {(() => {
                           const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
