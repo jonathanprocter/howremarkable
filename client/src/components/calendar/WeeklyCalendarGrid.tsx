@@ -155,18 +155,18 @@ export const WeeklyCalendarGrid = ({
     const actualDurationMs = endTime.getTime() - startTime.getTime();
     const actualDurationMinutes = actualDurationMs / (1000 * 60);
     
-    // Each time slot is 30 minutes and 40px tall
-    const slotHeight = 40;
-    const minutesPerSlot = 30;
+    // Each time slot is exactly 30 minutes and 40px tall
+    // This gives us 40px / 30min = 1.333... pixels per minute
+    const pixelsPerMinute = 40 / 30; // 1.333 pixels per minute
     
-    // Calculate precise height based on actual duration
-    // If appointment is 50 minutes, it should be 50/30 * 40 = 66.67px
-    // If appointment is 60 minutes, it should be 60/30 * 40 = 80px
-    // If appointment is 30 minutes, it should be 30/30 * 40 = 40px
-    const preciseHeight = Math.max((actualDurationMinutes / minutesPerSlot) * slotHeight, 20);
+    // Calculate exact height based on duration in minutes
+    const exactHeight = actualDurationMinutes * pixelsPerMinute;
+    
+    // Ensure minimum height of 20px for very short events
+    const finalHeight = Math.max(exactHeight, 20);
 
     return {
-      height: `${Math.round(preciseHeight)}px`,
+      height: `${Math.round(finalHeight)}px`,
       marginBottom: actualDurationMinutes > 30 ? '0px' : '2px',
       zIndex: 20 // Ensure events appear above other elements
     };
@@ -318,14 +318,9 @@ export const WeeklyCalendarGrid = ({
                       )}
                       style={{
                         ...getEventStyle(event),
-                        border: '2px solid red', // Debug: Add visible border
-                        backgroundColor: 'yellow', // Debug: Add visible background
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        minHeight: '30px',
-                        zIndex: 10
+                        position: 'relative',
+                        width: '100%',
+                        minHeight: '20px'
                       }}
                       draggable={event.source === 'google'}
                       onDragStart={(e) => handleDragStart(e, event)}
