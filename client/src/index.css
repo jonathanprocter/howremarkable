@@ -624,18 +624,10 @@ html, body {
 
 /* Weekly Calendar Grid Layout - Duplicate removed, using main definition above */
 
-/* Force equal column widths */
-.calendar-grid > .calendar-cell:nth-child(n+2):nth-child(-n+8) {
-    width: calc((100% - 100px) / 7);
-    max-width: calc((100% - 100px) / 7);
-    min-width: calc((100% - 100px) / 7);
-}
-
-/* Ensure all day columns have equal width */
-.calendar-grid > .calendar-cell:not(:first-child):not(.time-cell):not(.all-day-header) {
-    flex: 1 1 0;
+/* Force equal column widths for header cells only */
+.calendar-grid > .calendar-cell.header-cell:nth-child(n+2):nth-child(-n+8) {
     width: auto;
-    max-width: none;
+    flex: 1 1 0;
     min-width: 0;
 }
 
@@ -649,8 +641,6 @@ html, body {
     background: white;
     min-height: 30px;
     box-sizing: border-box;
-    min-width: 0;
-    overflow: hidden;
 }
 
 /* Header cells styling */
@@ -662,8 +652,6 @@ html, body {
     text-align: center;
     border-bottom: 2px solid black;
     padding: 6px 2px;
-    min-width: 0;
-    width: 100%;
 }
 
 /* Time cells styling */
