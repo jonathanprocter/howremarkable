@@ -191,12 +191,6 @@ const drawCurrentWeeklyGrid = (pdf: jsPDF, events: CalendarEvent[], weekStart: D
       }
     }
     
-    // Draw final vertical line for Sunday column right edge
-    const sundayRightX = margins + timeColumnWidth + 7 * dayColumnWidth;
-    pdf.setDrawColor(150, 150, 150);
-    pdf.setLineWidth(1);
-    pdf.line(sundayRightX, gridStartY, sundayRightX, timeGridStartY + totalSlots * timeSlotHeight);
-    
     // Time label - centered both vertically and horizontally
     pdf.setFontSize(fonts.timeLabel);
     pdf.setFont('helvetica', isHourSlot ? 'bold' : 'normal');
@@ -212,6 +206,12 @@ const drawCurrentWeeklyGrid = (pdf: jsPDF, events: CalendarEvent[], weekStart: D
   pdf.setDrawColor(150, 150, 150);
   pdf.setLineWidth(2);
   pdf.line(margins + timeColumnWidth, gridStartY, margins + timeColumnWidth, timeGridStartY + totalSlots * timeSlotHeight);
+  
+  // Draw final vertical line for Sunday column right edge
+  const sundayRightX = margins + timeColumnWidth + 7 * dayColumnWidth;
+  pdf.setDrawColor(150, 150, 150);
+  pdf.setLineWidth(1);
+  pdf.line(sundayRightX, gridStartY, sundayRightX, timeGridStartY + totalSlots * timeSlotHeight);
   
   // Draw events
   drawCurrentWeeklyEvents(pdf, events, weekStart, timeGridStartY);
