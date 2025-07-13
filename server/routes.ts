@@ -17,7 +17,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID!,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    callbackURL: `https://${process.env.REPLIT_DEV_DOMAIN}/api/auth/google/callback`
+    callbackURL: process.env.NODE_ENV === 'production' 
+      ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co/api/auth/google/callback`
+      : `https://${process.env.REPLIT_DEV_DOMAIN}/api/auth/google/callback`
   }, async (accessToken, refreshToken, profile, done) => {
     console.log("=== GOOGLE OAUTH STRATEGY CALLED ===");
     console.log("Profile ID:", profile.id);
