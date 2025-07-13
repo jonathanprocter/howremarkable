@@ -813,7 +813,7 @@ html, body {
     flex-direction: column;
     justify-content: flex-start;
     align-items: flex-start;
-    padding: 3px 5px; /* Slightly reduced padding for better fit */
+    padding: 2px 4px; /* Optimized padding for content fitting */
     overflow: hidden;
     text-overflow: clip;
     width: 100%;
@@ -825,6 +825,9 @@ html, body {
     height: auto !important;
     /* Ensure proper containment within grid lines */
     margin: 0;
+    /* Improved font sizing for better content fitting */
+    font-size: 9px;
+    line-height: 1.1;
 }
 
 .event-in-grid.appointment {

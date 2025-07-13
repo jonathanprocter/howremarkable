@@ -310,7 +310,7 @@ export const WeeklyCalendarGrid = ({
                   // Subtract 4px total margin (2px top + 2px bottom) to ensure appointments don't blend into grid lines
                   let appointmentHeight;
                   if (durationMinutes <= 30) {
-                    // 30-minute appointments get exactly 26px to fit perfectly within 30px time slot
+                    // 30-minute appointments: Always use the full 26px height for optimal content fitting
                     appointmentHeight = 26;
                   } else {
                     // Longer appointments get dynamic sizing with proper margins
@@ -360,13 +360,22 @@ export const WeeklyCalendarGrid = ({
                         onEventClick(event);
                       }}
                     >
-                      <div className="appointment-name">
-                        {wrapText(cleanEventTitle(event.title), 18).map((line, index) => (
+                      <div className="appointment-name" style={{ 
+                        fontSize: durationMinutes <= 30 ? '8px' : '9px',
+                        lineHeight: durationMinutes <= 30 ? '1.0' : '1.1',
+                        fontWeight: 'bold'
+                      }}>
+                        {wrapText(cleanEventTitle(event.title), durationMinutes <= 30 ? 16 : 18).map((line, index) => (
                           <div key={index}>{line}</div>
                         ))}
                       </div>
-                      <div className="appointment-spacer"></div>
-                      <div className="appointment-time">
+                      <div className="appointment-spacer" style={{ 
+                        height: durationMinutes <= 30 ? '1px' : '2px'
+                      }}></div>
+                      <div className="appointment-time" style={{ 
+                        fontSize: durationMinutes <= 30 ? '7px' : '8px',
+                        lineHeight: '1.0'
+                      }}>
                         {(() => {
                           const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
                           const endTime = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
