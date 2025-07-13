@@ -377,31 +377,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('Session passport user:', !!req.session?.passport?.user);
     console.log('Session ID:', req.sessionID);
 
-    // Force session reload and check if user is authenticated
-    if (!req.user && req.isAuthenticated && req.isAuthenticated()) {
-      // If passport says we're authenticated but req.user is missing, reload from session
-      if (req.session?.passport?.user) {
-        req.user = req.session.passport.user;
-      }
-    }
-
-    // Check authentication using passport's built-in method first
-    if (req.isAuthenticated && req.isAuthenticated()) {
+    // First check if we have a valid authenticated session via passport
+    if (req.isAuthenticated && req.isAuthenticated() && req.user) {
       console.log('✅ User authenticated via passport:', req.user?.email);
       return next();
     }
 
-    // Fallback: Check both req.user and session passport user
-    let user = req.user || req.session?.passport?.user;
-    
-    // Handle nested user object in passport session
-    if (!user && req.session?.passport) {
-      const passportData = req.session.passport;
-      user = passportData.user || passportData;
+    // Try to restore user from session if passport says we're authenticated but req.user is missing
+    if (req.isAuthenticated && req.isAuthenticated() && !req.user && req.session?.passport?.user) {
+      req.user = req.session.passport.user;
+      console.log('✅ User restored from session:', req.user?.email);
+      return next();
     }
 
+    // Fallback: Check session passport user directly
+    let user = req.session?.passport?.user;
+    
     if (!user || !user.id) {
-      console.log('No authenticated user found');
+      console.log('❌ No authenticated user found');
       console.log('Session data:', JSON.stringify(req.session, null, 2));
       return res.status(401).json({ 
         error: 'Authentication required. Please login with Google.',
@@ -414,8 +407,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     // Ensure req.user is set for subsequent middleware
     req.user = user;
-
-    console.log('✅ User authenticated:', user.email);
+    console.log('✅ User authenticated from session:', user.email);
     next();
   };
 
