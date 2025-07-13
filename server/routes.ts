@@ -208,7 +208,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "1. Go to Google Cloud Console (console.cloud.google.com)",
         "2. Enable Google Calendar API and Google Drive API",
         "3. Configure OAuth consent screen",
-        "4. Add authorized redirect URI: " + (process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5000') + "/api/auth/google/callback"
+        "4. Add authorized redirect URI: https://HowreMarkable.replit.app/api/auth/google/callback"
       ]
     });
   });
@@ -240,13 +240,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log("Environment check:");
     console.log("GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID ? "SET" : "MISSING");
     console.log("GOOGLE_CLIENT_SECRET:", process.env.GOOGLE_CLIENT_SECRET ? "SET" : "MISSING");
-    console.log("REPLIT_DEV_DOMAIN:", process.env.REPLIT_DEV_DOMAIN);
+    console.log("Production domain: HowreMarkable.replit.app");
 
     res.json({
       hasClientId: !!process.env.GOOGLE_CLIENT_ID,
       hasClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
-      domain: process.env.REPLIT_DEV_DOMAIN,
-      callbackUrl: `https://${process.env.REPLIT_DEV_DOMAIN}/api/auth/google/callback`
+      domain: "HowreMarkable.replit.app",
+      callbackUrl: "https://HowreMarkable.replit.app/api/auth/google/callback"
     });
   });
 
