@@ -537,6 +537,38 @@ export default function Planner() {
     setSelectedDate(newDate);
   };
 
+  // Debug function for column width issues
+  const debugColumnWidths = () => {
+    console.log('=== COLUMN WIDTH DEBUG ===');
+    
+    const calendarGrid = document.querySelector('.calendar-grid');
+    if (!calendarGrid) {
+      console.error('Calendar grid not found');
+      return;
+    }
+    
+    console.log('Calendar grid:', calendarGrid);
+    const gridStyle = window.getComputedStyle(calendarGrid);
+    console.log('Grid template columns:', gridStyle.gridTemplateColumns);
+    console.log('Grid width:', gridStyle.width);
+    
+    const headerCells = document.querySelectorAll('.calendar-cell.header-cell');
+    console.log(`Found ${headerCells.length} header cells`);
+    
+    headerCells.forEach((cell, index) => {
+      const rect = cell.getBoundingClientRect();
+      console.log(`Header Cell ${index} (${cell.textContent}):`, {
+        width: rect.width,
+        actualWidth: rect.width.toFixed(2) + 'px'
+      });
+    });
+  };
+
+  // Make debug function available globally
+  React.useEffect(() => {
+    (window as any).debugColumnWidths = debugColumnWidths;
+  }, []);
+
   // Loading states - only show if actually loading user data
   if (userLoading) {
     return <LoadingState message="Loading user data..." />;
