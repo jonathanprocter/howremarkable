@@ -144,10 +144,10 @@ export const DailyView = ({
     // Timeline starts at 6:00, so we calculate 30-minute slots since 6:00
     const minutesSince6am = (startHour - 6) * 60 + startMinute;
     const slotsFromStart = minutesSince6am / 30;
-    const topPosition = Math.max(0, slotsFromStart * 60);
+    const topPosition = Math.max(0, slotsFromStart * 40); // 40px per 30min slot
 
     // Calculate height based on duration
-    let height = Math.max(56, (durationMinutes / 30) * 60 - 4); // 60px per 30min slot, minus padding
+    let height = Math.max(36, (durationMinutes / 30) * 40 - 4); // 40px per 30min slot, minus padding
 
     // Source-specific styling - check if it's a SimplePractice appointment
     let className = 'appointment ';

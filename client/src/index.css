@@ -894,13 +894,13 @@ html, body {
 
 .time-column {
     display: grid;
-    grid-template-rows: repeat(36, 60px); /* 36 slots for 6:00-23:30 */
+    grid-template-rows: repeat(36, 40px); /* 36 slots for 6:00-23:30 - match appointment grid */
     border-right: 2px solid black;
     gap: 0;
 }
 
 .time-column .time-slot {
-    height: 60px;
+    height: 40px;
     border-bottom: 1px solid black;
     display: flex;
     align-items: center;
@@ -921,7 +921,7 @@ html, body {
 
 .appointments-column {
     display: grid;
-    grid-template-rows: repeat(36, 60px); /* 36 slots for 6:00-23:30 */
+    grid-template-rows: repeat(36, 40px); /* 36 slots for 6:00-23:30 - match time column */
     position: relative;
     gap: 0;
 }
@@ -943,7 +943,7 @@ html, body {
 }
 
 .appointment-slot {
-    height: 60px;
+    height: 40px;
     border-bottom: 1px solid black;
     position: relative;
     background: white;
