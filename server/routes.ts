@@ -386,18 +386,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Start and end dates are required' });
       }
 
-      // Only use development mode for specific development user in development environment
-      if (user.email === 'dev@test.com' && process.env.NODE_ENV === 'development') {
-        console.log('🔧 Development user - returning empty SimplePractice events');
-        return res.json({ 
-          events: [],
-          calendars: [{
-            id: 'simplepractice',
-            name: 'SimplePractice',
-            color: '#6495ED'
-          }]
-        });
-      }
+      
 
       if (!user.accessToken || user.accessToken === 'undefined') {
         console.log('❌ Invalid tokens for SimplePractice events');
@@ -534,41 +523,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const user = req.user as any;
-
-    // Only use development mode for specific development user
-    if (user.email === 'dev@test.com' && process.env.NODE_ENV === 'development') {
-      console.log('🔧 Development user detected, returning mock events');
-      const mockEvents = [
-        {
-          id: 'dev-event-1',
-          title: 'Development Meeting',
-          startTime: new Date().toISOString(),
-          endTime: new Date(Date.now() + 3600000).toISOString(),
-          description: 'Mock event for development',
-          location: 'Development Office',
-          source: 'google',
-          calendarId: 'primary'
-        }
-      ];
-
-      const mockCalendars = [
-        {
-          id: 'primary',
-          name: 'Primary Calendar',
-          color: '#4285f4'
-        },
-        {
-          id: 'simplepractice',
-          name: 'SimplePractice',
-          color: '#6495ED'
-        }
-      ];
-
-      return res.json({ 
-        events: mockEvents,
-        calendars: mockCalendars
-      });
-    }
 
       if (!user.accessToken || user.accessToken === 'undefined') {
         console.log('❌ Invalid tokens in session - please re-authenticate');

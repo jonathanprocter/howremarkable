@@ -726,6 +726,13 @@ export default function Planner() {
                   >
                     Sync Calendar Events
                   </Button>
+                  <Button
+                    onClick={() => window.location.href = '/api/auth/google'}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    size="sm"
+                  >
+                    Connect Real Google Account
+                  </Button>
                   <DevLoginButton />
                 </div>
               </CardContent>
