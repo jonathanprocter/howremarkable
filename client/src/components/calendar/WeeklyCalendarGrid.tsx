@@ -305,15 +305,25 @@ export const WeeklyCalendarGrid = ({
                   const eventStart = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
                   const eventEnd = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
                   const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
-                  // Use exact duration: 30px per 30-minute slot = 1px per minute
-                  const appointmentHeight = Math.max(durationMinutes, 30); // 1px per minute, minimum 30px
+                  
+                  // Dynamic height calculation: 1px per minute with proper containment
+                  // Subtract 4px total margin (2px top + 2px bottom) to ensure appointments don't blend into grid lines
+                  let appointmentHeight;
+                  if (durationMinutes <= 30) {
+                    // 30-minute appointments get exactly 26px to fit perfectly within 30px time slot
+                    appointmentHeight = 26;
+                  } else {
+                    // Longer appointments get dynamic sizing with proper margins
+                    appointmentHeight = Math.max(durationMinutes - 4, 26);
+                  }
                   
                   // Debug logging for ALL events to see what's happening
-                  console.log(`📊 ${event.title}: ${durationMinutes} minutes -> ${appointmentHeight}px height (Start: ${eventStart.toLocaleTimeString()}, End: ${eventEnd.toLocaleTimeString()})`);
+                  const durationText = durationMinutes <= 30 ? "30-min block" : `${durationMinutes} minutes`;
+                  console.log(`📊 ${event.title}: ${durationText} -> ${appointmentHeight}px height (contained within grid lines)`);
                   
                   // Additional debug for specific problem events
                   if (event.title.includes('Angelica') || event.title.includes('Dan') || event.title.includes('Sherrifa') || event.title.includes('Blake')) {
-                    console.log(`🔍 DETAILED: ${event.title}: ${durationMinutes} minutes -> ${appointmentHeight}px height`);
+                    console.log(`🔍 DETAILED: ${event.title}: ${durationText} -> ${appointmentHeight}px height`);
                   }
 
                   return (
@@ -336,11 +346,12 @@ export const WeeklyCalendarGrid = ({
                         position: 'absolute',
                         width: 'calc(100% - 8px)',
                         height: `${appointmentHeight}px`,
-                        top: '0px',
+                        top: '2px', // Add 2px margin from top grid line
                         left: '4px',
                         zIndex: 10,
                         minHeight: `${appointmentHeight}px`,
-                        maxHeight: `${appointmentHeight}px`
+                        maxHeight: `${appointmentHeight}px`,
+                        marginBottom: '2px' // Add 2px margin from bottom grid line
                       }}
                       draggable={event.source === 'google'}
                       onDragStart={(e) => handleDragStart(e, event)}

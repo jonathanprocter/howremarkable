@@ -813,16 +813,18 @@ html, body {
     flex-direction: column;
     justify-content: flex-start;
     align-items: flex-start;
-    padding: 4px 6px;
+    padding: 3px 5px; /* Slightly reduced padding for better fit */
     overflow: hidden;
     text-overflow: clip;
     width: 100%;
     min-width: 0;
     text-align: left;
-    /* Remove max-height constraint to allow proper duration sizing */
-    min-height: 30px;
+    /* Ensure appointments fit within their containers */
+    min-height: 26px; /* Minimum for 30-minute appointments */
     /* Override any CSS height constraints to allow dynamic sizing */
     height: auto !important;
+    /* Ensure proper containment within grid lines */
+    margin: 0;
 }
 
 .event-in-grid.appointment {

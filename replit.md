@@ -917,6 +917,14 @@ The application uses three main entities:
   - **Text Wrapping System**: Created comprehensive textWrappers.ts utility with wrapText function for multi-line appointment names
   - **Visual Separation**: Added border-bottom to appointment names and increased spacer height for better visual separation between name and time
   - **Enhanced Padding**: Increased appointment padding from 3px to 4px for better text containment
+- July 13, 2025. **DYNAMIC APPOINTMENT HEIGHT SYSTEM**: Implemented comprehensive dynamic appointment sizing with proper grid containment:
+  - **Fixed Height Constraints**: Removed hardcoded CSS duration classes (duration-30, duration-60, duration-90) that were forcing fixed heights
+  - **Dynamic Height Calculation**: Implemented 1px per minute calculation with proper margin containment (durationMinutes - 4px for margins)
+  - **30-Minute Appointment Optimization**: Special handling for 30-minute appointments to fit perfectly within 30px time slots (26px height)
+  - **Grid Line Containment**: Added 2px top margin and 2px bottom margin to prevent appointments from blending into grid lines
+  - **Proper Visual Separation**: All appointments now end before the grid line boundary to prevent overlapping with adjacent appointments
+  - **Enhanced Debugging**: Added comprehensive console logging showing duration calculations and height assignments
+  - **USER CONFIRMED**: Appointment heights now display correctly - 60-minute appointments show as 56px, 90-minute appointments show as 86px
 - July 12, 2025. **COMPREHENSIVE AUDIT SYSTEM IMPLEMENTATION**: Implemented complete audit infrastructure for pixel-perfect PDF export validation:
   - **Comprehensive Audit System (comprehensiveAuditSystem.ts)**: Created advanced audit infrastructure with DOM-based measurement extraction and PDF configuration comparison
   - **Audit Report Generator (auditReportGenerator.ts)**: Developed comprehensive testing framework with layout tests, export functionality validation, and detailed scoring system
