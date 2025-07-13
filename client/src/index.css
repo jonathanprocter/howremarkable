@@ -360,7 +360,9 @@ html, body {
     margin: 0;
     padding: 0;
     border: 2px solid black; /* Add complete border around entire grid */
+    border-top: 1px solid black; /* Thinner top border for 6:00 AM line */
     box-sizing: border-box;
+    position: relative;
 }
 
 .time-header {
@@ -646,7 +648,7 @@ html, body {
 .calendar-cell.header-cell {
     background: white;
     font-weight: bold;
-    font-size: 7px;
+    font-size: clamp(6px, 1.5vw, 10px); /* Dynamic font size that scales with container */
     color: black;
     text-align: center;
     border-bottom: 2px solid black;
@@ -654,6 +656,9 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
+    word-wrap: break-word;
+    hyphens: auto;
+    line-height: 1.1;
 }
 
 /* Time cells styling */
@@ -676,15 +681,34 @@ html, body {
 /* Removed - keep all borders for complete grid */
 
 .calendar-cell.hour {
-    border-top: 2px solid black;
+    border-top: 1px solid black;
     background: #f0f0f0 !important; /* Gray background for hour rows across entire week */
 }
 
 /* Ensure half-hour slots are white */
 .calendar-cell.half-hour {
     background: white !important;
-    border-bottom: 2px solid black;
+    border-bottom: 1px solid black;
 }
+
+/* Special styling for 6:00 AM row to extend across entire grid */
+.calendar-cell.hour:first-of-type {
+    border-top: 1px solid black;
+}
+
+/* Make the first hour row (6:00 AM) extend across entire grid */
+.weekly-calendar .calendar-grid::before {
+    content: "";
+    position: absolute;
+    top: 52px; /* Just below header */
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: black;
+    z-index: 10;
+}
+
+
 
 .calendar-cell:hover {
     background: #fafafa;
