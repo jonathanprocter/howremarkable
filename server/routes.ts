@@ -277,24 +277,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         refreshToken: 'dev-refresh-token-' + Date.now()
       };
 
-      // Store user in session manually
-      req.session.passport = {
-        user: devUser
-      };
-
-      // Also set req.user directly
-      req.user = devUser;
-
-      // Save session
-      req.session.save((err) => {
+      // Use passport's logIn method to properly authenticate
+      req.logIn(devUser, { session: true }, (err) => {
         if (err) {
-          console.error('Session save error:', err);
-          return res.status(500).json({ error: 'Failed to save session' });
+          console.error('Dev login error:', err);
+          return res.status(500).json({ error: 'Login failed' });
         }
 
         console.log('Development user logged in:', devUser.email);
         console.log('Session after dev login:', req.sessionID);
         console.log('User object in session:', !!req.user);
+        console.log('Session passport:', !!req.session.passport);
 
         res.json({ 
           success: true, 

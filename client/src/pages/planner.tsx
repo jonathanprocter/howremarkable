@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { CalendarEvent, CalendarDay, ViewMode, CalendarState } from '@/types/calendar';
@@ -86,9 +86,30 @@ export default function Planner() {
     enabled: !!user, // Only run when user is authenticated for calendar access
   });
 
-  // Extract SimplePractice events safely
-  const simplePracticeEvents = Array.isArray(simplePracticeData?.events) ? simplePracticeData.events : [];
-  const simplePracticeCalendars = Array.isArray(simplePracticeData?.calendars) ? simplePracticeData.calendars : [];
+  // Extract SimplePractice events safely with comprehensive error handling
+  const simplePracticeEvents = useMemo(() => {
+    try {
+      if (!simplePracticeData) return [];
+      if (!simplePracticeData.events) return [];
+      if (!Array.isArray(simplePracticeData.events)) return [];
+      return simplePracticeData.events;
+    } catch (error) {
+      console.error('Error processing SimplePractice events:', error);
+      return [];
+    }
+  }, [simplePracticeData]);
+
+  const simplePracticeCalendars = useMemo(() => {
+    try {
+      if (!simplePracticeData) return [];
+      if (!simplePracticeData.calendars) return [];
+      if (!Array.isArray(simplePracticeData.calendars)) return [];
+      return simplePracticeData.calendars;
+    } catch (error) {
+      console.error('Error processing SimplePractice calendars:', error);
+      return [];
+    }
+  }, [simplePracticeData]);
 
   // Google Calendar data - only if user is authenticated
   const { data: googleCalendarData, isLoading: isLoadingGoogleEvents, error: googleCalendarError } = useQuery({
@@ -556,6 +577,12 @@ export default function Planner() {
           </div>
 
           <div className="flex items-center gap-2">
+            {!user && <DevLoginButton />}
+            {user && (
+              <Badge variant="outline" className="text-sm bg-green-50">
+                Logged in as {user.name}
+              </Badge>
+            )}
             <Button
               variant={viewMode === 'weekly' ? 'default' : 'outline'}
               onClick={() => setViewMode('weekly')}
