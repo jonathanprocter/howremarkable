@@ -21,21 +21,34 @@ export class SimpleAuthFix {
       
       if (currentStatus.ok) {
         const authData = await currentStatus.json();
+        console.log('🔧 Auth status response:', authData);
+        
         if (authData.isAuthenticated && authData.user) {
-          console.log('✅ SIMPLE AUTH FIX: Authentication is already working!');
+          console.log('✅ SIMPLE AUTH FIX: Backend authentication confirmed!');
+          console.log('✅ User:', authData.user.email);
           
           // Force refresh the authentication hook to sync frontend
           if ((window as any).refreshAuth) {
             console.log('🔧 Refreshing authentication hook...');
             await (window as any).refreshAuth();
+            
+            // Wait for auth hook to process
+            await new Promise(resolve => setTimeout(resolve, 1000));
           }
           
-          // Clear and refresh all queries
+          // Clear and refresh all queries to reload data
           if ((window as any).queryClient) {
-            console.log('🔧 Clearing all queries...');
+            console.log('🔧 Clearing all queries and invalidating cache...');
             (window as any).queryClient.clear();
             await (window as any).queryClient.invalidateQueries();
+            
+            // Wait for queries to refresh
+            await new Promise(resolve => setTimeout(resolve, 1000));
           }
+          
+          // Force page reload to ensure complete synchronization
+          console.log('🔧 Forcing page reload to complete authentication sync...');
+          window.location.reload();
           
           return true;
         }
