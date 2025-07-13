@@ -699,7 +699,17 @@ html, body {
     border-top: 1px solid black;
 }
 
-/* Remove the artificial line - let 6:00 AM row use normal top-of-hour styling */
+/* Make the top of 6:00 AM row bold across entire week */
+.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(17),
+.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(18),
+.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(19),
+.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(20),
+.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(21),
+.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(22),
+.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(23),
+.weekly-calendar .calendar-grid > .calendar-cell.hour:nth-child(24) {
+    border-top: 2px solid black !important;
+}
 
 /* Ensure ALL DAY section has proper top border connection */
 .weekly-calendar .calendar-grid::after {
