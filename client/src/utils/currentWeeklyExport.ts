@@ -1,6 +1,18 @@
 import jsPDF from 'jspdf';
-import { CalendarEvent } from '@/types/calendar';
-import { cleanEventTitle } from './textWrappers';
+import { CalendarEvent } from '../types/calendar';
+
+// Clean event title utility function
+function cleanEventTitle(title: string): string {
+  if (!title) return '';
+  
+  // Remove " Appointment" suffix if present
+  let cleanedTitle = title.replace(/\s+Appointment\s*$/i, '');
+  
+  // Remove extra whitespace
+  cleanedTitle = cleanedTitle.trim().replace(/\s+/g, ' ');
+  
+  return cleanedTitle;
+}
 
 export interface CurrentWeeklyExportConfig {
   pageWidth: number;
@@ -359,3 +371,6 @@ const drawEventWithCurrentStyling = (
     pdf.text(timeStr, x + 4, timeY);
   }
 };
+
+// Default export for easier importing
+export default exportCurrentWeeklyView;

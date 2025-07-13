@@ -380,8 +380,23 @@ export default function Planner() {
           await exportExactGridPDF(currentWeek, allEvents);
           break;
         case 'current-weekly':
-          const { exportCurrentWeeklyView } = await import('../utils/currentWeeklyExport');
-          await exportCurrentWeeklyView(allEvents, currentWeek[0]?.date || new Date(), currentWeek[6]?.date || new Date());
+          console.log('🔄 Starting current weekly export...');
+          try {
+            const { exportCurrentWeeklyView } = await import('../utils/currentWeeklyExport');
+            console.log('✅ Module imported successfully');
+            
+            const weekStart = currentWeek[0]?.date || new Date();
+            const weekEnd = currentWeek[6]?.date || new Date();
+            
+            console.log(`📅 Week range: ${weekStart.toDateString()} to ${weekEnd.toDateString()}`);
+            console.log(`📊 Events count: ${allEvents.length}`);
+            
+            await exportCurrentWeeklyView(allEvents, weekStart, weekEnd);
+            console.log('✅ Current weekly export completed successfully');
+          } catch (error) {
+            console.error('❌ Current weekly export failed:', error);
+            throw error;
+          }
           break;
         case 'daily':
           console.log('🎯 DAILY PDF EXPORT STARTING...');
