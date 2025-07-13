@@ -58,23 +58,25 @@ export default function Planner() {
     setCurrentWeek(week);
   }, [selectedDate]);
 
-  // Fetch events - allow without authentication for calendar access
+  // Fetch events - only when authenticated
   const { data: events = [], isLoading: eventsLoading, error: eventsError } = useQuery({
     queryKey: ['/api/events'],
-    enabled: true, // Always try to fetch events
+    enabled: !!user, // Only fetch when user is authenticated
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 30 * 60 * 1000, // 30 minutes
   });
 
 
 
-   // SimplePractice calendar data - try to fetch regardless of app authentication
+   // SimplePractice calendar data - only fetch when authenticated
    const { data: simplePracticeData, isLoading: isLoadingSimplePracticeEvents, error: simplePracticeError } = useQuery({
     queryKey: ['/api/simplepractice/events'],
     queryFn: async () => {
         const startDate = new Date(2024, 0, 1).toISOString(); // January 1, 2024
         const endDate = new Date(2025, 11, 31).toISOString(); // December 31, 2025
-        const response = await fetch(`/api/simplepractice/events?start=${startDate}&end=${endDate}`);
+        const response = await fetch(`/api/simplepractice/events?start=${startDate}&end=${endDate}`, {
+          credentials: 'include' // Include cookies for session authentication
+        });
         if (!response.ok) {
             throw new Error('Failed to fetch SimplePractice events');
         }
@@ -83,7 +85,7 @@ export default function Planner() {
     retry: 1,
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    enabled: true, // Always try to fetch calendar events
+    enabled: !!user, // Only fetch when user is authenticated
   });
 
   // Extract SimplePractice events safely with comprehensive error handling
@@ -111,13 +113,15 @@ export default function Planner() {
     }
   }, [simplePracticeData]);
 
-  // Google Calendar data - try to fetch regardless of app authentication
+  // Google Calendar data - only fetch when authenticated
   const { data: googleCalendarData, isLoading: isLoadingGoogleEvents, error: googleCalendarError } = useQuery({
     queryKey: ['/api/calendar/events'],
     queryFn: async () => {
       const startDate = new Date(2024, 0, 1).toISOString(); // January 1, 2024
       const endDate = new Date(2025, 11, 31).toISOString(); // December 31, 2025
-      const response = await fetch(`/api/calendar/events?start=${startDate}&end=${endDate}`);
+      const response = await fetch(`/api/calendar/events?start=${startDate}&end=${endDate}`, {
+        credentials: 'include' // Include cookies for session authentication
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch Google Calendar events');
       }
@@ -126,7 +130,7 @@ export default function Planner() {
     retry: 1,
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    enabled: true, // Always try to fetch calendar events
+    enabled: !!user, // Only fetch when user is authenticated
   });
 
   const googleEvents = Array.isArray(googleCalendarData?.events) ? googleCalendarData.events : [];
