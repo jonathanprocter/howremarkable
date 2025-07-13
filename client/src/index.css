@@ -700,12 +700,24 @@ html, body {
 .weekly-calendar .calendar-grid::before {
     content: "";
     position: absolute;
-    top: 52px; /* Just below header */
+    top: 92px; /* Just below header and all-day section */
     left: 0;
     right: 0;
     height: 1px;
     background: black;
     z-index: 10;
+}
+
+/* Ensure ALL DAY section has proper top border connection */
+.weekly-calendar .calendar-grid::after {
+    content: "";
+    position: absolute;
+    top: 50px; /* Just below main header */
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: black;
+    z-index: 5;
 }
 
 
@@ -721,7 +733,7 @@ html, body {
     font-size: 8px;
     color: black;
     text-align: center;
-    border-bottom: 2px solid black;
+    border-bottom: 1px solid black; /* Match regular hour lines */
     padding: 6px 2px;
     border-right: 2px solid black;
 }
@@ -730,7 +742,7 @@ html, body {
     background: white;
     min-height: 40px;
     padding: 4px;
-    border-bottom: 2px solid black;
+    border-bottom: 1px solid black; /* Match regular hour lines */
 }
 
 /* Duplicate rules removed - using unified definitions above */
