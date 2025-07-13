@@ -160,7 +160,6 @@ export const WeeklyCalendarGrid = ({
 
     return {
       height: `${preciseHeight}px`,
-      marginTop: '-1px', // Move appointments up by 1px to align with time slot tops
       marginBottom: duration > 1 ? '0px' : '2px',
       zIndex: 20 // Ensure events appear above other elements
     };
@@ -315,7 +314,8 @@ export const WeeklyCalendarGrid = ({
                         ...getEventStyle(event),
                         position: 'relative',
                         width: '100%',
-                        minHeight: '20px'
+                        minHeight: '20px',
+                        top: '2px' // Move appointments slightly down from cell top
                       }}
                       draggable={event.source === 'google'}
                       onDragStart={(e) => handleDragStart(e, event)}

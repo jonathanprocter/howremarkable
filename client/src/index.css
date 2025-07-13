@@ -359,9 +359,7 @@ html, body {
     overflow: visible;
     margin: 0;
     padding: 0;
-    border: none;
-    border-bottom: 2px solid black;
-    border-left: 2px solid black;
+    border: 2px solid black; /* Add complete border around entire grid */
     box-sizing: border-box;
 }
 
@@ -665,16 +663,14 @@ html, body {
     border-right: 2px solid black;
 }
 
-/* Last column shouldn't have right border */
+/* Last column should have right border for complete grid */
 .calendar-cell:nth-child(8n) {
-    border-right: none;
+    border-right: 1px solid black;
 }
 
 
 
-.calendar-cell:last-child {
-    border-right: none;
-}
+/* Removed - keep all borders for complete grid */
 
 .calendar-cell.hour {
     border-bottom: 2px solid black;
