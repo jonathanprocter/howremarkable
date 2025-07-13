@@ -44,6 +44,8 @@ The 403 error occurs because the Google Cloud Console project needs proper confi
      https://ed4c6ee6-c0f6-458f-9eac-1eadf0569a2c-00-387t3f5z7i1mm.kirk.replit.dev/api/auth/google/callback
      ```
 
+   **NOTE:** The above URLs are for the current deployment. The app now automatically detects the correct domain, but you must update your Google Cloud Console OAuth settings to match the current domain.
+
 5. **Copy Client ID and Secret**
    - Copy the Client ID and Client Secret
    - These should already be configured in your Replit secrets

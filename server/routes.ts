@@ -13,14 +13,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // Configure Google OAuth2 Strategy - Use production domain
-  const baseURL = 'https://HowreMarkable.replit.app';
+  // Configure Google OAuth2 Strategy - Use dynamic URL based on environment
+  const baseURL = process.env.REPLIT_DOMAINS ? 
+    `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : 
+    'https://HowreMarkable.replit.app';
   const callbackURL = `${baseURL}/api/auth/google/callback`;
   
   console.log("🔧 OAuth Configuration:");
   console.log("- Callback URL:", callbackURL);
   console.log("- Environment:", process.env.NODE_ENV || 'development');
   console.log("- Base URL:", baseURL);
+  console.log("- REPLIT_DOMAINS:", process.env.REPLIT_DOMAINS);
   
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID!,
@@ -208,7 +211,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "1. Go to Google Cloud Console (console.cloud.google.com)",
         "2. Enable Google Calendar API and Google Drive API",
         "3. Configure OAuth consent screen",
-        "4. Add authorized redirect URI: https://HowreMarkable.replit.app/api/auth/google/callback"
+        `4. Add authorized redirect URI: ${callbackURL}`,
+        `5. Add authorized JavaScript origin: ${baseURL}`
       ]
     });
   });
@@ -240,13 +244,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log("Environment check:");
     console.log("GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID ? "SET" : "MISSING");
     console.log("GOOGLE_CLIENT_SECRET:", process.env.GOOGLE_CLIENT_SECRET ? "SET" : "MISSING");
-    console.log("Production domain: HowreMarkable.replit.app");
+    console.log("Current domain:", baseURL);
 
     res.json({
       hasClientId: !!process.env.GOOGLE_CLIENT_ID,
       hasClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
-      domain: "HowreMarkable.replit.app",
-      callbackUrl: "https://HowreMarkable.replit.app/api/auth/google/callback"
+      domain: baseURL,
+      callbackUrl: callbackURL
     });
   });
 
