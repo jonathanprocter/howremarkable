@@ -44,7 +44,7 @@ export const useAuthenticatedUser = (): UseAuthenticatedUserReturn => {
 
       const authData = await response.json();
 
-      if (authData.authenticated && authData.user) {
+      if (authData.isAuthenticated && authData.user) {
         console.log('✅ User authenticated:', authData.user.email);
         setUser(authData.user);
       } else {

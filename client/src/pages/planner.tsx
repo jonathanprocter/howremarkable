@@ -30,9 +30,39 @@ import { export100PercentPixelPerfectPDF } from '@/utils/pixelPerfectPDFExport';
 import { DevLoginButton } from '../components/DevLoginButton';
 
 export default function Planner() {
-  const { user, isLoading: userLoading } = useAuthenticatedUser();
+  const { user, isLoading: userLoading, refetch: refetchAuth } = useAuthenticatedUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Force refresh authentication after OAuth callback
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('code') && urlParams.has('scope')) {
+      // OAuth callback detected, refresh auth state after delay
+      setTimeout(() => {
+        refetchAuth();
+      }, 1000);
+    }
+  }, [refetchAuth]);
+
+  // Add authentication refresh function for debugging
+  const refreshAuth = async () => {
+    console.log('🔄 Refreshing authentication...');
+    try {
+      await refetchAuth();
+      await queryClient.invalidateQueries({ queryKey: ['/api/events'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/simplepractice/events'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/calendar/events'] });
+      console.log('✅ Authentication refreshed');
+    } catch (error) {
+      console.error('❌ Auth refresh failed:', error);
+    }
+  };
+
+  // Make auth refresh available globally for debugging
+  useEffect(() => {
+    (window as any).refreshAuth = refreshAuth;
+  }, []);
 
   // State management
   const [viewMode, setViewMode] = useState<ViewMode>('weekly');
