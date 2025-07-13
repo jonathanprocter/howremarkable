@@ -348,6 +348,7 @@ html, body {
     height: fit-content;
 }
 
+/* FIXED CALENDAR GRID - SINGLE SOURCE OF TRUTH */
 .calendar-grid {
     display: grid;
     grid-template-columns: 100px repeat(7, 1fr);
@@ -624,6 +625,7 @@ html, body {
 
 /* Weekly Calendar Grid Layout - Duplicate removed, using main definition above */
 
+/* UNIFIED CALENDAR CELL STYLING */
 .calendar-cell {
     background: white;
     border-right: 1px solid black;
@@ -1063,6 +1065,9 @@ html, body {
     }
     .calendar-grid {
         font-size: 8px;
+        display: grid;
+        grid-template-columns: 100px repeat(7, 1fr);
+        grid-template-rows: 50px repeat(36, 30px);
     }
     .appointment-name {
         font-size: 5px;
