@@ -83,7 +83,7 @@ html, body {
 
 .planner-container {
     width: 100%;
-    max-width: 1600px;
+    max-width: 100vw;
     margin: 0 auto;
     background: white;
     border: 2px solid black;
@@ -283,19 +283,22 @@ html, body {
 }
 
 .event-in-grid {
-    font-size: 10px;
+    font-size: 9px;
     overflow: hidden;
     cursor: pointer;
-    border-radius: 3px;
+    border-radius: 2px;
     border: 1px solid transparent;
-    padding: 1px 4px 2px 4px;
+    padding: 1px 3px;
     margin-bottom: 1px;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     align-items: flex-start;
-    width: 100%;
+    width: calc(100% - 2px);
     box-sizing: border-box;
+    position: relative;
+    text-overflow: ellipsis;
+    word-wrap: break-word;
 }
 
 .event-simplepractice {
@@ -347,17 +350,19 @@ html, body {
 
 .calendar-grid {
     display: grid;
-    grid-template-columns: 100px repeat(7, 1fr);
+    grid-template-columns: 80px repeat(7, 1fr);
     grid-template-rows: 50px repeat(36, 30px);
     background: white;
     height: fit-content;
     width: 100%;
+    max-width: 100%;
     overflow: visible;
     margin: 0;
     padding: 0;
     border: none;
     border-bottom: 2px solid black;
     border-left: 2px solid black;
+    box-sizing: border-box;
 }
 
 .time-header {
@@ -418,6 +423,8 @@ html, body {
     justify-content: center;
     border-right: 3px solid black !important;
     border-bottom: 1px solid #ddd;
+    min-height: 30px;
+    max-height: 30px;
     height: 30px;
     line-height: 1;
     box-sizing: border-box;
@@ -438,6 +445,8 @@ html, body {
     border-bottom: 1px solid #ddd;
     position: relative;
     cursor: pointer;
+    min-height: 30px;
+    max-height: 30px;
     height: 30px;
     box-sizing: border-box;
 }
