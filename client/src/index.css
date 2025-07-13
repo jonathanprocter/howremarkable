@@ -718,14 +718,14 @@ html, body {
     background: #fafafa;
 }
 
-/* All-day event cells */
+/* All-day event cells - ensure exactly 1px borders to match time slots */
 .calendar-cell.all-day-header {
     background: white;
     font-weight: bold;
     font-size: 8px;
     color: black;
     text-align: center;
-    border-bottom: 1px solid black; /* Match regular hour lines */
+    border-bottom: 1px solid black !important; /* Override header-cell 2px border */
     padding: 6px 2px;
     border-right: 2px solid black;
 }
@@ -734,7 +734,7 @@ html, body {
     background: white;
     min-height: 40px;
     padding: 4px;
-    border-bottom: 1px solid black; /* Match regular hour lines */
+    border-bottom: 1px solid black !important; /* Force 1px to match time slots */
 }
 
 /* Duplicate rules removed - using unified definitions above */
