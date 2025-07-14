@@ -2,7 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { Readable } from "stream";
 import { storage } from "./storage";
-import { insertEventSchema, insertDailyNotesSchema } from "@shared/schema";
+import { insertEventSchema, insertDailyNotesSchema, events } from "@shared/schema";
+import { and, gte, lte } from 'drizzle-orm';
+import { db } from './db';
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { google } from "googleapis";
@@ -48,6 +50,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
         access_token: accessToken,
         refresh_token: refreshToken
       });
+      
+      // Test token and refresh if needed
+      try {
+        await oauth2Client.getAccessToken();
+        console.log('✅ Token validation successful');
+      } catch (tokenError) {
+        console.log('⚠️ Token validation failed, attempting refresh...');
+        try {
+          const { credentials } = await oauth2Client.refreshAccessToken();
+          oauth2Client.setCredentials(credentials);
+          console.log('✅ Token refresh successful');
+        } catch (refreshError) {
+          console.log('❌ Token refresh failed:', refreshError.message);
+          // Fallback to database events for deployment reliability
+          console.log('🔄 Falling back to database events for deployment reliability');
+          
+          // Return cached events from database as fallback
+          const fallbackEvents = await db.select().from(events).where(
+            and(
+              gte(events.startTime, new Date(start as string)),
+              lte(events.startTime, new Date(end as string))
+            )
+          );
+          
+          const formattedFallbackEvents = fallbackEvents
+            .filter(event => event.source === 'google' || event.source === 'simplepractice')
+            .map(event => ({
+              id: event.id,
+              title: event.title,
+              startTime: event.startTime.toISOString(),
+              endTime: event.endTime.toISOString(),
+              description: event.description || '',
+              location: event.location || '',
+              source: event.source,
+              calendarId: event.calendarId || 'fallback'
+            }));
+          
+          return res.json({
+            events: formattedFallbackEvents,
+            calendars: [
+              { id: 'fallback', name: 'Cached Events', color: '#4285f4' }
+            ],
+            syncTime: new Date().toISOString(),
+            isLiveSync: false,
+            isFallback: true,
+            message: 'Using cached events due to token expiration'
+          });
+        }
+      }
 
       const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
@@ -119,11 +170,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Live sync error:', error);
-      return res.status(500).json({ 
-        error: 'Live sync failed',
-        message: error.message,
-        details: error.code || 'unknown'
-      });
+      
+      // Fallback to database events for deployment reliability
+      console.log('🔄 Falling back to database events for deployment reliability');
+      
+      try {
+        const fallbackEvents = await db.select().from(events).where(
+          and(
+            gte(events.startTime, new Date(start as string)),
+            lte(events.startTime, new Date(end as string))
+          )
+        );
+        
+        const formattedFallbackEvents = fallbackEvents
+          .filter(event => event.source === 'google' || event.source === 'simplepractice')
+          .map(event => ({
+            id: event.id,
+            title: event.title,
+            startTime: event.startTime.toISOString(),
+            endTime: event.endTime.toISOString(),
+            description: event.description || '',
+            location: event.location || '',
+            source: event.source,
+            calendarId: event.calendarId || 'fallback'
+          }));
+        
+        console.log(`✅ Fallback: Found ${formattedFallbackEvents.length} cached events`);
+        
+        return res.json({
+          events: formattedFallbackEvents,
+          calendars: [
+            { id: 'fallback', name: 'Cached Events', color: '#4285f4' }
+          ],
+          syncTime: new Date().toISOString(),
+          isLiveSync: false,
+          isFallback: true,
+          message: 'Using cached events due to API error'
+        });
+        
+      } catch (fallbackError) {
+        console.error('❌ Fallback also failed:', fallbackError);
+        return res.status(500).json({ 
+          error: 'Live sync failed',
+          message: error.message,
+          details: error.code || 'unknown'
+        });
+      }
     }
   });
 
