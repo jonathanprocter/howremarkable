@@ -233,7 +233,19 @@ export const DailyView = ({
     }
   };
 
+  // Local state for text areas to allow immediate typing
+  const [localEventData, setLocalEventData] = useState<{[key: string]: {notes?: string, actionItems?: string}}>({});
+
   const handleEventNotesChange = (eventId: string, field: 'notes' | 'actionItems', value: string) => {
+    // Update local state immediately for responsive typing
+    setLocalEventData(prev => ({
+      ...prev,
+      [eventId]: {
+        ...prev[eventId],
+        [field]: value
+      }
+    }));
+
     // Clear existing timer for this event and field
     const timerKey = `${eventId}_${field}`;
     if (noteTimers[timerKey]) {
@@ -258,6 +270,12 @@ export const DailyView = ({
       ...prev,
       [timerKey]: newTimer
     }));
+  };
+
+  // Helper function to get current value (local state or event data)
+  const getCurrentValue = (event: CalendarEvent, field: 'notes' | 'actionItems') => {
+    const localValue = localEventData[event.id]?.[field];
+    return localValue !== undefined ? localValue : (event[field] || '');
   };
 
   const formatEventTime = (event: CalendarEvent) => {
@@ -539,7 +557,7 @@ export const DailyView = ({
                           Event Notes
                         </label>
                         <Textarea
-                          value={event.notes || ''}
+                          value={getCurrentValue(event, 'notes')}
                           onChange={(e) => handleEventNotesChange(event.id, 'notes', e.target.value)}
                           placeholder="Add notes for this appointment..."
                           className="w-full text-sm"
@@ -551,7 +569,7 @@ export const DailyView = ({
                           Action Items
                         </label>
                         <Textarea
-                          value={event.actionItems || ''}
+                          value={getCurrentValue(event, 'actionItems')}
                           onChange={(e) => handleEventNotesChange(event.id, 'actionItems', e.target.value)}
                           placeholder="Add action items and follow-ups..."
                           className="w-full text-sm"
