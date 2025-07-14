@@ -1187,6 +1187,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // PATCH route for updating specific fields like notes and action items
+  app.patch("/api/events/:id", async (req, res) => {
+    try {
+      const eventId = req.params.id;
+      const updates = req.body;
+
+      if (!req.user) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+
+      const user = req.user as any;
+
+      // Validate updates object
+      if (!updates || typeof updates !== 'object') {
+        return res.status(400).json({ error: "Invalid update data" });
+      }
+
+      // Try to update by sourceId first (for Google Calendar events)
+      let event = await storage.updateEventBySourceId(parseInt(user.id), eventId, updates);
+
+      // If not found by sourceId, try by numeric ID for manual events
+      if (!event) {
+        const numericId = parseInt(eventId);
+        if (!isNaN(numericId) && numericId > 0) {
+          event = await storage.updateEvent(numericId, updates);
+        }
+      }
+
+      if (!event) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+
+      console.log(`✅ Updated event ${eventId} with notes/action items`);
+      res.json(event);
+    } catch (error) {
+      console.error('Patch event error:', error);
+      if (!res.headersSent) {
+        res.status(400).json({ 
+          error: "Failed to update event", 
+          details: error instanceof Error ? error.message : 'Unknown error' 
+        });
+      }
+    }
+  });
+
   app.delete("/api/events/:id", async (req, res) => {
     try {
       const eventId = parseInt(req.params.id);

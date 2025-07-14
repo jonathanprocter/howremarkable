@@ -27,6 +27,9 @@ import { exportExactWeeklySpec } from '@/utils/exactWeeklySpecExport';
 import { exportFixedDynamicDailyPlannerPDF } from '@/utils/fixedDynamicDailyPlannerPDF';
 import { exportAuditEnhancedPDF } from '@/utils/auditBasedPDFExport';
 import { export100PercentPixelPerfectPDF } from '@/utils/pixelPerfectPDFExport';
+import { exportEnhancedWeeklyPDF } from '@/utils/enhancedWeeklyPDFExport';
+import { exportEnhancedDailyPDF } from '@/utils/enhancedDailyPDFExport';
+import { exportEnhancedWeeklyPackage } from '@/utils/enhancedWeeklyPackageExport';
 import { DevLoginButton } from '../components/DevLoginButton';
 import { autonomousAuthAudit } from '../utils/autonomousAuthAudit';
 import { AuthenticationFix } from '../utils/authenticationFix';
@@ -590,6 +593,15 @@ export default function Planner() {
           break;
         case '100-percent-pixel-perfect':
           await export100PercentPixelPerfectPDF(currentWeek[0]?.date || new Date(), currentWeek[6]?.date || new Date(), allEvents);
+          break;
+        case 'enhanced-weekly':
+          await exportEnhancedWeeklyPDF(allEvents, currentWeek[0]?.date || new Date(), currentWeek[6]?.date || new Date());
+          break;
+        case 'enhanced-daily':
+          await exportEnhancedDailyPDF(allEvents, selectedDate);
+          break;
+        case 'enhanced-weekly-package':
+          await exportEnhancedWeeklyPackage(allEvents, currentWeek[0]?.date || new Date(), currentWeek[6]?.date || new Date());
           break;
         default:
           throw new Error('Unknown export type');
@@ -1258,6 +1270,33 @@ export default function Planner() {
                 >
                   <Download className="h-4 w-4 mr-2" />
                   🔧 Audit-Enhanced Export
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleExportPDF('enhanced-weekly')}
+                  className="w-full justify-start bg-purple-50 hover:bg-purple-100 border-purple-300"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  📝 Enhanced Weekly with Notes
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleExportPDF('enhanced-daily')}
+                  className="w-full justify-start bg-purple-50 hover:bg-purple-100 border-purple-300"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  📝 Enhanced Daily with Notes
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleExportPDF('enhanced-weekly-package')}
+                  className="w-full justify-start bg-indigo-50 hover:bg-indigo-100 border-indigo-300"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  📦 Enhanced Weekly Package (8 Pages)
                 </Button>
               </CardContent>
             </Card>
