@@ -14,8 +14,8 @@ export async function forceLiveGoogleCalendarSync(req: Request, res: Response) {
     }
 
     // ALWAYS use fresh Google Calendar API calls - prioritize environment tokens
-    const accessToken = process.env.GOOGLE_ACCESS_TOKEN || user.accessToken;
-    const refreshToken = process.env.GOOGLE_REFRESH_TOKEN || user.refreshToken;
+    const accessToken = process.env.GOOGLE_ACCESS_TOKEN || user?.accessToken;
+    const refreshToken = process.env.GOOGLE_REFRESH_TOKEN || user?.refreshToken;
     
     if (!accessToken || accessToken.startsWith('dev-')) {
       console.log('❌ No valid Google tokens for live sync');
@@ -28,12 +28,21 @@ export async function forceLiveGoogleCalendarSync(req: Request, res: Response) {
       isEnvironmentToken: !!process.env.GOOGLE_ACCESS_TOKEN
     });
 
-    const calendar = google.calendar({ version: 'v3' });
+    // Set up OAuth2 client with the tokens
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET
+    );
 
-    // Get all calendars using environment tokens
-    const calendarListResponse = await calendar.calendarList.list({
-      access_token: accessToken
+    oauth2Client.setCredentials({
+      access_token: accessToken,
+      refresh_token: refreshToken
     });
+
+    const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+
+    // Get all calendars using OAuth2 client
+    const calendarListResponse = await calendar.calendarList.list();
 
     const calendars = calendarListResponse.data.items || [];
     console.log(`📅 Found ${calendars.length} calendars to fetch from`);
@@ -51,8 +60,7 @@ export async function forceLiveGoogleCalendarSync(req: Request, res: Response) {
           timeMax: end as string,
           maxResults: 2500,
           singleEvents: true,
-          orderBy: 'startTime',
-          access_token: accessToken
+          orderBy: 'startTime'
         });
 
         const events = eventsResponse.data.items || [];
@@ -102,9 +110,17 @@ export async function forceLiveGoogleCalendarSync(req: Request, res: Response) {
 
   } catch (error) {
     console.error('❌ Live Google Calendar sync failed:', error);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      status: error.status,
+      response: error.response?.data
+    });
+    
     return res.status(500).json({
       error: 'Live Google Calendar sync failed',
       message: error.message,
+      details: error.response?.data || error.code,
       isLiveSync: false
     });
   }

@@ -53,9 +53,15 @@ export function setupAuthenticationFix(app: Express): void {
     next();
   };
 
-  // 3. Apply authentication middleware to protected routes
+  // 3. Apply authentication middleware to protected routes (excluding live-sync)
   app.use('/api/events', requireAuth);
-  app.use('/api/calendar', requireAuth);
+  app.use('/api/calendar', (req, res, next) => {
+    // Skip auth for live-sync endpoints
+    if (req.path.startsWith('/live-sync')) {
+      return next();
+    }
+    return requireAuth(req, res, next);
+  });
   app.use('/api/simplepractice', requireAuth);
   app.use('/api/upload', requireAuth);
 

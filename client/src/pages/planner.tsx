@@ -67,6 +67,24 @@ export default function Planner() {
     }
   };
 
+  // Add browser audit system on component mount
+  useEffect(() => {
+    // Load audit system
+    const loadAuditSystem = async () => {
+      try {
+        const auditScript = await fetch('/browser-live-sync-audit.js').then(r => r.text());
+        const script = document.createElement('script');
+        script.textContent = auditScript;
+        document.head.appendChild(script);
+        console.log('🔍 Browser audit system loaded');
+      } catch (error) {
+        console.error('Failed to load audit system:', error);
+      }
+    };
+    
+    loadAuditSystem();
+  }, []);
+
   // Add global error handler for unhandled promise rejections
   useEffect(() => {
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
