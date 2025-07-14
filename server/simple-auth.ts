@@ -34,6 +34,12 @@ export async function simpleDirectLogin(req: Request, res: Response) {
       refreshToken: process.env.GOOGLE_REFRESH_TOKEN || 'dev_refresh_token'
     };
     
+    // Also add Google tokens to session for middleware compatibility
+    req.session.google_access_token = process.env.GOOGLE_ACCESS_TOKEN;
+    req.session.google_refresh_token = process.env.GOOGLE_REFRESH_TOKEN;
+    req.session.google_token_type = 'Bearer';
+    req.session.google_expires_in = Date.now() + (3600 * 1000); // 1 hour from now
+    
     // Log the user in directly
     req.user = sessionUser;
     req.session.passport = { user: sessionUser };
