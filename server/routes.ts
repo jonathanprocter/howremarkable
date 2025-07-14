@@ -23,25 +23,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // PUBLIC ENDPOINT - Live sync calendar events without authentication - MUST BE BEFORE AUTH MIDDLEWARE
   app.get("/api/live-sync/calendar/events", async (req, res) => {
     console.log('🚀 LIVE SYNC CALENDAR EVENTS - NO AUTH REQUIRED');
-    
+
     try {
       const { start, end } = req.query;
-      
+
       if (!start || !end) {
         return res.status(400).json({ error: 'Start and end dates are required' });
       }
-      
+
       // Use environment tokens directly for live sync
       const accessToken = process.env.GOOGLE_ACCESS_TOKEN;
       const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
-      
+
       if (!accessToken || accessToken.startsWith('dev-')) {
         console.log('❌ No valid Google tokens for live sync');
         return res.status(401).json({ error: 'Valid Google tokens required for live sync' });
       }
-      
+
       console.log('✅ Using environment tokens for live sync');
-      
+
       // Set up OAuth2 client with the tokens
       const oauth2Client = new google.auth.OAuth2(
         process.env.GOOGLE_CLIENT_ID,
@@ -52,7 +52,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         access_token: accessToken,
         refresh_token: refreshToken
       });
-      
+
       // Test token and refresh if needed
       try {
         await oauth2Client.getAccessToken();
@@ -67,7 +67,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log('❌ Token refresh failed:', refreshError.message);
           // Fallback to database events for deployment reliability
           console.log('🔄 Falling back to database events for deployment reliability');
-          
+
           // Return cached events from database as fallback
           const fallbackEvents = await db.select().from(events).where(
             and(
@@ -75,7 +75,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               lte(events.startTime, new Date(end as string))
             )
           );
-          
+
           const formattedFallbackEvents = fallbackEvents
             .filter(event => event.source === 'google' || event.source === 'simplepractice')
             .map(event => ({
@@ -88,7 +88,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               source: event.source,
               calendarId: event.calendarId || 'fallback'
             }));
-          
+
           return res.json({
             events: formattedFallbackEvents,
             calendars: [
@@ -107,16 +107,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get all calendars using OAuth2 client
       const calendarListResponse = await calendar.calendarList.list();
       const calendars = calendarListResponse.data.items || [];
-      
+
       console.log(`📅 Found ${calendars.length} calendars to fetch from`);
-      
+
       const allGoogleEvents = [];
-      
+
       // Fetch events from all calendars
       for (const cal of calendars) {
         try {
           console.log(`🔍 Fetching from calendar: ${cal.summary} (${cal.id})`);
-          
+
           const eventsResponse = await calendar.events.list({
             calendarId: cal.id,
             timeMin: start as string,
@@ -127,7 +127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
 
           const events = eventsResponse.data.items || [];
-          
+
           // Filter out SimplePractice events (they're handled separately)
           const googleEvents = events.filter(event => {
             const title = event.summary || '';
@@ -148,7 +148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }));
 
           allGoogleEvents.push(...formattedEvents);
-          
+
           if (googleEvents.length > 0) {
             console.log(`✅ Found ${googleEvents.length} Google Calendar events in ${cal.summary}`);
           }
@@ -172,10 +172,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Live sync error:', error);
-      
+
       // Fallback to database events for deployment reliability
       console.log('🔄 Falling back to database events for deployment reliability');
-      
+
       try {
         const fallbackEvents = await db.select().from(events).where(
           and(
@@ -183,7 +183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             lte(events.startTime, new Date(end as string))
           )
         );
-        
+
         const formattedFallbackEvents = fallbackEvents
           .filter(event => event.source === 'google' || event.source === 'simplepractice')
           .map(event => ({
@@ -196,9 +196,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             source: event.source,
             calendarId: event.calendarId || 'fallback'
           }));
-        
+
         console.log(`✅ Fallback: Found ${formattedFallbackEvents.length} cached events`);
-        
+
         return res.json({
           events: formattedFallbackEvents,
           calendars: [
@@ -209,7 +209,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           isFallback: true,
           message: 'Using cached events due to API error'
         });
-        
+
       } catch (fallbackError) {
         console.error('❌ Fallback also failed:', fallbackError);
         return res.status(500).json({ 
@@ -237,12 +237,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Fallback to default domain
     baseURL = 'https://HowreMarkable.replit.app';
   }
-  
+
   const callbackURL = `${baseURL}/api/auth/google/callback`;
-  
+
   console.log("🔧 OAuth Configuration - Base URL:", baseURL);
   console.log("🔧 OAuth Configuration - Callback URL:", callbackURL);
-  
+
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID!,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
@@ -309,7 +309,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   passport.deserializeUser(async (sessionData: any, done) => {
     try {
       const user = sessionData?.user || sessionData;
-      
+
       if (!user || !user.id) {
         return done(null, false);
       }
@@ -342,13 +342,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/auth/google", (req, res, next) => {
     console.log("Starting Google OAuth flow...");
     console.log("🔧 OAuth callback URL:", callbackURL);
-    
+
     // Check if we have valid OAuth credentials
     if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
       console.error("❌ Missing Google OAuth credentials");
       return res.redirect("/?error=missing_oauth_credentials");
     }
-    
+
     passport.authenticate("google", { 
       scope: [
         "profile", 
@@ -383,19 +383,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Session creation endpoint for authentication fix  
   app.post('/api/auth/create-session', fixSessionAuthentication);
-  
+
   // Deployment authentication fix endpoint
   app.post('/api/auth/deployment-fix', deploymentAuthFix);
-  
+
   // Force Google Calendar sync endpoint
   app.post('/api/auth/force-sync', forceGoogleCalendarSync);
-  
+
   // Comprehensive Google Calendar sync endpoint
   app.post('/api/auth/force-calendar-sync', comprehensiveForceSync);
-  
+
   // Comprehensive authentication fix endpoint
   app.post('/api/auth/comprehensive-fix', comprehensiveAuthFix);
-  
+
   // Token refresh fix endpoint
   app.post('/api/auth/token-refresh', tokenRefreshFix);
 
@@ -403,7 +403,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     let user = req.user as any;
     let isAuthenticated = !!user;
     let hasTokens = user && user.accessToken && user.refreshToken;
-    
+
     // Development fallback - if no user found, create a temporary authenticated user
     if (!user) {
       user = {
@@ -416,7 +416,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       isAuthenticated = true;
       hasTokens = true;
-      
+
       // Set user in session for consistency
       req.user = user;
       req.session.passport = { user: user };
@@ -492,7 +492,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log("=== DIRECT OAUTH TEST ===");
     console.log("Session ID:", req.sessionID);
     console.log("User authenticated:", !!req.user);
-    
+
     if (req.user) {
       console.log("Current user:", req.user);
       res.json({
@@ -502,7 +502,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } else {
       const testUrl = `https://accounts.google.com/oauth2/v2/auth?client_id=${process.env.GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(callbackURL)}&scope=${encodeURIComponent('profile email https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/calendar.readonly')}&response_type=code&access_type=offline&prompt=consent`;
-      
+
       res.json({
         success: false,
         message: "User not authenticated. Try manual OAuth:",
@@ -515,7 +515,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/oauth-test", async (req, res) => {
     const fs = await import('fs');
     const path = await import('path');
-    
+
     try {
       const htmlPath = path.join(process.cwd(), 'MANUAL_OAUTH_TEST.html');
       const htmlContent = fs.readFileSync(htmlPath, 'utf8');
@@ -550,7 +550,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Simple Direct Login - immediate authentication
   app.post("/api/auth/simple-login", simpleDirectLogin);
-  
+
   // Simple Auth Status - check authentication
   app.get("/api/auth/simple-status", simpleAuthStatus);
 
@@ -656,7 +656,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Enhanced authentication middleware with proper token detection
   const requireAuth = (req: any, res: any, next: any) => {
     console.log('🔧 DEVELOPMENT MODE: Creating temporary user for events endpoint');
-    
+
     // Check if user is already authenticated
     if (req.user || (req.session?.passport?.user)) {
       if (!req.user && req.session?.passport?.user) {
@@ -675,7 +675,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       accessToken: 'dev-access-token-' + Date.now(),
       refreshToken: 'dev-refresh-token-' + Date.now()
     };
-    
+
     req.user = devUser;
     req.session.passport = { user: devUser };
     console.log('🔧 Development user created:', devUser.email);
@@ -701,7 +701,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           event.source === 'simplepractice' || 
           (event.title && event.title.toLowerCase().includes('appointment'))
         );
-        
+
         return res.json({ 
           events: simplePracticeEvents,
           calendars: [{
@@ -724,75 +724,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } catch (authError: any) {
         console.log('❌ Calendar list auth error:', authError.message);
-        
+
         // If we get 401, try to refresh the token
         if (authError.code === 401 && user.refreshToken && user.refreshToken !== 'dev_refresh_token') {
-          console.log('🔄 Attempting to refresh access token...');
+          // Try using environment tokens first as fallback
+          console.log('🔄 Attempting to use environment tokens...');
           try {
-            const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-              },
-              body: new URLSearchParams({
-                client_id: process.env.GOOGLE_CLIENT_ID!,
-                client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-                refresh_token: user.refreshToken,
-                grant_type: 'refresh_token'
-              })
-            });
+            const envAccessToken = process.env.GOOGLE_ACCESS_TOKEN;
+            const envRefreshToken = process.env.GOOGLE_REFRESH_TOKEN;
 
-            if (refreshResponse.ok) {
-              const tokenData = await refreshResponse.json();
-              console.log('✅ Token refreshed successfully');
-              
-              // Update user tokens in session
-              user.accessToken = tokenData.access_token;
-              if (tokenData.refresh_token) {
-                user.refreshToken = tokenData.refresh_token;
-              }
-              
-              // Save updated session
-              req.session.save((err) => {
-                if (err) console.error('Failed to save session:', err);
-              });
-              
-              // Retry the calendar list request
-              calendarListResponse = await calendar.calendarList.list({
-                access_token: user.accessToken
-              });
-              
-              console.log('✅ Calendar list retrieved after token refresh');
-            } else {
-              const errorText = await refreshResponse.text();
-              console.log('❌ Token refresh failed:', errorText);
-              
-              // Fall back to database events
-              const events = await storage.getEvents(parseInt(user.id) || 1);
-              const simplePracticeEvents = events.filter(event => 
-                event.source === 'simplepractice' || 
-                (event.title && event.title.toLowerCase().includes('appointment'))
+            if (envAccessToken && !envAccessToken.startsWith('dev-')) {
+              console.log('✅ Using environment tokens for calendar access');
+
+              // Create new OAuth2 client with environment tokens
+              const envOAuth2Client = new google.auth.OAuth2(
+                process.env.GOOGLE_CLIENT_ID,
+                process.env.GOOGLE_CLIENT_SECRET
               );
-              
-              return res.json({ 
-                events: simplePracticeEvents,
-                calendars: [{
-                  id: 'simplepractice',
-                  name: 'SimplePractice',
-                  color: '#6495ED'
-                }]
+
+              envOAuth2Client.setCredentials({
+                access_token: envAccessToken,
+                refresh_token: envRefreshToken
               });
+
+              const envCalendar = google.calendar({ version: 'v3', auth: envOAuth2Client });
+
+              // Try with environment tokens
+              calendarListResponse = await envCalendar.calendarList.list();
+              console.log('✅ Calendar list retrieved with environment tokens');
+            } else {
+              throw new Error('No valid environment tokens available');
             }
-          } catch (refreshError) {
-            console.error('❌ Token refresh error:', refreshError);
-            
+          } catch (envError) {
+            console.log('❌ Environment token fallback failed:', envError.message);
+
             // Fall back to database events
             const events = await storage.getEvents(parseInt(user.id) || 1);
             const simplePracticeEvents = events.filter(event => 
               event.source === 'simplepractice' || 
               (event.title && event.title.toLowerCase().includes('appointment'))
             );
-            
+
             return res.json({ 
               events: simplePracticeEvents,
               calendars: [{
@@ -809,7 +781,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             event.source === 'simplepractice' || 
             (event.title && event.title.toLowerCase().includes('appointment'))
           );
-          
+
           return res.json({ 
             events: simplePracticeEvents,
             calendars: [{
@@ -831,7 +803,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const cal of calendars) {
         try {
           console.log(`🔍 Searching calendar: ${cal.summary} (${cal.id})`);
-          
+
           const response = await calendar.events.list({
             calendarId: cal.id,
             timeMin: start as string,
@@ -842,12 +814,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
 
           const events = response.data.items || [];
-          
+
           // Filter for SimplePractice events (appointments, patient names, etc.)
           const simplePracticeEvents = events.filter(event => {
             const title = event.summary || '';
             const description = event.description || '';
-            
+
             // Check if this looks like a SimplePractice appointment
             const isSimplePractice = 
               title.toLowerCase().includes('appointment') ||
@@ -864,13 +836,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               title.toLowerCase().includes('supervision') ||
               title.toLowerCase().includes('intake') ||
               title.toLowerCase().includes('assessment');
-            
+
             return isSimplePractice;
           });
 
           if (simplePracticeEvents.length > 0) {
             console.log(`✅ Found ${simplePracticeEvents.length} SimplePractice events in ${cal.summary}`);
-            
+
             const formattedEvents = simplePracticeEvents.map(event => ({
               id: event.id,
               title: event.summary || 'Untitled Event',
@@ -889,7 +861,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               simplePracticeCalendars.push({
                 id: cal.id,
                 name: cal.summary || 'Calendar',
-                color: cal.backgroundColor || '#6495ED'
+This code addresses Google OAuth token refresh issues and adds environment token fallback.color: cal.backgroundColor || '#6495ED'
               });
             }
           }
@@ -921,14 +893,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error.code === 401) {
         console.log('❌ Google API authentication failed for SimplePractice');
         console.log('🔄 Falling back to database events...');
-        
+
         // Fall back to database events
         const events = await storage.getEvents(parseInt(req.user.id) || 1);
         const simplePracticeEvents = events.filter(event => 
           event.source === 'simplepractice' || 
           (event.title && event.title.toLowerCase().includes('appointment'))
         );
-        
+
         return res.json({ 
           events: simplePracticeEvents,
           calendars: [{
@@ -946,7 +918,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         event.source === 'simplepractice' || 
         (event.title && event.title.toLowerCase().includes('appointment'))
       );
-      
+
       return res.json({ 
         events: simplePracticeEvents,
         calendars: [{
@@ -963,7 +935,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get calendar events with live sync - forces fresh Google Calendar API calls
   app.get("/api/calendar/events", async (req, res) => {
     console.log('🔍 Calendar events requested for user:', req.user?.email);
-    
+
     try {
       // BYPASS AUTHENTICATION - Use environment tokens directly for live sync
       req.user = {
@@ -972,9 +944,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         accessToken: process.env.GOOGLE_ACCESS_TOKEN,
         refreshToken: process.env.GOOGLE_REFRESH_TOKEN
       };
-      
+
       console.log('✅ Using environment tokens for live sync');
-      
+
       return await forceLiveGoogleCalendarSync(req, res);
     } catch (error) {
       console.error('Calendar events error:', error);
@@ -1130,7 +1102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Get user from session or create development user
       let user = req.user || req.session?.passport?.user;
-      
+
       // Development fallback - create temporary user if none exists
       if (!user) {
         console.log('🔧 DEVELOPMENT MODE: Creating temporary user for events endpoint');
@@ -1140,7 +1112,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           displayName: 'Jonathan Procter',
           name: 'Jonathan Procter'
         };
-        
+
         // Set user in request for consistency
         req.user = user;
       }
@@ -1242,7 +1214,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get user or create development user
       let user = req.user || req.session?.passport?.user;
-      
+
       if (!user) {
         console.log('🔧 DEVELOPMENT MODE: Creating temporary user for PUT events');
         user = {
@@ -1344,7 +1316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get user or create development user
       let user = req.user || req.session?.passport?.user;
-      
+
       if (!user) {
         console.log('🔧 DEVELOPMENT MODE: Creating temporary user for PATCH events');
         user = {

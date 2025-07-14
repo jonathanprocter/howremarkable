@@ -16,7 +16,7 @@ export async function forceLiveGoogleCalendarSync(req: Request, res: Response) {
     // ALWAYS use fresh Google Calendar API calls - prioritize environment tokens
     const accessToken = process.env.GOOGLE_ACCESS_TOKEN || user?.accessToken;
     const refreshToken = process.env.GOOGLE_REFRESH_TOKEN || user?.refreshToken;
-    
+
     if (!accessToken || accessToken.startsWith('dev-')) {
       console.log('❌ No valid Google tokens for live sync');
       return res.status(401).json({ error: 'Valid Google tokens required for live sync' });
@@ -41,6 +41,53 @@ export async function forceLiveGoogleCalendarSync(req: Request, res: Response) {
 
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
+    // Test token and refresh if needed
+    try {
+      await oauth2Client.getAccessToken();
+      console.log('✅ Token validation successful');
+    } catch (tokenError) {
+      console.log('⚠️ Token validation failed, using cached events immediately');
+
+      // Import db here to avoid circular dependency issues
+      const { db } = await import('./db');
+      const { events } = await import('@shared/schema');
+      const { and, gte, lte } = await import('drizzle-orm');
+
+      // Return cached events from database as fallback
+      const fallbackEvents = await db.select().from(events).where(
+        and(
+          gte(events.startTime, new Date(start as string)),
+          lte(events.startTime, new Date(end as string))
+        )
+      );
+
+      const formattedFallbackEvents = fallbackEvents
+        .filter(event => event.source === 'google' || event.source === 'simplepractice')
+        .map(event => ({
+          id: event.id,
+          title: event.title,
+          startTime: event.startTime.toISOString(),
+          endTime: event.endTime.toISOString(),
+          description: event.description || '',
+          location: event.location || '',
+          source: event.source,
+          calendarId: event.calendarId || 'fallback'
+        }));
+
+      console.log(`✅ Fallback: Using ${formattedFallbackEvents.length} cached events`);
+
+      return res.json({
+        events: formattedFallbackEvents,
+        calendars: [
+          { id: 'fallback', name: 'Cached Events', color: '#4285f4' }
+        ],
+        syncTime: new Date().toISOString(),
+        isLiveSync: false,
+        isFallback: true,
+        message: 'Using cached events due to token validation failure'
+      });
+    }
+
     // Get all calendars using OAuth2 client
     const calendarListResponse = await calendar.calendarList.list();
 
@@ -53,7 +100,7 @@ export async function forceLiveGoogleCalendarSync(req: Request, res: Response) {
     for (const cal of calendars) {
       try {
         console.log(`🔍 Fetching from calendar: ${cal.summary} (${cal.id})`);
-        
+
         const eventsResponse = await calendar.events.list({
           calendarId: cal.id,
           timeMin: start as string,
@@ -64,7 +111,7 @@ export async function forceLiveGoogleCalendarSync(req: Request, res: Response) {
         });
 
         const events = eventsResponse.data.items || [];
-        
+
         // Filter out SimplePractice events (they're handled separately)
         const googleEvents = events.filter(event => {
           const title = event.summary || '';
@@ -85,7 +132,7 @@ export async function forceLiveGoogleCalendarSync(req: Request, res: Response) {
         }));
 
         allGoogleEvents.push(...formattedEvents);
-        
+
         if (googleEvents.length > 0) {
           console.log(`✅ Found ${googleEvents.length} Google Calendar events in ${cal.summary}`);
         }
@@ -116,7 +163,7 @@ export async function forceLiveGoogleCalendarSync(req: Request, res: Response) {
       status: error.status,
       response: error.response?.data
     });
-    
+
     return res.status(500).json({
       error: 'Live Google Calendar sync failed',
       message: error.message,

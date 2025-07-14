@@ -393,12 +393,19 @@ export default function Planner() {
               return retryResponse.json();
             }
           }
-          throw new Error('Failed to fetch events');
+          console.log('⚠️ Events API response not ok, using fallback');
+          return [];
         }
 
-        return response.json();
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          return data;
+        } else {
+          console.log('⚠️ Events API returned non-array, using fallback');
+          return [];
+        }
       } catch (error) {
-        console.error('❌ Events fetch failed:', error);
+        console.log('⚠️ Events fetch failed, using fallback:', error.message);
         // Return empty array instead of throwing to prevent UI crashes
         return [];
       }
@@ -406,8 +413,8 @@ export default function Planner() {
     enabled: true, // Always try to fetch events
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 30 * 60 * 1000, // 30 minutes
-    retry: 3,
-    retryDelay: 1000,
+    retry: 2, // Reduce retries to prevent excessive console noise
+    retryDelay: 2000, // Increase delay between retries
   });
 
 
@@ -516,18 +523,28 @@ export default function Planner() {
               return retryResponse.json();
             }
           }
-          throw new Error('Failed to fetch Google Calendar events');
+          console.log('⚠️ Google Calendar API response not ok, using fallback');
+          return { events: [], calendars: [] };
         }
 
-        return response.json();
+        const data = await response.json();
+        if (data && typeof data === 'object') {
+          return {
+            events: Array.isArray(data.events) ? data.events : [],
+            calendars: Array.isArray(data.calendars) ? data.calendars : []
+          };
+        } else {
+          console.log('⚠️ Google Calendar API returned invalid data, using fallback');
+          return { events: [], calendars: [] };
+        }
       } catch (error) {
-        console.error('❌ Google Calendar events fetch failed:', error);
+        console.log('⚠️ Google Calendar fetch failed, using fallback:', error.message);
         // Return empty structure instead of throwing
         return { events: [], calendars: [] };
       }
     },
-    retry: 3,
-    retryDelay: 1000,
+    retry: 2, // Reduce retries to prevent excessive console noise
+    retryDelay: 2000, // Increase delay between retries
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: true, // Always try to fetch
