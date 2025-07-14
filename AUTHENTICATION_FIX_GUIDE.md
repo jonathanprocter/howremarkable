@@ -10,23 +10,31 @@ The Google OAuth tokens have expired and the token refresh is failing with "inva
 
 ### 1. Re-authenticate with Google
 1. Visit your app at: https://HowreMarkable.replit.app
-2. Click "Force Google Reconnect" button (blue button in the interface)
+2. Click the blue "Fix Authentication" button in the interface
 3. Complete the Google OAuth flow
 4. Grant all requested permissions
 
-### 2. Verify Authentication
-After reconnecting, you should see:
-- "Connected with tokens" status
-- Real Google Calendar events loading
-- Export functionality working
+### 2. Force Google Calendar Sync
+After authentication, use the new sync feature:
+1. Click the green "Force Google Calendar Sync" button
+2. This will fetch and sync ALL events from your Google Calendar
+3. Events will be properly categorized as Google Calendar or SimplePractice events
+4. All events will be saved to the database for persistent access
 
-### 3. If Still Having Issues
+### 3. Verify Synchronization
+After sync completion, you should see:
+- Success message with event count statistics
+- All SimplePractice events displaying in the calendar
+- All Google Calendar events properly loaded
+- Export functionality working with real data
+
+### 4. If Authentication Still Fails
 The refresh token may be permanently expired. This happens when:
 - The app hasn't been used for 7 days
 - Google revoked the refresh token
 - OAuth consent screen was modified
 
-**Solution**: Complete fresh authentication by clicking "Force Google Reconnect"
+**Solution**: Complete fresh authentication by clicking "Fix Authentication"
 
 ## Technical Details
 - The app is configured for domain: https://HowreMarkable.replit.app

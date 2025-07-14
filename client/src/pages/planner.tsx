@@ -1242,6 +1242,72 @@ export default function Planner() {
                   >
                     🔒 Fix Authentication
                   </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={async () => {
+                      console.log('🔄 FORCING GOOGLE CALENDAR SYNC');
+                      try {
+                        toast({
+                          title: "Syncing Google Calendar",
+                          description: "This may take a moment...",
+                          variant: "default"
+                        });
+
+                        const response = await fetch('/api/auth/force-sync', {
+                          method: 'POST',
+                          credentials: 'include',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'Cache-Control': 'no-cache'
+                          }
+                        });
+
+                        if (response.ok) {
+                          const result = await response.json();
+                          console.log('✅ Google Calendar sync successful:', result);
+                          
+                          // Force refresh all queries
+                          await queryClient.invalidateQueries();
+                          await queryClient.refetchQueries();
+                          
+                          toast({
+                            title: "Sync Complete!",
+                            description: `Found ${result.stats.googleEvents} Google Calendar events and ${result.stats.simplePracticeEvents} SimplePractice events`,
+                            variant: "default"
+                          });
+                        } else {
+                          const error = await response.json();
+                          console.error('❌ Google Calendar sync failed:', error);
+                          
+                          if (error.needsAuth) {
+                            toast({
+                              title: "Authentication Required",
+                              description: "Redirecting to Google OAuth...",
+                              variant: "destructive"
+                            });
+                            setTimeout(() => window.location.href = error.redirectTo || '/api/auth/google', 1000);
+                          } else {
+                            toast({
+                              title: "Sync Failed",
+                              description: error.error || "Please try again",
+                              variant: "destructive"
+                            });
+                          }
+                        }
+                      } catch (error) {
+                        console.error('❌ Sync error:', error);
+                        toast({
+                          title: "Sync Error",
+                          description: "Please check your connection and try again",
+                          variant: "destructive"
+                        });
+                      }
+                    }}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
+                    size="sm"
+                  >
+                    🔄 Force Google Calendar Sync
+                  </Button>
                   {user ? (
                     <>
                       <Button 
