@@ -127,7 +127,7 @@ export default function Planner() {
   // DISABLED autonomous auth check to prevent reload loops - only manual fix button available
   useEffect(() => {
     // Autonomous checking disabled - only manual "FIX AUTHENTICATION NOW" button available
-    console.log('🔧 Autonomous authentication checking disabled - use manual fix button only');
+    // console.log('🔧 Autonomous authentication checking disabled - use manual fix button only');
   }, []);
 
   // Manual auth fix handler

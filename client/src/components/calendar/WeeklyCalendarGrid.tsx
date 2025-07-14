@@ -133,11 +133,11 @@ export const WeeklyCalendarGrid = ({
       return isEventInTimeSlot({ startTime, endTime }, timeSlot);
     });
     
-    // Debug logging for troubleshooting
-    if (filteredEvents.length > 0) {
-      console.log(`Found ${filteredEvents.length} events for ${date.toDateString()} at ${timeSlot.time}`, 
-        filteredEvents.map(e => ({ title: e.title, start: new Date(e.startTime).toLocaleString() })));
-    }
+    // Debug logging disabled to reduce console noise
+    // if (filteredEvents.length > 0) {
+    //   console.log(`Found ${filteredEvents.length} events for ${date.toDateString()} at ${timeSlot.time}`, 
+    //     filteredEvents.map(e => ({ title: e.title, start: new Date(e.startTime).toLocaleString() })));
+    // }
     
     return filteredEvents;
   };
@@ -290,10 +290,10 @@ export const WeeklyCalendarGrid = ({
                 {slotEvents.map((event, eventIndex) => {
                   const isFirstSlot = isFirstSlotOfEvent(event);
                   
-                  // Debug log for troubleshooting
-                  if (slotEvents.length > 0 && eventIndex === 0) {
-                    console.log(`Rendering event ${event.title} at ${timeSlot.time} - isFirstSlot: ${isFirstSlot}`);
-                  }
+                  // Debug log for troubleshooting (disabled to reduce console noise)
+                  // if (slotEvents.length > 0 && eventIndex === 0) {
+                  //   console.log(`Rendering event ${event.title} at ${timeSlot.time} - isFirstSlot: ${isFirstSlot}`);
+                  // }
                   
                   if (!isFirstSlot) return null;
 
@@ -317,14 +317,14 @@ export const WeeklyCalendarGrid = ({
                     appointmentHeight = Math.max(durationMinutes - 4, 26);
                   }
                   
-                  // Debug logging for ALL events to see what's happening
-                  const durationText = durationMinutes <= 30 ? "30-min block" : `${durationMinutes} minutes`;
-                  console.log(`📊 ${event.title}: ${durationText} -> ${appointmentHeight}px height (contained within grid lines)`);
+                  // Debug logging disabled to reduce console noise
+                  // const durationText = durationMinutes <= 30 ? "30-min block" : `${durationMinutes} minutes`;
+                  // console.log(`📊 ${event.title}: ${durationText} -> ${appointmentHeight}px height (contained within grid lines)`);
                   
-                  // Additional debug for specific problem events
-                  if (event.title.includes('Angelica') || event.title.includes('Dan') || event.title.includes('Sherrifa') || event.title.includes('Blake')) {
-                    console.log(`🔍 DETAILED: ${event.title}: ${durationText} -> ${appointmentHeight}px height`);
-                  }
+                  // Additional debug for specific problem events (disabled)
+                  // if (event.title.includes('Angelica') || event.title.includes('Dan') || event.title.includes('Sherrifa') || event.title.includes('Blake')) {
+                  //   console.log(`🔍 DETAILED: ${event.title}: ${durationText} -> ${appointmentHeight}px height`);
+                  // }
 
                   return (
                     <div
