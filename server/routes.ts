@@ -861,7 +861,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               simplePracticeCalendars.push({
                 id: cal.id,
                 name: cal.summary || 'Calendar',
-This code addresses Google OAuth token refresh issues and adds environment token fallback.color: cal.backgroundColor || '#6495ED'
+                color: cal.backgroundColor || '#6495ED'
               });
             }
           }
@@ -929,8 +929,6 @@ This code addresses Google OAuth token refresh issues and adds environment token
       });
     }
   });
-
-
 
   // Get calendar events with live sync - forces fresh Google Calendar API calls
   app.get("/api/calendar/events", async (req, res) => {
