@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { storage } from './storage';
+import { google } from 'googleapis';
 
 /**
  * Comprehensive Authentication Fix
@@ -123,71 +124,73 @@ export const tokenRefreshFix = async (req: Request, res: Response) => {
   console.log('🔄 TOKEN REFRESH FIX INITIATED');
   
   try {
+    // Check if we have a valid refresh token
     const user = req.user as AuthUser;
-    
-    if (!user || !user.refreshToken) {
+    if (!user || !user.refreshToken || user.refreshToken === 'working_refresh_token' || user.refreshToken === 'dev_token') {
+      console.log('❌ No valid refresh token available, redirecting to OAuth');
       return res.status(401).json({
         error: 'No refresh token available',
         needsAuth: true,
         redirectTo: '/api/auth/google'
       });
     }
-    
-    // Try to refresh the access token
-    const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        client_id: process.env.GOOGLE_CLIENT_ID!,
-        client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-        refresh_token: user.refreshToken,
-        grant_type: 'refresh_token'
-      })
+
+    // Use Google OAuth2 client to refresh tokens
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      'https://HowreMarkable.replit.app/api/auth/google/callback'
+    );
+
+    oauth2Client.setCredentials({
+      refresh_token: user.refreshToken
     });
+
+    // Refresh the access token
+    const { credentials } = await oauth2Client.refreshAccessToken();
     
-    if (refreshResponse.ok) {
-      const tokenData = await refreshResponse.json();
-      
-      // Update user tokens
-      user.accessToken = tokenData.access_token;
-      if (tokenData.refresh_token) {
-        user.refreshToken = tokenData.refresh_token;
+    if (!credentials.access_token) {
+      throw new Error('Failed to refresh access token');
+    }
+
+    // Update user with new tokens
+    const updatedUser = {
+      ...user,
+      accessToken: credentials.access_token,
+      refreshToken: credentials.refresh_token || user.refreshToken
+    };
+
+    // Update session
+    req.user = updatedUser;
+    req.session.passport = { user: updatedUser };
+
+    req.session.save((saveErr) => {
+      if (saveErr) {
+        console.error('❌ Session save error:', saveErr);
+        return res.status(500).json({ 
+          error: 'Session save failed', 
+          details: saveErr.message 
+        });
       }
       
-      // Update session
-      req.user = user;
-      req.session.passport = { user: user };
-      
-      req.session.save((saveErr) => {
-        if (saveErr) {
-          console.error('❌ Session save error after token refresh:', saveErr);
-          return res.status(500).json({ error: 'Session save failed' });
+      console.log('✅ Token refresh successful');
+      res.json({
+        success: true,
+        message: 'Tokens refreshed successfully',
+        user: {
+          id: updatedUser.id,
+          email: updatedUser.email,
+          displayName: updatedUser.displayName,
+          hasTokens: true
         }
-        
-        console.log('✅ Token refresh successful');
-        res.json({
-          success: true,
-          message: 'Tokens refreshed successfully',
-          hasNewTokens: true
-        });
       });
-    } else {
-      const errorText = await refreshResponse.text();
-      console.log('❌ Token refresh failed:', errorText);
-      
-      res.status(401).json({
-        error: 'Token refresh failed',
-        needsAuth: true,
-        redirectTo: '/api/auth/google',
-        details: errorText
-      });
-    }
-    
+    });
+
   } catch (error) {
     console.error('❌ Token refresh error:', error);
-    res.status(500).json({
+    
+    // If refresh fails, redirect to OAuth
+    res.status(401).json({
       error: 'Token refresh failed',
       message: error.message,
       needsAuth: true,

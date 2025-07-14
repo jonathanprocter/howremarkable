@@ -67,6 +67,28 @@ export default function Planner() {
     }
   };
 
+  // Add global error handler for unhandled promise rejections
+  useEffect(() => {
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      console.error('Unhandled promise rejection:', event.reason);
+      // Prevent the default behavior
+      event.preventDefault();
+      
+      // Show user-friendly error message
+      toast({
+        title: 'Application Error',
+        description: 'An unexpected error occurred. Please try refreshing the page.',
+        variant: 'destructive'
+      });
+    };
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
+  }, [toast]);
+
   // Make auth refresh available globally for debugging
   useEffect(() => {
     (window as any).refreshAuth = refreshAuth;
