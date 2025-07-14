@@ -828,7 +828,7 @@ export default function Planner() {
 
       console.log('📈 STATISTICS:');
       console.log(`Min width: ${minWidth.toFixed(2)}px`);
-      console.log(``Max width: ${maxWidth.toFixed(2)}px`);
+      console.log(`Max width: ${maxWidth.toFixed(2)}px`);
       console.log(`Average width: ${avgWidth.toFixed(2)}px`);
       console.log(`Width difference: ${(maxWidth - minWidth).toFixed(2)}px`);
 
