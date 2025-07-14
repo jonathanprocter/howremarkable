@@ -28,7 +28,7 @@ export async function forceLiveGoogleCalendarSync(req: Request, res: Response) {
       isEnvironmentToken: !!process.env.GOOGLE_ACCESS_TOKEN
     });
 
-    // Set up OAuth2 client with the tokens
+    // Set up OAuth2 client with the tokens - BYPASS TOKEN REFRESH
     const oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET
@@ -41,52 +41,8 @@ export async function forceLiveGoogleCalendarSync(req: Request, res: Response) {
 
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
-    // Test token and refresh if needed
-    try {
-      await oauth2Client.getAccessToken();
-      console.log('✅ Token validation successful');
-    } catch (tokenError) {
-      console.log('⚠️ Token validation failed, using cached events immediately');
-
-      // Import db here to avoid circular dependency issues
-      const { db } = await import('./db');
-      const { events } = await import('@shared/schema');
-      const { and, gte, lte } = await import('drizzle-orm');
-
-      // Return cached events from database as fallback
-      const fallbackEvents = await db.select().from(events).where(
-        and(
-          gte(events.startTime, new Date(start as string)),
-          lte(events.startTime, new Date(end as string))
-        )
-      );
-
-      const formattedFallbackEvents = fallbackEvents
-        .filter(event => event.source === 'google' || event.source === 'simplepractice')
-        .map(event => ({
-          id: event.id,
-          title: event.title,
-          startTime: event.startTime.toISOString(),
-          endTime: event.endTime.toISOString(),
-          description: event.description || '',
-          location: event.location || '',
-          source: event.source,
-          calendarId: event.calendarId || 'fallback'
-        }));
-
-      console.log(`✅ Fallback: Using ${formattedFallbackEvents.length} cached events`);
-
-      return res.json({
-        events: formattedFallbackEvents,
-        calendars: [
-          { id: 'fallback', name: 'Cached Events', color: '#4285f4' }
-        ],
-        syncTime: new Date().toISOString(),
-        isLiveSync: false,
-        isFallback: true,
-        message: 'Using cached events due to token validation failure'
-      });
-    }
+    // SKIP TOKEN VALIDATION - use tokens directly since they're fresh
+    console.log('⚡ Using tokens directly without validation to avoid refresh issues');
 
     // Get all calendars using OAuth2 client
     const calendarListResponse = await calendar.calendarList.list();

@@ -384,6 +384,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Session creation endpoint for authentication fix  
   app.post('/api/auth/create-session', fixSessionAuthentication);
 
+  // Google authentication fix endpoints
+  app.post('/api/auth/google-fix', async (req, res) => {
+    const { fixGoogleAuthentication } = await import('./google-auth-fix');
+    return fixGoogleAuthentication(req, res);
+  });
+
+  app.get('/api/auth/google-status', async (req, res) => {
+    const { getGoogleAuthStatus } = await import('./google-auth-fix');
+    return getGoogleAuthStatus(req, res);
+  });
+
+  // Test direct Google API access
+  app.get('/api/test-google-api', async (req, res) => {
+    console.log('🧪 Testing direct Google API access');
+    
+    try {
+      const accessToken = process.env.GOOGLE_ACCESS_TOKEN;
+      
+      if (!accessToken) {
+        return res.status(401).json({ error: 'No access token available' });
+      }
+      
+      const response = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Google API test failed:', response.status, errorText);
+        return res.status(response.status).json({ 
+          error: 'Google API test failed',
+          status: response.status,
+          message: errorText
+        });
+      }
+      
+      const data = await response.json();
+      console.log('✅ Google API test successful');
+      
+      return res.json({
+        success: true,
+        calendars: data.items?.length || 0,
+        message: 'Google API access working'
+      });
+    } catch (error) {
+      console.error('❌ Google API test error:', error);
+      return res.status(500).json({
+        error: 'Google API test failed',
+        message: error.message
+      });
+    }
+  });
+
   // Deployment authentication fix endpoint
   app.post('/api/auth/deployment-fix', deploymentAuthFix);
 
@@ -935,17 +991,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('🔍 Calendar events requested for user:', req.user?.email);
 
     try {
-      // BYPASS AUTHENTICATION - Use environment tokens directly for live sync
-      req.user = {
-        id: 1,
-        email: 'jonathan.procter@gmail.com',
-        accessToken: process.env.GOOGLE_ACCESS_TOKEN,
-        refreshToken: process.env.GOOGLE_REFRESH_TOKEN
-      };
-
-      console.log('✅ Using environment tokens for live sync');
-
-      return await forceLiveGoogleCalendarSync(req, res);
+      // Use direct API approach to bypass OAuth2 client refresh issues
+      const { directGoogleCalendarSync } = await import('./direct-google-api');
+      return await directGoogleCalendarSync(req, res);
     } catch (error) {
       console.error('Calendar events error:', error);
       return res.status(500).json({ 
