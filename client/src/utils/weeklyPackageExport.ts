@@ -31,6 +31,17 @@ export const exportWeeklyPackage = async (
   events: CalendarEvent[]
 ): Promise<void> => {
   console.log('🎯 STARTING COMPREHENSIVE WEEKLY PACKAGE EXPORT');
+  console.log(`📅 Week Range: ${weekStartDate.toLocaleDateString()} - ${weekEndDate.toLocaleDateString()}`);
+  console.log(`📊 Total Events: ${events.length}`);
+
+  // Audit validation before export
+  const auditResults = {
+    eventsCount: events.length,
+    weekRange: `${weekStartDate.toLocaleDateString()} - ${weekEndDate.toLocaleDateString()}`,
+    validEvents: 0,
+    invalidEvents: 0,
+    exportSuccess: false
+  };
 
   const pdf = new jsPDF({
     orientation: 'landscape',
@@ -39,6 +50,18 @@ export const exportWeeklyPackage = async (
   });
 
   try {
+    // Validate events before processing
+    events.forEach(event => {
+      if (event.title && event.startTime && event.endTime) {
+        auditResults.validEvents++;
+      } else {
+        auditResults.invalidEvents++;
+        console.warn('⚠️ Invalid event found:', event);
+      }
+    });
+
+    console.log(`✅ Event Validation: ${auditResults.validEvents} valid, ${auditResults.invalidEvents} invalid`);
+
     // Generate weekly overview page
     drawWeeklyOverviewPage(pdf, weekStartDate, weekEndDate, events);
 
@@ -50,11 +73,22 @@ export const exportWeeklyPackage = async (
     // Save the complete package
     pdf.save(filename);
 
+    auditResults.exportSuccess = true;
+    
     console.log(`✅ WEEKLY PACKAGE EXPORT COMPLETE`);
-    console.log(`  - Filename: ${filename}`);
+    console.log(`📊 Audit Results:`, auditResults);
+    console.log(`📁 Filename: ${filename}`);
+
+    // Store audit results for testing
+    localStorage.setItem('weeklyPackageAuditResults', JSON.stringify(auditResults));
 
   } catch (error) {
+    auditResults.exportSuccess = false;
     console.error('❌ Weekly package export failed:', error);
+    console.error('📊 Final Audit Results:', auditResults);
+    
+    localStorage.setItem('weeklyPackageAuditResults', JSON.stringify(auditResults));
+    
     alert('Sorry, something went wrong while generating your weekly package PDF. Please try again.');
     throw new Error(`Weekly package export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }

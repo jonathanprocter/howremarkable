@@ -34,6 +34,7 @@ import { DevLoginButton } from '../components/DevLoginButton';
 import { autonomousAuthAudit } from '../utils/autonomousAuthAudit';
 import { AuthenticationFix } from '../utils/authenticationFix';
 import { SessionFixer } from '../utils/sessionFixer';
+import { weeklyPackageAuditor } from '@/utils/weeklyPackageAuditor';
 
 export default function Planner() {
   const { user, isLoading: userLoading, refetch: refetchAuth } = useAuthenticatedUser();
@@ -257,7 +258,7 @@ export default function Planner() {
             'Cache-Control': 'no-cache'
           }
         });
-        
+
         if (!response.ok) {
           if (response.status === 401) {
             // Try with authenticated session cookie
@@ -268,7 +269,7 @@ export default function Planner() {
                 'Cookie': 'remarkable.sid=s%3AgBvnYGiTDicIU7Udon_c5TdzlgtHhdNU.4GDBmZtU6BzV0jBKRj1PNKgdyBHfJE8kOCsFjBEhqeI'
               }
             });
-            
+
             if (retryResponse.ok) {
               console.log('✅ Events loaded with authenticated session');
               return retryResponse.json();
@@ -276,7 +277,7 @@ export default function Planner() {
           }
           throw new Error('Failed to fetch events');
         }
-        
+
         return response.json();
       } catch (error) {
         console.error('❌ Events fetch failed:', error);
@@ -299,7 +300,7 @@ export default function Planner() {
     queryFn: async () => {
         const startDate = new Date(2024, 0, 1).toISOString(); // January 1, 2024
         const endDate = new Date(2025, 11, 31).toISOString(); // December 31, 2025
-        
+
         try {
           const response = await fetch(`/api/simplepractice/events?start=${startDate}&end=${endDate}`, {
             credentials: 'include',
@@ -307,7 +308,7 @@ export default function Planner() {
               'Cache-Control': 'no-cache'
             }
           });
-          
+
           if (!response.ok) {
             if (response.status === 401) {
               // Try with authenticated session cookie
@@ -318,7 +319,7 @@ export default function Planner() {
                   'Cookie': 'remarkable.sid=s%3AgBvnYGiTDicIU7Udon_c5TdzlgtHhdNU.4GDBmZtU6BzV0jBKRj1PNKgdyBHfJE8kOCsFjBEhqeI'
                 }
               });
-              
+
               if (retryResponse.ok) {
                 console.log('✅ SimplePractice events loaded with authenticated session');
                 return retryResponse.json();
@@ -326,7 +327,7 @@ export default function Planner() {
             }
             throw new Error('Failed to fetch SimplePractice events');
           }
-          
+
           return response.json();
         } catch (error) {
           console.error('❌ SimplePractice events fetch failed:', error);
@@ -372,7 +373,7 @@ export default function Planner() {
     queryFn: async () => {
       const startDate = new Date(2024, 0, 1).toISOString(); // January 1, 2024
       const endDate = new Date(2025, 11, 31).toISOString(); // December 31, 2025
-      
+
       try {
         const response = await fetch(`/api/calendar/events?start=${startDate}&end=${endDate}`, {
           credentials: 'include',
@@ -380,7 +381,7 @@ export default function Planner() {
             'Cache-Control': 'no-cache'
           }
         });
-        
+
         if (!response.ok) {
           if (response.status === 401) {
             // Try with authenticated session cookie
@@ -391,7 +392,7 @@ export default function Planner() {
                 'Cookie': 'remarkable.sid=s%3AgBvnYGiTDicIU7Udon_c5TdzlgtHhdNU.4GDBmZtU6BzV0jBKRj1PNKgdyBHfJE8kOCsFjBEhqeI'
               }
             });
-            
+
             if (retryResponse.ok) {
               console.log('✅ Google Calendar events loaded with authenticated session');
               return retryResponse.json();
@@ -399,7 +400,7 @@ export default function Planner() {
           }
           throw new Error('Failed to fetch Google Calendar events');
         }
-        
+
         return response.json();
       } catch (error) {
         console.error('❌ Google Calendar events fetch failed:', error);
@@ -689,9 +690,11 @@ export default function Planner() {
           console.log('✅ Daily PDF export completed');
           break;
         case 'weekly-package':
+          await weeklyPackageAuditor.auditWeeklyPackage(currentWeek[0]?.date || new Date(), currentWeek[6]?.date || new Date(), allEvents, 'standard');
           await exportWeeklyPackage(currentWeek, allEvents);
           break;
         case 'bidirectional-weekly-package':
+          await weeklyPackageAuditor.auditWeeklyPackage(currentWeek[0]?.date || new Date(), currentWeek[6]?.date || new Date(), allEvents, 'bidirectional');
           await exportBidirectionalWeeklyPackage(currentWeek[0]?.date || new Date(), currentWeek[6]?.date || new Date(), allEvents);
           break;
         case 'pixel-perfect':
@@ -826,8 +829,7 @@ export default function Planner() {
     }
   };
 
-  const handleReconnectGoogle = () => {
-    console.log('Reconnecting to Google Calendar...');
+  const handleReconnectGoogle = () => {    console.log('Reconnecting to Google Calendar...');
     window.location.href = '/api/auth/google';
   };
 
@@ -1190,7 +1192,7 @@ export default function Planner() {
                     variant="outline" 
                     onClick={async () => {
                       console.log('🔄 Force loading all events...');
-                      
+
                       // Force authentication fix first
                       try {
                         const response = await fetch('/api/auth/deployment-fix', {
@@ -1201,7 +1203,7 @@ export default function Planner() {
                             'Cache-Control': 'no-cache'
                           }
                         });
-                        
+
                         if (response.ok) {
                           const result = await response.json();
                           console.log('✅ Auth fix result:', result);
@@ -1209,11 +1211,11 @@ export default function Planner() {
                       } catch (error) {
                         console.error('❌ Auth fix failed:', error);
                       }
-                      
+
                       // Force refresh all queries
                       await queryClient.invalidateQueries();
                       await queryClient.refetchQueries();
-                      
+
                       toast({
                         title: "Force Refresh Complete",
                         description: "All events and authentication refreshed",

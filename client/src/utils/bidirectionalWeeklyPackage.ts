@@ -41,17 +41,24 @@ export const exportBidirectionalWeeklyPackage = async (
   weekEndDate: Date,
   events: CalendarEvent[]
 ): Promise<void> => {
-  console.log('🎯 STARTING BIDIRECTIONAL WEEKLY PACKAGE EXPORT');
-  console.log('📅 Week range:', format(weekStartDate, 'MMM dd'), '-', format(weekEndDate, 'MMM dd, yyyy'));
-  console.log('📋 Total events:', events.length);
-
-  const pdf = new jsPDF({
-    orientation: 'landscape',
-    unit: 'pt',
-    format: 'letter' // US Letter format
-  });
-
   try {
+    console.log('🎯 STARTING BIDIRECTIONAL WEEKLY PACKAGE EXPORT');
+    console.log(`📅 Week: ${format(weekStartDate, 'MMM dd')} - ${format(weekEndDate, 'MMM dd, yyyy')}`);
+    console.log(`📊 Events: ${events.length}`);
+
+    // Audit validation
+    const auditResults = {
+      packageType: 'bidirectional',
+      eventsCount: events.length,
+      validEvents: events.filter(e => e.title && e.startTime && e.endTime).length,
+      weekStart: format(weekStartDate, 'yyyy-MM-dd'),
+      weekEnd: format(weekEndDate, 'yyyy-MM-dd'),
+      exportSuccess: false,
+      timestamp: new Date().toISOString()
+    };
+
+    console.log('🔍 Audit validation:', auditResults);
+
     // Filter events for the current week
     const weekEvents = events.filter(event => {
       const eventDate = new Date(event.startTime);
@@ -80,7 +87,7 @@ export const exportBidirectionalWeeklyPackage = async (
 
     // Generate filename
     const filename = `bidirectional-weekly-package-${format(weekStartDate, 'MMM-dd')}-to-${format(weekEndDate, 'MMM-dd-yyyy')}.pdf`;
-    
+
     // Save the complete package
     pdf.save(filename);
 
@@ -105,7 +112,7 @@ async function generateWeeklyOverviewPage(
   events: CalendarEvent[]
 ) {
   const config = PACKAGE_CONFIG.weekly;
-  
+
   // Page setup
   pdf.setFillColor(255, 255, 255);
   pdf.rect(0, 0, config.width, config.height, 'F');
@@ -133,18 +140,18 @@ async function generateWeeklyOverviewPage(
 
   // Draw day headers
   const daysOfWeek = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-  
+
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(12);
-  
+
   for (let day = 0; day < 7; day++) {
     const dayX = config.margin + config.timeColumnWidth + (day * actualDayWidth);
     const currentDate = addDays(weekStartDate, day);
-    
+
     // Day header background
     pdf.setFillColor(240, 240, 240);
     pdf.rect(dayX, gridStartY, actualDayWidth, 30, 'F');
-    
+
     // Day name and date
     pdf.setTextColor(0, 0, 0);
     pdf.text(daysOfWeek[day], dayX + actualDayWidth / 2, gridStartY + 15, { align: 'center' });
@@ -153,7 +160,7 @@ async function generateWeeklyOverviewPage(
 
   // Draw time grid
   const timeGridStartY = gridStartY + 30;
-  
+
   for (let slot = 0; slot < config.totalSlots; slot++) {
     const hour = 6 + Math.floor(slot / 2);
     const minute = (slot % 2) * 30;
@@ -194,7 +201,7 @@ async function generateWeeklyOverviewPage(
     if (adjustedDay >= 0 && adjustedDay < 7) {
       const startTime = new Date(event.startTime);
       const endTime = new Date(event.endTime);
-      
+
       const startHour = startTime.getHours();
       const startMinute = startTime.getMinutes();
       const endHour = endTime.getHours();
@@ -228,11 +235,11 @@ async function generateWeeklyOverviewPage(
         pdf.setTextColor(0, 0, 0);
         pdf.setFont('helvetica', 'normal');
         pdf.setFontSize(8);
-        
+
         const eventTitle = event.title || 'Untitled Event';
         const cleanTitle = eventTitle.replace(' Appointment', '').trim();
         const dailyPageRef = `(→ Page ${adjustedDay + 2})`;
-        
+
         pdf.text(cleanTitle, eventX + 3, eventY + 12);
         pdf.text(dailyPageRef, eventX + 3, eventY + 24);
       }
@@ -258,7 +265,7 @@ async function generateDailyPage(
   weekEndDate: Date
 ) {
   const config = PACKAGE_CONFIG.daily;
-  
+
   // Page setup
   pdf.setFillColor(255, 255, 255);
   pdf.rect(0, 0, config.width, config.height, 'F');
@@ -282,7 +289,7 @@ async function generateDailyPage(
   const navY = config.headerHeight - 15;
   const buttonWidth = 100;
   const buttonHeight = 20;
-  
+
   // Back to Weekly button
   pdf.setFillColor(240, 240, 240);
   pdf.rect(config.width / 2 - buttonWidth / 2, navY - 10, buttonWidth, buttonHeight, 'F');
@@ -295,7 +302,7 @@ async function generateDailyPage(
   // Previous/Next day navigation
   const prevDay = dayIndex > 0 ? `← ${format(addDays(weekStartDate, dayIndex - 1), 'EEE')} (Page ${dayIndex + 1})` : '';
   const nextDay = dayIndex < 6 ? `${format(addDays(weekStartDate, dayIndex + 1), 'EEE')} (Page ${dayIndex + 3}) →` : '';
-  
+
   if (prevDay) {
     pdf.text(prevDay, 50, navY);
   }
@@ -312,7 +319,7 @@ async function generateDailyPage(
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(12);
   pdf.setFillColor(240, 240, 240);
-  
+
   // Time column header
   pdf.rect(config.margin, gridStartY, config.timeColumnWidth, 25, 'F');
   pdf.setDrawColor(180, 180, 180);
@@ -326,7 +333,7 @@ async function generateDailyPage(
 
   // Draw time slots
   const timeGridStartY = gridStartY + 25;
-  
+
   for (let slot = 0; slot < totalSlots; slot++) {
     const hour = 6 + Math.floor(slot / 2);
     const minute = (slot % 2) * 30;
@@ -359,7 +366,7 @@ async function generateDailyPage(
   events.forEach(event => {
     const startTime = new Date(event.startTime);
     const endTime = new Date(event.endTime);
-    
+
     const startHour = startTime.getHours();
     const startMinute = startTime.getMinutes();
     const endHour = endTime.getHours();
@@ -402,11 +409,11 @@ async function generateDailyPage(
       pdf.setTextColor(0, 0, 0);
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(12);
-      
+
       const eventTitle = event.title || 'Untitled Event';
       const cleanTitle = eventTitle.replace(' Appointment', '').trim();
       const timeRange = `${format(startTime, 'HH:mm')} - ${format(endTime, 'HH:mm')}`;
-      
+
       pdf.text(cleanTitle, eventX + 8, eventY + 15);
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(10);
