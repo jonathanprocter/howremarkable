@@ -76,18 +76,21 @@ export default function Planner() {
     try {
       const response = await fetch('/enhancement-script.js');
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        console.log('📁 Enhancement script not found, continuing without it');
+        return;
       }
       const scriptText = await response.text();
       // Check if response is HTML instead of JavaScript
       if (scriptText.trim().startsWith('<')) {
-        throw new Error('Received HTML instead of JavaScript - script not found');
+        console.log('📁 Enhancement script returned HTML, skipping');
+        return;
       }
       const script = document.createElement('script');
       script.textContent = scriptText;
       document.head.appendChild(script);
+      console.log('✅ Enhancement script loaded successfully');
     } catch (error) {
-      console.error('❌ Failed to load enhancement script:', error);
+      console.log('📁 Enhancement script not available, continuing without it');
     }
   };
     loadEnhancementScript();

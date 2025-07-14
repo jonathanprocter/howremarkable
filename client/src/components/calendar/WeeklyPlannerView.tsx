@@ -42,7 +42,7 @@ export const WeeklyPlannerView = ({
           {events.length} events for week of {week[0]?.date?.toDateString() || 'Unknown'}
         </p>
       </div>
-      
+
       <div className="grid grid-cols-8 gap-2">
         <div className="font-medium text-sm text-gray-600">Time</div>
         {week.map((day, index) => (
@@ -52,7 +52,7 @@ export const WeeklyPlannerView = ({
           </div>
         ))}
       </div>
-      
+
       <div className="mt-4 text-sm text-gray-500">
         Component loaded successfully. Events and week data are available.
       </div>
