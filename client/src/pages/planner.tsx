@@ -34,7 +34,7 @@ import { DevLoginButton } from '../components/DevLoginButton';
 import { autonomousAuthAudit } from '../utils/autonomousAuthAudit';
 import { AuthenticationFix } from '../utils/authenticationFix';
 import { SessionFixer } from '../utils/sessionFixer';
-import { weeklyPackageAuditor } from '@/utils/weeklyPackageAuditor';
+import { weeklyPackageAuditor } from '@/utils/weeklyPackageAudit';
 
 export default function Planner() {
   const { user, isLoading: userLoading, refetch: refetchAuth } = useAuthenticatedUser();
