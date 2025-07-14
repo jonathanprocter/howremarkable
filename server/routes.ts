@@ -16,6 +16,7 @@ import { forceGoogleCalendarSync } from "./auth-sync";
 import { comprehensiveAuthFix, tokenRefreshFix, authStatusWithFix, forceGoogleCalendarSync as comprehensiveForceSync } from "./comprehensive-auth-fix";
 import { forceLiveGoogleCalendarSync } from "./force-live-sync";
 import { simpleDirectLogin, simpleAuthStatus } from "./simple-auth";
+import { handleOAuthCallback, refreshGoogleTokens } from "./oauth-completion-handler";
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
@@ -360,83 +361,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     })(req, res, next);
   });
 
-  app.get("/api/auth/google/callback", (req, res, next) => {
-    console.log("🔗 Google OAuth callback received on:", req.get('host'));
-    console.log("🔗 Full callback URL:", `${req.protocol}://${req.get('host')}${req.originalUrl}`);
-    console.log("🔗 Query params:", req.query);
-    console.log("🔗 Session ID:", req.sessionID);
+  app.get("/api/auth/google/callback", handleOAuthCallback);
 
-    if (req.query.error) {
-      const error = req.query.error as string;
-      const errorDescription = req.query.error_description as string;
-      console.error("OAuth error:", error, errorDescription);
-      return res.redirect("/?error=auth_failed&details=" + encodeURIComponent(errorDescription || error));
-    }
-
-    // Ensure we have an authorization code
-    if (!req.query.code) {
-      console.error("❌ No authorization code received from Google");
-      return res.redirect("/?error=auth_failed&details=no_authorization_code");
-    }
-
-    console.log("✅ Authorization code received, proceeding with passport authentication");
-
-    passport.authenticate("google", { 
-      failureRedirect: "/?error=auth_failed",
-      session: true
-    }, (err, user, info) => {
-      console.log("=== PASSPORT AUTHENTICATION CALLBACK ===");
-      console.log("Error:", err);
-      console.log("User:", user ? { id: user.id, email: user.email } : "NO USER");
-      console.log("Info:", info);
-
-      if (err) {
-        console.error("Passport authentication error:", err);
-        return res.redirect("/?error=auth_failed&details=" + encodeURIComponent(err.message));
-      }
-      if (!user) {
-        console.error("No user returned from authentication:", info);
-        return res.redirect("/?error=auth_failed&details=no_user");
-      }
-
-      req.logIn(user, { session: true }, (loginErr) => {
-        if (loginErr) {
-          console.error("Login error:", loginErr);
-          return res.redirect("/?error=auth_failed&details=" + encodeURIComponent(loginErr.message));
-        }
-        
-        console.log("✅ Google OAuth callback successful - User logged in:", user.email);
-        console.log("✅ Session ID:", req.sessionID);
-        console.log("✅ User in req.user:", !!req.user);
-        console.log("✅ Session passport:", !!req.session.passport);
-
-        // Manually ensure session data is set correctly
-        req.session.passport = { user: user };
-        req.user = user;
-
-        // Force session save with callback
-        req.session.save((saveErr) => {
-          if (saveErr) {
-            console.error("Session save error:", saveErr);
-            return res.redirect("/?error=session_save_failed");
-          }
-          
-          console.log("✅ Session saved successfully");
-          console.log("✅ Final session check - User:", !!req.user);
-          console.log("✅ Final session check - Passport:", !!req.session.passport);
-          console.log("✅ Session ID:", req.sessionID);
-          console.log("✅ User tokens:", {
-            hasAccessToken: !!user.accessToken,
-            hasRefreshToken: !!user.refreshToken,
-            accessTokenPreview: user.accessToken ? user.accessToken.substring(0, 20) + "..." : "none"
-          });
-          
-          // Redirect with success parameter
-          res.redirect("/?oauth_success=true&connected=true");
-        });
-      });
-    })(req, res, next);
-  });
+  // Token refresh endpoint  
+  app.post("/api/auth/token-refresh", refreshGoogleTokens);
 
   // Error handling for failed authentication
   app.get("/api/auth/error", (req, res) => {
