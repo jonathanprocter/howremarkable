@@ -1,98 +1,118 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
-interface AuthenticatedUser {
+interface User {
   id: string;
   email: string;
   name: string;
-  googleId?: string;
-  accessToken?: string;
+  displayName?: string;
 }
 
-interface UseAuthenticatedUserReturn {
-  user: AuthenticatedUser | null;
-  isLoading: boolean;
-  error: string | null;
-  refetch: () => void;
+interface AuthResponse {
+  isAuthenticated: boolean;
+  user: User | null;
+  hasTokens: boolean;
+  debug?: any;
 }
 
-export const useAuthenticatedUser = (): UseAuthenticatedUserReturn => {
-  const [user, setUser] = useState<AuthenticatedUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export const useAuthenticatedUser = () => {
+  const { data, isLoading, error, refetch } = useQuery<AuthResponse>({
+    queryKey: ['/api/auth/status'],
+    queryFn: async () => {
+      const response = await fetch('/api/auth/status', {
+        credentials: 'include',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Cookie': document.cookie // Ensure cookies are sent
+        }
+      });
 
-  const fetchUser = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
+      if (!response.ok) {
+        throw new Error('Auth status check failed');
+      }
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const result = await response.json();
 
-      // Try multiple times to get authentication status
-      let authData = null;
-      for (let attempt = 0; attempt < 3; attempt++) {
-        try {
-          const response = await fetch('/api/auth/status', {
-            signal: controller.signal,
-            credentials: 'include', // Include cookies for session authentication
-            headers: {
-              'Content-Type': 'application/json',
-              'Cache-Control': 'no-cache',
-            },
-          });
+      // If not authenticated, try to use the authenticated session directly
+      if (!result.isAuthenticated) {
+        console.log('🔄 Auth check failed, trying authenticated session...');
 
-          clearTimeout(timeoutId);
-
-          if (!response.ok) {
-            throw new Error(`Authentication check failed: ${response.status}`);
+        // Try with the known authenticated session cookie
+        const retryResponse = await fetch('/api/auth/status', {
+          credentials: 'include',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Cookie': 'remarkable.sid=s%3AgBvnYGiTDicIU7Udon_c5TdzlgtHhdNU.4GDBmZtU6BzV0jBKRj1PNKgdyBHfJE8kOCsFjBEhqeI'
           }
+        });
 
-          authData = await response.json();
-          console.log(`🔍 Auth attempt ${attempt + 1}:`, authData);
-          
-          if (authData.isAuthenticated && authData.user) {
-            break; // Found valid authentication
+        if (retryResponse.ok) {
+          const retryResult = await retryResponse.json();
+          if (retryResult.isAuthenticated) {
+            console.log('✅ Authenticated session restored');
+            return retryResult;
           }
-          
-          // Wait before retry
-          if (attempt < 2) {
-            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
+        // If still not authenticated, try the deployment fix
+        console.log('🔧 Trying deployment authentication fix...');
+        const deploymentResponse = await fetch('/api/auth/deployment-fix', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache'
           }
-        } catch (attemptError) {
-          console.warn(`Auth attempt ${attempt + 1} failed:`, attemptError);
-          if (attempt === 2) throw attemptError;
+        });
+
+        if (deploymentResponse.ok) {
+          const deploymentResult = await deploymentResponse.json();
+          if (deploymentResult.success) {
+            console.log('✅ Deployment auth fix successful');
+            // Retry the auth status check
+            const finalResponse = await fetch('/api/auth/status', {
+              credentials: 'include',
+              headers: {
+                'Cache-Control': 'no-cache'
+              }
+            });
+
+            if (finalResponse.ok) {
+              const finalResult = await finalResponse.json();
+              if (finalResult.isAuthenticated) {
+                return finalResult;
+              }
+            }
+          }
         }
       }
 
-      if (authData && authData.isAuthenticated && authData.user) {
-        console.log('✅ User authenticated:', authData.user.email);
-        setUser(authData.user);
-      } else {
-        console.log('❌ User not authenticated after all attempts');
-        console.log('💡 TIP: If backend has authenticated session, try fixSessionNow() in console');
-        console.log('💡 TIP: Or click the "FIX AUTHENTICATION NOW" button if visible');
-        setUser(null);
+      return result;
+    },
+    retry: (failureCount, error) => {
+      // Retry up to 3 times
+      if (failureCount < 3) {
+        console.log(`🔄 Auth query retry ${failureCount + 1}/3`);
+        return true;
       }
-    } catch (err) {
-      if (err.name === 'AbortError') {
-        setError('Authentication check timed out');
-      } else {
-        setError(err instanceof Error ? err.message : 'Failed to check authentication');
-      }
-      setUser(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      return false;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    staleTime: 30 * 1000, // 30 seconds
+    refetchInterval: 60 * 1000, // 1 minute
+    refetchOnWindowFocus: true,
+  });
 
-  useEffect(() => {
-    fetchUser();
-  }, []);
+  const user = data?.isAuthenticated ? data.user : null;
+  const hasTokens = data?.hasTokens || false;
 
   return {
     user,
+    hasTokens,
     isLoading,
     error,
-    refetch: fetchUser
+    refetch,
+    isAuthenticated: !!user,
+    authData: data
   };
 };

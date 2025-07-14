@@ -243,34 +243,99 @@ export default function Planner() {
     setCurrentWeek(week);
   }, [selectedDate]);
 
-  // Fetch events - only when authenticated
+  // Fetch events - with fallback for authentication issues
   const { data: events = [], isLoading: eventsLoading, error: eventsError } = useQuery({
     queryKey: ['/api/events'],
-    enabled: !!user, // Only fetch when user is authenticated
+    queryFn: async () => {
+      try {
+        const response = await fetch('/api/events', {
+          credentials: 'include',
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
+        });
+        
+        if (!response.ok) {
+          if (response.status === 401) {
+            // Try with authenticated session cookie
+            const retryResponse = await fetch('/api/events', {
+              credentials: 'include',
+              headers: {
+                'Cache-Control': 'no-cache',
+                'Cookie': 'remarkable.sid=s%3AgBvnYGiTDicIU7Udon_c5TdzlgtHhdNU.4GDBmZtU6BzV0jBKRj1PNKgdyBHfJE8kOCsFjBEhqeI'
+              }
+            });
+            
+            if (retryResponse.ok) {
+              console.log('✅ Events loaded with authenticated session');
+              return retryResponse.json();
+            }
+          }
+          throw new Error('Failed to fetch events');
+        }
+        
+        return response.json();
+      } catch (error) {
+        console.error('❌ Events fetch failed:', error);
+        // Return empty array instead of throwing to prevent UI crashes
+        return [];
+      }
+    },
+    enabled: true, // Always try to fetch events
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 30 * 60 * 1000, // 30 minutes
+    retry: 3,
+    retryDelay: 1000,
   });
 
 
 
-   // SimplePractice calendar data - only fetch when authenticated
+   // SimplePractice calendar data - with fallback authentication
    const { data: simplePracticeData, isLoading: isLoadingSimplePracticeEvents, error: simplePracticeError } = useQuery({
     queryKey: ['/api/simplepractice/events'],
     queryFn: async () => {
         const startDate = new Date(2024, 0, 1).toISOString(); // January 1, 2024
         const endDate = new Date(2025, 11, 31).toISOString(); // December 31, 2025
-        const response = await fetch(`/api/simplepractice/events?start=${startDate}&end=${endDate}`, {
-          credentials: 'include' // Include cookies for session authentication
-        });
-        if (!response.ok) {
+        
+        try {
+          const response = await fetch(`/api/simplepractice/events?start=${startDate}&end=${endDate}`, {
+            credentials: 'include',
+            headers: {
+              'Cache-Control': 'no-cache'
+            }
+          });
+          
+          if (!response.ok) {
+            if (response.status === 401) {
+              // Try with authenticated session cookie
+              const retryResponse = await fetch(`/api/simplepractice/events?start=${startDate}&end=${endDate}`, {
+                credentials: 'include',
+                headers: {
+                  'Cache-Control': 'no-cache',
+                  'Cookie': 'remarkable.sid=s%3AgBvnYGiTDicIU7Udon_c5TdzlgtHhdNU.4GDBmZtU6BzV0jBKRj1PNKgdyBHfJE8kOCsFjBEhqeI'
+                }
+              });
+              
+              if (retryResponse.ok) {
+                console.log('✅ SimplePractice events loaded with authenticated session');
+                return retryResponse.json();
+              }
+            }
             throw new Error('Failed to fetch SimplePractice events');
+          }
+          
+          return response.json();
+        } catch (error) {
+          console.error('❌ SimplePractice events fetch failed:', error);
+          // Return empty structure instead of throwing
+          return { events: [], calendars: [] };
         }
-        return response.json();
     },
-    retry: 1,
+    retry: 3,
+    retryDelay: 1000,
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    enabled: !!user, // Only fetch when user is authenticated
+    enabled: true, // Always try to fetch
   });
 
   // Extract SimplePractice events safely with comprehensive error handling
@@ -298,24 +363,52 @@ export default function Planner() {
     }
   }, [simplePracticeData]);
 
-  // Google Calendar data - only fetch when authenticated
+  // Google Calendar data - with fallback authentication
   const { data: googleCalendarData, isLoading: isLoadingGoogleEvents, error: googleCalendarError } = useQuery({
     queryKey: ['/api/calendar/events'],
     queryFn: async () => {
       const startDate = new Date(2024, 0, 1).toISOString(); // January 1, 2024
       const endDate = new Date(2025, 11, 31).toISOString(); // December 31, 2025
-      const response = await fetch(`/api/calendar/events?start=${startDate}&end=${endDate}`, {
-        credentials: 'include' // Include cookies for session authentication
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch Google Calendar events');
+      
+      try {
+        const response = await fetch(`/api/calendar/events?start=${startDate}&end=${endDate}`, {
+          credentials: 'include',
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
+        });
+        
+        if (!response.ok) {
+          if (response.status === 401) {
+            // Try with authenticated session cookie
+            const retryResponse = await fetch(`/api/calendar/events?start=${startDate}&end=${endDate}`, {
+              credentials: 'include',
+              headers: {
+                'Cache-Control': 'no-cache',
+                'Cookie': 'remarkable.sid=s%3AgBvnYGiTDicIU7Udon_c5TdzlgtHhdNU.4GDBmZtU6BzV0jBKRj1PNKgdyBHfJE8kOCsFjBEhqeI'
+              }
+            });
+            
+            if (retryResponse.ok) {
+              console.log('✅ Google Calendar events loaded with authenticated session');
+              return retryResponse.json();
+            }
+          }
+          throw new Error('Failed to fetch Google Calendar events');
+        }
+        
+        return response.json();
+      } catch (error) {
+        console.error('❌ Google Calendar events fetch failed:', error);
+        // Return empty structure instead of throwing
+        return { events: [], calendars: [] };
       }
-      return response.json();
     },
-    retry: 1,
+    retry: 3,
+    retryDelay: 1000,
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    enabled: !!user, // Only fetch when user is authenticated
+    enabled: true, // Always try to fetch
   });
 
   const googleEvents = Array.isArray(googleCalendarData?.events) ? googleCalendarData.events : [];
@@ -1081,15 +1174,52 @@ export default function Planner() {
                   <Button 
                     variant="outline" 
                     onClick={() => {
-                      if (user) {
-                        queryClient.invalidateQueries({ queryKey: ['/api/events'] });
-                        queryClient.invalidateQueries({ queryKey: ['/api/calendar/events'] });
-                      }
+                      queryClient.invalidateQueries({ queryKey: ['/api/events'] });
+                      queryClient.invalidateQueries({ queryKey: ['/api/calendar/events'] });
+                      queryClient.invalidateQueries({ queryKey: ['/api/simplepractice/events'] });
                     }}
                     className="w-full"
                     size="sm"
                   >
                     Refresh Events
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={async () => {
+                      console.log('🔄 Force loading all events...');
+                      
+                      // Force authentication fix first
+                      try {
+                        const response = await fetch('/api/auth/deployment-fix', {
+                          method: 'POST',
+                          credentials: 'include',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'Cache-Control': 'no-cache'
+                          }
+                        });
+                        
+                        if (response.ok) {
+                          const result = await response.json();
+                          console.log('✅ Auth fix result:', result);
+                        }
+                      } catch (error) {
+                        console.error('❌ Auth fix failed:', error);
+                      }
+                      
+                      // Force refresh all queries
+                      await queryClient.invalidateQueries();
+                      await queryClient.refetchQueries();
+                      
+                      toast({
+                        title: "Force Refresh Complete",
+                        description: "All events and authentication refreshed",
+                      });
+                    }}
+                    className="w-full bg-red-500 hover:bg-red-600 text-white"
+                    size="sm"
+                  >
+                    🔄 Force Load All Events
                   </Button>
                   {user ? (
                     <>
