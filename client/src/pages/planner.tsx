@@ -1094,6 +1094,26 @@ export default function Planner() {
                 Logged in as {user.name}
               </Badge>
             )}
+            {user && (
+              <Button
+                onClick={handleTokenRefresh}
+                variant="outline"
+                size="sm"
+                className="bg-orange-50 hover:bg-orange-100 text-orange-700 border-orange-200"
+              >
+                🔄 Fix 403 Error
+              </Button>
+            )}
+            {user && (
+              <Button
+                onClick={handleManualAuthFix}
+                variant="outline"
+                size="sm"
+                className="bg-red-50 hover:bg-red-100 text-red-700 border-red-200"
+              >
+                🔧 Auth Fix
+              </Button>
+            )}
             <Button
               variant={viewMode === 'weekly' ? 'default' : 'outline'}
               onClick={() => setViewMode('weekly')}
