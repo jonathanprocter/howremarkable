@@ -1096,13 +1096,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/events/:id", async (req, res) => {
     try {
-      const eventId = parseInt(req.params.id);
+      const eventId = req.params.id;
       const updates = req.body;
 
-      // Validate event ID
-      if (isNaN(eventId) || eventId <= 0) {
-        return res.status(400).json({ error: "Invalid event ID" });
+      if (!req.user) {
+        return res.status(401).json({ error: "Authentication required" });
       }
+
+      const user = req.user as any;
 
       // Validate updates object
       if (!updates || typeof updates !== 'object') {
@@ -1133,7 +1134,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Start time must be before end time" });
       }
 
-      const event = await storage.updateEvent(eventId, updates);
+      // Try to update by sourceId first (for Google Calendar events)
+      let event = await storage.updateEventBySourceId(parseInt(user.id), eventId, updates);
+
+      // If not found by sourceId, try by numeric ID for manual events
+      if (!event) {
+        const numericId = parseInt(eventId);
+        if (!isNaN(numericId) && numericId > 0) {
+          event = await storage.updateEvent(numericId, updates);
+        }
+      }
 
       if (!event) {
         return res.status(404).json({ error: "Event not found" });
