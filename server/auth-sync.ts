@@ -107,8 +107,8 @@ export async function forceGoogleCalendarSync(req: Request, res: Response) {
         
         const response = await calendar.events.list({
           calendarId: cal.id,
-          timeMin: new Date(2024, 0, 1).toISOString(),
-          timeMax: new Date(2025, 11, 31).toISOString(),
+          timeMin: new Date(2024, 0, 1).toISOString(), // January 1, 2024
+          timeMax: new Date(2025, 11, 31).toISOString(), // December 31, 2025
           singleEvents: true,
           orderBy: 'startTime',
           maxResults: 2500,

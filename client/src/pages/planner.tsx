@@ -35,6 +35,7 @@ import { autonomousAuthAudit } from '../utils/autonomousAuthAudit';
 import { AuthenticationFix } from '../utils/authenticationFix';
 import { SessionFixer } from '../utils/sessionFixer';
 import { weeklyPackageAuditor } from '@/utils/weeklyPackageAudit';
+import { DateRangeInfo } from '@/components/DateRangeInfo';
 
 export default function Planner() {
   const { user, isLoading: userLoading, refetch: refetchAuth } = useAuthenticatedUser();
@@ -1339,6 +1340,9 @@ export default function Planner() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Date Range Information */}
+            <DateRangeInfo />
 
             {/* Google Calendar Integration */}
             <GoogleCalendarIntegration
