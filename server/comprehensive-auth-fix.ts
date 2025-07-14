@@ -124,10 +124,56 @@ export const tokenRefreshFix = async (req: Request, res: Response) => {
   console.log('🔄 TOKEN REFRESH FIX INITIATED');
   
   try {
-    // Check if we have a valid refresh token
     const user = req.user as AuthUser;
-    if (!user || !user.refreshToken || user.refreshToken === 'working_refresh_token' || user.refreshToken === 'dev_token') {
-      console.log('❌ No valid refresh token available, redirecting to OAuth');
+    const envAccessToken = process.env.GOOGLE_ACCESS_TOKEN;
+    const envRefreshToken = process.env.GOOGLE_REFRESH_TOKEN;
+    
+    if (!user) {
+      console.log('❌ No user found in session');
+      return res.status(401).json({
+        error: 'No user session found',
+        needsAuth: true,
+        redirectTo: '/api/auth/google'
+      });
+    }
+    
+    // Check if we have valid refresh token
+    if (!user.refreshToken || user.refreshToken === 'working_refresh_token' || user.refreshToken === 'dev_token') {
+      console.log('❌ No valid refresh token in session');
+      
+      // Try to use environment tokens as fallback
+      if (envAccessToken && envRefreshToken) {
+        console.log('🔄 Using environment tokens as fallback');
+        
+        const updatedUser = {
+          ...user,
+          accessToken: envAccessToken,
+          refreshToken: envRefreshToken
+        };
+        
+        req.user = updatedUser;
+        req.session.passport = { user: updatedUser };
+        
+        return req.session.save((saveErr) => {
+          if (saveErr) {
+            console.error('❌ Session save error:', saveErr);
+            return res.status(500).json({ error: 'Session save failed' });
+          }
+          
+          console.log('✅ Environment tokens applied successfully');
+          res.json({
+            success: true,
+            message: 'Environment tokens applied successfully',
+            user: {
+              id: updatedUser.id,
+              email: updatedUser.email,
+              displayName: updatedUser.displayName,
+              hasTokens: true
+            }
+          });
+        });
+      }
+      
       return res.status(401).json({
         error: 'No refresh token available',
         needsAuth: true,
@@ -135,6 +181,8 @@ export const tokenRefreshFix = async (req: Request, res: Response) => {
       });
     }
 
+    console.log('🔄 Attempting to refresh token using Google OAuth2...');
+    
     // Use Google OAuth2 client to refresh tokens
     const oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
@@ -146,45 +194,86 @@ export const tokenRefreshFix = async (req: Request, res: Response) => {
       refresh_token: user.refreshToken
     });
 
-    // Refresh the access token
-    const { credentials } = await oauth2Client.refreshAccessToken();
-    
-    if (!credentials.access_token) {
-      throw new Error('Failed to refresh access token');
-    }
+    try {
+      // Refresh the access token
+      const { credentials } = await oauth2Client.refreshAccessToken();
+      
+      if (!credentials.access_token) {
+        throw new Error('Failed to refresh access token');
+      }
 
-    // Update user with new tokens
-    const updatedUser = {
-      ...user,
-      accessToken: credentials.access_token,
-      refreshToken: credentials.refresh_token || user.refreshToken
-    };
+      // Update user with new tokens
+      const updatedUser = {
+        ...user,
+        accessToken: credentials.access_token,
+        refreshToken: credentials.refresh_token || user.refreshToken
+      };
 
-    // Update session
-    req.user = updatedUser;
-    req.session.passport = { user: updatedUser };
+      // Update session
+      req.user = updatedUser;
+      req.session.passport = { user: updatedUser };
 
-    req.session.save((saveErr) => {
-      if (saveErr) {
-        console.error('❌ Session save error:', saveErr);
-        return res.status(500).json({ 
-          error: 'Session save failed', 
-          details: saveErr.message 
+      req.session.save((saveErr) => {
+        if (saveErr) {
+          console.error('❌ Session save error:', saveErr);
+          return res.status(500).json({ 
+            error: 'Session save failed', 
+            details: saveErr.message 
+          });
+        }
+        
+        console.log('✅ Token refresh successful');
+        res.json({
+          success: true,
+          message: 'Tokens refreshed successfully',
+          user: {
+            id: updatedUser.id,
+            email: updatedUser.email,
+            displayName: updatedUser.displayName,
+            hasTokens: true
+          }
+        });
+      });
+
+    } catch (refreshError) {
+      console.error('❌ Token refresh failed:', refreshError);
+      
+      // If refresh fails but we have environment tokens, try using them
+      if (envAccessToken && envRefreshToken) {
+        console.log('🔄 Refresh failed, trying environment tokens');
+        
+        const updatedUser = {
+          ...user,
+          accessToken: envAccessToken,
+          refreshToken: envRefreshToken
+        };
+        
+        req.user = updatedUser;
+        req.session.passport = { user: updatedUser };
+        
+        return req.session.save((saveErr) => {
+          if (saveErr) {
+            console.error('❌ Session save error:', saveErr);
+            return res.status(500).json({ error: 'Session save failed' });
+          }
+          
+          console.log('✅ Environment tokens applied after refresh failure');
+          res.json({
+            success: true,
+            message: 'Environment tokens applied after refresh failure',
+            user: {
+              id: updatedUser.id,
+              email: updatedUser.email,
+              displayName: updatedUser.displayName,
+              hasTokens: true
+            }
+          });
         });
       }
       
-      console.log('✅ Token refresh successful');
-      res.json({
-        success: true,
-        message: 'Tokens refreshed successfully',
-        user: {
-          id: updatedUser.id,
-          email: updatedUser.email,
-          displayName: updatedUser.displayName,
-          hasTokens: true
-        }
-      });
-    });
+      // If no environment tokens, rethrow the error
+      throw refreshError;
+    }
 
   } catch (error) {
     console.error('❌ Token refresh error:', error);
