@@ -1226,6 +1226,22 @@ export default function Planner() {
                   >
                     🔄 Force Load All Events
                   </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      console.log('🔄 FORCING GOOGLE RECONNECT - FIXING AUTHENTICATION');
+                      toast({
+                        title: "Redirecting to Google",
+                        description: "Please complete the authentication flow",
+                        variant: "default"
+                      });
+                      window.location.href = '/api/auth/google';
+                    }}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                    size="sm"
+                  >
+                    🔒 Fix Authentication
+                  </Button>
                   {user ? (
                     <>
                       <Button 
