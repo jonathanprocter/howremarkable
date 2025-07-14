@@ -449,7 +449,7 @@ export default function Planner() {
   // Event mutations
   const createEventMutation = useMutation({
     mutationFn: (eventData: Partial<CalendarEvent>) => 
-      apiRequest('/api/events', { method: 'POST', body: eventData }),
+      apiRequest('POST', '/api/events', eventData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
       toast({ title: 'Event created successfully' });
@@ -461,7 +461,7 @@ export default function Planner() {
 
   const updateEventMutation = useMutation({
     mutationFn: ({ id, ...eventData }: { id: string } & Partial<CalendarEvent>) =>
-      apiRequest(`/api/events/${id}`, { method: 'PUT', body: eventData }),
+      apiRequest('PUT', `/api/events/${id}`, eventData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
       toast({ title: 'Event updated successfully' });
@@ -473,7 +473,7 @@ export default function Planner() {
 
   const deleteEventMutation = useMutation({
     mutationFn: (eventId: string) => 
-      apiRequest(`/api/events/${eventId}`, { method: 'DELETE' }),
+      apiRequest('DELETE', `/api/events/${eventId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
       toast({ title: 'Event deleted successfully' });
