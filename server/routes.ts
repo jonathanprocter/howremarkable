@@ -11,7 +11,7 @@ import { setupAuthenticationFix } from "./auth-fix";
 import { fixSessionAuthentication } from "./session-fixer";
 import { deploymentAuthFix } from "./deployment-auth-fix";
 import { forceGoogleCalendarSync } from "./auth-sync";
-import { comprehensiveAuthFix, tokenRefreshFix, authStatusWithFix } from "./comprehensive-auth-fix";
+import { comprehensiveAuthFix, tokenRefreshFix, authStatusWithFix, forceGoogleCalendarSync as comprehensiveForceSync } from "./comprehensive-auth-fix";
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
@@ -217,6 +217,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Force Google Calendar sync endpoint
   app.post('/api/auth/force-sync', forceGoogleCalendarSync);
+  
+  // Comprehensive Google Calendar sync endpoint
+  app.post('/api/auth/force-calendar-sync', comprehensiveForceSync);
   
   // Comprehensive authentication fix endpoint
   app.post('/api/auth/comprehensive-fix', comprehensiveAuthFix);
