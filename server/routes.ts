@@ -123,6 +123,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Google OAuth Routes
   app.get("/api/auth/google", (req, res, next) => {
     console.log("Starting Google OAuth flow...");
+    console.log("🔧 OAuth callback URL:", callbackURL);
+    
+    // Check if we have valid OAuth credentials
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+      console.error("❌ Missing Google OAuth credentials");
+      return res.redirect("/?error=missing_oauth_credentials");
+    }
+    
     passport.authenticate("google", { 
       scope: [
         "profile", 
@@ -310,7 +318,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       hasClientId: !!process.env.GOOGLE_CLIENT_ID,
       hasClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
       domain: baseURL,
-      callbackUrl: callbackURL
+      callbackUrl: callbackURL,
+      manualOAuthUrl: `https://accounts.google.com/oauth2/v2/auth?client_id=${process.env.GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(callbackURL)}&scope=${encodeURIComponent('profile email https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/calendar.readonly')}&response_type=code&access_type=offline&prompt=consent`
     });
   });
 
