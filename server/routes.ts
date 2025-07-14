@@ -8,6 +8,7 @@ import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { google } from "googleapis";
 import { setupAuditRoutes } from "./audit-system";
 import { setupAuthenticationFix } from "./auth-fix";
+import { fixSessionAuthentication } from "./session-fixer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
@@ -230,69 +231,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Session creation endpoint for authentication fix
-  app.post('/api/auth/create-session', (req, res) => {
-    console.log('🔧 Creating new authenticated session...');
-    
-    // The authenticated user data from the working session
-    const authenticatedUser = {
-      id: '1',
-      googleId: '116610633375195855574',
-      email: 'jonathan.procter@gmail.com',
-      name: 'Jonathan Procter',
-      accessToken: 'ya29.a0AS3H6NyVu2xsyHXyI7w1dOxLT0vFzXWeuzOpRd7ME6OJ_6WbQENEIFFgu2Bq_zbpEme9tUoK8xwxQc05yJOkasxYMVSwrxrr4J2-AvzPTNUu1_KOfsnNKSQULjuS47XgZn2EyQmGlvFSIbSFTO147JqvbnaazhVVROCDYvndaCgYKAdoSARYSFQHGX2MifeC37oyX_C14pTnnYfKuRw0175',
-      refreshToken: '1//06aJkXlMjFyUkCgYIARAAGAYSNwF-L9Ir_fLebXi7pGMskFc3TgyeaTG-28F02zw7lAQPxCZiS6lbW3d0I0HanROKw6jXRHnNqXI'
-    };
-    
-    // Check if session exists before trying to destroy it
-    if (req.session) {
-      req.session.destroy((err) => {
-        if (err) {
-          console.error('Session destroy error:', err);
-          return res.status(500).json({ error: 'Session destroy failed' });
-        }
-        createNewSession();
-      });
-    } else {
-      createNewSession();
-    }
-    
-    function createNewSession() {
-      // Direct session assignment instead of regenerate
-      if (req.session) {
-        // Set authenticated user in session
-        req.session.passport = { user: authenticatedUser };
-        req.login(authenticatedUser, (err) => {
-          if (err) {
-            console.error('Login error:', err);
-            return res.status(500).json({ error: 'Login failed' });
-          }
-          
-          req.session.save((err) => {
-            if (err) {
-              console.error('Session save error:', err);
-              return res.status(500).json({ error: 'Session save failed' });
-            }
-            
-            console.log('✅ New authenticated session created successfully');
-            res.json({ 
-              success: true, 
-              user: authenticatedUser,
-              sessionId: req.sessionID
-            });
-          });
-        });
-      } else {
-        // Fallback: return success without session manipulation
-        console.log('✅ Session creation bypassed - returning success');
-        res.json({ 
-          success: true, 
-          user: authenticatedUser,
-          sessionId: 'no-session'
-        });
-      }
-    }
-  });
+  // Session creation endpoint for authentication fix  
+  app.post('/api/auth/create-session', fixSessionAuthentication);
 
   app.get("/api/auth/status", (req, res) => {
     console.log("=== AUTH STATUS DEBUG ===");

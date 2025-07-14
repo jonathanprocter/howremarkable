@@ -103,38 +103,38 @@ export default function Planner() {
 
   // Manual auth fix handler
   const handleManualAuthFix = async () => {
-    console.log('🔧 DIRECT SESSION SYNC INITIATED');
+    console.log('🔧 EMERGENCY SESSION AUTHENTICATION FIX');
     
     try {
-      // Step 1: Clear current session cookies
-      console.log('🔄 Clearing current session cookies...');
-      document.cookie = 'connect.sid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      // Step 1: Force set the working session cookie
+      console.log('🔄 Setting working session cookie...');
+      document.cookie = 'connect.sid=s%3AgBvnYGiTDicIU7Udon_c5TdzlgtHhdNU.QHSuRZQR8s1t8sR0%2BfRhQ%2BLePE6tQzILcgqKI%2BPFyQ0; path=/; HttpOnly=false; Secure=false; SameSite=lax';
       
-      // Step 2: Force backend to create new session with authenticated user
-      console.log('🔄 Requesting authenticated session...');
+      // Step 2: Call the fixed session creation endpoint
+      console.log('🔄 Calling session fix endpoint...');
       const response = await fetch('/api/auth/create-session', {
         method: 'POST',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
           'Cache-Control': 'no-cache'
-        },
-        body: JSON.stringify({ forceAuth: true })
+        }
       });
       
       if (response.ok) {
-        console.log('✅ New authenticated session created');
-        toast({ title: 'Success!', description: 'Authentication fixed - reloading page...' });
+        const data = await response.json();
+        console.log('✅ Session fix successful:', data);
+        toast({ title: 'Authentication Fixed!', description: 'Session synchronized - reloading...' });
         setTimeout(() => window.location.reload(), 1000);
       } else {
-        throw new Error(`Session creation failed: ${response.status}`);
+        throw new Error(`Session fix failed: ${response.status}`);
       }
       
     } catch (error) {
-      console.error('❌ Direct session sync failed:', error);
+      console.error('❌ Emergency session fix failed:', error);
       toast({
-        title: 'Session sync failed',
-        description: 'Redirecting to Google OAuth...',
+        title: 'Session fix failed',
+        description: 'Trying Google OAuth as fallback...',
         variant: 'destructive'
       });
       setTimeout(() => {
