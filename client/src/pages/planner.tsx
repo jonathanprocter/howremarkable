@@ -1209,16 +1209,123 @@ export default function Planner() {
                   onClick={async () => {
                     try {
                       console.log('🎯 Adding sample Event Notes and Action Items to upcoming week events...');
-                      const result = await (window as any).addSampleNotesAndActionItems?.();
-                      if (result?.success) {
-                        console.log(`✅ Successfully enhanced ${result.updatedCount} events`);
-                        // Refresh events to show updated data
-                        window.location.reload();
-                      } else {
-                        console.error('❌ Failed to enhance events:', result?.error || 'Unknown error');
+                      
+                      // Get upcoming week date range
+                      const today = new Date();
+                      const startOfWeek = new Date(today);
+                      startOfWeek.setDate(today.getDate() - today.getDay() + 1); // Next Monday
+                      const endOfWeek = new Date(startOfWeek);
+                      endOfWeek.setDate(startOfWeek.getDate() + 6); // Next Sunday
+                      
+                      console.log(`📅 Targeting events for week: ${startOfWeek.toDateString()} to ${endOfWeek.toDateString()}`);
+                      
+                      // Fetch current events
+                      const eventsResponse = await fetch('/api/events');
+                      const events = await eventsResponse.json();
+                      
+                      // Filter events for the upcoming week
+                      const upcomingWeekEvents = events.filter((event: any) => {
+                        const eventDate = new Date(event.startTime);
+                        return eventDate >= startOfWeek && eventDate <= endOfWeek;
+                      });
+                      
+                      console.log(`📊 Found ${upcomingWeekEvents.length} events in upcoming week`);
+                      
+                      if (upcomingWeekEvents.length === 0) {
+                        console.log('⚠️ No events found for upcoming week');
+                        return;
                       }
+                      
+                      // Sample enhancements
+                      const sampleEnhancements = [
+                        {
+                          keywords: ["Dan", "Supervision", "supervision"],
+                          notes: ["Review quarterly performance metrics", "Discuss team development goals", "Address any outstanding issues"],
+                          actionItems: ["Schedule follow-up meeting for next week", "Prepare performance review documents", "Send meeting summary to team"]
+                        },
+                        {
+                          keywords: ["Vivian", "Meador"],
+                          notes: ["Review notes prior to our session", "Patient showing progress with treatment plan"],
+                          actionItems: ["Send the Vivian email to let him know about the passing of her brother", "Adjust treatment plan as needed", "Schedule grief counseling resources"]
+                        }
+                      ];
+                      
+                      let updatedCount = 0;
+                      
+                      // Update events with notes and action items
+                      for (const enhancement of sampleEnhancements) {
+                        const matchingEvents = upcomingWeekEvents.filter((event: any) => {
+                          if (!event.title) return false;
+                          return enhancement.keywords.some(keyword => 
+                            event.title.toLowerCase().includes(keyword.toLowerCase())
+                          );
+                        });
+                        
+                        for (const matchingEvent of matchingEvents) {
+                          console.log(`📝 Updating event: ${matchingEvent.title} (${new Date(matchingEvent.startTime).toDateString()})`);
+                          
+                          const updateResponse = await fetch(`/api/events/${matchingEvent.id}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              notes: enhancement.notes,
+                              actionItems: enhancement.actionItems
+                            })
+                          });
+                          
+                          if (updateResponse.ok) {
+                            console.log(`✅ Successfully updated: ${matchingEvent.title}`);
+                            updatedCount++;
+                          } else {
+                            console.error(`❌ Failed to update: ${matchingEvent.title}`);
+                          }
+                        }
+                      }
+                      
+                      // Add generic notes to remaining events
+                      const unenhancedEvents = upcomingWeekEvents.filter((event: any) => {
+                        return !sampleEnhancements.some(enhancement => 
+                          enhancement.keywords.some(keyword => 
+                            event.title && event.title.toLowerCase().includes(keyword.toLowerCase())
+                          )
+                        );
+                      });
+                      
+                      for (const event of unenhancedEvents.slice(0, 3)) {
+                        console.log(`📝 Adding generic notes to: ${event.title}`);
+                        
+                        const updateResponse = await fetch(`/api/events/${event.id}`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            notes: ["Event preparation completed", "Review client file and previous session notes"],
+                            actionItems: ["Follow up on session outcomes", "Update treatment plan as needed"]
+                          })
+                        });
+                        
+                        if (updateResponse.ok) {
+                          console.log(`✅ Successfully added generic notes to: ${event.title}`);
+                          updatedCount++;
+                        }
+                      }
+                      
+                      console.log(`🎯 Successfully enhanced ${updatedCount} events with notes and action items`);
+                      
+                      // Refresh events to show updated data
+                      queryClient.invalidateQueries({ queryKey: ['/api/events'] });
+                      
+                      toast({
+                        title: "Events Enhanced",
+                        description: `Added notes and action items to ${updatedCount} upcoming week events`,
+                      });
+                      
                     } catch (error) {
                       console.error('❌ Error enhancing events:', error);
+                      toast({
+                        title: "Enhancement Failed",
+                        description: "Failed to add notes to events. Check console for details.",
+                        variant: "destructive"
+                      });
                     }
                   }}
                   className="w-full justify-start bg-green-50 hover:bg-green-100 border-green-300"
