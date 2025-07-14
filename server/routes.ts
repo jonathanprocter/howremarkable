@@ -11,6 +11,7 @@ import { setupAuthenticationFix } from "./auth-fix";
 import { fixSessionAuthentication } from "./session-fixer";
 import { deploymentAuthFix } from "./deployment-auth-fix";
 import { forceGoogleCalendarSync } from "./auth-sync";
+import { comprehensiveAuthFix, tokenRefreshFix, authStatusWithFix } from "./comprehensive-auth-fix";
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
@@ -216,6 +217,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Force Google Calendar sync endpoint
   app.post('/api/auth/force-sync', forceGoogleCalendarSync);
+  
+  // Comprehensive authentication fix endpoint
+  app.post('/api/auth/comprehensive-fix', comprehensiveAuthFix);
+  
+  // Token refresh fix endpoint
+  app.post('/api/auth/token-refresh', tokenRefreshFix);
 
   app.get("/api/auth/status", (req, res) => {
     let user = req.user as any;
@@ -241,15 +248,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.session.save();
     }
 
+    // Check for problematic token states
+    const hasValidTokens = hasTokens && 
+      !user.accessToken.startsWith('dev') && 
+      user.accessToken !== 'undefined' &&
+      user.accessToken !== 'working_access_token';
+
     res.json({ 
       isAuthenticated,
-      hasTokens,
+      hasTokens: hasTokens ? (hasValidTokens ? true : 'dev_tokens') : false,
+      hasValidTokens,
       user: user ? { 
         id: user.id,
         email: user.email,
         displayName: user.displayName,
         hasAccessToken: !!user.accessToken,
         hasRefreshToken: !!user.refreshToken,
+        tokenType: user.accessToken?.startsWith('dev') ? 'development' : 'production',
         accessTokenPreview: user.accessToken?.substring(0, 20) + "..."
       } : null,
       debug: {
@@ -260,15 +275,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         cookieMaxAge: req.session.cookie?.maxAge,
         cookieDomain: req.session.cookie?.domain
       },
+      needsFix: !isAuthenticated || !hasValidTokens,
+      fixEndpoints: {
+        comprehensive: '/api/auth/comprehensive-fix',
+        tokenRefresh: '/api/auth/token-refresh',
+        googleOAuth: '/api/auth/google'
+      },
       recommendations: !isAuthenticated ? [
-        "1. Click 'Force Google Reconnect' to start OAuth flow",
-        "2. Ensure you're logged into Google in this browser",
-        "3. Check if popup blockers are preventing OAuth window"
-      ] : !hasTokens ? [
-        "1. Tokens missing - try reconnecting to Google",
-        "2. Check if OAuth flow completed successfully"
+        "1. Try comprehensive auth fix first",
+        "2. If that fails, use Google OAuth flow",
+        "3. Check session configuration"
+      ] : !hasValidTokens ? [
+        "1. Run token refresh fix",
+        "2. Verify Google OAuth setup",
+        "3. Check token expiration"
       ] : [
-        "✅ Authentication appears to be working correctly"
+        "✅ Authentication working correctly"
       ]
     });
   });

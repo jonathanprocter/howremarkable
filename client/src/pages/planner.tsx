@@ -132,10 +132,32 @@ export default function Planner() {
 
   // Manual auth fix handler
   const handleManualAuthFix = async () => {
-    console.log('🚀 DEPLOYMENT AUTHENTICATION FIX');
+    console.log('🚀 COMPREHENSIVE AUTHENTICATION FIX');
 
     try {
-      // Try deployment authentication fix first
+      // Try comprehensive authentication fix first
+      console.log('🔄 Trying comprehensive authentication fix...');
+      const comprehensiveResponse = await fetch('/api/auth/comprehensive-fix', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
+      });
+
+      if (comprehensiveResponse.ok) {
+        const data = await comprehensiveResponse.json();
+        console.log('✅ Comprehensive fix successful:', data);
+
+        if (data.success) {
+          toast({ title: 'Authentication Fixed!', description: `Session restored for ${data.user.email}` });
+          setTimeout(() => window.location.reload(), 1000);
+          return;
+        }
+      }
+
+      // Try deployment authentication fix as fallback
       console.log('🔄 Trying deployment authentication fix...');
       const deploymentResponse = await fetch('/api/auth/deployment-fix', {
         method: 'POST',
@@ -186,6 +208,51 @@ export default function Planner() {
       toast({
         title: 'Authentication fix failed',
         description: 'Redirecting to Google OAuth as final fallback...',
+        variant: 'destructive'
+      });
+      setTimeout(() => {
+        window.location.href = '/api/auth/google';
+      }, 2000);
+    }
+  };
+
+  // Token refresh handler for 403 errors
+  const handleTokenRefresh = async () => {
+    console.log('🔄 TOKEN REFRESH FOR 403 ERROR');
+
+    try {
+      toast({ title: 'Refreshing tokens...', description: 'Attempting to refresh expired tokens...' });
+
+      const response = await fetch('/api/auth/token-refresh', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Token refresh successful:', data);
+        toast({ title: 'Tokens Refreshed!', description: 'Authentication tokens updated successfully' });
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        const errorData = await response.json();
+        console.log('❌ Token refresh failed:', errorData);
+        
+        if (errorData.needsAuth) {
+          toast({ title: 'OAuth required', description: 'Redirecting to Google OAuth...' });
+          setTimeout(() => window.location.href = errorData.redirectTo, 1000);
+        } else {
+          throw new Error(errorData.error || 'Token refresh failed');
+        }
+      }
+    } catch (error) {
+      console.error('❌ Token refresh error:', error);
+      toast({
+        title: 'Token refresh failed',
+        description: 'Redirecting to Google OAuth as fallback...',
         variant: 'destructive'
       });
       setTimeout(() => {
@@ -961,6 +1028,12 @@ export default function Planner() {
             className="bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-8 rounded-lg transition-colors text-xl animate-pulse"
           >
             🔧 FIX AUTHENTICATION NOW
+          </button>
+          <button
+            onClick={handleTokenRefresh}
+            className="bg-orange-600 hover:bg-orange-700 text-white font-bold py-4 px-8 rounded-lg transition-colors text-xl"
+          >
+            🔄 REFRESH TOKENS (403 Fix)
           </button>
           <button
             onClick={handleGoogleReconnect}
