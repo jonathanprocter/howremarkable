@@ -367,6 +367,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Serve the manual OAuth test HTML file
+  app.get("/oauth-test", async (req, res) => {
+    const fs = await import('fs');
+    const path = await import('path');
+    
+    try {
+      const htmlPath = path.join(process.cwd(), 'MANUAL_OAUTH_TEST.html');
+      const htmlContent = fs.readFileSync(htmlPath, 'utf8');
+      res.setHeader('Content-Type', 'text/html');
+      res.send(htmlContent);
+    } catch (error) {
+      console.error('Error serving OAuth test HTML:', error);
+      res.status(404).send('OAuth test file not found');
+    }
+  });
+
   // Test session persistence endpoint
   app.get("/api/auth/session-test", (req, res) => {
     console.log("=== SESSION TEST ===");
