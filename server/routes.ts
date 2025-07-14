@@ -9,6 +9,7 @@ import { google } from "googleapis";
 import { setupAuditRoutes } from "./audit-system";
 import { setupAuthenticationFix } from "./auth-fix";
 import { fixSessionAuthentication } from "./session-fixer";
+import { deploymentAuthFix } from "./deployment-auth-fix";
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
@@ -233,6 +234,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Session creation endpoint for authentication fix  
   app.post('/api/auth/create-session', fixSessionAuthentication);
+  
+  // Deployment authentication fix endpoint
+  app.post('/api/auth/deployment-fix', deploymentAuthFix);
 
   app.get("/api/auth/status", (req, res) => {
     console.log("=== AUTH STATUS DEBUG ===");

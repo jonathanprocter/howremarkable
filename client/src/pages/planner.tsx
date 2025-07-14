@@ -103,16 +103,12 @@ export default function Planner() {
 
   // Manual auth fix handler
   const handleManualAuthFix = async () => {
-    console.log('🔧 EMERGENCY SESSION AUTHENTICATION FIX');
+    console.log('🚀 DEPLOYMENT AUTHENTICATION FIX');
     
     try {
-      // Step 1: Force set the working session cookie
-      console.log('🔄 Setting working session cookie...');
-      document.cookie = 'connect.sid=s%3AgBvnYGiTDicIU7Udon_c5TdzlgtHhdNU.QHSuRZQR8s1t8sR0%2BfRhQ%2BLePE6tQzILcgqKI%2BPFyQ0; path=/; HttpOnly=false; Secure=false; SameSite=lax';
-      
-      // Step 2: Call the fixed session creation endpoint
-      console.log('🔄 Calling session fix endpoint...');
-      const response = await fetch('/api/auth/create-session', {
+      // Try deployment authentication fix first
+      console.log('🔄 Trying deployment authentication fix...');
+      const deploymentResponse = await fetch('/api/auth/deployment-fix', {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -121,20 +117,46 @@ export default function Planner() {
         }
       });
       
-      if (response.ok) {
-        const data = await response.json();
+      if (deploymentResponse.ok) {
+        const data = await deploymentResponse.json();
+        console.log('✅ Deployment fix successful:', data);
+        
+        if (data.success) {
+          toast({ title: 'Authentication Restored!', description: `Found ${data.eventsCount} events in database` });
+          setTimeout(() => window.location.reload(), 1000);
+          return;
+        } else if (data.redirectTo) {
+          toast({ title: 'Redirecting to Google OAuth...', description: 'No events found, please authenticate' });
+          setTimeout(() => window.location.href = data.redirectTo, 1000);
+          return;
+        }
+      }
+      
+      // Fallback to session fix if deployment fix fails
+      console.log('🔄 Falling back to session fix...');
+      const sessionResponse = await fetch('/api/auth/create-session', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
+      });
+      
+      if (sessionResponse.ok) {
+        const data = await sessionResponse.json();
         console.log('✅ Session fix successful:', data);
         toast({ title: 'Authentication Fixed!', description: 'Session synchronized - reloading...' });
         setTimeout(() => window.location.reload(), 1000);
       } else {
-        throw new Error(`Session fix failed: ${response.status}`);
+        throw new Error(`Session fix failed: ${sessionResponse.status}`);
       }
       
     } catch (error) {
-      console.error('❌ Emergency session fix failed:', error);
+      console.error('❌ Authentication fix failed:', error);
       toast({
-        title: 'Session fix failed',
-        description: 'Trying Google OAuth as fallback...',
+        title: 'Authentication fix failed',
+        description: 'Redirecting to Google OAuth as final fallback...',
         variant: 'destructive'
       });
       setTimeout(() => {
