@@ -223,8 +223,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // Configure Google OAuth2 Strategy - Use current domain
-  const baseURL = process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : 'https://HowreMarkable.replit.app';
+  // Configure Google OAuth2 Strategy - Use current domain with deployment detection
+  let baseURL;
+  if (process.env.REPLIT_DEV_DOMAIN) {
+    baseURL = `https://${process.env.REPLIT_DEV_DOMAIN}`;
+  } else if (process.env.REPLIT_DOMAINS) {
+    // Use the first domain from REPLIT_DOMAINS for deployment
+    const domains = process.env.REPLIT_DOMAINS.split(',');
+    baseURL = `https://${domains[0]}`;
+  } else {
+    // Fallback to default domain
+    baseURL = 'https://HowreMarkable.replit.app';
+  }
+  
   const callbackURL = `${baseURL}/api/auth/google/callback`;
   
   console.log("🔧 OAuth Configuration - Base URL:", baseURL);

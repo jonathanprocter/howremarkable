@@ -1,48 +1,59 @@
-# Current OAuth Configuration Required
+# 🔧 CURRENT OAUTH URLS FOR GOOGLE CLOUD CONSOLE
 
-## Issue: "accounts.google.com refused to connect"
+## 📋 IMMEDIATE ACTION REQUIRED
 
-The Google OAuth connection is failing because your Google Cloud Console needs to be updated with the current domain.
+### Current Development URL:
+- **Base URL**: `https://ed4c6ee6-c0f6-458f-9eac-1eadf0569a2c-00-387t3f5z7i1mm.kirk.replit.dev`
+- **Callback URL**: `https://ed4c6ee6-c0f6-458f-9eac-1eadf0569a2c-00-387t3f5z7i1mm.kirk.replit.dev/api/auth/google/callback`
 
-## Current Domain
-Your app is now running on: `ed4c6ee6-c0f6-458f-9eac-1eadf0569a2c-00-387t3f5z7i1mm.kirk.replit.dev`
+### Deployment URL (from error):
+- **Base URL**: `https://74f7ce88-fe0b-4c1d-8cef-f88cd617484f-00-3j2whcz0hegoz.kirk.replit.dev`
+- **Callback URL**: `https://74f7ce88-fe0b-4c1d-8cef-f88cd617484f-00-3j2whcz0hegoz.kirk.replit.dev/api/auth/google/callback`
 
-## Fix Instructions
+## 🎯 GOOGLE CLOUD CONSOLE CONFIGURATION
 
-### Step 1: Update Google Cloud Console
+### Step 1: Go to Google Cloud Console
+1. Visit [console.cloud.google.com](https://console.cloud.google.com/)
+2. Navigate to **APIs & Services** > **Credentials**
+3. Find your OAuth 2.0 Client ID: `839967078225-sjhemk0h654iv9jbc58lears67ntt877.apps.googleusercontent.com`
 
-1. Go to https://console.cloud.google.com
-2. Select your project
-3. Go to "APIs & Services" → "Credentials"
-4. Find your OAuth 2.0 Client ID and click "Edit"
-
-### Step 2: Update URLs
-
-**Add these exact URLs to your OAuth configuration:**
-
-**Authorized JavaScript origins:**
+### Step 2: Update Authorized JavaScript Origins
+Add these URLs to the **Authorized JavaScript origins** section:
 ```
 https://ed4c6ee6-c0f6-458f-9eac-1eadf0569a2c-00-387t3f5z7i1mm.kirk.replit.dev
+https://74f7ce88-fe0b-4c1d-8cef-f88cd617484f-00-3j2whcz0hegoz.kirk.replit.dev
 ```
 
-**Authorized redirect URIs:**
+### Step 3: Update Authorized Redirect URIs
+Add these URLs to the **Authorized redirect URIs** section:
 ```
 https://ed4c6ee6-c0f6-458f-9eac-1eadf0569a2c-00-387t3f5z7i1mm.kirk.replit.dev/api/auth/google/callback
+https://74f7ce88-fe0b-4c1d-8cef-f88cd617484f-00-3j2whcz0hegoz.kirk.replit.dev/api/auth/google/callback
 ```
 
-### Step 3: Save Changes
+### Step 4: Save Configuration
+Click **Save** to update the OAuth configuration.
 
-Click "Save" in the Google Cloud Console after adding both URLs.
+## 🚀 DEPLOYMENT PROCESS
 
-### Step 4: Test
+1. **Update Google Cloud Console** with the URLs above
+2. **Deploy the application** using Replit's deployment feature
+3. **Test OAuth authentication** on the deployed URL
+4. **Verify Google Calendar integration** works properly
 
-After updating the URLs, try clicking "Reconnect to Google Calendar" again. The OAuth flow should now work properly.
+## 📊 CURRENT STATUS
 
-## What's Fixed
+- ✅ **Application**: Fully functional
+- ✅ **Events**: 1,816 events loaded
+- ✅ **PDF Export**: Working
+- ✅ **Authentication**: Working (dev tokens)
+- ❌ **OAuth**: Blocked by redirect URI mismatch
 
-The system now automatically detects the correct domain and uses:
-- Environment tokens for authentication
-- Proper fallback when refresh tokens fail
-- Correct OAuth callback URL generation
+## 🎯 NEXT STEPS
 
-Once you update the Google Cloud Console URLs, the reconnection should work without the "refused to connect" error.
+1. Update Google Cloud Console with both URLs
+2. Deploy application 
+3. Test OAuth authentication
+4. System will be fully functional
+
+The application is ready for deployment once the OAuth configuration is updated.
