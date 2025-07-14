@@ -17,28 +17,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // Configure Google OAuth2 Strategy - Use dynamic domain detection
-  const getReplitDomain = () => {
-    // Use the proper Replit domain from environment
-    if (process.env.REPLIT_DEV_DOMAIN) return process.env.REPLIT_DEV_DOMAIN;
-    if (process.env.REPLIT_DOMAINS) return process.env.REPLIT_DOMAINS;
-    
-    // Fallback to constructed domain
-    if (process.env.REPL_SLUG) return `${process.env.REPL_SLUG}.replit.dev`;
-    if (process.env.REPL_ID) return `${process.env.REPL_ID}.replit.dev`;
-    
-    return 'localhost:3000';
-  };
-  
-  const currentDomain = getReplitDomain();
-  const baseURL = currentDomain.includes('localhost') ? `http://${currentDomain}` : `https://${currentDomain}`;
+  // Configure Google OAuth2 Strategy - Use production domain
+  const baseURL = 'https://HowreMarkable.replit.app';
   const callbackURL = `${baseURL}/api/auth/google/callback`;
   
-  console.log("🔧 OAuth Configuration:");
-  console.log("- Callback URL:", callbackURL);
-  console.log("- Environment:", process.env.NODE_ENV || 'development');
-  console.log("- Base URL:", baseURL);
-  console.log("- Current Domain:", currentDomain);
+  console.log("🔧 OAuth Configuration:", callbackURL);
   
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID!,
@@ -100,43 +83,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Passport serialization
   passport.serializeUser((user: any, done) => {
-    console.log('✅ Serializing user:', { id: user.id, email: user.email });
-    // Store the full user object in session
     done(null, user);
   });
 
   passport.deserializeUser(async (sessionData: any, done) => {
     try {
-      console.log('✅ Deserializing user:', { id: sessionData?.id, email: sessionData?.email });
-
-      // Handle both direct user object and nested passport structure
       const user = sessionData?.user || sessionData;
       
       if (!user || !user.id) {
-        console.log('❌ No valid user data in session');
         return done(null, false);
       }
 
       // Validate tokens are present for Google users
       if (user.googleId && (!user.accessToken || user.accessToken === 'undefined')) {
-        console.log('⚠️ Google user missing valid tokens, creating dev tokens');
         user.accessToken = 'dev-access-token-' + Date.now();
         user.refreshToken = 'dev-refresh-token-' + Date.now();
       }
 
-      console.log('✅ User deserialized successfully:', user.email);
       done(null, user);
     } catch (error) {
-      console.error('❌ Deserialization error:', error);
+      console.error('Deserialization error:', error);
       done(null, false);
     }
   });
 
   // Session debugging middleware (minimal logging)
   app.use((req, res, next) => {
-    // Only log session debug for specific endpoints and occasionally to reduce spam
-    if (req.path.startsWith('/api/') && !req.path.includes('/auth/status') && Math.random() < 0.1) {
-      console.log(`🔍 Session Debug [${req.method} ${req.path}]: User=${!!req.user}, Session=${req.sessionID.slice(0,8)}...`);
+    // Only log for auth-related endpoints to reduce console spam
+    if (req.path.includes('/auth/') && !req.path.includes('/status')) {
+      console.log(`🔍 Auth [${req.method} ${req.path}]: User=${!!req.user}`);
     }
     next();
   });
@@ -239,21 +214,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/deployment-fix', deploymentAuthFix);
 
   app.get("/api/auth/status", (req, res) => {
-    console.log("=== AUTH STATUS DEBUG ===");
-    console.log("Session ID:", req.sessionID);
-    console.log("Session exists:", !!req.session);
-    console.log("User in request:", !!req.user);
-    console.log("User details:", req.user ? { id: req.user.id, email: req.user.email } : null);
-    console.log("Session passport:", req.session.passport);
-    console.log("Session cookie:", req.session.cookie);
-
     let user = req.user as any;
     let isAuthenticated = !!user;
     let hasTokens = user && user.accessToken && user.refreshToken;
     
     // Development fallback - if no user found, create a temporary authenticated user
     if (!user) {
-      console.log("🔧 DEVELOPMENT MODE: Creating temporary authenticated user");
       user = {
         id: 1,
         email: 'jonathan.procter@gmail.com',
@@ -270,10 +236,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.session.passport = { user: user };
       req.session.save();
     }
-    
-    console.log("Has access token:", !!user?.accessToken);
-    console.log("Has refresh token:", !!user?.refreshToken);
-    console.log("Access token preview:", user?.accessToken?.substring(0, 20) + "...");
 
     res.json({ 
       isAuthenticated,
@@ -443,35 +405,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Enhanced middleware to ensure authentication for calendar routes
+  // Simplified authentication middleware
   const requireAuth = (req: any, res: any, next: any) => {
-    console.log('Authentication check for:', req.path);
-    
-    // First check if we have a valid authenticated session via passport
-    if (req.isAuthenticated && req.isAuthenticated() && req.user) {
-      console.log('✅ User authenticated via passport:', req.user?.email);
-      return next();
-    }
-
-    // Try to restore user from session if passport says we're authenticated but req.user is missing
-    if (req.isAuthenticated && req.isAuthenticated() && !req.user && req.session?.passport?.user) {
-      req.user = req.session.passport.user;
-      console.log('✅ User restored from session:', req.user?.email);
-      return next();
-    }
-
-    // Fallback: Check session passport user directly
-    let user = req.session?.passport?.user;
-    
-    if (user && user.id) {
-      // Ensure req.user is set for subsequent middleware
-      req.user = user;
-      console.log('✅ User authenticated from session:', user.email);
+    // Check if user is already authenticated
+    if (req.user || (req.session?.passport?.user)) {
+      if (!req.user && req.session?.passport?.user) {
+        req.user = req.session.passport.user;
+      }
       return next();
     }
 
     // Development fallback - create temporary authenticated user
-    console.log('🔧 DEVELOPMENT MODE: Creating temporary authenticated user for', req.path);
     const devUser = {
       id: '1',
       email: 'jonathan.procter@gmail.com',
@@ -483,8 +427,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     req.user = devUser;
     req.session.passport = { user: devUser };
-    
-    console.log('✅ Development user created for:', req.path);
     return next();
   };
 
@@ -501,14 +443,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Always use database events for consistency
-      console.log('🔧 Using database events for SimplePractice');
       const events = await storage.getEvents(parseInt(user.id) || 1);
       const simplePracticeEvents = events.filter(event => 
         event.source === 'simplepractice' || 
         (event.title && event.title.toLowerCase().includes('appointment'))
       );
       
-      console.log(`✅ Found ${simplePracticeEvents.length} SimplePractice events`);
       return res.json({ events: simplePracticeEvents });
 
       console.log('Fetching SimplePractice events from all Google Calendars...');
@@ -646,14 +586,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // For development mode or if tokens are dev tokens, use database
       if (!user.accessToken || user.accessToken.startsWith('dev-') || user.accessToken === 'undefined') {
-        console.log('🔧 Using database events for calendar');
         const events = await storage.getEvents(parseInt(user.id) || 1);
         const googleEvents = events.filter(event => 
           event.source === 'google' || 
           (!event.source || event.source === 'manual')
         );
         
-        console.log(`✅ Found ${googleEvents.length} calendar events from database`);
         return res.json({ 
           events: googleEvents,
           calendars: [{
@@ -1030,22 +968,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = parseInt(user.id) || 1;
-      
-      console.log("✅ Events endpoint - User:", user.email, "ID:", userId);
-
       const events = await storage.getEvents(userId);
 
       // Validate events response
       if (!Array.isArray(events)) {
         throw new Error('Invalid events response from storage');
       }
-
-      console.log(`📅 Database events found: ${events.length}`);
-      console.log('📊 Event sources breakdown:', events.reduce((acc, event) => {
-        const source = event.source || 'manual';
-        acc[source] = (acc[source] || 0) + 1;
-        return acc;
-      }, {}));
 
       // Map database events to the expected format with validation
       const eventsFormatted = events.map(e => {
