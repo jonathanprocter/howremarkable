@@ -15,6 +15,7 @@ import { deploymentAuthFix } from "./deployment-auth-fix";
 import { forceGoogleCalendarSync } from "./auth-sync";
 import { comprehensiveAuthFix, tokenRefreshFix, authStatusWithFix, forceGoogleCalendarSync as comprehensiveForceSync } from "./comprehensive-auth-fix";
 import { forceLiveGoogleCalendarSync } from "./force-live-sync";
+import { simpleDirectLogin, simpleAuthStatus } from "./simple-auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
@@ -618,6 +619,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       message: `Session test #${req.session.testCounter}`
     });
   });
+
+  // Simple Direct Login - immediate authentication
+  app.post("/api/auth/simple-login", simpleDirectLogin);
+  
+  // Simple Auth Status - check authentication
+  app.get("/api/auth/simple-status", simpleAuthStatus);
 
   app.post("/api/auth/logout", (req, res) => {
     req.logout((err) => {

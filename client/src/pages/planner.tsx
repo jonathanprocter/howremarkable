@@ -1372,6 +1372,54 @@ export default function Planner() {
                   </Button>
                   <Button 
                     variant="outline" 
+                    onClick={async () => {
+                      console.log('🔄 SIMPLE LOGIN ATTEMPT');
+                      toast({
+                        title: "Logging In",
+                        description: "Using simple login method...",
+                        variant: "default"
+                      });
+                      
+                      try {
+                        const response = await fetch('/api/auth/simple-login', {
+                          method: 'POST',
+                          credentials: 'include',
+                          headers: {
+                            'Content-Type': 'application/json',
+                          }
+                        });
+                        
+                        if (response.ok) {
+                          const data = await response.json();
+                          console.log('✅ Simple login successful:', data);
+                          toast({
+                            title: "Login Successful!",
+                            description: "Refreshing page...",
+                            variant: "default"
+                          });
+                          setTimeout(() => window.location.reload(), 1000);
+                        } else {
+                          throw new Error('Login failed');
+                        }
+                      } catch (error) {
+                        console.error('❌ Simple login failed:', error);
+                        toast({
+                          title: "Login Failed",
+                          description: "Trying Google OAuth...",
+                          variant: "destructive"
+                        });
+                        setTimeout(() => {
+                          window.location.href = '/api/auth/google';
+                        }, 1000);
+                      }
+                    }}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
+                    size="sm"
+                  >
+                    ✅ Simple Login
+                  </Button>
+                  <Button 
+                    variant="outline" 
                     onClick={() => {
                       console.log('🔄 FORCING GOOGLE RECONNECT - FIXING AUTHENTICATION');
                       toast({
