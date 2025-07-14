@@ -4,12 +4,21 @@
  */
 
 async function addSampleNotesAndActionItems() {
-  console.log('🎯 Adding sample Event Notes and Action Items to database events...');
+  console.log('🎯 Adding sample Event Notes and Action Items to your real upcoming week events...');
   
-  // Sample data for events with notes and action items
+  // Get upcoming week date range
+  const today = new Date();
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - today.getDay() + 1); // Next Monday
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6); // Next Sunday
+  
+  console.log(`📅 Targeting events for week: ${startOfWeek.toDateString()} to ${endOfWeek.toDateString()}`);
+  
+  // Sample data for events with notes and action items - will be applied to matching events
   const sampleEnhancements = [
     {
-      title: "Dan re: Supervision",
+      keywords: ["Dan", "Supervision", "supervision"],
       notes: [
         "Review quarterly performance metrics",
         "Discuss team development goals",
@@ -22,7 +31,7 @@ async function addSampleNotesAndActionItems() {
       ]
     },
     {
-      title: "Sherrifa Hoosein Appointment",
+      keywords: ["Sherrifa", "Hoosein"],
       notes: [
         "Previous session focused on anxiety management",
         "Client showed improvement in coping strategies"
@@ -34,7 +43,7 @@ async function addSampleNotesAndActionItems() {
       ]
     },
     {
-      title: "Coffee with Nora",
+      keywords: ["Coffee", "Nora"],
       notes: [
         "Fully's Revenue update and LMHC discussion",
         "Market analysis for Q3 expansion"
@@ -45,7 +54,7 @@ async function addSampleNotesAndActionItems() {
       ]
     },
     {
-      title: "Call with Blake",
+      keywords: ["Blake", "Call"],
       notes: [
         "Received the receipt for the Pfizer transaction",
         "Discussed budget allocations for next quarter"
@@ -57,7 +66,7 @@ async function addSampleNotesAndActionItems() {
       ]
     },
     {
-      title: "Vivian Meador Appointment",
+      keywords: ["Vivian", "Meador"],
       notes: [
         "Review notes prior to our session",
         "Patient showing progress with treatment plan"
@@ -66,6 +75,18 @@ async function addSampleNotesAndActionItems() {
         "Send the Vivian email to let him know about the passing of her brother",
         "Adjust treatment plan as needed",
         "Schedule grief counseling resources"
+      ]
+    },
+    {
+      keywords: ["Appointment", "Patient", "Client"],
+      notes: [
+        "Standard appointment preparation completed",
+        "Client file reviewed prior to session"
+      ],
+      actionItems: [
+        "Follow up on previous session goals",
+        "Update treatment notes",
+        "Schedule next appointment if needed"
       ]
     }
   ];
@@ -77,17 +98,36 @@ async function addSampleNotesAndActionItems() {
     
     console.log(`📊 Found ${events.length} existing events in database`);
     
+    // Filter events for the upcoming week
+    const upcomingWeekEvents = events.filter(event => {
+      const eventDate = new Date(event.startTime);
+      return eventDate >= startOfWeek && eventDate <= endOfWeek;
+    });
+    
+    console.log(`📊 Found ${upcomingWeekEvents.length} events in upcoming week (${startOfWeek.toDateString()} to ${endOfWeek.toDateString()})`);
+    
+    if (upcomingWeekEvents.length === 0) {
+      console.log('⚠️ No events found for upcoming week. Showing all events to select from:');
+      events.slice(0, 10).forEach(event => {
+        console.log(`- ${event.title} (${new Date(event.startTime).toDateString()})`);
+      });
+      return { success: false, message: 'No events found for upcoming week' };
+    }
+    
     let updatedCount = 0;
     
     // Update events with sample notes and action items
     for (const enhancement of sampleEnhancements) {
-      // Find matching event by title (case-insensitive partial match)
-      const matchingEvent = events.find(event => 
-        event.title && event.title.toLowerCase().includes(enhancement.title.toLowerCase())
-      );
+      // Find matching events by keywords (case-insensitive partial match)
+      const matchingEvents = upcomingWeekEvents.filter(event => {
+        if (!event.title) return false;
+        return enhancement.keywords.some(keyword => 
+          event.title.toLowerCase().includes(keyword.toLowerCase())
+        );
+      });
       
-      if (matchingEvent) {
-        console.log(`📝 Updating event: ${matchingEvent.title}`);
+      for (const matchingEvent of matchingEvents) {
+        console.log(`📝 Updating event: ${matchingEvent.title} (${new Date(matchingEvent.startTime).toDateString()})`);
         
         // Update the event with notes and action items
         const updateResponse = await fetch(`/api/events/${matchingEvent.id}`, {
@@ -107,8 +147,43 @@ async function addSampleNotesAndActionItems() {
         } else {
           console.error(`❌ Failed to update: ${matchingEvent.title}`);
         }
-      } else {
-        console.log(`⚠️ No matching event found for: ${enhancement.title}`);
+      }
+    }
+    
+    // Also add generic notes to any remaining events without enhancements
+    const unenhancedEvents = upcomingWeekEvents.filter(event => {
+      return !sampleEnhancements.some(enhancement => 
+        enhancement.keywords.some(keyword => 
+          event.title && event.title.toLowerCase().includes(keyword.toLowerCase())
+        )
+      );
+    });
+    
+    console.log(`📝 Adding generic notes to ${unenhancedEvents.length} remaining events`);
+    
+    for (const event of unenhancedEvents.slice(0, 5)) { // Limit to first 5 to avoid overwhelming
+      console.log(`📝 Adding generic notes to: ${event.title}`);
+      
+      const updateResponse = await fetch(`/api/events/${event.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          notes: [
+            "Event preparation completed",
+            "Review client file and previous session notes"
+          ],
+          actionItems: [
+            "Follow up on session outcomes",
+            "Update treatment plan as needed"
+          ]
+        })
+      });
+      
+      if (updateResponse.ok) {
+        console.log(`✅ Successfully added generic notes to: ${event.title}`);
+        updatedCount++;
       }
     }
     

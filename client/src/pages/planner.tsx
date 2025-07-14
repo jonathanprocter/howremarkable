@@ -71,6 +71,19 @@ export default function Planner() {
     (window as any).queryClient = queryClient;
     (window as any).authHookState = { user, isLoading: userLoading };
     
+    // Load the enhancement script
+    const loadEnhancementScript = async () => {
+      try {
+        const script = await fetch('/add-sample-notes.js');
+        const scriptText = await script.text();
+        eval(scriptText);
+        console.log('✅ Enhancement script loaded successfully');
+      } catch (error) {
+        console.error('❌ Failed to load enhancement script:', error);
+      }
+    };
+    loadEnhancementScript();
+    
     // Add session debugging functions
     (window as any).testAuthenticatedSession = async () => {
       console.log('🧪 Testing authenticated session directly...');
@@ -1181,6 +1194,38 @@ export default function Planner() {
                     </label>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Event Enhancement */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Event Enhancement</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    try {
+                      console.log('🎯 Adding sample Event Notes and Action Items to upcoming week events...');
+                      const result = await (window as any).addSampleNotesAndActionItems?.();
+                      if (result?.success) {
+                        console.log(`✅ Successfully enhanced ${result.updatedCount} events`);
+                        // Refresh events to show updated data
+                        window.location.reload();
+                      } else {
+                        console.error('❌ Failed to enhance events:', result?.error || 'Unknown error');
+                      }
+                    } catch (error) {
+                      console.error('❌ Error enhancing events:', error);
+                    }
+                  }}
+                  className="w-full justify-start bg-green-50 hover:bg-green-100 border-green-300"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  📝 Add Notes to Upcoming Week
+                </Button>
               </CardContent>
             </Card>
 
