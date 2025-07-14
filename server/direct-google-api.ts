@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { storage } from './storage';
 
 export async function directGoogleCalendarSync(req: Request, res: Response) {
   console.log('🚀 DIRECT GOOGLE CALENDAR SYNC - NO OAUTH2 CLIENT');
@@ -41,7 +42,7 @@ export async function directGoogleCalendarSync(req: Request, res: Response) {
     
     console.log(`📅 Found ${calendars.length} calendars via direct API`);
 
-    const allGoogleEvents = [];
+    const allGoogleEvents = [] as any[];
 
     // Fetch events from all calendars via direct API calls
     for (const cal of calendars) {
@@ -90,6 +91,20 @@ export async function directGoogleCalendarSync(req: Request, res: Response) {
         }));
 
         allGoogleEvents.push(...formattedEvents);
+
+        // Persist events for offline access
+        const userId = parseInt((req.user as any)?.id) || 1;
+        for (const evt of formattedEvents) {
+          await storage.upsertEvent(userId, evt.id, {
+            title: evt.title,
+            startTime: new Date(evt.startTime),
+            endTime: new Date(evt.endTime),
+            description: evt.description,
+            location: evt.location,
+            source: 'google',
+            calendarId: evt.calendarId,
+          });
+        }
 
         if (googleEvents.length > 0) {
           console.log(`✅ Found ${googleEvents.length} Google Calendar events in ${cal.summary}`);
