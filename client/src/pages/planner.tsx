@@ -72,13 +72,23 @@ export default function Planner() {
     // Load audit system
     const loadAuditSystem = async () => {
       try {
-        const auditScript = await fetch('/browser-live-sync-audit.js').then(r => r.text());
+        const response = await fetch('/browser-live-sync-audit.js');
+        if (!response.ok) {
+          console.log('📁 Audit script not found, continuing without it');
+          return;
+        }
+        const auditScript = await response.text();
+        // Check if response is HTML instead of JavaScript
+        if (auditScript.trim().startsWith('<')) {
+          console.log('📁 Audit script returned HTML, skipping');
+          return;
+        }
         const script = document.createElement('script');
         script.textContent = auditScript;
         document.head.appendChild(script);
-        console.log('🔍 Browser audit system loaded');
+        console.log('✅ Browser audit system loaded');
       } catch (error) {
-        console.error('Failed to load audit system:', error);
+        console.log('📁 Audit system not available, continuing without it');
       }
     };
     
