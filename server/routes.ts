@@ -23,7 +23,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const baseURL = process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : 'https://HowreMarkable.replit.app';
   const callbackURL = `${baseURL}/api/auth/google/callback`;
   
-  console.log("🔧 OAuth Configuration:", callbackURL);
+  console.log("🔧 OAuth Configuration - Base URL:", baseURL);
+  console.log("🔧 OAuth Configuration - Callback URL:", callbackURL);
   
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID!,
@@ -147,6 +148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log("🔗 Google OAuth callback received on:", req.get('host'));
     console.log("🔗 Full callback URL:", `${req.protocol}://${req.get('host')}${req.originalUrl}`);
     console.log("🔗 Query params:", req.query);
+    console.log("🔗 Session ID:", req.sessionID);
 
     if (req.query.error) {
       const error = req.query.error as string;
@@ -155,10 +157,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.redirect("/?error=auth_failed&details=" + encodeURIComponent(errorDescription || error));
     }
 
+    // Ensure we have an authorization code
+    if (!req.query.code) {
+      console.error("❌ No authorization code received from Google");
+      return res.redirect("/?error=auth_failed&details=no_authorization_code");
+    }
+
+    console.log("✅ Authorization code received, proceeding with passport authentication");
+
     passport.authenticate("google", { 
       failureRedirect: "/?error=auth_failed",
       session: true
     }, (err, user, info) => {
+      console.log("=== PASSPORT AUTHENTICATION CALLBACK ===");
+      console.log("Error:", err);
+      console.log("User:", user ? { id: user.id, email: user.email } : "NO USER");
+      console.log("Info:", info);
+
       if (err) {
         console.error("Passport authentication error:", err);
         return res.redirect("/?error=auth_failed&details=" + encodeURIComponent(err.message));
@@ -168,16 +183,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.redirect("/?error=auth_failed&details=no_user");
       }
 
-      req.logIn(user, { session: true }, (err) => {
-        if (err) {
-          console.error("Login error:", err);
-          return res.redirect("/?error=auth_failed&details=" + encodeURIComponent(err.message));
+      req.logIn(user, { session: true }, (loginErr) => {
+        if (loginErr) {
+          console.error("Login error:", loginErr);
+          return res.redirect("/?error=auth_failed&details=" + encodeURIComponent(loginErr.message));
         }
         
-        console.log("Google OAuth callback successful - User logged in:", user.email);
-        console.log("Session ID:", req.sessionID);
-        console.log("User in req.user:", !!req.user);
-        console.log("Session passport:", !!req.session.passport);
+        console.log("✅ Google OAuth callback successful - User logged in:", user.email);
+        console.log("✅ Session ID:", req.sessionID);
+        console.log("✅ User in req.user:", !!req.user);
+        console.log("✅ Session passport:", !!req.session.passport);
 
         // Manually ensure session data is set correctly
         req.session.passport = { user: user };
@@ -194,9 +209,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log("✅ Final session check - User:", !!req.user);
           console.log("✅ Final session check - Passport:", !!req.session.passport);
           console.log("✅ Session ID:", req.sessionID);
+          console.log("✅ User tokens:", {
+            hasAccessToken: !!user.accessToken,
+            hasRefreshToken: !!user.refreshToken,
+            accessTokenPreview: user.accessToken ? user.accessToken.substring(0, 20) + "..." : "none"
+          });
           
-          // Redirect immediately after successful save
-          res.redirect("/?connected=true");
+          // Redirect with success parameter
+          res.redirect("/?oauth_success=true&connected=true");
         });
       });
     })(req, res, next);
@@ -321,6 +341,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       callbackUrl: callbackURL,
       manualOAuthUrl: `https://accounts.google.com/oauth2/v2/auth?client_id=${process.env.GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(callbackURL)}&scope=${encodeURIComponent('profile email https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/calendar.readonly')}&response_type=code&access_type=offline&prompt=consent`
     });
+  });
+
+  // Direct OAuth test endpoint  
+  app.get("/api/auth/oauth-test", (req, res) => {
+    console.log("=== DIRECT OAUTH TEST ===");
+    console.log("Session ID:", req.sessionID);
+    console.log("User authenticated:", !!req.user);
+    
+    if (req.user) {
+      console.log("Current user:", req.user);
+      res.json({
+        success: true,
+        user: req.user,
+        sessionId: req.sessionID
+      });
+    } else {
+      const testUrl = `https://accounts.google.com/oauth2/v2/auth?client_id=${process.env.GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(callbackURL)}&scope=${encodeURIComponent('profile email https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/calendar.readonly')}&response_type=code&access_type=offline&prompt=consent`;
+      
+      res.json({
+        success: false,
+        message: "User not authenticated. Try manual OAuth:",
+        oauthUrl: testUrl
+      });
+    }
   });
 
   // Test session persistence endpoint
