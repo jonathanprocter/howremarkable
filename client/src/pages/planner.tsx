@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { CalendarEvent, CalendarDay, ViewMode, CalendarState } from '@/types/calendar';
@@ -782,7 +782,7 @@ export default function Planner() {
   };
 
   // Make debug function available globally
-  React.useEffect(() => {
+  useEffect(() => {
     (window as any).debugColumnWidths = debugColumnWidths;
 
     // Inline detailed debug function

@@ -137,17 +137,18 @@ app.use((req, res, next) => {
   const port = 5000;
   
   // Add error handling before listen
-  server.on('error', (err) => {
+  server.on('error', (err: any) => {
     console.error('Server error:', err);
     if (err.code === 'EADDRINUSE') {
       console.error(`Port ${port} is already in use`);
+      console.log('Please use the Clean Start workflow to kill existing processes');
       process.exit(1);
     }
   });
   
   // Graceful shutdown
-  process.on('SIGTERM', () => {
-    console.log('SIGTERM signal received: closing HTTP server');
+  const gracefulShutdown = () => {
+    console.log('Shutting down gracefully...');
     server.close(() => {
       console.log('HTTP server closed');
       pool.end(() => {
@@ -155,22 +156,24 @@ app.use((req, res, next) => {
         process.exit(0);
       });
     });
-  });
+  };
 
-  process.on('SIGINT', () => {
-    console.log('SIGINT signal received: closing HTTP server');
-    server.close(() => {
-      console.log('HTTP server closed');
-      pool.end(() => {
-        console.log('Database pool closed');
-        process.exit(0);
-      });
-    });
-  });
+  process.on('SIGTERM', gracefulShutdown);
+  process.on('SIGINT', gracefulShutdown);
   
-  server.listen(port, "0.0.0.0", () => {
-    log(`serving on port ${port}`);
-  });
+  // Try to start server with retry logic
+  const startServer = () => {
+    try {
+      server.listen(port, "0.0.0.0", () => {
+        log(`serving on port ${port}`);
+      });
+    } catch (error) {
+      console.error('Failed to start server:', error);
+      process.exit(1);
+    }
+  };
+
+  startServer();
   
   } catch (error) {
     console.error('Server startup failed:', error);
