@@ -234,7 +234,30 @@ export const DailyView = ({
   };
 
   const handleEventNotesChange = (eventId: string, field: 'notes' | 'actionItems', value: string) => {
-    onUpdateEvent(eventId, { [field]: value });
+    // Clear existing timer for this event and field
+    const timerKey = `${eventId}_${field}`;
+    if (noteTimers[timerKey]) {
+      clearTimeout(noteTimers[timerKey]);
+    }
+    
+    // Set new timer with debouncing (500ms delay)
+    const newTimer = setTimeout(() => {
+      console.log(`💾 Saving ${field} for event ${eventId}:`, value);
+      onUpdateEvent(eventId, { [field]: value });
+      
+      // Clean up timer
+      setNoteTimers(prev => {
+        const updated = { ...prev };
+        delete updated[timerKey];
+        return updated;
+      });
+    }, 500);
+    
+    // Store the timer
+    setNoteTimers(prev => ({
+      ...prev,
+      [timerKey]: newTimer
+    }));
   };
 
   const formatEventTime = (event: CalendarEvent) => {
