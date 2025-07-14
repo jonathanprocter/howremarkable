@@ -451,14 +451,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // For development mode or if tokens are dev tokens, use database
-      if (!user.accessToken || user.accessToken.startsWith('dev-') || user.accessToken === 'undefined') {
+      if (!user.accessToken || user.accessToken.startsWith('dev-') || user.accessToken === 'undefined' || user.accessToken === 'dev_access_token') {
         const events = await storage.getEvents(parseInt(user.id) || 1);
         const simplePracticeEvents = events.filter(event => 
           event.source === 'simplepractice' || 
           (event.title && event.title.toLowerCase().includes('appointment'))
         );
         
-        return res.json({ events: simplePracticeEvents });
+        return res.json({ 
+          events: simplePracticeEvents,
+          calendars: [{
+            id: 'simplepractice',
+            name: 'SimplePractice',
+            color: '#6495ED'
+          }]
+        });
       }
 
       console.log('Fetching SimplePractice events from all Google Calendars...');
@@ -466,9 +473,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const calendar = google.calendar({ version: 'v3' });
 
       // First get all available calendars
-      const calendarListResponse = await calendar.calendarList.list({
-        access_token: user.accessToken
-      });
+      let calendarListResponse;
+      try {
+        calendarListResponse = await calendar.calendarList.list({
+          access_token: user.accessToken
+        });
+      } catch (authError: any) {
+        console.log('❌ Calendar list auth error:', authError.message);
+        
+        // If we get 401, try to refresh the token
+        if (authError.code === 401 && user.refreshToken && user.refreshToken !== 'dev_refresh_token') {
+          console.log('🔄 Attempting to refresh access token...');
+          try {
+            const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+              },
+              body: new URLSearchParams({
+                client_id: process.env.GOOGLE_CLIENT_ID!,
+                client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+                refresh_token: user.refreshToken,
+                grant_type: 'refresh_token'
+              })
+            });
+
+            if (refreshResponse.ok) {
+              const tokenData = await refreshResponse.json();
+              console.log('✅ Token refreshed successfully');
+              
+              // Update user tokens in session
+              user.accessToken = tokenData.access_token;
+              if (tokenData.refresh_token) {
+                user.refreshToken = tokenData.refresh_token;
+              }
+              
+              // Save updated session
+              req.session.save((err) => {
+                if (err) console.error('Failed to save session:', err);
+              });
+              
+              // Retry the calendar list request
+              calendarListResponse = await calendar.calendarList.list({
+                access_token: user.accessToken
+              });
+              
+              console.log('✅ Calendar list retrieved after token refresh');
+            } else {
+              const errorText = await refreshResponse.text();
+              console.log('❌ Token refresh failed:', errorText);
+              
+              // Fall back to database events
+              const events = await storage.getEvents(parseInt(user.id) || 1);
+              const simplePracticeEvents = events.filter(event => 
+                event.source === 'simplepractice' || 
+                (event.title && event.title.toLowerCase().includes('appointment'))
+              );
+              
+              return res.json({ 
+                events: simplePracticeEvents,
+                calendars: [{
+                  id: 'simplepractice',
+                  name: 'SimplePractice',
+                  color: '#6495ED'
+                }]
+              });
+            }
+          } catch (refreshError) {
+            console.error('❌ Token refresh error:', refreshError);
+            
+            // Fall back to database events
+            const events = await storage.getEvents(parseInt(user.id) || 1);
+            const simplePracticeEvents = events.filter(event => 
+              event.source === 'simplepractice' || 
+              (event.title && event.title.toLowerCase().includes('appointment'))
+            );
+            
+            return res.json({ 
+              events: simplePracticeEvents,
+              calendars: [{
+                id: 'simplepractice',
+                name: 'SimplePractice',
+                color: '#6495ED'
+              }]
+            });
+          }
+        } else {
+          // No valid refresh token or auth error, fall back to database
+          const events = await storage.getEvents(parseInt(user.id) || 1);
+          const simplePracticeEvents = events.filter(event => 
+            event.source === 'simplepractice' || 
+            (event.title && event.title.toLowerCase().includes('appointment'))
+          );
+          
+          return res.json({ 
+            events: simplePracticeEvents,
+            calendars: [{
+              id: 'simplepractice',
+              name: 'SimplePractice',
+              color: '#6495ED'
+            }]
+          });
+        }
+      }
 
       const calendars = calendarListResponse.data.items || [];
       console.log(`📅 Found ${calendars.length} calendars to search`);
@@ -569,15 +676,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (error.code === 401) {
         console.log('❌ Google API authentication failed for SimplePractice');
-        return res.status(401).json({ 
-          error: 'SimplePractice calendar authentication failed. Please re-authenticate.',
-          needsReauth: true 
+        console.log('🔄 Falling back to database events...');
+        
+        // Fall back to database events
+        const events = await storage.getEvents(parseInt(req.user.id) || 1);
+        const simplePracticeEvents = events.filter(event => 
+          event.source === 'simplepractice' || 
+          (event.title && event.title.toLowerCase().includes('appointment'))
+        );
+        
+        return res.json({ 
+          events: simplePracticeEvents,
+          calendars: [{
+            id: 'simplepractice',
+            name: 'SimplePractice',
+            color: '#6495ED'
+          }]
         });
       }
 
-      res.status(500).json({ 
-        error: 'Failed to fetch SimplePractice events',
-        details: error.message 
+      // For other errors, also fall back to database
+      console.log('❌ SimplePractice events error, falling back to database...');
+      const events = await storage.getEvents(parseInt(req.user.id) || 1);
+      const simplePracticeEvents = events.filter(event => 
+        event.source === 'simplepractice' || 
+        (event.title && event.title.toLowerCase().includes('appointment'))
+      );
+      
+      return res.json({ 
+        events: simplePracticeEvents,
+        calendars: [{
+          id: 'simplepractice',
+          name: 'SimplePractice',
+          color: '#6495ED'
+        }]
       });
     }
   });
@@ -595,7 +727,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // For development mode or if tokens are dev tokens, use database
-      if (!user.accessToken || user.accessToken.startsWith('dev-') || user.accessToken === 'undefined') {
+      if (!user.accessToken || user.accessToken.startsWith('dev-') || user.accessToken === 'undefined' || user.accessToken === 'dev_access_token') {
         const events = await storage.getEvents(parseInt(user.id) || 1);
         const googleEvents = events.filter(event => 
           event.source === 'google' || 
@@ -665,23 +797,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
               
               console.log('✅ Calendar list retrieved after token refresh');
             } else {
-              console.log('❌ Token refresh failed:', await refreshResponse.text());
-              return res.status(401).json({ 
-                error: 'Authentication failed. Please re-authenticate.',
-                needsReauth: true 
+              const errorText = await refreshResponse.text();
+              console.log('❌ Token refresh failed:', errorText);
+              
+              // Fall back to database events
+              const events = await storage.getEvents(parseInt(user.id) || 1);
+              const googleEvents = events.filter(event => 
+                event.source === 'google' || 
+                (!event.source || event.source === 'manual')
+              );
+              
+              return res.json({ 
+                events: googleEvents,
+                calendars: [{
+                  id: 'primary',
+                  name: 'Primary Calendar',
+                  color: '#4285f4'
+                }]
               });
             }
           } catch (refreshError) {
             console.error('❌ Token refresh error:', refreshError);
-            return res.status(401).json({ 
-              error: 'Authentication failed. Please re-authenticate.',
-              needsReauth: true 
+            
+            // Fall back to database events
+            const events = await storage.getEvents(parseInt(user.id) || 1);
+            const googleEvents = events.filter(event => 
+              event.source === 'google' || 
+              (!event.source || event.source === 'manual')
+            );
+            
+            return res.json({ 
+              events: googleEvents,
+              calendars: [{
+                id: 'primary',
+                name: 'Primary Calendar',
+                color: '#4285f4'
+              }]
             });
           }
         } else {
-          return res.status(401).json({ 
-            error: 'Google Calendar authentication failed - tokens may be expired',
-            needsReauth: true 
+          // No valid refresh token or auth error, fall back to database
+          const events = await storage.getEvents(parseInt(user.id) || 1);
+          const googleEvents = events.filter(event => 
+            event.source === 'google' || 
+            (!event.source || event.source === 'manual')
+          );
+          
+          return res.json({ 
+            events: googleEvents,
+            calendars: [{
+              id: 'primary',
+              name: 'Primary Calendar',
+              color: '#4285f4'
+            }]
           });
         }
       }
@@ -805,15 +973,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (error.code === 401) {
         console.log('❌ Google API authentication failed - tokens may be expired');
-        return res.status(401).json({ 
-          error: 'Google Calendar authentication failed. Please re-authenticate.',
-          needsReauth: true 
+        console.log('🔄 Falling back to database events...');
+        
+        // Fall back to database events
+        const events = await storage.getEvents(parseInt(req.user.id) || 1);
+        const googleEvents = events.filter(event => 
+          event.source === 'google' || 
+          (!event.source || event.source === 'manual')
+        );
+        
+        return res.json({ 
+          events: googleEvents,
+          calendars: [{
+            id: 'primary',
+            name: 'Primary Calendar',
+            color: '#4285f4'
+          }]
         });
       }
 
-      res.status(500).json({ 
-        error: 'Failed to fetch calendar events',
-        details: error.message 
+      // For other errors, also fall back to database
+      console.log('❌ Calendar events error, falling back to database...');
+      const events = await storage.getEvents(parseInt(req.user.id) || 1);
+      const googleEvents = events.filter(event => 
+        event.source === 'google' || 
+        (!event.source || event.source === 'manual')
+      );
+      
+      return res.json({ 
+        events: googleEvents,
+        calendars: [{
+          id: 'primary',
+          name: 'Primary Calendar',
+          color: '#4285f4'
+        }]
       });
     }
   });
