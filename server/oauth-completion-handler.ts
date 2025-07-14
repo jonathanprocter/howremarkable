@@ -84,8 +84,12 @@ export async function handleOAuthCallback(req: Request, res: Response) {
       res.redirect('/?auth=success&test=failed');
     }
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ OAuth callback error:', error);
+    const errorDesc = error?.response?.data?.error;
+    if (errorDesc === 'invalid_grant') {
+      return res.redirect('/?error=invalid_grant');
+    }
     res.redirect('/?error=callback_failed');
   }
 }

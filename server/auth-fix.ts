@@ -65,40 +65,10 @@ export function setupAuthenticationFix(app: Express): void {
   app.use('/api/simplepractice', requireAuth);
   app.use('/api/upload', requireAuth);
 
-  // 4. Enhanced OAuth success handler
-  app.get('/api/auth/google/callback', (req, res, next) => {
-    console.log('\n🚀 OAUTH CALLBACK - ENHANCED HANDLER');
-    
-    passport.authenticate('google', { 
-      failureRedirect: '/api/auth/error',
-      session: true 
-    })(req, res, (err) => {
-      if (err) {
-        console.error('❌ OAuth authentication error:', err);
-        return res.redirect('/?error=oauth_failed');
-      }
-      
-      const user = req.user as any;
-      if (!user) {
-        console.error('❌ No user after OAuth');
-        return res.redirect('/?error=no_user');
-      }
-      
-      console.log('✅ OAuth successful for:', user.email);
-      console.log('Session ID:', req.sessionID);
-      
-      // Force session save
-      req.session.save((saveErr) => {
-        if (saveErr) {
-          console.error('❌ Session save error:', saveErr);
-          return res.redirect('/?error=session_save_failed');
-        }
-        
-        console.log('✅ Session saved successfully');
-        res.redirect('/?auth=success');
-      });
-    });
-  });
+  // 4. OAuth callback handler is registered in `routes.ts` to avoid
+  //    duplicate handlers causing conflicts. This placeholder is kept
+  //    for backward compatibility but no longer registers its own
+  //    callback route.
 
   // 5. Session recovery endpoint
   app.get('/api/auth/recover', (req, res) => {
