@@ -39,7 +39,7 @@ export default function Planner() {
   const { user, isLoading: userLoading, refetch: refetchAuth } = useAuthenticatedUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   // Force refresh authentication after OAuth callback
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -70,20 +70,28 @@ export default function Planner() {
     (window as any).refreshAuth = refreshAuth;
     (window as any).queryClient = queryClient;
     (window as any).authHookState = { user, isLoading: userLoading };
-    
+
     // Load the enhancement script
     const loadEnhancementScript = async () => {
-      try {
-        const script = await fetch('/add-sample-notes.js');
-        const scriptText = await script.text();
-        eval(scriptText);
-        console.log('✅ Enhancement script loaded successfully');
-      } catch (error) {
-        console.error('❌ Failed to load enhancement script:', error);
+    try {
+      const response = await fetch('/enhancement-script.js');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    };
+      const scriptText = await response.text();
+      // Check if response is HTML instead of JavaScript
+      if (scriptText.trim().startsWith('<')) {
+        throw new Error('Received HTML instead of JavaScript - script not found');
+      }
+      const script = document.createElement('script');
+      script.textContent = scriptText;
+      document.head.appendChild(script);
+    } catch (error) {
+      console.error('❌ Failed to load enhancement script:', error);
+    }
+  };
     loadEnhancementScript();
-    
+
     // Add session debugging functions
     (window as any).testAuthenticatedSession = async () => {
       console.log('🧪 Testing authenticated session directly...');
@@ -104,7 +112,7 @@ export default function Planner() {
         return false;
       }
     };
-    
+
     (window as any).fixSessionNow = () => {
       console.log('🔧 EMERGENCY SESSION FIX: Forcing authenticated session...');
       SessionFixer.forceUseAuthenticatedSession();
@@ -120,7 +128,7 @@ export default function Planner() {
   // Manual auth fix handler
   const handleManualAuthFix = async () => {
     console.log('🚀 DEPLOYMENT AUTHENTICATION FIX');
-    
+
     try {
       // Try deployment authentication fix first
       console.log('🔄 Trying deployment authentication fix...');
@@ -132,11 +140,11 @@ export default function Planner() {
           'Cache-Control': 'no-cache'
         }
       });
-      
+
       if (deploymentResponse.ok) {
         const data = await deploymentResponse.json();
         console.log('✅ Deployment fix successful:', data);
-        
+
         if (data.success) {
           toast({ title: 'Authentication Restored!', description: `Found ${data.eventsCount} events in database` });
           setTimeout(() => window.location.reload(), 1000);
@@ -147,7 +155,7 @@ export default function Planner() {
           return;
         }
       }
-      
+
       // Fallback to session fix if deployment fix fails
       console.log('🔄 Falling back to session fix...');
       const sessionResponse = await fetch('/api/auth/create-session', {
@@ -158,7 +166,7 @@ export default function Planner() {
           'Cache-Control': 'no-cache'
         }
       });
-      
+
       if (sessionResponse.ok) {
         const data = await sessionResponse.json();
         console.log('✅ Session fix successful:', data);
@@ -167,7 +175,7 @@ export default function Planner() {
       } else {
         throw new Error(`Session fix failed: ${sessionResponse.status}`);
       }
-      
+
     } catch (error) {
       console.error('❌ Authentication fix failed:', error);
       toast({
@@ -184,13 +192,13 @@ export default function Planner() {
   // Google OAuth reconnect handler
   const handleGoogleReconnect = async () => {
     console.log('🔗 Google reconnect requested');
-    
+
     try {
       toast({ title: 'Starting Google OAuth...', description: 'Redirecting to Google...' });
-      
+
       // Use the comprehensive authentication fix system
       const success = await AuthenticationFix.startGoogleOAuth();
-      
+
       if (success) {
         console.log('✅ Google reconnect initiated');
       } else {
@@ -565,13 +573,13 @@ export default function Planner() {
           try {
             const { exportCurrentWeeklyView } = await import('../utils/currentWeeklyExport');
             console.log('✅ Module imported successfully');
-            
+
             const weekStart = currentWeek[0]?.date || new Date();
             const weekEnd = currentWeek[6]?.date || new Date();
-            
+
             console.log(`📅 Week range: ${weekStart.toDateString()} to ${weekEnd.toDateString()}`);
             console.log(`📊 Events count: ${allEvents.length}`);
-            
+
             await exportCurrentWeeklyView(allEvents, weekStart, weekEnd);
             console.log('✅ Current weekly export completed successfully');
           } catch (error) {
@@ -749,21 +757,21 @@ export default function Planner() {
   // Debug function for column width issues
   const debugColumnWidths = () => {
     console.log('=== COLUMN WIDTH DEBUG ===');
-    
+
     const calendarGrid = document.querySelector('.calendar-grid');
     if (!calendarGrid) {
       console.error('Calendar grid not found');
       return;
     }
-    
+
     console.log('Calendar grid:', calendarGrid);
     const gridStyle = window.getComputedStyle(calendarGrid);
     console.log('Grid template columns:', gridStyle.gridTemplateColumns);
     console.log('Grid width:', gridStyle.width);
-    
+
     const headerCells = document.querySelectorAll('.calendar-cell.header-cell');
     console.log(`Found ${headerCells.length} header cells`);
-    
+
     headerCells.forEach((cell, index) => {
       const rect = cell.getBoundingClientRect();
       console.log(`Header Cell ${index} (${cell.textContent}):`, {
@@ -776,27 +784,27 @@ export default function Planner() {
   // Make debug function available globally
   React.useEffect(() => {
     (window as any).debugColumnWidths = debugColumnWidths;
-    
+
     // Inline detailed debug function
     (window as any).debugColumnWidthsDetailed = function() {
       console.log('=== DETAILED COLUMN WIDTH DEBUG ===');
-      
+
       const calendarGrid = document.querySelector('.calendar-grid');
       if (!calendarGrid) {
         console.error('❌ Calendar grid not found');
         return;
       }
-      
+
       console.log('✅ Calendar grid found');
-      
+
       const gridStyle = window.getComputedStyle(calendarGrid);
       console.log('Grid template columns:', gridStyle.gridTemplateColumns);
       console.log('Grid width:', gridStyle.width);
       console.log('Grid display:', gridStyle.display);
-      
+
       const headerCells = document.querySelectorAll('.calendar-cell.header-cell');
       console.log(`📊 Found ${headerCells.length} header cells`);
-      
+
       const measurements = [];
       headerCells.forEach((cell, index) => {
         const rect = cell.getBoundingClientRect();
@@ -810,27 +818,27 @@ export default function Planner() {
         measurements.push(measurement);
         console.log(`Cell ${index} (${cell.textContent.trim()}): ${rect.width.toFixed(2)}px`);
       });
-      
+
       // Calculate statistics for day columns (skip TIME column)
       const dayColumns = measurements.slice(1);
       const dayWidths = dayColumns.map(m => m.width);
       const minWidth = Math.min(...dayWidths);
       const maxWidth = Math.max(...dayWidths);
       const avgWidth = dayWidths.reduce((a, b) => a + b, 0) / dayWidths.length;
-      
+
       console.log('📈 STATISTICS:');
       console.log(`Min width: ${minWidth.toFixed(2)}px`);
-      console.log(`Max width: ${maxWidth.toFixed(2)}px`);
+      console.log(``Max width: ${maxWidth.toFixed(2)}px`);
       console.log(`Average width: ${avgWidth.toFixed(2)}px`);
       console.log(`Width difference: ${(maxWidth - minWidth).toFixed(2)}px`);
-      
+
       const tolerance = 1;
       const isEqual = (maxWidth - minWidth) <= tolerance;
       console.log(`${isEqual ? '✅' : '❌'} Columns are ${isEqual ? 'equal' : 'unequal'}`);
-      
+
       return measurements;
     };
-    
+
     console.log('🎯 Debug functions ready: debugColumnWidths() and debugColumnWidthsDetailed()');
   }, []);
 
@@ -1209,33 +1217,33 @@ export default function Planner() {
                   onClick={async () => {
                     try {
                       console.log('🎯 Adding sample Event Notes and Action Items to upcoming week events...');
-                      
+
                       // Get upcoming week date range
                       const today = new Date();
                       const startOfWeek = new Date(today);
                       startOfWeek.setDate(today.getDate() - today.getDay() + 1); // Next Monday
                       const endOfWeek = new Date(startOfWeek);
                       endOfWeek.setDate(startOfWeek.getDate() + 6); // Next Sunday
-                      
+
                       console.log(`📅 Targeting events for week: ${startOfWeek.toDateString()} to ${endOfWeek.toDateString()}`);
-                      
+
                       // Fetch current events
                       const eventsResponse = await fetch('/api/events');
                       const events = await eventsResponse.json();
-                      
+
                       // Filter events for the upcoming week
                       const upcomingWeekEvents = events.filter((event: any) => {
                         const eventDate = new Date(event.startTime);
                         return eventDate >= startOfWeek && eventDate <= endOfWeek;
                       });
-                      
+
                       console.log(`📊 Found ${upcomingWeekEvents.length} events in upcoming week`);
-                      
+
                       if (upcomingWeekEvents.length === 0) {
                         console.log('⚠️ No events found for upcoming week');
                         return;
                       }
-                      
+
                       // Sample enhancements
                       const sampleEnhancements = [
                         {
@@ -1249,9 +1257,9 @@ export default function Planner() {
                           actionItems: ["Send the Vivian email to let him know about the passing of her brother", "Adjust treatment plan as needed", "Schedule grief counseling resources"]
                         }
                       ];
-                      
+
                       let updatedCount = 0;
-                      
+
                       // Update events with notes and action items
                       for (const enhancement of sampleEnhancements) {
                         const matchingEvents = upcomingWeekEvents.filter((event: any) => {
@@ -1260,10 +1268,10 @@ export default function Planner() {
                             event.title.toLowerCase().includes(keyword.toLowerCase())
                           );
                         });
-                        
+
                         for (const matchingEvent of matchingEvents) {
                           console.log(`📝 Updating event: ${matchingEvent.title} (${new Date(matchingEvent.startTime).toDateString()})`);
-                          
+
                           const updateResponse = await fetch(`/api/events/${matchingEvent.id}`, {
                             method: 'PATCH',
                             headers: { 'Content-Type': 'application/json' },
@@ -1272,7 +1280,7 @@ export default function Planner() {
                               actionItems: enhancement.actionItems
                             })
                           });
-                          
+
                           if (updateResponse.ok) {
                             console.log(`✅ Successfully updated: ${matchingEvent.title}`);
                             updatedCount++;
@@ -1281,7 +1289,7 @@ export default function Planner() {
                           }
                         }
                       }
-                      
+
                       // Add generic notes to remaining events
                       const unenhancedEvents = upcomingWeekEvents.filter((event: any) => {
                         return !sampleEnhancements.some(enhancement => 
@@ -1290,10 +1298,10 @@ export default function Planner() {
                           )
                         );
                       });
-                      
+
                       for (const event of unenhancedEvents.slice(0, 3)) {
                         console.log(`📝 Adding generic notes to: ${event.title}`);
-                        
+
                         const updateResponse = await fetch(`/api/events/${event.id}`, {
                           method: 'PATCH',
                           headers: { 'Content-Type': 'application/json' },
@@ -1302,23 +1310,23 @@ export default function Planner() {
                             actionItems: ["Follow up on session outcomes", "Update treatment plan as needed"]
                           })
                         });
-                        
+
                         if (updateResponse.ok) {
                           console.log(`✅ Successfully added generic notes to: ${event.title}`);
                           updatedCount++;
                         }
                       }
-                      
+
                       console.log(`🎯 Successfully enhanced ${updatedCount} events with notes and action items`);
-                      
+
                       // Refresh events to show updated data
                       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
-                      
+
                       toast({
                         title: "Events Enhanced",
                         description: `Added notes and action items to ${updatedCount} upcoming week events`,
                       });
-                      
+
                     } catch (error) {
                       console.error('❌ Error enhancing events:', error);
                       toast({
@@ -1539,7 +1547,7 @@ export default function Planner() {
                       console.log('Google Calendar Data:', googleCalendarData);
                       console.log('Google Calendar Error:', googleCalendarError);
                       console.log('Access token status:', document.cookie.includes('access_token'));
-                      
+
                       // Try to check authentication status
                       fetch('/api/auth/status')
                         .then(res => res.json())
@@ -1552,11 +1560,11 @@ export default function Planner() {
                             debug: data.debug,
                             recommendations: data.recommendations
                           });
-                          
+
                           const status = data.isAuthenticated 
                             ? (data.hasTokens ? 'Connected with tokens' : 'Connected but missing tokens')
                             : 'Not connected';
-                          
+
                           toast({
                             title: 'Google Calendar Auth Status',
                             description: `${status} - ${data.user?.email || 'No user'}`,
