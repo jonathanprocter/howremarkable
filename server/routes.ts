@@ -17,6 +17,7 @@ import {
   refreshTokens 
 } from "./clean-auth";
 import { createDirectGoogleAuth } from "./direct-google-auth";
+import { FreshGoogleAuth } from "./fresh-google-auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
@@ -805,6 +806,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         error: 'Force sync failed',
         message: error.message
+      });
+    }
+  });
+
+  // FRESH GOOGLE AUTH ROUTES - New working OAuth flow
+  app.get("/api/auth/google/fresh", (req, res) => {
+    console.log('🚀 Starting fresh Google OAuth flow...');
+    const authUrl = FreshGoogleAuth.generateAuthUrl();
+    console.log('🔗 Redirecting to Google OAuth:', authUrl);
+    res.redirect(authUrl);
+  });
+  
+  app.get("/api/auth/google/fresh-callback", async (req, res) => {
+    console.log('📝 Fresh Google OAuth callback received');
+    const { code } = req.query;
+    
+    if (!code) {
+      console.error('❌ No authorization code received');
+      return res.status(400).json({ error: 'No authorization code received' });
+    }
+    
+    const success = await FreshGoogleAuth.handleCallback(code as string, req);
+    
+    if (success) {
+      console.log('✅ Fresh Google authentication successful!');
+      res.redirect('/?google_auth=success');
+    } else {
+      console.error('❌ Fresh Google authentication failed');
+      res.redirect('/?google_auth=error');
+    }
+  });
+  
+  // Test fresh Google Calendar connection
+  app.get("/api/auth/google/fresh-test", async (req, res) => {
+    try {
+      const startDate = new Date('2025-01-01').toISOString();
+      const endDate = new Date('2025-12-31').toISOString();
+      
+      const events = await FreshGoogleAuth.fetchCalendarEvents(req, startDate, endDate);
+      
+      res.json({
+        success: true,
+        message: `Fresh Google Calendar connected successfully!`,
+        eventCount: events.length,
+        events: events.slice(0, 5) // Show first 5 events as sample
+      });
+    } catch (error) {
+      console.error('❌ Fresh Google test failed:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
       });
     }
   });

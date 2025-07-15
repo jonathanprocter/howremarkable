@@ -37,6 +37,7 @@ import { AuthenticationFix } from '../utils/authenticationFix';
 import { SessionFixer } from '../utils/sessionFixer';
 import { weeklyPackageAuditor } from '@/utils/weeklyPackageAudit';
 import { DateRangeInfo } from '@/components/DateRangeInfo';
+import { FreshGoogleAuth } from '@/components/auth/FreshGoogleAuth';
 
 export default function Planner() {
   const { user, isLoading: userLoading, refetch: refetchAuth } = useAuthenticatedUser();
@@ -1124,6 +1125,9 @@ export default function Planner() {
 
           {/* Sidebar */}
           <div className="space-y-4">
+            {/* Fresh Google Calendar Authentication */}
+            <FreshGoogleAuth />
+            
             {/* Google Calendar Authentication */}
             <ManualGoogleAuth />
             
