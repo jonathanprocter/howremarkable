@@ -836,24 +836,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.redirect(authUrl);
   });
 
-  app.get("/api/auth/google/fresh-callback", async (req, res) => {
-    console.log('📝 Fresh Google OAuth callback received');
-    const { code } = req.query;
-
-    if (!code) {
-      console.error('❌ No authorization code received');
-      return res.status(400).json({ error: 'No authorization code received' });
-    }
-
-    const success = await FreshGoogleAuth.handleCallback(code as string, req);
-
-    if (success) {
-      console.log('✅ Fresh Google authentication successful!');
-      res.redirect('/?google_auth=success');
-    } else {
-      console.error('❌ Fresh Google authentication failed');
-      res.redirect('/?google_auth=error');
-    }
+  app.get("/api/auth/google/callback", async (req, res) => {
+    console.log('📝 Google OAuth callback received');
+    const { handleOAuthCallback } = await import('./oauth-completion-handler');
+    await handleOAuthCallback(req, res);
   });
 
   // Test fresh Google Calendar connection
