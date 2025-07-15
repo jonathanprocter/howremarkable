@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { GoogleCalendarIntegration } from '@/components/sidebar/GoogleCalendarIntegration';
-import { Loader2, Calendar, FileText, Download, Upload, Eye, Settings } from 'lucide-react';
+import { Loader2, Calendar, FileText, Download, Upload, Eye, Settings, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
 import { LoadingState } from '@/components/common/LoadingState';
@@ -36,6 +36,7 @@ import { AuthenticationFix } from '../utils/authenticationFix';
 import { SessionFixer } from '../utils/sessionFixer';
 import { weeklyPackageAuditor } from '@/utils/weeklyPackageAudit';
 import { DateRangeInfo } from '@/components/DateRangeInfo';
+import { GoogleAuthFix } from '@/components/GoogleAuthFix';
 
 export default function Planner() {
   const { user, isLoading: userLoading, refetch: refetchAuth } = useAuthenticatedUser();
@@ -1051,6 +1052,11 @@ export default function Planner() {
               : selectedDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
             }
           </div>
+        </div>
+
+        {/* Google Authentication Fix */}
+        <div className="mb-6">
+          <GoogleAuthFix />
         </div>
 
         {/* Main Content */}

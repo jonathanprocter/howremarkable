@@ -77,7 +77,9 @@ export class GoogleCalendarAuth {
       return null;
     }
     
-    // Test current token
+    console.log('🔍 Testing Google access token...');
+    
+    // Test current token first
     try {
       const testResponse = await fetch('https://www.googleapis.com/oauth2/v1/tokeninfo', {
         method: 'GET',
@@ -87,21 +89,44 @@ export class GoogleCalendarAuth {
       });
       
       if (testResponse.ok) {
+        const tokenInfo = await testResponse.json();
         console.log('✅ Current access token is valid');
+        console.log('Token scope:', tokenInfo.scope);
+        console.log('Token expiry:', tokenInfo.expires_in);
         return accessToken;
+      } else {
+        console.log(`Token validation failed: ${testResponse.status} ${testResponse.statusText}`);
       }
     } catch (error) {
-      console.log('Current token validation failed, attempting refresh...');
+      console.log('Current token validation failed:', error.message);
     }
     
-    // Try to refresh token
-    const newTokens = await this.refreshAccessToken(refreshToken);
-    if (newTokens) {
-      console.log('✅ Token refreshed successfully');
-      return newTokens.access_token;
+    // Don't attempt refresh if the token is fresh from the playground
+    // Instead, try to use it directly for API calls
+    console.log('⚠️ Token validation failed, but trying direct API call...');
+    
+    // Test direct calendar API call
+    try {
+      const calendarTestResponse = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=1', {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (calendarTestResponse.ok) {
+        console.log('✅ Direct Calendar API call successful - token is working');
+        return accessToken;
+      } else {
+        console.log(`Direct Calendar API call failed: ${calendarTestResponse.status}`);
+        const errorData = await calendarTestResponse.text();
+        console.log('Error details:', errorData);
+      }
+    } catch (directError) {
+      console.log('Direct API call error:', directError.message);
     }
     
-    console.log('❌ Token refresh failed');
+    console.log('❌ Token validation completely failed');
     return null;
   }
   
