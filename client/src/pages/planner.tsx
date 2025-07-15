@@ -30,7 +30,7 @@ import { export100PercentPixelPerfectPDF } from '@/utils/pixelPerfectPDFExport';
 import { exportEnhancedWeeklyPDF } from '@/utils/enhancedWeeklyPDFExport';
 import { exportEnhancedDailyPDF } from '@/utils/enhancedDailyPDFExport';
 import { exportEnhancedWeeklyPackage } from '@/utils/enhancedWeeklyPackageExport';
-import { GoogleOAuthButton } from '../components/DevLoginButton';
+import { CleanAuthButton } from '../components/auth/CleanAuthButton';
 import { autonomousAuthAudit } from '../utils/autonomousAuthAudit';
 import { AuthenticationFix } from '../utils/authenticationFix';
 import { SessionFixer } from '../utils/sessionFixer';
@@ -180,166 +180,16 @@ export default function Planner() {
     // console.log('🔧 Autonomous authentication checking disabled - use manual fix button only');
   }, []);
 
-  // Manual auth fix handler
-  const handleManualAuthFix = async () => {
-    console.log('🚀 COMPREHENSIVE AUTHENTICATION FIX');
-
-    try {
-      // Try comprehensive authentication fix first
-      console.log('🔄 Trying comprehensive authentication fix...');
-      const comprehensiveResponse = await fetch('/api/auth/comprehensive-fix', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache'
-        }
-      });
-
-      if (comprehensiveResponse.ok) {
-        const data = await comprehensiveResponse.json();
-        console.log('✅ Comprehensive fix successful:', data);
-
-        if (data.success) {
-          toast({ title: 'Authentication Fixed!', description: `Session restored for ${data.user.email}` });
-          setTimeout(() => window.location.reload(), 1000);
-          return;
-        }
-      }
-
-      // Try deployment authentication fix as fallback
-      console.log('🔄 Trying deployment authentication fix...');
-      const deploymentResponse = await fetch('/api/auth/deployment-fix', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache'
-        }
-      });
-
-      if (deploymentResponse.ok) {
-        const data = await deploymentResponse.json();
-        console.log('✅ Deployment fix successful:', data);
-
-        if (data.success) {
-          toast({ title: 'Authentication Restored!', description: `Found ${data.eventsCount} events in database` });
-          setTimeout(() => window.location.reload(), 1000);
-          return;
-        } else if (data.redirectTo) {
-          toast({ title: 'Redirecting to Google OAuth...', description: 'No events found, please authenticate' });
-          setTimeout(() => window.location.href = data.redirectTo, 1000);
-          return;
-        }
-      }
-
-      // Fallback to session fix if deployment fix fails
-      console.log('🔄 Falling back to session fix...');
-      const sessionResponse = await fetch('/api/auth/create-session', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache'
-        }
-      });
-
-      if (sessionResponse.ok) {
-        const data = await sessionResponse.json();
-        console.log('✅ Session fix successful:', data);
-        toast({ title: 'Authentication Fixed!', description: 'Session synchronized - reloading...' });
-        setTimeout(() => window.location.reload(), 1000);
-      } else {
-        throw new Error(`Session fix failed: ${sessionResponse.status}`);
-      }
-
-    } catch (error) {
-      console.error('❌ Authentication fix failed:', error);
-      toast({
-        title: 'Authentication fix failed',
-        description: 'Redirecting to Google OAuth as final fallback...',
-        variant: 'destructive'
-      });
-      setTimeout(() => {
-        window.location.href = '/api/auth/google';
-      }, 2000);
-    }
+  // Simple Google OAuth handler
+  const handleGoogleOAuth = () => {
+    console.log('🔗 Starting Google OAuth flow');
+    window.location.href = '/api/auth/google';
   };
 
-  // Token refresh handler for 403 errors
-  const handleTokenRefresh = async () => {
-    console.log('🔄 TOKEN REFRESH FOR 403 ERROR');
 
-    try {
-      toast({ title: 'Refreshing tokens...', description: 'Attempting to refresh expired tokens...' });
-
-      const response = await fetch('/api/auth/token-refresh', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('✅ Token refresh successful:', data);
-        toast({ title: 'Tokens Refreshed!', description: 'Authentication tokens updated successfully' });
-        setTimeout(() => window.location.reload(), 1000);
-      } else {
-        const errorData = await response.json();
-        console.log('❌ Token refresh failed:', errorData);
-        
-        if (errorData.needsAuth) {
-          toast({ title: 'OAuth required', description: 'Redirecting to Google OAuth...' });
-          setTimeout(() => window.location.href = errorData.redirectTo, 1000);
-        } else {
-          throw new Error(errorData.error || 'Token refresh failed');
-        }
-      }
-    } catch (error) {
-      console.error('❌ Token refresh error:', error);
-      toast({
-        title: 'Token refresh failed',
-        description: 'Redirecting to Google OAuth as fallback...',
-        variant: 'destructive'
-      });
-      setTimeout(() => {
-        window.location.href = '/api/auth/google';
-      }, 2000);
-    }
-  };
 
   // Google OAuth reconnect handler
-  const handleGoogleReconnect = async () => {
-    console.log('🔗 Google reconnect requested');
 
-    try {
-      toast({ title: 'Starting Google OAuth...', description: 'Redirecting to Google...' });
-
-      // Use the comprehensive authentication fix system
-      const success = await AuthenticationFix.startGoogleOAuth();
-
-      if (success) {
-        console.log('✅ Google reconnect initiated');
-      } else {
-        console.log('❌ Google reconnect failed');
-        toast({
-          title: 'Google reconnect failed',
-          description: 'Please check your internet connection and try again',
-          variant: 'destructive'
-        });
-      }
-    } catch (error) {
-      console.error('❌ Google reconnect error:', error);
-      toast({
-        title: 'Google reconnect error',
-        description: 'Please try refreshing the page',
-        variant: 'destructive'
-      });
-    }
-  };
 
   // State management
   const [viewMode, setViewMode] = useState<ViewMode>('weekly');
@@ -1077,37 +927,18 @@ export default function Planner() {
 
   const isLoading = eventsLoading || isLoadingGoogleEvents || isLoadingSimplePracticeEvents;
 
-  // Always show authentication UI with current status
+  // Clean authentication UI with Google OAuth
   const authenticationUI = (
-    <div className="mb-4 p-6 bg-red-50 border-2 border-red-500 rounded-lg">
+    <div className="mb-4 p-6 bg-blue-50 border-2 border-blue-500 rounded-lg">
       <div className="text-center space-y-4">
         <div>
-          <h3 className="font-bold text-red-800 text-2xl">🚨 AUTHENTICATION SYSTEM</h3>
-          <p className="text-red-700 text-lg mt-2">
-            User: {user ? `✅ ${user.name}` : '❌ Not authenticated'} | 
-            Backend: ✅ 1518 events loaded | 
-            Status: {userLoading ? 'Loading...' : 'Ready'}
+          <h3 className="font-bold text-blue-800 text-2xl">🔐 Authentication Required</h3>
+          <p className="text-blue-700 text-lg mt-2">
+            Please sign in with your Google account to access your calendar
           </p>
         </div>
-        <div className="flex justify-center gap-4">
-          <button
-            onClick={handleManualAuthFix}
-            className="bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-8 rounded-lg transition-colors text-xl animate-pulse"
-          >
-            🔧 FIX AUTHENTICATION NOW
-          </button>
-          <button
-            onClick={handleTokenRefresh}
-            className="bg-orange-600 hover:bg-orange-700 text-white font-bold py-4 px-8 rounded-lg transition-colors text-xl"
-          >
-            🔄 REFRESH TOKENS (403 Fix)
-          </button>
-          <button
-            onClick={handleGoogleReconnect}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-lg transition-colors text-xl"
-          >
-            🔗 GOOGLE RECONNECT
-          </button>
+        <div className="flex justify-center">
+          <CleanAuthButton />
         </div>
       </div>
     </div>
@@ -1155,7 +986,7 @@ export default function Planner() {
           </div>
 
           <div className="flex items-center gap-2">
-            {!user && <GoogleOAuthButton />}
+            {!user && <CleanAuthButton />}
             {user && (
               <Badge variant="outline" className="text-sm bg-green-50">
                 Logged in as {user.name}
@@ -1163,22 +994,12 @@ export default function Planner() {
             )}
             {user && (
               <Button
-                onClick={handleTokenRefresh}
-                variant="outline"
-                size="sm"
-                className="bg-orange-50 hover:bg-orange-100 text-orange-700 border-orange-200"
-              >
-                🔄 Fix 403 Error
-              </Button>
-            )}
-            {user && (
-              <Button
-                onClick={handleManualAuthFix}
+                onClick={() => window.location.href = '/api/auth/logout'}
                 variant="outline"
                 size="sm"
                 className="bg-red-50 hover:bg-red-100 text-red-700 border-red-200"
               >
-                🔧 Auth Fix
+                🔓 Logout
               </Button>
             )}
             <Button
@@ -1544,7 +1365,6 @@ export default function Planner() {
                       </div>
                     </>
                   )}
-                  <DevLoginButton />
                 </div>
               </CardContent>
             </Card>
