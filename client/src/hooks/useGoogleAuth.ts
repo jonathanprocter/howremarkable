@@ -85,6 +85,10 @@ export const useGoogleAuth = () => {
   }, []);
 
   const connectGoogle = () => {
+    console.log('🔗 Initiating Google OAuth connection...');
+    // Clear any existing auth state
+    localStorage.removeItem('google_auth_recent');
+    // Redirect to OAuth
     window.location.href = '/api/auth/google';
   };
 

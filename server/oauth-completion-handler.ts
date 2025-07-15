@@ -42,17 +42,47 @@ export async function handleOAuthCallback(req: Request, res: Response) {
     req.session.google_token_type = tokens.token_type || 'Bearer';
     req.session.google_expires_in = tokens.expiry_date;
     
+    // Get user info from Google
+    let userEmail = 'jonathan.procter@gmail.com';
+    let userName = 'Jonathan Procter';
+    
+    try {
+      const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+        headers: {
+          'Authorization': `Bearer ${tokens.access_token}`
+        }
+      });
+      
+      if (userInfoResponse.ok) {
+        const userInfo = await userInfoResponse.json();
+        userEmail = userInfo.email || userEmail;
+        userName = userInfo.name || userName;
+        console.log('✅ Retrieved user info:', { email: userEmail, name: userName });
+      }
+    } catch (error) {
+      console.warn('⚠️ Could not fetch user info, using defaults');
+    }
+    
     // Create authenticated user
     const userId = 1; // Default user ID
     req.session.userId = userId;
     req.session.isAuthenticated = true;
-    req.session.passport = { user: userId };
+    req.session.userEmail = userEmail;
+    req.session.passport = { 
+      user: {
+        id: userId,
+        email: userEmail,
+        name: userName,
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token
+      }
+    };
     
     req.user = {
       id: userId,
-      email: 'jonathan.procter@gmail.com',
-      name: 'Jonathan Procter',
-      displayName: 'Jonathan Procter',
+      email: userEmail,
+      name: userName,
+      displayName: userName,
       accessToken: tokens.access_token,
       refreshToken: tokens.refresh_token
     };
