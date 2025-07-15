@@ -48,7 +48,6 @@ export default function Planner() {
     
     // Check for successful authentication
     if (urlParams.get('auth') === 'success') {
-      console.log('✅ OAuth success detected, refreshing authentication...');
       setTimeout(() => {
         refetchAuth();
         // Clear the URL parameters
@@ -58,7 +57,6 @@ export default function Planner() {
     
     // Check for failed authentication
     if (urlParams.get('error') === 'oauth_failed') {
-      console.log('❌ OAuth failed');
       toast({
         title: "Authentication Failed",
         description: "Google OAuth authentication failed. Please try again.",
@@ -70,7 +68,6 @@ export default function Planner() {
     
     // Also check for Google OAuth callback parameters
     if (urlParams.has('code') && urlParams.has('scope')) {
-      console.log('🔄 OAuth callback detected, refreshing authentication...');
       setTimeout(() => {
         refetchAuth();
       }, 1000);
@@ -79,15 +76,13 @@ export default function Planner() {
 
   // Add authentication refresh function for debugging
   const refreshAuth = async () => {
-    console.log('🔄 Refreshing authentication...');
     try {
       await refetchAuth();
       await queryClient.invalidateQueries({ queryKey: ['/api/events'] });
       await queryClient.invalidateQueries({ queryKey: ['/api/simplepractice/events'] });
       await queryClient.invalidateQueries({ queryKey: ['/api/calendar/events'] });
-      console.log('✅ Authentication refreshed');
     } catch (error) {
-      console.error('❌ Auth refresh failed:', error);
+      // Auth refresh failed
     }
   };
 
@@ -98,13 +93,13 @@ export default function Planner() {
       try {
         const response = await fetch('/browser-live-sync-audit.js');
         if (!response.ok) {
-          console.log('📁 Audit script not found, continuing without it');
+          // Audit script not found, continuing without it
           return;
         }
         const auditScript = await response.text();
         // Check if response is HTML instead of JavaScript
         if (auditScript.trim().startsWith('<')) {
-          console.log('📁 Audit script returned HTML, skipping');
+          // Audit script returned HTML, skipping
           return;
         }
         const script = document.createElement('script');
@@ -329,8 +324,7 @@ export default function Planner() {
 
           return response.json();
         } catch (error) {
-          console.error('❌ SimplePractice events fetch failed:', error);
-          // Return empty structure instead of throwing
+          // SimplePractice events fetch failed - return empty structure
           return { events: [], calendars: [] };
         }
     },
@@ -1283,7 +1277,7 @@ export default function Planner() {
                   <Button 
                     variant="outline" 
                     onClick={() => {
-                      console.log('🔄 FORCING GOOGLE RECONNECT - FIXING AUTHENTICATION');
+                      // Fixing Google authentication
                       toast({
                         title: "Redirecting to Google",
                         description: "Please complete the authentication flow",
@@ -1299,7 +1293,7 @@ export default function Planner() {
                   <Button 
                     variant="outline" 
                     onClick={async () => {
-                      console.log('🔄 FORCING GOOGLE CALENDAR SYNC');
+                      // Forcing Google Calendar sync
                       try {
                         toast({
                           title: "Syncing Google Calendar",
@@ -1318,7 +1312,7 @@ export default function Planner() {
 
                         if (response.ok) {
                           const result = await response.json();
-                          console.log('✅ Google Calendar sync successful:', result);
+                          // Google Calendar sync successful
                           
                           // Force refresh all queries
                           await queryClient.invalidateQueries();
@@ -1331,7 +1325,7 @@ export default function Planner() {
                           });
                         } else {
                           const error = await response.json();
-                          console.error('❌ Google Calendar sync failed:', error);
+                          // Google Calendar sync failed
                           
                           if (error.needsAuth) {
                             toast({

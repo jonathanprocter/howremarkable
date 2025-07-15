@@ -57,7 +57,7 @@ export const useAuthenticatedUser = () => {
             }
           }
         } catch (error) {
-          console.error('Auth deployment fix failed:', error);
+          // Silently handle deployment fix failure
         }
       }
 
@@ -66,7 +66,6 @@ export const useAuthenticatedUser = () => {
     retry: (failureCount, error) => {
       // Retry up to 3 times
       if (failureCount < 3) {
-        console.log(`🔄 Auth query retry ${failureCount + 1}/3`);
         return true;
       }
       return false;
