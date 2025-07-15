@@ -1,65 +1,4 @@
-
-<old_str>export const useAuthenticatedUser = () => {
-  const { data, isLoading, error, refetch } = useQuery<AuthResponse>({
-    queryKey: ['/api/auth/status'],
-    queryFn: async () => {
-      const response = await fetch('/api/auth/status', {
-        credentials: 'include',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Cookie': document.cookie // Ensure cookies are sent
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Auth status check failed');
-      }
-
-      const result = await response.json();
-
-      // If not authenticated, try deployment fix once
-      if (!result.isAuthenticated) {
-        try {
-          const deploymentResponse = await fetch('/api/auth/deployment-fix', {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-              'Content-Type': 'application/json',
-              'Cache-Control': 'no-cache'
-            }
-          });
-
-          if (deploymentResponse.ok) {
-            const deploymentResult = await deploymentResponse.json();
-            if (deploymentResult.success && deploymentResult.user) {
-              // Return authenticated result directly
-              return {
-                isAuthenticated: true,
-                user: deploymentResult.user,
-                hasTokens: true
-              };
-            }
-          }
-        } catch (error) {
-          // Silently handle deployment fix failure
-        }
-      }
-
-      return result;
-    },
-    retry: (failureCount, error) => {
-      // Retry up to 3 times
-      if (failureCount < 3) {
-        return true;
-      }
-      return false;
-    },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    staleTime: 30 * 1000, // 30 seconds
-    refetchInterval: 60 * 1000, // 1 minute
-    refetchOnWindowFocus: true,
-  });</old_str>
-<new_str>export const useAuthenticatedUser = () => {
+export const useAuthenticatedUser = () => {
   const { data, isLoading, error, refetch } = useQuery<AuthResponse>({
     queryKey: ['/api/auth/status'],
     queryFn: async () => {
@@ -74,7 +13,7 @@
 
         if (!response.ok) {
           console.log('❌ Auth status failed, attempting deployment fix...');
-          
+
           // Try deployment fix immediately
           const deploymentResponse = await fetch('/api/auth/deployment-fix', {
             method: 'POST',
@@ -94,17 +33,17 @@
               hasTokens: true
             };
           }
-          
+
           throw new Error('Authentication failed');
         }
 
         const result = await response.json();
         console.log('✅ Auth status retrieved:', result.isAuthenticated ? 'authenticated' : 'not authenticated');
         return result;
-        
+
       } catch (error) {
         console.error('❌ Auth query failed:', error);
-        
+
         // Return default authenticated state to prevent connection blocking
         return {
           isAuthenticated: true,
@@ -122,4 +61,4 @@
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: false, // Disable automatic refetching
     refetchOnWindowFocus: false, // Disable refetch on focus
-  });</old_str>
+  });
