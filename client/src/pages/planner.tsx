@@ -105,9 +105,9 @@ export default function Planner() {
         const script = document.createElement('script');
         script.textContent = auditScript;
         document.head.appendChild(script);
-        console.log('✅ Browser audit system loaded');
+        // Browser audit system loaded
       } catch (error) {
-        console.log('📁 Audit system not available, continuing without it');
+        // Audit system not available, continuing without it
       }
     };
     
@@ -117,7 +117,7 @@ export default function Planner() {
   // Add global error handler for unhandled promise rejections
   useEffect(() => {
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      console.error('Unhandled promise rejection:', event.reason);
+      // Unhandled promise rejection handled silently
       // Prevent the default behavior
       event.preventDefault();
       
@@ -168,7 +168,6 @@ export default function Planner() {
 
     // Add session debugging functions
     (window as any).testAuthenticatedSession = async () => {
-      console.log('🧪 Testing authenticated session directly...');
       try {
         const response = await fetch('/api/auth/status', {
           method: 'GET',
@@ -179,16 +178,13 @@ export default function Planner() {
           }
         });
         const data = await response.json();
-        console.log('🔍 Authenticated session test result:', data);
         return data.isAuthenticated;
       } catch (error) {
-        console.error('❌ Authenticated session test failed:', error);
         return false;
       }
     };
 
     (window as any).fixSessionNow = () => {
-      console.log('🔧 EMERGENCY SESSION FIX: Forcing authenticated session...');
       SessionFixer.forceUseAuthenticatedSession();
     };
   }, [refreshAuth, queryClient, user, userLoading]);
@@ -201,7 +197,6 @@ export default function Planner() {
 
   // Simple Google OAuth handler
   const handleGoogleOAuth = () => {
-    console.log('🔗 Starting Google OAuth flow');
     window.location.href = '/api/auth/google';
   };
 
@@ -432,12 +427,7 @@ export default function Planner() {
   });
 
   // Debug logging for event sources and errors
-  console.log('📊 Event breakdown:', {
-    total: allEvents.length,
-    simplepractice: allEvents.filter(e => e.source === 'simplepractice').length,
-    google: allEvents.filter(e => e.source === 'google').length,
-    manual: allEvents.filter(e => e.source === 'manual' || !e.source).length
-  });
+  // Event breakdown calculated
 
   // Debug: Show date ranges of your appointments
   if (allEvents.length > 0) {
@@ -445,87 +435,47 @@ export default function Planner() {
     const earliestDate = eventDates[0];
     const latestDate = eventDates[eventDates.length - 1];
 
-    console.log('📅 Your appointments date range:', {
-      earliest: earliestDate?.toDateString(),
-      latest: latestDate?.toDateString(),
-      sampleDates: eventDates.slice(0, 5).map(d => d.toDateString()),
-      currentlyViewing: selectedDate.toDateString()
-    });
+    // Appointment date range calculated
   }
 
   // Log SimplePractice status for debugging
-  console.log('🔍 SimplePractice Status:', {
-    isLoading: isLoadingSimplePracticeEvents,
-    hasError: !!simplePracticeError,
-    error: simplePracticeError?.message,
-    eventsFound: simplePracticeEvents.length,
-    calendarsFound: simplePracticeCalendars.length
-  });
+  // SimplePractice status checked
 
   // Make test functions available globally for debugging (after allEvents is defined)
   useEffect(() => {
     // Create comprehensive test function with detailed logging
     (window as any).testDailyExport = async () => {
       try {
-        console.log('🧪 === DAILY PDF EXPORT TEST STARTING ===');
-        console.log('📊 Test environment:', {
-          selectedDate: selectedDate.toDateString(),
-          allEventsCount: allEvents.length,
-          eventsForSelectedDate: allEvents.filter(e => {
-            const eventDate = new Date(e.startTime);
-            return eventDate.toDateString() === selectedDate.toDateString();
-          }).length
-        });
-
         // Test if the function exists
         if (typeof exportDailyToPDF === 'function') {
-          console.log('✅ exportDailyToPDF function is available');
-
           // Call the function
           await exportDailyToPDF(selectedDate, allEvents);
-          console.log('✅ Test daily export completed successfully');
-        } else {
-          console.error('❌ exportDailyToPDF function not found');
-          console.log('Available imports:', { exportDailyToPDF: typeof exportDailyToPDF });
         }
       } catch (error) {
-        console.error('❌ Test daily export failed:', error);
-        console.error('Error details:', {
-          message: error.message,
-          stack: error.stack?.split('\n')?.slice(0, 5)
-        });
+        // Test daily export failed
       }
     };
 
     (window as any).testDynamicDailyExport = async () => {
       try {
-        console.log('🧪 Testing dynamic daily PDF export...');
         await exportDynamicDailyPlannerPDF(selectedDate, allEvents);
-        console.log('✅ Test dynamic daily export completed');
       } catch (error) {
-        console.error('❌ Test dynamic daily export failed:', error);
+        // Test dynamic daily export failed
       }
     };
 
     // Test button click handler for debugging
     (window as any).testButtonClick = async () => {
       try {
-        console.log('🧪 Testing button click handler...');
-        console.log('🚀 Starting PDF export: daily');
-        console.log('📅 Selected date:', selectedDate.toDateString());
-        console.log('📊 Total events:', allEvents.length);
-
         await exportDailyToPDF(selectedDate, allEvents);
-        console.log('✅ Button click test completed');
       } catch (error) {
-        console.error('❌ Button click test failed:', error);
+        // Button click test failed
       }
     };
 
     // Add simple PDF test function
     (window as any).testSimplePDF = async () => {
       try {
-        console.log('🧪 Testing Simple PDF Export');
         const { exportSimplePDF } = await import('../utils/simplePDFExport');
 
         // Filter events for selected date
@@ -534,37 +484,23 @@ export default function Planner() {
           return eventDate.toDateString() === selectedDate.toDateString();
         });
 
-        console.log('📊 Events for selected date:', todayEvents.length);
-
         await exportSimplePDF(selectedDate, todayEvents);
-        console.log('✅ Simple PDF test completed successfully');
       } catch (error) {
-        console.error('❌ Simple PDF test failed:', error);
+        // Simple PDF test failed
       }
     };
 
     // Add direct PDF export test
     (window as any).testDirectPDF = async () => {
       try {
-        console.log('🧪 Testing Direct Daily PDF Export');
-        console.log('📅 Selected date:', selectedDate.toDateString());
-        console.log('📊 All events:', allEvents.length);
-
         // Call the actual export function directly
         await handleExportPDF('daily');
-        console.log('✅ Direct PDF test completed successfully');
       } catch (error) {
-        console.error('❌ Direct PDF test failed:', error);
+        // Direct PDF test failed
       }
     };
 
-    console.log('🎯 Test functions registered:', {
-      testDailyExport: typeof (window as any).testDailyExport,
-      testDynamicDailyExport: typeof (window as any).testDynamicDailyExport,
-      testButtonClick: typeof (window as any).testButtonClick,
-      testSimplePDF: typeof (window as any).testSimplePDF,
-      testDirectPDF: typeof (window as any).testDirectPDF
-    });
+    // Test functions registered
 
     // Automatic testing disabled to prevent export loops
     // Test functions available via window.testSimplePDF(), window.testDirectPDF(), etc.
@@ -940,7 +876,7 @@ export default function Planner() {
       return measurements;
     };
 
-    console.log('🎯 Debug functions ready: debugColumnWidths() and debugColumnWidthsDetailed()');
+    // Debug functions ready
   }, []);
 
   const isLoading = eventsLoading || isLoadingGoogleEvents || isLoadingSimplePracticeEvents;

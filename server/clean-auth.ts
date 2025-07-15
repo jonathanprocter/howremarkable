@@ -17,8 +17,7 @@ const getBaseURL = () => {
 
 const callbackURL = `${getBaseURL()}/api/auth/google/callback`;
 
-console.log('🔧 Clean Auth - Base URL:', getBaseURL());
-console.log('🔧 Clean Auth - Callback URL:', callbackURL);
+// Clean Auth - Base URL and Callback URL configured
 
 // Clean Google OAuth Strategy
 passport.use(new GoogleStrategy({
@@ -27,13 +26,7 @@ passport.use(new GoogleStrategy({
     callbackURL: callbackURL
   },
   async (accessToken, refreshToken, profile, done) => {
-    console.log('✅ Google OAuth success:', {
-      id: profile.id,
-      email: profile.emails?.[0]?.value,
-      name: profile.displayName,
-      hasAccessToken: !!accessToken,
-      hasRefreshToken: !!refreshToken
-    });
+    // Google OAuth success
 
     try {
       // Import storage to interact with database
@@ -50,14 +43,14 @@ passport.use(new GoogleStrategy({
             profile.emails?.[0]?.value || '',
             profile.displayName || ''
           );
-          console.log("✅ Created new user in database:", dbUser.id);
+          // Created new user in database
         } catch (createError) {
           // If user creation fails due to duplicate email, find existing user
-          console.log("User creation failed, looking for existing user with this email");
+          // User creation failed, looking for existing user with this email
           dbUser = await storage.getUserByUsername(profile.emails?.[0]?.value || '');
           if (!dbUser) {
             // Still no user found, use fallback user ID 1
-            console.log("Using fallback user ID 1");
+            // Using fallback user ID 1
             dbUser = { 
               id: 1, 
               googleId: profile.id, 
@@ -68,10 +61,10 @@ passport.use(new GoogleStrategy({
               password: null 
             };
           }
-          console.log("✅ Using existing user in database:", dbUser.id);
+          // Using existing user in database
         }
       } else {
-        console.log("✅ Found existing user in database:", dbUser.id);
+        // Found existing user in database
       }
 
       // Store tokens and database user ID in session
@@ -228,7 +221,7 @@ export async function refreshTokens(req: Request, res: Response) {
       user.refreshToken = credentials.refresh_token;
     }
     
-    console.log('✅ Tokens refreshed successfully');
+    // Tokens refreshed successfully
     
     res.json({
       success: true,
@@ -236,7 +229,7 @@ export async function refreshTokens(req: Request, res: Response) {
     });
     
   } catch (error) {
-    console.error('❌ Token refresh failed:', error);
+    // Token refresh failed
     res.status(401).json({
       error: 'Token refresh failed',
       redirectTo: '/api/auth/google'

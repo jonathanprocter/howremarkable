@@ -257,10 +257,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Session debugging middleware (minimal logging)
   app.use((req, res, next) => {
-    // Only log for auth-related endpoints to reduce console spam
-    if (req.path.includes('/auth/') && !req.path.includes('/status')) {
-      console.log(`🔍 Auth [${req.method} ${req.path}]: User=${!!req.user}`);
-    }
+    // Auth endpoint monitoring (logging disabled)
     next();
   });
 
@@ -756,7 +753,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Development fallback - create temporary user if none exists
       if (!user) {
-        console.log('🔧 DEVELOPMENT MODE: Creating temporary user for events endpoint');
+        // DEVELOPMENT MODE: Creating temporary user for events endpoint
         user = {
           id: 1,
           email: 'jonathan.procter@gmail.com',
@@ -969,7 +966,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let user = req.user || req.session?.passport?.user;
 
       if (!user) {
-        console.log('🔧 DEVELOPMENT MODE: Creating temporary user for PATCH events');
+        // DEVELOPMENT MODE: Creating temporary user for PATCH events
         user = {
           id: 1,
           email: 'jonathan.procter@gmail.com',

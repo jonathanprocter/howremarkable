@@ -64,7 +64,7 @@ export class ComprehensiveAuditSystem {
   private events: CalendarEvent[] = [];
 
   constructor() {
-    console.log('🔍 Comprehensive Audit System initialized');
+    // Comprehensive Audit System initialized
   }
 
   /**
