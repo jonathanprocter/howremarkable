@@ -1,3 +1,16 @@
+import { useQuery } from '@tanstack/react-query';
+
+interface AuthResponse {
+  isAuthenticated: boolean;
+  user?: {
+    id: string;
+    email: string;
+    name: string;
+    displayName: string;
+  };
+  hasTokens: boolean;
+}
+
 export const useAuthenticatedUser = () => {
   const { data, isLoading, error, refetch } = useQuery<AuthResponse>({
     queryKey: ['/api/auth/status'],
