@@ -614,9 +614,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get calendar events with live sync - forces fresh Google Calendar API calls
   app.get("/api/calendar/events", async (req, res) => {
     try {
-      // Use direct API approach to bypass OAuth2 client refresh issues
-      const { directGoogleCalendarSync } = await import('./direct-google-api');
-      return await directGoogleCalendarSync(req, res);
+      // Use the new Google Calendar fix system
+      const { handleGoogleCalendarSync } = await import('./google-calendar-fix');
+      return await handleGoogleCalendarSync(req, res);
     } catch (error) {
       return res.status(500).json({ 
         error: 'Failed to fetch calendar events',
@@ -762,6 +762,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!res.headersSent) {
         res.status(500).json({ error: "Failed to upload to Google Drive" });
       }
+    }
+  });
+
+  // Test Google authentication status
+  app.get("/api/auth/google/test", async (req, res) => {
+    try {
+      const { testGoogleAuth } = await import('./google-calendar-fix');
+      return await testGoogleAuth(req, res);
+    } catch (error) {
+      console.error('Google auth test error:', error);
+      res.status(500).json({
+        error: 'Authentication test failed',
+        message: error.message,
+        needsAuth: true
+      });
+    }
+  });
+
+  // Live sync endpoint that bypasses authentication
+  app.get("/api/live-sync/calendar/events", async (req, res) => {
+    try {
+      const { handleGoogleCalendarSync } = await import('./google-calendar-fix');
+      return await handleGoogleCalendarSync(req, res);
+    } catch (error) {
+      console.error('Live sync error:', error);
+      res.status(500).json({
+        error: 'Live sync failed',
+        message: error.message,
+        needsAuth: true
+      });
     }
   });
 
