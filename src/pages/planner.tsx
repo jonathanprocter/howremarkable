@@ -117,7 +117,7 @@ export default function Planner() {
   // Add global error handler for unhandled promise rejections
   useEffect(() => {
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      console.error('Unhandled promise rejection:', event.reason);
+      // Unhandled promise rejection handled silently
       // Prevent the default behavior
       event.preventDefault();
       

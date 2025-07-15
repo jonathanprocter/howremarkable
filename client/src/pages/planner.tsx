@@ -768,14 +768,40 @@ export default function Planner() {
     }
   };
 
-  const handleReconnectGoogle = () => {    console.log('Reconnecting to Google Calendar...');
-    window.location.href = '/api/auth/google';
+  const handleReconnectGoogle = async () => {
+    console.log('Reconnecting to Google Calendar...');
+    try {
+      // Clear any existing authentication state
+      await queryClient.invalidateQueries({ queryKey: ['/api/auth/status'] });
+      // Redirect to OAuth
+      window.location.href = '/api/auth/google';
+    } catch (error) {
+      console.error('Error during Google reconnection:', error);
+      toast({
+        title: "Authentication Error",
+        description: "Failed to reconnect to Google Calendar. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleRefreshCalendars = () => {
+  const handleRefreshCalendars = async () => {
     console.log('Refreshing calendars...');
-    // Force refetch of Google Calendar events
-    queryClient.invalidateQueries({ queryKey: ['/api/calendar/events'] });
+    try {
+      // Force refetch of Google Calendar events
+      await queryClient.invalidateQueries({ queryKey: ['/api/calendar/events'] });
+      toast({
+        title: "Calendars refreshed",
+        description: "Google Calendar events have been refreshed."
+      });
+    } catch (error) {
+      console.error('Error refreshing calendars:', error);
+      toast({
+        title: "Refresh failed",
+        description: "Failed to refresh calendars. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   // Navigation
