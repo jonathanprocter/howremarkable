@@ -73,9 +73,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 <summary className="cursor-pointer font-medium text-gray-700 mb-2">
                   Error Details (Development)
                 </summary>
-                <pre className="whitespace-pre-wrap text-red-600">
+                <pre className="whitespace-pre-wrap text-red-600 max-h-32 overflow-y-auto">
                   {this.state.error.toString()}
-                  {this.state.errorInfo?.componentStack}
+                  {this.state.errorInfo?.componentStack && 
+                    this.state.errorInfo.componentStack.slice(0, 500) + '...'
+                  }
                 </pre>
               </details>
             )}

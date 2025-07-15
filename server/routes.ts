@@ -257,7 +257,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Session debugging middleware (minimal logging)
   app.use((req, res, next) => {
-    // Auth endpoint monitoring (logging disabled)
+    // Skip logging for repeated requests to reduce console noise
+    const isRepeatedRequest = req.headers['x-request-id'] && 
+      global.lastRequestId === req.headers['x-request-id'];
+    
+    if (!isRepeatedRequest && process.env.NODE_ENV === 'development') {
+      global.lastRequestId = req.headers['x-request-id'];
+    }
     next();
   });
 
