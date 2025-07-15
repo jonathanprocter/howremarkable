@@ -2,7 +2,6 @@ import { Button } from '@/components/ui/button';
 
 export function CleanAuthButton() {
   const handleGoogleOAuth = () => {
-    console.log('🔗 Starting Google OAuth flow');
     // Add a loading state indicator
     const button = document.querySelector('[data-oauth-button]') as HTMLButtonElement;
     if (button) {

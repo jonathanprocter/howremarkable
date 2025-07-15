@@ -1229,7 +1229,6 @@ export default function Planner() {
                   <Button 
                     variant="outline" 
                     onClick={async () => {
-                      console.log('🔄 SIMPLE LOGIN ATTEMPT');
                       toast({
                         title: "Logging In",
                         description: "Using simple login method...",
@@ -1247,7 +1246,6 @@ export default function Planner() {
                         
                         if (response.ok) {
                           const data = await response.json();
-                          console.log('✅ Simple login successful:', data);
                           toast({
                             title: "Login Successful!",
                             description: "Refreshing page...",
@@ -1258,7 +1256,6 @@ export default function Planner() {
                           throw new Error('Login failed');
                         }
                       } catch (error) {
-                        console.error('❌ Simple login failed:', error);
                         toast({
                           title: "Login Failed",
                           description: "Trying Google OAuth...",

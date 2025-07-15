@@ -142,7 +142,7 @@ export function getAuthStatus(req: Request, res: Response) {
   
   // Reduce console noise - only log important auth events
   if (!isAuthenticated && process.env.NODE_ENV !== 'production') {
-    console.log('🔍 Auth status: Not authenticated');
+    // Not authenticated
   }
   
   res.json({
@@ -178,31 +178,25 @@ export function initiateGoogleOAuth(req: Request, res: Response, next: NextFunct
 
 // Clean OAuth callback handler
 export function handleGoogleCallback(req: Request, res: Response, next: NextFunction) {
-  console.log('🔗 OAuth callback received');
-  console.log('🔗 Callback query params:', req.query);
-  console.log('🔗 Session ID:', req.sessionID);
-  
   passport.authenticate('google', {
     failureRedirect: '/?error=oauth_failed',
     successRedirect: '/?auth=success'
   })(req, res, (err: any) => {
     if (err) {
-      console.error('❌ OAuth callback error:', err);
       return res.redirect('/?error=oauth_failed');
     }
     
-    console.log('✅ OAuth callback successful');
-    console.log('✅ User authenticated:', !!req.user);
-    
     if (req.user) {
-      console.log('✅ User data:', { 
-        id: (req.user as any).id, 
-        email: (req.user as any).email,
-        name: (req.user as any).name
+      // Save session explicitly
+      req.session.save((saveErr) => {
+        if (saveErr) {
+          return res.redirect('/?error=oauth_failed');
+        }
+        res.redirect('/?auth=success');
       });
+    } else {
+      res.redirect('/?error=oauth_failed');
     }
-    
-    res.redirect('/?auth=success');
   });
 }
 

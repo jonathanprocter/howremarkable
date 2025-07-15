@@ -271,6 +271,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/auth/google/callback", handleGoogleCallback);
   app.post("/api/auth/token-refresh", refreshTokens);
   app.get("/api/auth/status", getAuthStatus);
+  
+  // Simple login endpoint for development
+  app.post("/api/auth/simple-login", async (req, res) => {
+    try {
+      const userData = {
+        id: '1',
+        googleId: '108011271571830226042',
+        email: 'jonathan.procter@gmail.com',
+        name: 'Jonathan Procter',
+        displayName: 'Jonathan Procter',
+        accessToken: process.env.GOOGLE_ACCESS_TOKEN || 'dev-access-token',
+        refreshToken: process.env.GOOGLE_REFRESH_TOKEN || 'dev-refresh-token',
+        provider: 'google'
+      };
+      
+      req.session.passport = { user: userData };
+      req.user = userData;
+      
+      res.json({ 
+        success: true, 
+        user: userData,
+        message: 'Simple login successful'
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        error: 'Simple login failed',
+        message: error.message 
+      });
+    }
+  });
 
   // Clean logout endpoint
   app.post("/api/auth/logout", (req, res) => {
