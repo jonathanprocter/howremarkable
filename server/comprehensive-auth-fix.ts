@@ -62,8 +62,8 @@ export const comprehensiveAuthFix = async (req: Request, res: Response) => {
       email: dbUser.email,
       displayName: dbUser.displayName,
       name: dbUser.name,
-      accessToken: process.env.GOOGLE_ACCESS_TOKEN || 'working_access_token',
-      refreshToken: process.env.GOOGLE_REFRESH_TOKEN || 'working_refresh_token',
+      accessToken: process.env.GOOGLE_ACCESS_TOKEN || '',
+      refreshToken: process.env.GOOGLE_REFRESH_TOKEN || '',
       googleId: dbUser.googleId || undefined
     };
     
@@ -175,7 +175,7 @@ export const tokenRefreshFix = async (req: Request, res: Response) => {
     }
     
     // Fallback: Check if we have valid refresh token in session
-    if (!user.refreshToken || user.refreshToken === 'working_refresh_token' || user.refreshToken === 'dev_token') {
+    if (!user.refreshToken) {
       console.log('❌ No valid refresh token in session and no environment tokens');
       
       return res.status(401).json({
@@ -302,10 +302,7 @@ export const authStatusWithFix = (req: Request, res: Response) => {
   const hasTokens = user && user.accessToken && user.refreshToken;
   
   // Check for problematic token states
-  const hasValidTokens = hasTokens && 
-    !user.accessToken.startsWith('dev') && 
-    user.accessToken !== 'undefined' &&
-    user.accessToken !== 'working_access_token';
+  const hasValidTokens = hasTokens;
   
   res.json({
     isAuthenticated,

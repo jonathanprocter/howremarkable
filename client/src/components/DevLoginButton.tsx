@@ -1,10 +1,6 @@
 
 import React from 'react';
 import { Button } from './ui/button';
-
-export function GoogleOAuthButton() {
-  const handleGoogleLogin = () => {
-    // Redirect to Google OAuth endpoint
     window.location.href = '/api/auth/google';
   };
 

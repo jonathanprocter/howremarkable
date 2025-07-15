@@ -283,7 +283,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.user = knownUser;
       console.log('✅ Auto-authenticated user:', knownUser.email);
     }
-
     next();
   });
 
@@ -296,24 +295,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Simple login endpoint for development
   app.post("/api/auth/simple-login", async (req, res) => {
     try {
-      const userData = {
-        id: '1',
-        googleId: '108011271571830226042',
-        email: 'jonathan.procter@gmail.com',
-        name: 'Jonathan Procter',
-        displayName: 'Jonathan Procter',
-        accessToken: process.env.GOOGLE_ACCESS_TOKEN || 'dev-access-token',
-        refreshToken: process.env.GOOGLE_REFRESH_TOKEN || 'dev-refresh-token',
-        provider: 'google'
-      };
-
-      req.session.passport = { user: userData };
-      req.user = userData;
-
-      res.json({ 
-        success: true, 
-        user: userData,
-        message: 'Simple login successful'
       });
     } catch (error) {
       res.status(500).json({ 
@@ -333,52 +314,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Add deployment-fix endpoint for session consistency
-  app.post("/api/auth/deployment-fix", async (req, res) => {
-    try {
-      // Try to restore session from known good session
-      const sessionId = 'gBvnYGiTDicIU7Udon_c5TdzlgtHhdNU';
-
-      // Check if user is already authenticated
-      if (req.user) {
-        return res.json({ 
-          success: true, 
-          user: req.user,
-          message: 'User already authenticated'
-        });
-      }
-
-      // Set up a known good user session for development
-      const userData = {
-        id: '1',
-        googleId: '108011271571830226042',
-        email: 'jonathan.procter@gmail.com',
-        name: 'Jonathan Procter',
-        displayName: 'Jonathan Procter',
-        accessToken: process.env.GOOGLE_ACCESS_TOKEN || 'dev-access-token',
-        refreshToken: process.env.GOOGLE_REFRESH_TOKEN || 'dev-refresh-token',
-        provider: 'google'
-      };
-
-      // Manually set up the session
-      req.session.passport = { user: userData };
-      req.user = userData;
-
-      res.json({ 
-        success: true, 
-        user: userData,
-        message: 'Session restored for deployment'
-      });
-
-    } catch (error) {
-      res.status(500).json({ 
-        error: 'Session restore failed',
-        message: error.message 
-      });
-    }
-  });
-
-
   // Get SimplePractice events from all calendars
   app.get("/api/simplepractice/events", requireAuth, async (req, res) => {
     // SimplePractice events requested
@@ -391,8 +326,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Start and end dates are required' });
       }
 
-      // For development mode or if tokens are dev tokens, use database
-      if (!user.accessToken || user.accessToken.startsWith('dev-') || user.accessToken === 'undefined' || user.accessToken === 'dev_access_token') {
+      // If tokens are missing use cached events
+      if (!user.accessToken) {
         const events = await storage.getEvents(parseInt(user.id) || 1);
         const simplePracticeEvents = events.filter(event => 
           event.source === 'simplepractice' || 
@@ -421,7 +356,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } catch (authError: any) {
         // If we get 401, try to refresh the token
-        if (authError.code === 401 && user.refreshToken && user.refreshToken !== 'dev_refresh_token') {
+        if (authError.code === 401 && user.refreshToken) {
           // Try using environment tokens first as fallback
           try {
             const envAccessToken = process.env.GOOGLE_ACCESS_TOKEN;
@@ -1023,21 +958,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Events API
   app.get("/api/events", async (req, res) => {
     try {
-      // Get user from session or create development user
-      let user = req.user || req.session?.passport?.user;
-
-      // Development fallback - create temporary user if none exists
+      const user = req.user || req.session?.passport?.user;
       if (!user) {
-        // DEVELOPMENT MODE: Creating temporary user for events endpoint
-        user = {
-          id: 1,
-          email: 'jonathan.procter@gmail.com',
-          displayName: 'Jonathan Procter',
-          name: 'Jonathan Procter'
-        };
-
-        // Set user in request for consistency
-        req.user = user;
       }
 
       const userId = parseInt(user.id) || 1;
@@ -1135,18 +1057,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const eventId = req.params.id;
       const updates = req.body;
 
-      // Get user or create development user
-      let user = req.user || req.session?.passport?.user;
-
+      const user = req.user || req.session?.passport?.user;
       if (!user) {
-        console.log('🔧 DEVELOPMENT MODE: Creating temporary user for PUT events');
-        user = {
-          id: 1,
-          email: 'jonathan.procter@gmail.com',
-          displayName: 'Jonathan Procter',
-          name: 'Jonathan Procter'
-        };
-        req.user = user;
+        return res.status(401).json({ error: 'Not authenticated' });
       }
 
       // Validate updates object
@@ -1237,18 +1150,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const eventId = req.params.id;
       const updates = req.body;
 
-      // Get user or create development user
-      let user = req.user || req.session?.passport?.user;
-
+      const user = req.user || req.session?.passport?.user;
       if (!user) {
-        // DEVELOPMENT MODE: Creating temporary user for PATCH events
-        user = {
-          id: 1,
-          email: 'jonathan.procter@gmail.com',
-          displayName: 'Jonathan Procter',
-          name: 'Jonathan Procter'
-        };
-        req.user = user;
       }
 
       // Validate updates object
