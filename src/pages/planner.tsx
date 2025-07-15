@@ -1322,7 +1322,13 @@ export default function Planner() {
                   {user ? (
                     <>
                       <Button 
-                        onClick={handleSyncCalendarEvents}
+                        onClick={async () => {
+                          try {
+                            await handleSyncCalendarEvents();
+                          } catch (error) {
+                            console.error('Sync calendar events error:', error);
+                          }
+                        }}
                         className="w-full bg-green-600 hover:bg-green-700 text-white"
                         size="sm"
                       >
@@ -1637,7 +1643,13 @@ export default function Planner() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleExportPDF('dynamic-daily')}
+                  onClick={async () => {
+                    try {
+                      await handleExportPDF('dynamic-daily');
+                    } catch (error) {
+                      console.error('Export PDF error:', error);
+                    }
+                  }}
                   className="w-full justify-start bg-emerald-50 hover:bg-emerald-100"
                 >
                   <Download className="h-4 w-4 mr-2" />
@@ -1646,7 +1658,13 @@ export default function Planner() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleExportPDF('bidirectional-weekly-package')}
+                  onClick={async () => {
+                    try {
+                      await handleExportPDF('bidirectional-weekly-package');
+                    } catch (error) {
+                      console.error('Export PDF error:', error);
+                    }
+                  }}
                   className="w-full justify-start bg-blue-50 hover:bg-blue-100"
                 >
                   <Download className="h-4 w-4 mr-2" />
@@ -1655,7 +1673,13 @@ export default function Planner() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleExportPDF('audit-enhanced')}
+                  onClick={async () => {
+                    try {
+                      await handleExportPDF('audit-enhanced');
+                    } catch (error) {
+                      console.error('Export PDF error:', error);
+                    }
+                  }}
                   className="w-full justify-start bg-yellow-50 hover:bg-yellow-100 border-yellow-300"
                 >
                   <Download className="h-4 w-4 mr-2" />
@@ -1664,7 +1688,13 @@ export default function Planner() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleExportPDF('enhanced-weekly')}
+                  onClick={async () => {
+                    try {
+                      await handleExportPDF('enhanced-weekly');
+                    } catch (error) {
+                      console.error('Export PDF error:', error);
+                    }
+                  }}
                   className="w-full justify-start bg-purple-50 hover:bg-purple-100 border-purple-300"
                 >
                   <Download className="h-4 w-4 mr-2" />
@@ -1673,7 +1703,13 @@ export default function Planner() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleExportPDF('enhanced-daily')}
+                  onClick={async () => {
+                    try {
+                      await handleExportPDF('enhanced-daily');
+                    } catch (error) {
+                      console.error('Export PDF error:', error);
+                    }
+                  }}
                   className="w-full justify-start bg-purple-50 hover:bg-purple-100 border-purple-300"
                 >
                   <Download className="h-4 w-4 mr-2" />
@@ -1682,7 +1718,13 @@ export default function Planner() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleExportPDF('enhanced-weekly-package')}
+                  onClick={async () => {
+                    try {
+                      await handleExportPDF('enhanced-weekly-package');
+                    } catch (error) {
+                      console.error('Export PDF error:', error);
+                    }
+                  }}
                   className="w-full justify-start bg-indigo-50 hover:bg-indigo-100 border-indigo-300"
                 >
                   <Download className="h-4 w-4 mr-2" />
@@ -1700,7 +1742,13 @@ export default function Planner() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleRunAudit}
+                  onClick={async () => {
+                    try {
+                      await handleRunAudit();
+                    } catch (error) {
+                      console.error('Run audit error:', error);
+                    }
+                  }}
                   className="w-full justify-start"
                 >
                   <Settings className="h-4 w-4 mr-2" />
@@ -1709,7 +1757,13 @@ export default function Planner() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleRunComprehensiveAudit}
+                  onClick={async () => {
+                    try {
+                      await handleRunComprehensiveAudit();
+                    } catch (error) {
+                      console.error('Run comprehensive audit error:', error);
+                    }
+                  }}
                   className="w-full justify-start bg-purple-50 hover:bg-purple-100"
                 >
                   <Settings className="h-4 w-4 mr-2" />
@@ -1718,7 +1772,13 @@ export default function Planner() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleTestExports}
+                  onClick={async () => {
+                    try {
+                      await handleTestExports();
+                    } catch (error) {
+                      console.error('Test exports error:', error);
+                    }
+                  }}
                   className="w-full justify-start bg-orange-50 hover:bg-orange-100"
                 >
                   <Settings className="h-4 w-4 mr-2" />

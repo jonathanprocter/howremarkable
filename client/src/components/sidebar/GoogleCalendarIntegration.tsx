@@ -61,7 +61,13 @@ export const GoogleCalendarIntegration = ({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={onRefreshCalendars}
+                  onClick={async () => {
+                    try {
+                      await onRefreshCalendars();
+                    } catch (error) {
+                      console.error('Refresh calendars error:', error);
+                    }
+                  }}
                   disabled={isLoading}
                   className="h-6 w-6 p-0"
                 >
@@ -114,7 +120,13 @@ export const GoogleCalendarIntegration = ({
               </Button>
               {onReconnect && (
                 <Button 
-                  onClick={onReconnect}
+                  onClick={async () => {
+                    try {
+                      await onReconnect();
+                    } catch (error) {
+                      console.error('Reconnect error:', error);
+                    }
+                  }}
                   className="w-full"
                   size="sm"
                   variant="secondary"
