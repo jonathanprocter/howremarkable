@@ -4,123 +4,69 @@
  */
 
 async function testAuthenticationSystem() {
-  console.log('🔍 Testing Google Calendar Authentication System...\n');
+  console.log('🔄 Testing Authentication System...');
   
-  // Test 1: Debug endpoint
-  console.log('Test 1: Debug Google Authentication');
   try {
-    const debugResponse = await fetch('/api/auth/google/debug');
-    const debugData = await debugResponse.json();
-    console.log('✅ Debug endpoint working:', debugData.success);
-    console.log('Environment tokens:', debugData.environment);
-    console.log('Token validation:', debugData.tokenTest.valid);
-    console.log('Calendar access:', debugData.calendarTest.success);
-  } catch (error) {
-    console.error('❌ Debug endpoint failed:', error);
-  }
-  
-  // Test 2: Force sync endpoint
-  console.log('\nTest 2: Force Google Calendar Sync');
-  try {
-    const syncResponse = await fetch('/api/auth/google/force-sync', {
-      method: 'POST'
-    });
-    const syncData = await syncResponse.json();
-    console.log('✅ Force sync endpoint working:', syncData.success || 'Failed as expected');
-    console.log('Sync result:', syncData);
-  } catch (error) {
-    console.error('❌ Force sync failed:', error);
-  }
-  
-  // Test 3: OAuth redirect URL
-  console.log('\nTest 3: OAuth Redirect URL Generation');
-  try {
-    const oauthResponse = await fetch('/api/auth/google', {
-      method: 'HEAD',
-      redirect: 'manual'
-    });
-    console.log('✅ OAuth endpoint working:', oauthResponse.status === 302);
-    console.log('Redirect location:', oauthResponse.headers.get('Location'));
-  } catch (error) {
-    console.error('❌ OAuth endpoint failed:', error);
-  }
-  
-  // Test 4: Check if GoogleAuthFix component is loaded
-  console.log('\nTest 4: Frontend Component Integration');
-  const authFixComponent = document.querySelector('[data-testid="google-auth-fix"]') || 
-                          document.querySelector('.google-auth-fix') ||
-                          document.querySelector('button[class*="Fix Authentication"]');
-  
-  if (authFixComponent) {
-    console.log('✅ GoogleAuthFix component found in DOM');
-  } else {
-    console.log('⚠️ GoogleAuthFix component not found - checking for buttons...');
-    const buttons = Array.from(document.querySelectorAll('button')).filter(btn => 
-      btn.textContent.includes('Fix Authentication') || 
-      btn.textContent.includes('Force') ||
-      btn.textContent.includes('Google')
-    );
-    console.log('Found auth-related buttons:', buttons.length);
-    buttons.forEach(btn => console.log('  -', btn.textContent.trim()));
-  }
-  
-  // Test 5: Check for authentication errors in the interface
-  console.log('\nTest 5: Authentication Error Detection');
-  const errorElements = document.querySelectorAll('[class*="error"], [class*="alert"], [class*="warning"]');
-  console.log('Found error/alert elements:', errorElements.length);
-  
-  const authErrors = Array.from(errorElements).filter(el => 
-    el.textContent.toLowerCase().includes('auth') || 
-    el.textContent.toLowerCase().includes('google') ||
-    el.textContent.toLowerCase().includes('token')
-  );
-  console.log('Auth-related errors:', authErrors.length);
-  authErrors.forEach(error => console.log('  -', error.textContent.trim()));
-  
-  // Test 6: Check current authentication state
-  console.log('\nTest 6: Current Authentication State');
-  try {
-    const authResponse = await fetch('/api/auth/status');
-    const authData = await authResponse.json();
-    console.log('✅ Auth status endpoint working');
-    console.log('User authenticated:', authData.isAuthenticated);
-    console.log('User info:', authData.user);
-  } catch (error) {
-    console.error('❌ Auth status check failed:', error);
-  }
-  
-  // Test 7: Check events loading
-  console.log('\nTest 7: Events Loading Status');
-  try {
-    const eventsResponse = await fetch('/api/events');
-    const eventsData = await eventsResponse.json();
-    console.log('✅ Events endpoint working');
-    console.log('Total events loaded:', eventsData.length);
+    // Step 1: Check current auth status
+    console.log('\n1. Checking current auth status...');
+    const authStatus = await fetch('/api/auth/status', {
+      credentials: 'include'
+    }).then(r => r.json());
     
-    const googleEvents = eventsData.filter(e => e.source === 'google');
-    const simplePracticeEvents = eventsData.filter(e => e.source === 'simplepractice');
-    console.log('Google Calendar events:', googleEvents.length);
-    console.log('SimplePractice events:', simplePracticeEvents.length);
+    console.log('Current auth status:', authStatus);
+    
+    // Step 2: Test debug endpoint
+    console.log('\n2. Testing debug endpoint...');
+    const debugResponse = await fetch('/api/auth/google/debug', {
+      credentials: 'include'
+    }).then(r => r.json());
+    
+    console.log('Debug response:', debugResponse);
+    
+    // Step 3: Test Google auth redirect
+    console.log('\n3. Testing Google auth redirect...');
+    console.log('Visit this URL to test authentication:');
+    console.log('http://localhost:5000/api/auth/google');
+    
+    // Step 4: Test force sync
+    console.log('\n4. Testing force sync...');
+    try {
+      const syncResponse = await fetch('/api/auth/google/force-sync', {
+        method: 'POST',
+        credentials: 'include'
+      }).then(r => r.json());
+      
+      console.log('Force sync response:', syncResponse);
+    } catch (error) {
+      console.log('Force sync failed (expected if not authenticated):', error.message);
+    }
+    
+    // Step 5: Check session storage
+    console.log('\n5. Checking session storage...');
+    const sessionCheck = await fetch('/api/auth/google/test-tokens', {
+      credentials: 'include'
+    }).then(r => r.json()).catch(e => ({ error: e.message }));
+    
+    console.log('Session token check:', sessionCheck);
+    
+    console.log('\n✅ Authentication test completed');
+    console.log('To authenticate:');
+    console.log('1. Visit: http://localhost:5000/api/auth/google');
+    console.log('2. Complete Google OAuth flow');
+    console.log('3. Check that you are redirected back with ?auth=success');
+    console.log('4. Run this test again to verify authentication worked');
+    
   } catch (error) {
-    console.error('❌ Events loading failed:', error);
+    console.error('❌ Authentication test failed:', error);
   }
-  
-  console.log('\n🎯 Authentication System Test Complete!');
-  console.log('Next steps:');
-  console.log('1. Click "Fix Authentication" button to start OAuth flow');
-  console.log('2. Grant Google Calendar permissions');
-  console.log('3. Test "Force Google Calendar Sync" after authentication');
-  
-  return {
-    debugEndpoint: true,
-    syncEndpoint: true,
-    oauthEndpoint: true,
-    frontendComponent: !!authFixComponent,
-    recommendation: 'Use Fix Authentication button to resolve token issues'
-  };
 }
 
-// Run the test
-testAuthenticationSystem().then(results => {
-  console.log('\n📊 Test Results Summary:', results);
-});
+// Auto-run if in browser
+if (typeof window !== 'undefined') {
+  testAuthenticationSystem();
+}
+
+// Export for Node.js
+if (typeof module !== 'undefined') {
+  module.exports = { testAuthenticationSystem };
+}

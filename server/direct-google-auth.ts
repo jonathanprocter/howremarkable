@@ -75,9 +75,21 @@ export function createDirectGoogleAuth() {
           hasClientSecret: !!CLIENT_SECRET
         });
 
-        // Exchange code for tokens
-        const { tokens } = await oauth2Client.getToken(code as string);
+        // Exchange code for tokens with proper error handling
+        const tokenResponse = await oauth2Client.getToken(code as string);
+        const tokens = tokenResponse.tokens;
         
+        console.log('🔍 Raw token response:', {
+          hasTokens: !!tokens,
+          tokenKeys: Object.keys(tokens || {}),
+          hasAccessToken: !!tokens?.access_token,
+          hasRefreshToken: !!tokens?.refresh_token
+        });
+        
+        if (!tokens || !tokens.access_token) {
+          throw new Error('No valid tokens received from Google');
+        }
+
         console.log('✅ Token exchange successful:', {
           hasAccessToken: !!tokens.access_token,
           hasRefreshToken: !!tokens.refresh_token,

@@ -809,88 +809,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Google OAuth authentication
-  app.get("/api/auth/google", (req, res) => {
-    const baseUrl = process.env.REPLIT_DOMAIN || 'localhost:5000';
-    const protocol = baseUrl.includes('localhost') ? 'http' : 'https';
-    const redirectUri = `${protocol}://${baseUrl}/api/auth/google/callback`;
-    
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-      `client_id=${process.env.GOOGLE_CLIENT_ID}&` +
-      `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-      `response_type=code&` +
-      `scope=${encodeURIComponent('https://www.googleapis.com/auth/calendar.readonly')}&` +
-      `access_type=offline&` +
-      `prompt=consent`;
-    
-    console.log('🔗 Redirecting to Google OAuth:', authUrl);
-    res.redirect(authUrl);
-  });
-
-  // Google OAuth callback
-  app.get("/api/auth/google/callback", async (req, res) => {
-    const { code } = req.query;
-    
-    if (!code) {
-      return res.status(400).json({ error: 'Authorization code not provided' });
-    }
-    
-    try {
-      const baseUrl = process.env.REPLIT_DOMAIN || 'localhost:5000';
-      const protocol = baseUrl.includes('localhost') ? 'http' : 'https';
-      const redirectUri = `${protocol}://${baseUrl}/api/auth/google/callback`;
-      
-      // Exchange code for tokens
-      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          client_id: process.env.GOOGLE_CLIENT_ID!,
-          client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-          code: code as string,
-          grant_type: 'authorization_code',
-          redirect_uri: redirectUri,
-        }),
-      });
-      
-      const tokens = await tokenResponse.json();
-      
-      if (!tokenResponse.ok) {
-        console.error('Token exchange failed:', tokens);
-        return res.status(400).json({ error: 'Failed to exchange authorization code for tokens' });
-      }
-      
-      // Store tokens in session
-      req.session.googleTokens = {
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
-        expiry_date: Date.now() + (tokens.expires_in * 1000)
-      };
-      
-      console.log('✅ Google OAuth successful, tokens stored in session');
-      
-      // Redirect back to planner with success parameter
-      res.redirect('/?auth=success');
-      
-    } catch (error) {
-      console.error('OAuth callback error:', error);
-      res.status(500).json({ error: 'OAuth callback failed' });
-    }
-  });
-
   // Create direct Google auth instance
   const directGoogleAuth = createDirectGoogleAuth();
 
-  // Direct Google OAuth routes
+  // Google OAuth routes using direct auth
   app.get("/api/auth/google", (req, res) => {
+    console.log('🔄 OAuth initiation requested');
     const authUrl = directGoogleAuth.getAuthUrl();
+    console.log('🔗 Generated auth URL:', authUrl);
     res.redirect(authUrl);
   });
 
   app.get("/api/auth/google/callback", async (req, res) => {
+    console.log('🔄 OAuth callback hit with query:', req.query);
     await directGoogleAuth.handleCallback(req, res);
+  });
+
+  // Test tokens endpoint
+  app.get('/api/auth/google/test-tokens', async (req, res) => {
+    try {
+      const result = await directGoogleAuth.testTokens(req);
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ 
+        valid: false, 
+        error: error.message 
+      });
+    }
   });
 
   // Google Auth Debug endpoint
