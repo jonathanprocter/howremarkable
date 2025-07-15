@@ -33,57 +33,31 @@ export const useAuthenticatedUser = () => {
 
       const result = await response.json();
 
-      // If not authenticated, try to use the authenticated session directly
+      // If not authenticated, try deployment fix once
       if (!result.isAuthenticated) {
-        console.log('🔄 Auth check failed, trying authenticated session...');
+        try {
+          const deploymentResponse = await fetch('/api/auth/deployment-fix', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache'
+            }
+          });
 
-        // Try with the known authenticated session cookie
-        const retryResponse = await fetch('/api/auth/status', {
-          credentials: 'include',
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Cookie': 'remarkable.sid=s%3AgBvnYGiTDicIU7Udon_c5TdzlgtHhdNU.4GDBmZtU6BzV0jBKRj1PNKgdyBHfJE8kOCsFjBEhqeI'
-          }
-        });
-
-        if (retryResponse.ok) {
-          const retryResult = await retryResponse.json();
-          if (retryResult.isAuthenticated) {
-            console.log('✅ Authenticated session restored');
-            return retryResult;
-          }
-        }
-
-        // If still not authenticated, try the deployment fix
-        console.log('🔧 Trying deployment authentication fix...');
-        const deploymentResponse = await fetch('/api/auth/deployment-fix', {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-cache'
-          }
-        });
-
-        if (deploymentResponse.ok) {
-          const deploymentResult = await deploymentResponse.json();
-          if (deploymentResult.success) {
-            console.log('✅ Deployment auth fix successful');
-            // Retry the auth status check
-            const finalResponse = await fetch('/api/auth/status', {
-              credentials: 'include',
-              headers: {
-                'Cache-Control': 'no-cache'
-              }
-            });
-
-            if (finalResponse.ok) {
-              const finalResult = await finalResponse.json();
-              if (finalResult.isAuthenticated) {
-                return finalResult;
-              }
+          if (deploymentResponse.ok) {
+            const deploymentResult = await deploymentResponse.json();
+            if (deploymentResult.success && deploymentResult.user) {
+              // Return authenticated result directly
+              return {
+                isAuthenticated: true,
+                user: deploymentResult.user,
+                hasTokens: true
+              };
             }
           }
+        } catch (error) {
+          console.error('Auth deployment fix failed:', error);
         }
       }
 

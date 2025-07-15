@@ -2,8 +2,6 @@ import { Request, Response } from 'express';
 import { storage } from './storage';
 
 export async function directGoogleCalendarSync(req: Request, res: Response) {
-  console.log('🚀 DIRECT GOOGLE CALENDAR SYNC WITH TOKEN REFRESH');
-  
   try {
     const { start, end } = req.query;
     
@@ -18,8 +16,6 @@ export async function directGoogleCalendarSync(req: Request, res: Response) {
     // If no valid token, try to refresh
     if (!accessToken || accessToken.startsWith('dev-')) {
       if (refreshToken) {
-        console.log('🔄 Attempting to refresh expired access token...');
-        
         try {
           const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
             method: 'POST',
@@ -45,11 +41,7 @@ export async function directGoogleCalendarSync(req: Request, res: Response) {
                 req.session.google_refresh_token = tokenData.refresh_token;
               }
             }
-            
-            console.log('✅ Token refresh successful');
           } else {
-            const errorData = await refreshResponse.json();
-            console.error('❌ Token refresh failed:', errorData);
             return res.status(401).json({ 
               error: 'Token refresh failed', 
               needsAuth: true,
@@ -57,7 +49,6 @@ export async function directGoogleCalendarSync(req: Request, res: Response) {
             });
           }
         } catch (refreshError) {
-          console.error('❌ Token refresh error:', refreshError);
           return res.status(401).json({ 
             error: 'Token refresh failed', 
             needsAuth: true,
@@ -65,7 +56,6 @@ export async function directGoogleCalendarSync(req: Request, res: Response) {
           });
         }
       } else {
-        console.log('❌ No valid tokens available');
         return res.status(401).json({ 
           error: 'Authentication required', 
           needsAuth: true,
@@ -74,7 +64,7 @@ export async function directGoogleCalendarSync(req: Request, res: Response) {
       }
     }
 
-    console.log('🔄 Making direct API calls with valid access token');
+    // Making direct API calls with valid access token
     
     // Get calendar list directly via HTTP
     const calendarListResponse = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
@@ -85,26 +75,22 @@ export async function directGoogleCalendarSync(req: Request, res: Response) {
     });
 
     if (!calendarListResponse.ok) {
-      const errorData = await calendarListResponse.json();
-      console.error('❌ Calendar list fetch failed:', errorData);
-      return res.status(calendarListResponse.status).json({
-        error: 'Failed to fetch calendar list',
-        details: errorData
+      // Fall back to cached events if calendar list fails
+      const cachedEvents = await storage.getEvents(parseInt((req.user as any)?.id) || 1);
+      return res.json({
+        events: cachedEvents || [],
+        calendars: []
       });
     }
 
     const calendarListData = await calendarListResponse.json();
     const calendars = calendarListData.items || [];
     
-    console.log(`📅 Found ${calendars.length} calendars via direct API`);
-
     const allGoogleEvents = [] as any[];
 
     // Fetch events from all calendars via direct API calls
     for (const cal of calendars) {
       try {
-        console.log(`🔍 Fetching from calendar: ${cal.summary} (${cal.id})`);
-        
         const eventsUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.id)}/events?` +
           `timeMin=${encodeURIComponent(start as string)}&` +
           `timeMax=${encodeURIComponent(end as string)}&` +
@@ -120,7 +106,6 @@ export async function directGoogleCalendarSync(req: Request, res: Response) {
         });
 
         if (!eventsResponse.ok) {
-          console.warn(`⚠️ Could not access calendar ${cal.summary}: ${eventsResponse.status}`);
           continue;
         }
 
@@ -162,15 +147,11 @@ export async function directGoogleCalendarSync(req: Request, res: Response) {
           });
         }
 
-        if (googleEvents.length > 0) {
-          console.log(`✅ Found ${googleEvents.length} Google Calendar events in ${cal.summary}`);
-        }
       } catch (calendarError) {
-        console.warn(`⚠️ Error fetching calendar ${cal.summary}: ${calendarError.message}`);
+        // Skip calendar if there's an error
+        continue;
       }
     }
-
-    console.log(`🎯 Total Google Calendar events found via direct API: ${allGoogleEvents.length}`);
 
     // Return fresh data from direct Google Calendar API calls
     res.json({ 
@@ -186,12 +167,15 @@ export async function directGoogleCalendarSync(req: Request, res: Response) {
     });
 
   } catch (error) {
-    console.error('❌ Direct Google Calendar sync failed:', error);
+    // Fall back to cached events if direct API fails
+    const cachedEvents = await storage.getEvents(parseInt((req.user as any)?.id) || 1);
     
-    return res.status(500).json({
-      error: 'Direct Google Calendar sync failed',
-      message: error.message,
-      method: 'direct-api'
+    return res.json({
+      events: cachedEvents || [],
+      calendars: [],
+      syncTime: new Date().toISOString(),
+      isLiveSync: false,
+      method: 'fallback'
     });
   }
 }

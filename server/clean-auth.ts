@@ -86,10 +86,8 @@ passport.use(new GoogleStrategy({
         provider: 'google'
       };
 
-      console.log("✅ Returning user object:", { id: user.id, email: user.email, name: user.name });
       return done(null, user);
     } catch (error) {
-      console.error("❌ Error in Google OAuth strategy:", error);
       return done(error, false);
     }
   }
@@ -97,7 +95,6 @@ passport.use(new GoogleStrategy({
 
 // Clean serialization
 passport.serializeUser((user: any, done) => {
-  console.log('🔄 Serializing user:', { id: user.id, email: user.email });
   done(null, user);
 });
 
@@ -106,22 +103,17 @@ passport.deserializeUser(async (sessionData: any, done) => {
     const user = sessionData?.user || sessionData;
     
     if (!user || !user.id) {
-      console.log('❌ No user data in session');
       return done(null, false);
     }
     
-    console.log('🔄 Deserializing user:', { id: user.id, email: user.email });
-    
     // Validate tokens are present for Google users
     if (user.googleId && (!user.accessToken || user.accessToken === 'undefined')) {
-      console.log('⚠️ Missing tokens, adding dev tokens');
       user.accessToken = 'dev-access-token-' + Date.now();
       user.refreshToken = 'dev-refresh-token-' + Date.now();
     }
     
     done(null, user);
   } catch (error) {
-    console.error('❌ Deserialization error:', error);
     done(null, false);
   }
 });
@@ -135,7 +127,6 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
     return next();
   }
   
-  console.log('❌ Authentication required - redirecting to OAuth');
   res.status(401).json({ 
     error: 'Authentication required',
     redirectTo: '/api/auth/google'
@@ -149,14 +140,10 @@ export function getAuthStatus(req: Request, res: Response) {
   // Check both passport authentication and user object presence
   const isAuthenticated = (req.isAuthenticated && req.isAuthenticated()) || !!user;
   
-  console.log('🔍 Auth status check:', {
-    isAuthenticated,
-    hasUser: !!user,
-    userEmail: user?.email,
-    hasTokens: !!(user?.accessToken && user?.refreshToken),
-    passportAuth: req.isAuthenticated && req.isAuthenticated(),
-    sessionID: req.sessionID
-  });
+  // Reduce console noise - only log important auth events
+  if (!isAuthenticated && process.env.NODE_ENV !== 'production') {
+    console.log('🔍 Auth status: Not authenticated');
+  }
   
   res.json({
     isAuthenticated,
@@ -172,7 +159,7 @@ export function getAuthStatus(req: Request, res: Response) {
 
 // Clean OAuth initiation
 export function initiateGoogleOAuth(req: Request, res: Response, next: NextFunction) {
-  console.log('🚀 Initiating Google OAuth flow');
+  // Initiating Google OAuth flow
   
   // Generate state for security
   const state = Math.random().toString(36).substring(2, 15);

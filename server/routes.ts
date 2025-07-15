@@ -290,7 +290,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Check if user is already authenticated
       if (req.user) {
-        console.log('✅ User already authenticated in deployment fix');
         return res.json({ 
           success: true, 
           user: req.user,
@@ -314,8 +313,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.session.passport = { user: userData };
       req.user = userData;
       
-      console.log('✅ Deployment fix: Session restored manually');
-      
       res.json({ 
         success: true, 
         user: userData,
@@ -323,7 +320,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
     } catch (error) {
-      console.error('❌ Deployment fix failed:', error);
       res.status(500).json({ 
         error: 'Session restore failed',
         message: error.message 
@@ -335,7 +331,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get SimplePractice events from all calendars
   app.get("/api/simplepractice/events", requireAuth, async (req, res) => {
-    console.log('🔍 SimplePractice events requested');
+    // SimplePractice events requested
 
     try {
       const user = req.user as any;
@@ -363,7 +359,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      console.log('Fetching SimplePractice events from all Google Calendars...');
+      // Fetching SimplePractice events from all Google Calendars
 
       const calendar = google.calendar({ version: 'v3' });
 
@@ -374,18 +370,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           access_token: user.accessToken
         });
       } catch (authError: any) {
-        console.log('❌ Calendar list auth error:', authError.message);
-
         // If we get 401, try to refresh the token
         if (authError.code === 401 && user.refreshToken && user.refreshToken !== 'dev_refresh_token') {
           // Try using environment tokens first as fallback
-          console.log('🔄 Attempting to use environment tokens...');
           try {
             const envAccessToken = process.env.GOOGLE_ACCESS_TOKEN;
             const envRefreshToken = process.env.GOOGLE_REFRESH_TOKEN;
 
             if (envAccessToken && !envAccessToken.startsWith('dev-')) {
-              console.log('✅ Using environment tokens for calendar access');
 
               // Create new OAuth2 client with environment tokens
               const envOAuth2Client = new google.auth.OAuth2(
@@ -402,13 +394,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
               // Try with environment tokens
               calendarListResponse = await envCalendar.calendarList.list();
-              console.log('✅ Calendar list retrieved with environment tokens');
+              // Calendar list retrieved with environment tokens
             } else {
               throw new Error('No valid environment tokens available');
             }
           } catch (envError) {
-            console.log('❌ Environment token fallback failed:', envError.message);
-
             // Fall back to database events
             const events = await storage.getEvents(parseInt(user.id) || 1);
             const simplePracticeEvents = events.filter(event => 
@@ -445,16 +435,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const calendars = calendarListResponse.data.items || [];
-      console.log(`📅 Found ${calendars.length} calendars to search`);
-
       let allSimplePracticeEvents = [];
       let simplePracticeCalendars = [];
 
       // Search through all calendars for SimplePractice events
       for (const cal of calendars) {
         try {
-          console.log(`🔍 Searching calendar: ${cal.summary} (${cal.id})`);
-
           const response = await calendar.events.list({
             calendarId: cal.id,
             timeMin: start as string,
@@ -492,8 +478,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
 
           if (simplePracticeEvents.length > 0) {
-            console.log(`✅ Found ${simplePracticeEvents.length} SimplePractice events in ${cal.summary}`);
-
             const formattedEvents = simplePracticeEvents.map(event => ({
               id: event.id,
               title: event.summary || 'Untitled Event',
@@ -517,7 +501,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
         } catch (calendarError) {
-          console.warn(`⚠️ Could not access calendar ${cal.summary}: ${calendarError.message}`);
           // Continue with other calendars
         }
       }
@@ -583,14 +566,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get calendar events with live sync - forces fresh Google Calendar API calls
   app.get("/api/calendar/events", async (req, res) => {
-    console.log('🔍 Calendar events requested for user:', req.user?.email);
-
     try {
       // Use direct API approach to bypass OAuth2 client refresh issues
       const { directGoogleCalendarSync } = await import('./direct-google-api');
       return await directGoogleCalendarSync(req, res);
     } catch (error) {
-      console.error('Calendar events error:', error);
       return res.status(500).json({ 
         error: 'Failed to fetch calendar events',
         message: error.message,
