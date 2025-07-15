@@ -1,46 +1,52 @@
 #!/bin/bash
 
-echo "🔧 Building application for deployment..."
+# Deployment Build Script
+# This script fixes the deployment issue by building client files to server/public
 
-# Step 1: Build client files to server/public
-echo "Building client..."
+echo "🚀 Starting deployment build process..."
+
+# Create necessary directories
+echo "📁 Creating directory structure..."
+mkdir -p server/public
+mkdir -p dist
+
+# Build client to server/public (where server expects files)
+echo "📦 Building client application..."
 npx vite build --outDir=server/public --emptyOutDir
 
-# Check if client build was successful
-if [ $? -eq 0 ]; then
-    echo "✅ Client build successful"
-else
+if [ $? -ne 0 ]; then
     echo "❌ Client build failed"
     exit 1
 fi
 
-# Step 2: Build server files
-echo "Building server..."
+# Build server to dist
+echo "📦 Building server application..."
 npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
 
-# Check if server build was successful
-if [ $? -eq 0 ]; then
-    echo "✅ Server build successful"
-else
+if [ $? -ne 0 ]; then
     echo "❌ Server build failed"
     exit 1
 fi
 
-# Step 3: Verify files exist
-if [ -d "server/public" ]; then
-    echo "✅ Client files available in server/public"
-    ls -la server/public/
+# Verify build output
+echo "🔍 Verifying build output..."
+
+if [ -f "server/public/index.html" ]; then
+    echo "✅ Client build found in server/public"
 else
-    echo "❌ server/public directory not found"
+    echo "❌ Client build not found in server/public"
     exit 1
 fi
 
 if [ -f "dist/index.js" ]; then
-    echo "✅ Server files available in dist/"
-    ls -la dist/
+    echo "✅ Server build found in dist"
 else
-    echo "❌ dist/index.js not found"
+    echo "❌ Server build not found in dist"
     exit 1
 fi
 
-echo "🚀 Build complete! Ready for deployment."
+echo "🎉 Deployment build completed successfully!"
+echo "📋 Build Summary:"
+echo "   Client files: server/public/"
+echo "   Server files: dist/"
+echo "💡 To start the production server, run: npm start"
