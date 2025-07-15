@@ -67,13 +67,20 @@ export class GoogleCalendarAuth {
     }
   }
   
-  static async getValidAccessToken(): Promise<string | null> {
-    // Try environment tokens first
-    let accessToken = process.env.GOOGLE_ACCESS_TOKEN;
-    let refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
+  static async getValidAccessToken(req?: any): Promise<string | null> {
+    // First try to get tokens from session (for authenticated users)
+    let accessToken = req?.session?.google_access_token || req?.user?.accessToken;
+    let refreshToken = req?.session?.google_refresh_token || req?.user?.refreshToken;
+    
+    // Fall back to environment tokens
+    if (!accessToken || !refreshToken) {
+      accessToken = process.env.GOOGLE_ACCESS_TOKEN;
+      refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
+      console.log('Using environment tokens as fallback');
+    }
     
     if (!accessToken || !refreshToken) {
-      console.log('No environment tokens available');
+      console.log('No access or refresh tokens available');
       return null;
     }
     
@@ -101,11 +108,9 @@ export class GoogleCalendarAuth {
       console.log('Current token validation failed:', error.message);
     }
     
-    // Don't attempt refresh if the token is fresh from the playground
-    // Instead, try to use it directly for API calls
-    console.log('⚠️ Token validation failed, but trying direct API call...');
+    // Try direct calendar API call to double-check
+    console.log('⚠️ Token validation failed, trying direct API call...');
     
-    // Test direct calendar API call
     try {
       const calendarTestResponse = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=1', {
         headers: {
@@ -126,12 +131,60 @@ export class GoogleCalendarAuth {
       console.log('Direct API call error:', directError.message);
     }
     
-    console.log('❌ Token validation completely failed');
+    // If both validations failed, attempt to refresh the token
+    console.log('🔄 Attempting to refresh access token...');
+    
+    try {
+      const refreshedTokens = await this.refreshAccessToken(refreshToken);
+      if (refreshedTokens && refreshedTokens.access_token) {
+        console.log('✅ Successfully refreshed access token');
+        
+        // Update session with new tokens if req is provided
+        if (req && req.session) {
+          req.session.google_access_token = refreshedTokens.access_token;
+          if (refreshedTokens.refresh_token) {
+            req.session.google_refresh_token = refreshedTokens.refresh_token;
+          }
+          req.session.google_token_expiry = refreshedTokens.expiry_date;
+          
+          // Update user object if present
+          if (req.user) {
+            req.user.accessToken = refreshedTokens.access_token;
+            if (refreshedTokens.refresh_token) {
+              req.user.refreshToken = refreshedTokens.refresh_token;
+            }
+          }
+          
+          console.log('✅ Updated session with new tokens');
+        }
+        
+        // Test the new token
+        const newTestResponse = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=1', {
+          headers: {
+            'Authorization': `Bearer ${refreshedTokens.access_token}`,
+            'Accept': 'application/json'
+          }
+        });
+        
+        if (newTestResponse.ok) {
+          console.log('✅ Refreshed token is working');
+          return refreshedTokens.access_token;
+        } else {
+          console.log(`❌ Refreshed token still not working: ${newTestResponse.status}`);
+        }
+      } else {
+        console.log('❌ Token refresh failed - no new token received');
+      }
+    } catch (refreshError) {
+      console.log('❌ Token refresh error:', refreshError.message);
+    }
+    
+    console.log('❌ All token validation and refresh attempts failed');
     return null;
   }
   
-  static async fetchCalendarEvents(startDate: string, endDate: string): Promise<any[]> {
-    const accessToken = await this.getValidAccessToken();
+  static async fetchCalendarEvents(startDate: string, endDate: string, req?: any): Promise<any[]> {
+    const accessToken = await this.getValidAccessToken(req);
     if (!accessToken) {
       throw new Error('No valid access token available');
     }
@@ -233,7 +286,7 @@ export async function handleGoogleCalendarSync(req: Request, res: Response) {
     
     console.log('🔄 Starting Google Calendar sync...');
     
-    const events = await GoogleCalendarAuth.fetchCalendarEvents(start as string, end as string);
+    const events = await GoogleCalendarAuth.fetchCalendarEvents(start as string, end as string, req);
     
     // Save events to database
     const userId = 1; // Use fallback user ID for now
