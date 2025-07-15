@@ -7,6 +7,9 @@ interface AuthResponse {
     email: string;
     name: string;
     displayName: string;
+    accessToken?: string;
+    refreshToken?: string;
+    provider?: string;
   };
   hasTokens: boolean;
 }
@@ -15,63 +18,26 @@ export const useAuthenticatedUser = () => {
   const { data, isLoading, error, refetch } = useQuery<AuthResponse>({
     queryKey: ['/api/auth/status'],
     queryFn: async () => {
-      try {
-        const response = await fetch('/api/auth/status', {
-          credentials: 'include',
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Cookie': document.cookie
-          }
-        });
-
-        if (!response.ok) {
-          console.log('❌ Auth status failed, attempting deployment fix...');
-
-          // Try deployment fix immediately
-          const deploymentResponse = await fetch('/api/auth/deployment-fix', {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-              'Content-Type': 'application/json',
-              'Cache-Control': 'no-cache'
-            }
-          });
-
-          if (deploymentResponse.ok) {
-            const deploymentResult = await deploymentResponse.json();
-            console.log('✅ Deployment fix successful:', deploymentResult.user?.email);
-            return {
-              isAuthenticated: true,
-              user: deploymentResult.user,
-              hasTokens: true
-            };
-          }
-
-          throw new Error('Authentication failed');
-        }
-
-        const result = await response.json();
-        console.log('✅ Auth status retrieved:', result.isAuthenticated ? 'authenticated' : 'not authenticated');
-        return result;
-
-      } catch (error) {
-        console.error('❌ Auth query failed:', error);
-
-        // Return default authenticated state to prevent connection blocking
-        return {
-          isAuthenticated: true,
-          user: {
-            id: '1',
-            email: 'jonathan.procter@gmail.com',
-            name: 'Jonathan Procter',
-            displayName: 'Jonathan Procter'
-          },
-          hasTokens: true
-        };
+      const response = await fetch('/api/auth/status');
+      if (!response.ok) {
+        throw new Error('Failed to fetch auth status');
       }
+      return response.json();
     },
-    retry: false, // Disable retries to prevent connection blocking
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: false, // Disable automatic refetching
-    refetchOnWindowFocus: false, // Disable refetch on focus
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: 1
   });
+
+  const user = data?.user;
+  const isAuthenticated = data?.isAuthenticated || false;
+  const hasTokens = data?.hasTokens || false;
+
+  return {
+    user,
+    isAuthenticated,
+    hasTokens,
+    isLoading,
+    error,
+    refetch
+  };
+};
