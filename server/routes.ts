@@ -18,6 +18,7 @@ import {
 } from "./clean-auth";
 import { createDirectGoogleAuth } from "./direct-google-auth";
 import { FreshGoogleAuth } from "./fresh-google-auth";
+import { runComprehensiveAudit } from "./comprehensive-audit";
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
@@ -854,6 +855,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('❌ Fresh Google test failed:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
+  // COMPREHENSIVE AUDIT ENDPOINT
+  app.get("/api/audit/comprehensive", async (req, res) => {
+    try {
+      console.log('🔍 Running comprehensive application audit...');
+      const auditResults = await runComprehensiveAudit();
+      
+      // Log the report to console
+      console.log('\n' + auditResults.report);
+      
+      res.json({
+        success: true,
+        timestamp: new Date().toISOString(),
+        ...auditResults
+      });
+    } catch (error) {
+      console.error('❌ Comprehensive audit failed:', error);
       res.status(500).json({
         success: false,
         error: error.message
