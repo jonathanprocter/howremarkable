@@ -1,17 +1,19 @@
 
-// REMOVED: DevLoginButton component - NO DEV AUTHENTICATION ALLOWED
-// This component is no longer needed as all authentication must go through Google OAuth
-
 import React from 'react';
 import { Button } from './ui/button';
 
-export function DevLoginButton() {
+export function GoogleOAuthButton() {
+  const handleGoogleLogin = () => {
+    // Redirect to Google OAuth endpoint
+    window.location.href = '/api/auth/google';
+  };
+
   return (
     <Button 
-      disabled
-      className="bg-gray-400 text-gray-600 cursor-not-allowed"
+      onClick={handleGoogleLogin}
+      className="bg-blue-600 hover:bg-blue-700 text-white"
     >
-      Dev Login Disabled
+      Sign in with Google
     </Button>
   );
 }

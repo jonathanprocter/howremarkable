@@ -30,7 +30,7 @@ import { export100PercentPixelPerfectPDF } from '@/utils/pixelPerfectPDFExport';
 import { exportEnhancedWeeklyPDF } from '@/utils/enhancedWeeklyPDFExport';
 import { exportEnhancedDailyPDF } from '@/utils/enhancedDailyPDFExport';
 import { exportEnhancedWeeklyPackage } from '@/utils/enhancedWeeklyPackageExport';
-import { DevLoginButton } from '../components/DevLoginButton';
+import { GoogleOAuthButton } from '../components/DevLoginButton';
 import { autonomousAuthAudit } from '../utils/autonomousAuthAudit';
 import { AuthenticationFix } from '../utils/authenticationFix';
 import { SessionFixer } from '../utils/sessionFixer';
@@ -1155,7 +1155,7 @@ export default function Planner() {
           </div>
 
           <div className="flex items-center gap-2">
-            {!user && <DevLoginButton />}
+            {!user && <GoogleOAuthButton />}
             {user && (
               <Badge variant="outline" className="text-sm bg-green-50">
                 Logged in as {user.name}
