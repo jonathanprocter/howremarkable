@@ -347,10 +347,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return done(null, false);
       }
 
-      // Validate tokens are present for Google users
+      // Ensure required tokens exist
       if (user.googleId && (!user.accessToken || user.accessToken === 'undefined')) {
-        user.accessToken = 'dev-access-token-' + Date.now();
-        user.refreshToken = 'dev-refresh-token-' + Date.now();
+        return done(null, false);
       }
 
       done(null, user);
@@ -489,47 +488,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/token-refresh', tokenRefreshFix);
 
   app.get("/api/auth/status", (req, res) => {
-    let user = req.user as any;
-    let isAuthenticated = !!user;
-    let hasTokens = user && user.accessToken && user.refreshToken;
-
-    // Development fallback - if no user found, create a temporary authenticated user
-    if (!user) {
-      user = {
-        id: 1,
-        email: 'jonathan.procter@gmail.com',
-        displayName: 'Jonathan Procter',
-        name: 'Jonathan Procter',
-        accessToken: 'dev_access_token',
-        refreshToken: 'dev_refresh_token'
-      };
-      isAuthenticated = true;
-      hasTokens = true;
-
-      // Set user in session for consistency
-      req.user = user;
-      req.session.passport = { user: user };
-      req.session.save();
-    }
+    const user = req.user as any;
+    const isAuthenticated = !!user;
+    const hasTokens = user && user.accessToken && user.refreshToken;
 
     // Check for problematic token states
-    const hasValidTokens = hasTokens && 
-      !user.accessToken.startsWith('dev') && 
-      user.accessToken !== 'undefined' &&
-      user.accessToken !== 'working_access_token';
+    const hasValidTokens = hasTokens;
 
     res.json({ 
       isAuthenticated,
-      hasTokens: hasTokens ? (hasValidTokens ? true : 'dev_tokens') : false,
+      hasTokens,
       hasValidTokens,
       user: user ? { 
         id: user.id,
         email: user.email,
         displayName: user.displayName,
         hasAccessToken: !!user.accessToken,
-        hasRefreshToken: !!user.refreshToken,
-        tokenType: user.accessToken?.startsWith('dev') ? 'development' : 'production',
-        accessTokenPreview: user.accessToken?.substring(0, 20) + "..."
+        hasRefreshToken: !!user.refreshToken
       } : null,
       debug: {
         sessionId: req.sessionID,
@@ -653,122 +628,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Development login endpoint
-  app.post("/api/auth/dev-login", async (req, res) => {
-    try {
-      console.log('🔍 Session Debug [POST /api/auth/dev-login]: User=' + (req.user ? 'true' : 'false') + ', Session=' + req.sessionID?.substring(0, 8) + '...');
-
-      // Create a development user with valid tokens
-      const devUser = {
-        id: '8',
-        googleId: 'dev-google-id',
-        email: 'dev@test.com',
-        name: 'Development User',
-        accessToken: 'dev-access-token-' + Date.now(),
-        refreshToken: 'dev-refresh-token-' + Date.now()
-      };
-
-      // Use passport's logIn method to properly authenticate
-      req.logIn(devUser, { session: true }, (err) => {
-        if (err) {
-          console.error('Dev login error:', err);
-          return res.status(500).json({ error: 'Login failed' });
-        }
-
-        // Ensure session structure is correct
-        req.session.passport = { user: devUser };
-        req.user = devUser;
-
-        // Force session save with callback
-        req.session.save((saveErr) => {
-          if (saveErr) {
-            console.error('Session save error:', saveErr);
-            return res.status(500).json({ error: 'Session save failed' });
-          }
-
-          console.log('Development user logged in:', devUser.email);
-          console.log('Session after dev login:', req.sessionID);
-          console.log('User object in session:', !!req.user);
-          console.log('Session passport:', !!req.session.passport);
-
-          res.json({ 
-            success: true, 
-            user: devUser,
-            sessionId: req.sessionID
-          });
-        });
-      });
-
-    } catch (error) {
-      console.error('Dev login error:', error);
-      res.status(500).json({ error: 'Login failed' });
-    }
-  });
-
-  // Simple login endpoint for testing
-  app.get("/api/auth/test-login", (req, res) => {
-    const testUser = {
-      id: '8',
-      googleId: 'test-google-id',
-      email: 'dev@test.com',
-      name: 'Test User',
-      accessToken: 'test-access-token-' + Date.now(),
-      refreshToken: 'test-refresh-token-' + Date.now()
-    };
-
-    req.logIn(testUser, { session: true }, (err) => {
-      if (err) {
-        console.error('Test login error:', err);
-        return res.status(500).json({ error: 'Test login failed', details: err.message });
-      }
-
-      // Ensure session data is set
-      req.session.passport = { user: testUser };
-      req.user = testUser;
-
-      req.session.save((saveErr) => {
-        if (saveErr) {
-          console.error('Test session save error:', saveErr);
-          return res.status(500).json({ error: 'Session save failed' });
-        }
-
-        console.log('✅ Test user logged in successfully:', testUser.email);
-        res.json({ 
-          success: true, 
-          user: testUser,
-          sessionId: req.sessionID,
-          message: 'Test login successful'
-        });
-      });
-    });
-  });
 
   // Enhanced authentication middleware with proper token detection
   const requireAuth = (req: any, res: any, next: any) => {
-    console.log('🔧 DEVELOPMENT MODE: Creating temporary user for events endpoint');
-
     // Check if user is already authenticated
     if (req.user || (req.session?.passport?.user)) {
       if (!req.user && req.session?.passport?.user) {
         req.user = req.session.passport.user;
       }
-      console.log('✅ User found in session:', req.user?.email);
       return next();
     }
 
-    // Development fallback - create temporary authenticated user
-    const devUser = {
-      id: '1',
-      email: 'jonathan.procter@gmail.com',
-      displayName: 'Jonathan Procter',
-      name: 'Jonathan Procter',
-      accessToken: 'dev-access-token-' + Date.now(),
-      refreshToken: 'dev-refresh-token-' + Date.now()
-    };
-
-    req.user = devUser;
-    req.session.passport = { user: devUser };
-    console.log('🔧 Development user created:', devUser.email);
-    return next();
+    return res.status(401).json({ error: 'Not authenticated' });
   };
 
   // Get SimplePractice events from all calendars
@@ -783,8 +654,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Start and end dates are required' });
       }
 
-      // For development mode or if tokens are dev tokens, use database
-      if (!user.accessToken || user.accessToken.startsWith('dev-') || user.accessToken === 'undefined' || user.accessToken === 'dev_access_token') {
+      // If tokens are missing use cached events
+      if (!user.accessToken) {
         const events = await storage.getEvents(parseInt(user.id) || 1);
         const simplePracticeEvents = events.filter(event => 
           event.source === 'simplepractice' || 
@@ -815,7 +686,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('❌ Calendar list auth error:', authError.message);
 
         // If we get 401, try to refresh the token
-        if (authError.code === 401 && user.refreshToken && user.refreshToken !== 'dev_refresh_token') {
+        if (authError.code === 401 && user.refreshToken) {
           // Try using environment tokens first as fallback
           console.log('🔄 Attempting to use environment tokens...');
           try {
@@ -1179,21 +1050,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Events API
   app.get("/api/events", async (req, res) => {
     try {
-      // Get user from session or create development user
-      let user = req.user || req.session?.passport?.user;
-
-      // Development fallback - create temporary user if none exists
+      const user = req.user || req.session?.passport?.user;
       if (!user) {
-        console.log('🔧 DEVELOPMENT MODE: Creating temporary user for events endpoint');
-        user = {
-          id: 1,
-          email: 'jonathan.procter@gmail.com',
-          displayName: 'Jonathan Procter',
-          name: 'Jonathan Procter'
-        };
-
-        // Set user in request for consistency
-        req.user = user;
+        return res.status(401).json({ error: 'Not authenticated' });
       }
 
       const userId = parseInt(user.id) || 1;
@@ -1291,18 +1150,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const eventId = req.params.id;
       const updates = req.body;
 
-      // Get user or create development user
-      let user = req.user || req.session?.passport?.user;
-
+      const user = req.user || req.session?.passport?.user;
       if (!user) {
-        console.log('🔧 DEVELOPMENT MODE: Creating temporary user for PUT events');
-        user = {
-          id: 1,
-          email: 'jonathan.procter@gmail.com',
-          displayName: 'Jonathan Procter',
-          name: 'Jonathan Procter'
-        };
-        req.user = user;
+        return res.status(401).json({ error: 'Not authenticated' });
       }
 
       // Validate updates object
@@ -1393,18 +1243,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const eventId = req.params.id;
       const updates = req.body;
 
-      // Get user or create development user
-      let user = req.user || req.session?.passport?.user;
-
+      const user = req.user || req.session?.passport?.user;
       if (!user) {
-        console.log('🔧 DEVELOPMENT MODE: Creating temporary user for PATCH events');
-        user = {
-          id: 1,
-          email: 'jonathan.procter@gmail.com',
-          displayName: 'Jonathan Procter',
-          name: 'Jonathan Procter'
-        };
-        req.user = user;
+        return res.status(401).json({ error: 'Not authenticated' });
       }
 
       // Validate updates object

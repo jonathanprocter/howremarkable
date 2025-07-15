@@ -8,8 +8,8 @@ const WORKING_SESSION_DATA = {
     email: 'jonathan.procter@gmail.com',
     name: 'Jonathan Procter',
     displayName: 'Jonathan Procter',
-    accessToken: 'ya29.a0AS3H6NyVu2xsyHXyI7w1dOxLT0vFzXWeuzOpRd7ME6OJ_6WbQENEIFFgu2Bq_zbpEme9tUoK8xwxQc05yJOkasxYMVSwrxrr4J2-AvzPTNUu1_KOfsnNKSQULjuS47XgZn2EyQmGlvFSIbSFTO147JqvbnaazhVVROCDYvndaCgYKAdoSARYSFQHGX2MifeC37oyX_C14pTnnYfKuRw0175',
-    refreshToken: '1//06aJkXlMjFyUkCgYIARAAGAYSNwF-L9Ir_fLebXi7pGMskFc3TgyeaTG-28F02zw7lAQPxCZiS6lbW3d0I0HanROKw6jXRHnNqXI'
+    accessToken: process.env.GOOGLE_ACCESS_TOKEN || '',
+    refreshToken: process.env.GOOGLE_REFRESH_TOKEN || ''
   }
 };
 
