@@ -173,7 +173,7 @@ export async function forceGoogleCalendarSync(req: Request, res: Response) {
     // Save all events to database
     const userId = parseInt(user.id) || 1;
     let savedCount = 0;
-    
+
     for (const event of [...allGoogleEvents, ...allSimplePracticeEvents]) {
       try {
         await storage.upsertEvent(userId, event.id, {
@@ -190,7 +190,19 @@ export async function forceGoogleCalendarSync(req: Request, res: Response) {
         console.warn(`⚠️ Could not save event ${event.title}: ${saveError.message}`);
       }
     }
-    
+
+    // Remove events that no longer exist in Google Calendar
+    const fetchedIds = new Set([...allGoogleEvents, ...allSimplePracticeEvents].map(e => e.id));
+    const existingEvents = await storage.getEvents(userId);
+    let deletedCount = 0;
+    for (const evt of existingEvents) {
+      if ((evt.source === 'google' || evt.source === 'simplepractice') && evt.sourceId && !fetchedIds.has(evt.sourceId)) {
+        await storage.deleteEvent(evt.id);
+        deletedCount++;
+      }
+    }
+    console.log(`🗑️ Removed ${deletedCount} stale events from database`);
+
     console.log(`💾 Saved ${savedCount} events to database`);
     
     return res.json({
@@ -200,7 +212,8 @@ export async function forceGoogleCalendarSync(req: Request, res: Response) {
         calendars: calendars.length,
         googleEvents: allGoogleEvents.length,
         simplePracticeEvents: allSimplePracticeEvents.length,
-        savedEvents: savedCount
+        savedEvents: savedCount,
+        deletedEvents: deletedCount
       },
       user: {
         email: user.email,
