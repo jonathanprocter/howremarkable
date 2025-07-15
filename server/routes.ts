@@ -815,26 +815,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/auth/google/fresh", (req, res) => {
     console.log('🚀 Starting fresh Google OAuth flow...');
 
-    // Use the main callback endpoint that's already configured in Google Cloud Console
+    // Use the current domain for redirect URI
+    const baseURL = process.env.REPLIT_DOMAINS 
+      ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
+      : 'https://ed4c6ee6-c0f6-458f-9eac-1eadf0569a2c-00-387t3f5z7i1mm.kirk.replit.dev';
+
     const oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
-      `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'https://ed4c6ee6-c0f6-458f-9eac-1eadf0569a2c-00-387t3f5z7i1mm.kirk.replit.dev'}/api/auth/google/callback`
+      `${baseURL}/api/auth/google/callback`
     );
 
     const authUrl = oauth2Client.generateAuthUrl({
-    access_type: 'offline',
-    scope: [
-      'https://www.googleapis.com/auth/calendar.readonly',
-      'https://www.googleapis.com/auth/calendar.events',
-      'https://www.googleapis.com/auth/drive.file',
-      'https://www.googleapis.com/auth/userinfo.profile',
-      'https://www.googleapis.com/auth/userinfo.email',
-      'openid'
-    ],
-    prompt: 'consent',
-    include_granted_scopes: true
-  });
+      access_type: 'offline',
+      scope: [
+        'https://www.googleapis.com/auth/calendar.readonly',
+        'https://www.googleapis.com/auth/calendar.events',
+        'https://www.googleapis.com/auth/drive.file',
+        'https://www.googleapis.com/auth/userinfo.profile',
+        'https://www.googleapis.com/auth/userinfo.email',
+        'openid'
+      ],
+      prompt: 'consent',
+      include_granted_scopes: true
+    });
     console.log('🔗 Redirecting to Google OAuth:', authUrl);
     res.redirect(authUrl);
   });

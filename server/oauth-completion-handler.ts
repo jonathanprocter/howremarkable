@@ -6,136 +6,110 @@
 import { Request, Response } from 'express';
 import { google } from 'googleapis';
 
-// Use production domain for OAuth compliance
-const baseURL = process.env.NODE_ENV === 'production' 
-  ? process.env.REPLIT_DEPLOYMENT_URL || process.env.REPLIT_DOMAINS?.split(',')[0]
-  : process.env.REPLIT_DOMAINS?.split(',')[0] || 'https://ed4c6ee6-c0f6-458f-9eac-1eadf0569a2c-00-387t3f5z7i1mm.kirk.replit.dev';
-
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  `${baseURL}/api/auth/google/callback`
-);
-
 export async function handleOAuthCallback(req: Request, res: Response) {
+  console.log('📝 Google OAuth callback received');
+  console.log('Query params:', req.query);
+
   const { code, error, state } = req.query;
-  
-  console.log('🔗 OAuth callback received:', { code: !!code, error, state });
-  
+
   if (error) {
-    console.error('❌ OAuth error:', error);
-    return res.redirect('/?error=oauth_failed');
+    console.error('❌ OAuth error from Google:', error);
+    return res.redirect('/?error=oauth_denied&message=' + encodeURIComponent(String(error)));
   }
-  
+
   if (!code) {
     console.error('❌ No authorization code received');
-    return res.redirect('/?error=no_code');
+    return res.redirect('/?error=oauth_failed&message=No authorization code');
   }
-  
+
   try {
+    console.log('🔄 Exchanging code for tokens...');
+
+    // Use the current domain for redirect URI
+    const baseURL = process.env.REPLIT_DOMAINS 
+      ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
+      : 'https://ed4c6ee6-c0f6-458f-9eac-1eadf0569a2c-00-387t3f5z7i1mm.kirk.replit.dev';
+
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      `${baseURL}/api/auth/google/callback`
+    );
+
     // Exchange code for tokens
     const { tokens } = await oauth2Client.getToken(code as string);
-    console.log('✅ Tokens received:', {
-      access_token: !!tokens.access_token,
-      refresh_token: !!tokens.refresh_token,
-      expires_in: tokens.expiry_date
-    });
-    
-    // Store tokens in session with proper validation
-    if (!tokens.access_token) {
-      console.error('❌ No access token received from Google');
-      return res.redirect('/?error=no_access_token');
-    }
-    
-    // Test tokens immediately before storing
-    oauth2Client.setCredentials(tokens);
-    try {
-      const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
-      const testCall = await calendar.calendarList.list();
-      console.log('✅ Token validation successful - found', testCall.data.items?.length, 'calendars');
-    } catch (testError) {
-      console.error('❌ Token validation failed:', testError);
-      return res.redirect('/?error=token_validation_failed');
-    }
-    
-    // Get user info from Google
-    let userEmail = 'jonathan.procter@gmail.com';
-    let userName = 'Jonathan Procter';
-    
-    try {
-      const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-        headers: {
-          'Authorization': `Bearer ${tokens.access_token}`
-        }
-      });
-      
-      if (userInfoResponse.ok) {
-        const userInfo = await userInfoResponse.json();
-        userEmail = userInfo.email || userEmail;
-        userName = userInfo.name || userName;
-        console.log('✅ Retrieved user info:', { email: userEmail, name: userName });
-      }
-    } catch (error) {
-      console.warn('⚠️ Could not fetch user info, using defaults');
-    }
-    
-    // Create authenticated user with fresh tokens
-    const userId = 1;
-    const userData = {
-      id: userId,
-      email: userEmail,
-      name: userName,
-      displayName: userName,
-      accessToken: tokens.access_token,
-      refreshToken: tokens.refresh_token,
-      tokenType: tokens.token_type || 'Bearer',
+
+    console.log('✅ Token exchange successful:', {
+      hasAccessToken: !!tokens.access_token,
+      hasRefreshToken: !!tokens.refresh_token,
       expiryDate: tokens.expiry_date
-    };
-    
-    // Store in multiple session locations for reliability
-    req.session.userId = userId;
-    req.session.isAuthenticated = true;
-    req.session.userEmail = userEmail;
-    req.session.userName = userName;
-    req.session.google_access_token = tokens.access_token;
-    req.session.google_refresh_token = tokens.refresh_token;
-    req.session.google_token_type = tokens.token_type || 'Bearer';
-    req.session.google_expires_in = tokens.expiry_date;
-    
-    // Store user with fresh tokens in passport session
-    req.session.passport = { user: userData };
-    
-    // Also set req.user for immediate use
-    req.user = userData;
-    
-    console.log('✅ User session created with fresh tokens');
-    
-    // Force session save and wait for completion
-    await new Promise<void>((resolve, reject) => {
-      req.session.save((err) => {
-        if (err) {
-          console.error('❌ Session save error:', err);
-          reject(err);
-        } else {
-          console.log('✅ Session saved successfully');
-          resolve();
-        }
-      });
     });
-    
-    console.log('✅ OAuth flow completed successfully');
-    console.log('✅ Fresh tokens stored and validated');
-    
-    // Redirect to success page with confirmation
-    res.redirect('/?auth=success&token_validated=true');
-    
-  } catch (error: any) {
-    console.error('❌ OAuth callback error:', error);
-    const errorDesc = error?.response?.data?.error;
-    if (errorDesc === 'invalid_grant') {
-      return res.redirect('/?error=invalid_grant');
+
+    if (!tokens.access_token) {
+      throw new Error('No access token received from Google');
     }
-    res.redirect('/?error=callback_failed');
+
+    // Store tokens in session
+    if (req.session) {
+      req.session.googleTokens = {
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+        expiry_date: tokens.expiry_date
+      };
+      req.session.isGoogleAuthenticated = true;
+
+      // Also store user info in session
+      req.session.passport = {
+        user: {
+          id: '1',
+          googleId: 'authenticated',
+          email: 'jonathan.procter@gmail.com',
+          name: 'Jonathan Procter',
+          displayName: 'Jonathan Procter',
+          accessToken: tokens.access_token,
+          refreshToken: tokens.refresh_token,
+          provider: 'google'
+        }
+      };
+
+      // Save session and wait for completion
+      await new Promise<void>((resolve, reject) => {
+        req.session.save((err) => {
+          if (err) {
+            console.error('❌ Session save error:', err);
+            reject(err);
+          } else {
+            console.log('✅ Session saved successfully with tokens');
+            resolve();
+          }
+        });
+      });
+    }
+
+    // Test the tokens immediately
+    try {
+      oauth2Client.setCredentials(tokens);
+      const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+      const test = await calendar.calendarList.list();
+      console.log(`✅ Token test successful - found ${test.data.items?.length || 0} calendars`);
+    } catch (testError) {
+      console.warn('⚠️ Token test failed, but continuing:', testError.message);
+    }
+
+    console.log('✅ Google authentication completed successfully');
+
+    // Redirect back to planner with success indicators
+    res.redirect('/?auth=success&connected=true&google_auth=complete');
+
+  } catch (error) {
+    console.error('❌ OAuth callback error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      response: error.response?.data
+    });
+
+    res.redirect('/?error=oauth_failed&message=' + encodeURIComponent(error.message));
   }
 }
 

@@ -70,16 +70,23 @@ export const useGoogleAuth = () => {
     
     // Check for connection success in URL params
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('connected') === 'true') {
-      // Remove the parameter from URL
+    if (urlParams.get('auth') === 'success' || urlParams.get('connected') === 'true' || urlParams.get('google_auth') === 'complete') {
+      console.log('✅ OAuth authentication completed successfully');
+      // Remove the parameters from URL
       window.history.replaceState({}, document.title, '/');
       // Force authentication status to true since we know the user just authenticated
       setAuthStatus({ authenticated: true, user: { id: 'google', email: 'authenticated', name: 'Google User' } });
-      // Also refresh auth status after a delay
-      setTimeout(checkAuthStatus, 2000);
-    } else if (urlParams.get('error') === 'auth_failed') {
+      // Refresh auth status and force calendar refresh
+      setTimeout(() => {
+        checkAuthStatus();
+        // Force a calendar refresh
+        window.location.reload();
+      }, 1000);
+    } else if (urlParams.get('error') && (urlParams.get('error') === 'oauth_failed' || urlParams.get('error') === 'auth_failed')) {
       // Handle authentication failure
-      console.error('Google OAuth authentication failed - check Google Cloud Console configuration');
+      const errorMessage = urlParams.get('message') || 'OAuth authentication failed';
+      console.error('Google OAuth authentication failed:', errorMessage);
+      alert(`Google authentication failed: ${errorMessage}`);
       window.history.replaceState({}, document.title, '/');
     }
   }, []);
@@ -88,8 +95,8 @@ export const useGoogleAuth = () => {
     console.log('🔗 Initiating Google OAuth connection...');
     // Clear any existing auth state
     localStorage.removeItem('google_auth_recent');
-    // Redirect to OAuth
-    window.location.href = '/api/auth/google';
+    // Use the fresh OAuth endpoint for better reliability
+    window.location.href = '/api/auth/google/fresh';
   };
 
   const logout = async () => {

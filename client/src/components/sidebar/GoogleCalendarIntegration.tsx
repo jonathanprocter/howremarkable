@@ -139,8 +139,9 @@ export const GoogleCalendarIntegration = ({
             <>
               <Button 
                 onClick={() => {
-                  // Initiating Google OAuth
-                  window.location.href = '/api/auth/google';
+                  console.log('🔗 Initiating Google Calendar OAuth...');
+                  // Use the fresh OAuth endpoint for better reliability
+                  window.location.href = '/api/auth/google/fresh';
                 }}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                 size="sm"
