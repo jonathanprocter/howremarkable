@@ -514,8 +514,8 @@ export default function Planner() {
   const createEventMutation = useMutation({
     mutationFn: (eventData: Partial<CalendarEvent>) => 
       apiRequest('POST', '/api/events', eventData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/events'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['/api/events'] });
       toast({ title: 'Event created successfully' });
     },
     onError: (error) => {
@@ -526,8 +526,8 @@ export default function Planner() {
   const updateEventMutation = useMutation({
     mutationFn: ({ id, ...eventData }: { id: string } & Partial<CalendarEvent>) =>
       apiRequest('PUT', `/api/events/${id}`, eventData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/events'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['/api/events'] });
       toast({ title: 'Event updated successfully' });
     },
     onError: (error) => {
@@ -538,8 +538,8 @@ export default function Planner() {
   const deleteEventMutation = useMutation({
     mutationFn: (eventId: string) => 
       apiRequest('DELETE', `/api/events/${eventId}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/events'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['/api/events'] });
       toast({ title: 'Event deleted successfully' });
     },
     onError: (error) => {
@@ -772,11 +772,11 @@ export default function Planner() {
     }
   };
 
-  const handleReconnectGoogle = () => {
+  const handleReconnectGoogle = async () => {
     console.log('Reconnecting to Google Calendar...');
     try {
       // Clear any existing authentication state
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/status'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/auth/status'] });
       // Redirect to OAuth
       window.location.href = '/api/auth/google';
     } catch (error) {

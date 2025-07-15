@@ -40,7 +40,11 @@ export class SimpleAuthFix {
           if ((window as any).queryClient) {
             console.log('🔧 Clearing all queries and invalidating cache...');
             (window as any).queryClient.clear();
-            await (window as any).queryClient.invalidateQueries();
+            try {
+              await (window as any).queryClient.invalidateQueries();
+            } catch (error) {
+              console.error('Error invalidating queries:', error);
+            }
             
             // Wait for queries to refresh
             await new Promise(resolve => setTimeout(resolve, 1000));

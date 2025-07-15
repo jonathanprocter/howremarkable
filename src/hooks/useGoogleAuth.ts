@@ -98,7 +98,7 @@ export const useGoogleAuth = () => {
         method: 'POST'
       });
       setAuthStatus({ authenticated: false, user: null });
-      queryClient.invalidateQueries();
+      await queryClient.invalidateQueries();
     } catch (error) {
       console.error('Logout failed:', error);
     }
