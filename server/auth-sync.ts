@@ -61,16 +61,23 @@ export async function forceGoogleCalendarSync(req: Request, res: Response) {
               user.refreshToken = tokenData.refresh_token;
             }
             
-            // Update session
-            req.session.passport = { user };
-            req.session.save();
+            // Update session safely
+            if (req.session) {
+              req.session.passport = { user };
+              req.session.save((saveErr) => {
+                if (saveErr) {
+                  console.error('❌ Session save error:', saveErr);
+                }
+              });
+            }
             
             // Retry calendar list fetch
             calendarListResponse = await calendar.calendarList.list({
               access_token: user.accessToken
             });
           } else {
-            console.log('❌ Token refresh failed');
+            const errorData = await refreshResponse.json().catch(() => ({ error: 'unknown' }));
+            console.log('❌ Token refresh failed:', errorData);
             return res.status(401).json({
               error: 'Token refresh failed',
               needsAuth: true,

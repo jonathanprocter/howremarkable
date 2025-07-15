@@ -18,11 +18,30 @@ export const useAuthenticatedUser = () => {
   const { data, isLoading, error, refetch } = useQuery<AuthResponse>({
     queryKey: ['/api/auth/status'],
     queryFn: async () => {
-      const response = await fetch('/api/auth/status');
-      if (!response.ok) {
-        throw new Error('Failed to fetch auth status');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+      
+      try {
+        const response = await fetch('/api/auth/status', {
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch auth status: ${response.status}`);
+        }
+        
+        return response.json();
+      } catch (error) {
+        clearTimeout(timeoutId);
+        
+        if (error.name === 'AbortError') {
+          throw new Error('Auth status request timed out');
+        }
+        
+        throw error;
       }
-      return response.json();
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
     retry: 1

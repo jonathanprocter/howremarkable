@@ -91,16 +91,16 @@ export async function forceTokenRefresh(req: Request, res: Response) {
       }
     } catch (testError) {
       console.error('❌ Token validation error:', testError);
-      return res.status(500).json({
+      return res.status(401).json({
         error: 'Token validation failed',
-        details: testError.message
+        needsAuth: true,
+        redirectTo: '/api/auth/google'
       });
     }
-
   } catch (error) {
-    console.error('❌ Force token refresh failed:', error);
+    console.error('❌ Token refresh failed:', error);
     return res.status(500).json({
-      error: 'Force token refresh failed',
+      error: 'Token refresh failed',
       details: error.message
     });
   }

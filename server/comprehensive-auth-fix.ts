@@ -75,10 +75,13 @@ export const comprehensiveAuthFix = async (req: Request, res: Response) => {
     req.session.save((saveErr) => {
       if (saveErr) {
         console.error('❌ Session save error:', saveErr);
-        return res.status(500).json({ 
-          error: 'Session save failed', 
-          details: saveErr.message 
-        });
+        if (!res.headersSent) {
+          return res.status(500).json({ 
+            error: 'Session save failed', 
+            details: saveErr.message 
+          });
+        }
+        return;
       }
       
       console.log('✅ Comprehensive auth fix completed successfully');
