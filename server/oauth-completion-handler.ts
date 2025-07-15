@@ -36,11 +36,22 @@ export async function handleOAuthCallback(req: Request, res: Response) {
       expires_in: tokens.expiry_date
     });
     
-    // Store tokens in session
+    // Store tokens in session with proper validation
+    if (!tokens.access_token) {
+      console.error('❌ No access token received from Google');
+      return res.redirect('/?error=no_access_token');
+    }
+    
     req.session.google_access_token = tokens.access_token;
     req.session.google_refresh_token = tokens.refresh_token;
     req.session.google_token_type = tokens.token_type || 'Bearer';
     req.session.google_expires_in = tokens.expiry_date;
+    
+    console.log('✅ Tokens stored in session:', {
+      hasAccessToken: !!tokens.access_token,
+      hasRefreshToken: !!tokens.refresh_token,
+      expiresAt: tokens.expiry_date
+    });
     
     // Get user info from Google
     let userEmail = 'jonathan.procter@gmail.com';
@@ -63,29 +74,40 @@ export async function handleOAuthCallback(req: Request, res: Response) {
       console.warn('⚠️ Could not fetch user info, using defaults');
     }
     
-    // Create authenticated user
+    // Create authenticated user with fresh tokens
     const userId = 1; // Default user ID
     req.session.userId = userId;
     req.session.isAuthenticated = true;
     req.session.userEmail = userEmail;
+    req.session.userName = userName;
+    
+    // Store user with fresh tokens in passport session
     req.session.passport = { 
       user: {
         id: userId,
         email: userEmail,
         name: userName,
+        displayName: userName,
         accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token
+        refreshToken: tokens.refresh_token,
+        tokenType: tokens.token_type,
+        expiryDate: tokens.expiry_date
       }
     };
     
+    // Also set req.user for immediate use
     req.user = {
       id: userId,
       email: userEmail,
       name: userName,
       displayName: userName,
       accessToken: tokens.access_token,
-      refreshToken: tokens.refresh_token
+      refreshToken: tokens.refresh_token,
+      tokenType: tokens.token_type,
+      expiryDate: tokens.expiry_date
     };
+    
+    console.log('✅ User session created with fresh tokens');
     
     // Save session
     await new Promise<void>((resolve, reject) => {

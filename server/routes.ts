@@ -292,7 +292,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/auth/google/callback", handleGoogleCallback);
   app.post("/api/auth/token-refresh", refreshTokens);
   app.get("/api/auth/status", getAuthStatus);
-  
+
   // Simple login endpoint for development
   app.post("/api/auth/simple-login", async (req, res) => {
     try {
@@ -306,10 +306,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         refreshToken: process.env.GOOGLE_REFRESH_TOKEN || 'dev-refresh-token',
         provider: 'google'
       };
-      
+
       req.session.passport = { user: userData };
       req.user = userData;
-      
+
       res.json({ 
         success: true, 
         user: userData,
@@ -338,7 +338,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Try to restore session from known good session
       const sessionId = 'gBvnYGiTDicIU7Udon_c5TdzlgtHhdNU';
-      
+
       // Check if user is already authenticated
       if (req.user) {
         return res.json({ 
@@ -347,7 +347,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: 'User already authenticated'
         });
       }
-      
+
       // Set up a known good user session for development
       const userData = {
         id: '1',
@@ -359,17 +359,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         refreshToken: process.env.GOOGLE_REFRESH_TOKEN || 'dev-refresh-token',
         provider: 'google'
       };
-      
+
       // Manually set up the session
       req.session.passport = { user: userData };
       req.user = userData;
-      
+
       res.json({ 
         success: true, 
         user: userData,
         message: 'Session restored for deployment'
       });
-      
+
     } catch (error) {
       res.status(500).json({ 
         error: 'Session restore failed',
@@ -814,22 +814,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // FRESH GOOGLE AUTH ROUTES - New working OAuth flow
   app.get("/api/auth/google/fresh", (req, res) => {
     console.log('🚀 Starting fresh Google OAuth flow...');
-    const authUrl = FreshGoogleAuth.generateAuthUrl();
+
+    // Use the main callback endpoint that's already configured in Google Cloud Console
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'https://ed4c6ee6-c0f6-458f-9eac-1eadf0569a2c-00-387t3f5z7i1mm.kirk.replit.dev'}/api/auth/google/callback`
+    );
+
+    const authUrl = oauth2Client.generateAuthUrl({
+    access_type: 'offline',
+    scope: [
+      'https://www.googleapis.com/auth/calendar',
+      'https://www.googleapis.com/auth/drive.file',
+      'profile',
+      'email'
+    ],
+    prompt: 'consent'
+  });
     console.log('🔗 Redirecting to Google OAuth:', authUrl);
     res.redirect(authUrl);
   });
-  
+
   app.get("/api/auth/google/fresh-callback", async (req, res) => {
     console.log('📝 Fresh Google OAuth callback received');
     const { code } = req.query;
-    
+
     if (!code) {
       console.error('❌ No authorization code received');
       return res.status(400).json({ error: 'No authorization code received' });
     }
-    
+
     const success = await FreshGoogleAuth.handleCallback(code as string, req);
-    
+
     if (success) {
       console.log('✅ Fresh Google authentication successful!');
       res.redirect('/?google_auth=success');
@@ -838,15 +855,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.redirect('/?google_auth=error');
     }
   });
-  
+
   // Test fresh Google Calendar connection
   app.get("/api/auth/google/fresh-test", async (req, res) => {
     try {
       const startDate = new Date('2025-01-01').toISOString();
       const endDate = new Date('2025-12-31').toISOString();
-      
+
       const events = await FreshGoogleAuth.fetchCalendarEvents(req, startDate, endDate);
-      
+
       res.json({
         success: true,
         message: `Fresh Google Calendar connected successfully!`,
@@ -867,10 +884,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('🔍 Running comprehensive application audit...');
       const auditResults = await runComprehensiveAudit();
-      
+
       // Log the report to console
       console.log('\n' + auditResults.report);
-      
+
       res.json({
         success: true,
         timestamp: new Date().toISOString(),
@@ -912,13 +929,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: error.message 
       });
     }
+// OAuth scopes have been corrected, and redirect URI fix to address Google authentication issues.
   });
 
   // Google Auth Debug endpoint
   app.get("/api/auth/google/debug", async (req, res) => {
     try {
       const tokenTest = await directGoogleAuth.testTokens(req);
-      
+
       res.json({
         success: tokenTest.valid,
         environment: {
@@ -952,11 +970,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/google/force-sync", async (req, res) => {
     try {
       const syncResult = await directGoogleAuth.forceSync(req);
-      
+
       // Save synced events to database
       const userId = 1; // Use default user for development
       let savedCount = 0;
-      
+
       for (const event of syncResult.events) {
         try {
           await storage.upsertEvent(userId, event.id, {
@@ -973,7 +991,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.warn(`Failed to save event ${event.id}:`, eventError.message);
         }
       }
-      
+
       res.json({
         success: true,
         stats: {
@@ -1329,7 +1347,7 @@ function requireAuth(req: any, res: any, next: any) {
   // Always ensure user exists to prevent connection issues
   if (!req.user) {
     const sessionUser = req.session?.passport?.user;
-    
+
     if (sessionUser) {
       req.user = sessionUser;
     } else {
@@ -1343,12 +1361,12 @@ function requireAuth(req: any, res: any, next: any) {
         refreshToken: process.env.GOOGLE_REFRESH_TOKEN || 'dev-refresh',
         provider: 'google'
       };
-      
+
       // Update session for consistency
       req.session.passport = { user: req.user };
     }
   }
-  
+
   console.log(`✅ Auth middleware: User ${req.user.email} authenticated for ${req.path}`);
   next();
 }
