@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { google } from 'googleapis';
+import { storage } from './storage';
 
 export async function forceLiveGoogleCalendarSync(req: Request, res: Response) {
   console.log('🚀 FORCE LIVE SYNC ACTIVATED - ENVIRONMENT TOKEN VERSION');
@@ -99,8 +100,40 @@ export async function forceLiveGoogleCalendarSync(req: Request, res: Response) {
 
     console.log(`🎯 Total live Google Calendar events found: ${allGoogleEvents.length}`);
 
+    // Persist events for offline access
+    const userId = parseInt((req.user as any)?.id) || 1;
+    let savedCount = 0;
+    for (const evt of allGoogleEvents) {
+      try {
+        await storage.upsertEvent(userId, evt.id, {
+          title: evt.title,
+          startTime: evt.startTime,
+          endTime: evt.endTime,
+          description: evt.description,
+          location: evt.location,
+          source: 'google',
+          calendarId: evt.calendarId
+        });
+        savedCount++;
+      } catch (err) {
+        console.warn(`⚠️ Could not save event ${evt.title}: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+
+    // Remove stale events
+    const fetchedIds = new Set(allGoogleEvents.map(e => e.id));
+    const existing = await storage.getEvents(userId);
+    let deletedCount = 0;
+    for (const evt of existing) {
+      if (evt.source === 'google' && evt.sourceId && !fetchedIds.has(evt.sourceId)) {
+        await storage.deleteEvent(evt.id);
+        deletedCount++;
+      }
+    }
+    console.log(`💾 Saved ${savedCount} events, removed ${deletedCount} old events`);
+
     // Return fresh data from Google Calendar API
-    res.json({ 
+    res.json({
       events: allGoogleEvents,
       calendars: calendars.map(cal => ({
         id: cal.id,

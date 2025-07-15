@@ -159,8 +159,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`🎯 Total live Google Calendar events found: ${allGoogleEvents.length}`);
 
+      // Persist events for offline access using fallback user ID 1
+      const userId = 1;
+      let savedCount = 0;
+      for (const evt of allGoogleEvents) {
+        try {
+          await storage.upsertEvent(userId, evt.id, {
+            title: evt.title,
+            startTime: new Date(evt.startTime),
+            endTime: new Date(evt.endTime),
+            description: evt.description,
+            location: evt.location,
+            source: 'google',
+            calendarId: evt.calendarId
+          });
+          savedCount++;
+        } catch (err) {
+          console.warn(`⚠️ Could not save event ${evt.title}: ${err instanceof Error ? err.message : String(err)}`);
+        }
+      }
+
+      const fetchedIds = new Set(allGoogleEvents.map(e => e.id));
+      const existing = await storage.getEvents(userId);
+      let deletedCount = 0;
+      for (const evt of existing) {
+        if (evt.source === 'google' && evt.sourceId && !fetchedIds.has(evt.sourceId)) {
+          await storage.deleteEvent(evt.id);
+          deletedCount++;
+        }
+      }
+      console.log(`💾 Saved ${savedCount} events, removed ${deletedCount} old events`);
+
       // Return fresh data from Google Calendar API
-      res.json({ 
+      res.json({
         events: allGoogleEvents,
         calendars: calendars.map(cal => ({
           id: cal.id,
