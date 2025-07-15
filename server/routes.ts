@@ -227,7 +227,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Configure Google OAuth2 Strategy - Use current domain with deployment detection
   let baseURL;
-  if (process.env.REPLIT_DEV_DOMAIN) {
+  if (process.env.BASE_URL) {
+    baseURL = process.env.BASE_URL;
+  } else if (process.env.REPLIT_DEV_DOMAIN) {
     baseURL = `https://${process.env.REPLIT_DEV_DOMAIN}`;
   } else if (process.env.REPLIT_DOMAINS) {
     // Use the first domain from REPLIT_DOMAINS for deployment
