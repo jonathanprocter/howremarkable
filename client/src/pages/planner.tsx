@@ -345,8 +345,8 @@ export default function Planner() {
   const [viewMode, setViewMode] = useState<ViewMode>('weekly');
   const [selectedDate, setSelectedDate] = useState<Date>(() => {
     try {
-      // Start at a date in 2025 where appointments should be visible
-      return new Date(2025, 6, 7); // July 7, 2025 (month is 0-indexed)
+      // Default to today so the planner opens on the current week
+      return new Date();
     } catch (error) {
       console.warn('Failed to create initial date, using fallback');
       return new Date(Date.now());

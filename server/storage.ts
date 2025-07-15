@@ -10,6 +10,12 @@ export interface IStorage {
   createGoogleUser(googleId: string, email: string, name: string): Promise<User>;
   getEvents(userId: number): Promise<Event[]>;
   createEvent(event: InsertEvent): Promise<Event>;
+  /**
+   * Insert or update an event based on its external source ID. If an event
+   * with the provided `sourceId` exists for the given user it will be updated,
+   * otherwise a new row is created. The method returns the stored event.
+   */
+  upsertEvent(userId: number, sourceId: string, event: Partial<Event>): Promise<Event>;
   updateEvent(eventId: number, updates: Partial<Event>): Promise<Event>;
   deleteEvent(eventId: number): Promise<void>;
   getDailyNote(userId: number, date: string): Promise<DailyNote | undefined>;
@@ -64,6 +70,28 @@ export class DatabaseStorage implements IStorage {
       .values(event)
       .returning();
     return newEvent;
+  }
+
+  async upsertEvent(userId: number, sourceId: string, event: Partial<Event>): Promise<Event> {
+    const [existing] = await db
+      .select()
+      .from(events)
+      .where(and(eq(events.userId, userId), eq(events.sourceId, sourceId)));
+
+    if (existing) {
+      const [updated] = await db
+        .update(events)
+        .set(event)
+        .where(and(eq(events.userId, userId), eq(events.sourceId, sourceId)))
+        .returning();
+      return updated;
+    }
+
+    const [created] = await db
+      .insert(events)
+      .values({ ...event, userId, sourceId })
+      .returning();
+    return created;
   }
 
   async updateEvent(eventId: number, updates: Partial<Event>): Promise<Event> {
