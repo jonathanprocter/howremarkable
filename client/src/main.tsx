@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 import "./utils/consoleManager";
+import "./utils/connectionFix";
 
 // Global error handlers for unhandled promise rejections
 window.addEventListener('unhandledrejection', (event) => {

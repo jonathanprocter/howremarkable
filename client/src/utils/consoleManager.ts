@@ -1,4 +1,3 @@
-
 export class ConsoleManager {
   private static logHistory = new Map<string, number>();
   private static lastLogTime = new Map<string, number>();
@@ -37,26 +36,24 @@ export class ConsoleManager {
   }
 }
 
-// Replace global console methods in development
+// Disable console throttling for connection debugging
 if (process.env.NODE_ENV === 'development') {
   const originalLog = console.log;
   const originalWarn = console.warn;
   const originalError = console.error;
 
   console.log = (message: any, ...args: any[]) => {
-    ConsoleManager.throttledLog(message, args, 'log');
+    // Allow all logs through for connection debugging
+    originalLog(message, ...args);
   };
 
   console.warn = (message: any, ...args: any[]) => {
-    ConsoleManager.throttledLog(message, args, 'warn');
+    // Allow all warnings through
+    originalWarn(message, ...args);
   };
 
   console.error = (message: any, ...args: any[]) => {
-    // Always allow critical errors through
-    if (typeof message === 'string' && message.includes('Critical')) {
-      originalError(message, ...args);
-    } else {
-      ConsoleManager.throttledLog(message, args, 'error');
-    }
+    // Always allow all errors through for debugging
+    originalError(message, ...args);
   };
 }
