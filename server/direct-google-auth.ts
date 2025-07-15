@@ -48,49 +48,87 @@ export function createDirectGoogleAuth() {
 
     // Handle OAuth callback
     handleCallback: async (req: Request, res: Response) => {
-      const { code } = req.query;
+      const { code, error, state } = req.query;
+
+      console.log('🔄 OAuth callback received:', { 
+        hasCode: !!code, 
+        hasError: !!error, 
+        state,
+        sessionId: req.sessionID
+      });
+
+      if (error) {
+        console.error('❌ OAuth error from Google:', error);
+        return res.redirect('/?error=oauth_denied');
+      }
 
       if (!code) {
-        return res.status(400).send('Authorization code is required');
+        console.error('❌ No authorization code received');
+        return res.redirect('/?error=oauth_failed');
       }
 
       try {
+        console.log('🔄 Exchanging code for tokens...');
+        console.log('OAuth2 Client Config:', {
+          clientId: CLIENT_ID?.substring(0, 20) + '...',
+          redirectUri: REDIRECT_URI,
+          hasClientSecret: !!CLIENT_SECRET
+        });
+
         // Exchange code for tokens
         const { tokens } = await oauth2Client.getToken(code as string);
+        
+        console.log('✅ Token exchange successful:', {
+          hasAccessToken: !!tokens.access_token,
+          hasRefreshToken: !!tokens.refresh_token,
+          expiresAt: tokens.expiry_date,
+          scope: tokens.scope
+        });
         
         // Store tokens in session with proper serialization
         if (req.session) {
           req.session.googleTokens = tokens;
           req.session.isGoogleAuthenticated = true;
           
-          // Force session save
-          req.session.save((err) => {
-            if (err) {
-              console.error('Session save error:', err);
-            } else {
-              console.log('✅ Session saved successfully');
-            }
+          // Force session save and wait for completion
+          await new Promise<void>((resolve, reject) => {
+            req.session.save((err) => {
+              if (err) {
+                console.error('❌ Session save error:', err);
+                reject(err);
+              } else {
+                console.log('✅ Session saved successfully with tokens');
+                resolve();
+              }
+            });
           });
         }
 
-        console.log('✅ Google authentication successful');
-        console.log('✅ Tokens stored in session:', {
-          hasAccessToken: !!tokens.access_token,
-          hasRefreshToken: !!tokens.refresh_token,
-          expiresAt: tokens.expiry_date
-        });
-
-        // Redirect back to planner
+        console.log('✅ Google authentication completed successfully');
+        
+        // Redirect back to planner with success
         res.redirect('/?auth=success');
+        
       } catch (error) {
         console.error('❌ OAuth callback error:', error);
-        res.redirect('/?auth=error');
+        console.error('Error details:', {
+          message: error.message,
+          code: error.code,
+          response: error.response?.data
+        });
+        res.redirect('/?error=oauth_failed');
       }
     },
 
     // Test tokens and get user info
     testTokens: async (req: Request) => {
       const tokens = req.session?.googleTokens;
+      
+      console.log('🔍 Testing tokens:', {
+        hasTokens: !!tokens,
+        sessionId: req.sessionID,
+        isAuthenticated: req.session?.isGoogleAuthenticated
+      });
       
       if (!tokens) {
         return { valid: false, error: 'No tokens in session' };
@@ -103,12 +141,17 @@ export function createDirectGoogleAuth() {
         const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
         const response = await calendar.calendarList.list();
         
+        console.log('✅ Token test successful:', {
+          calendarCount: response.data.items?.length || 0
+        });
+        
         return {
           valid: true,
           calendarCount: response.data.items?.length || 0,
           userEmail: tokens.email || 'unknown'
         };
       } catch (error) {
+        console.error('❌ Token test failed:', error.message);
         return {
           valid: false,
           error: error.message || 'Token validation failed'

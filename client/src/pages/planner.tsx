@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { GoogleCalendarIntegration } from '@/components/sidebar/GoogleCalendarIntegration';
-import { GoogleAuthFix } from '@/components/GoogleAuthFix';
+import { ManualGoogleAuth } from '@/components/ManualGoogleAuth';
 import { Loader2, Calendar, FileText, Download, Upload, Eye, Settings, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthenticatedUser } from '@/hooks/useAuthenticatedUser';
@@ -1125,7 +1125,7 @@ export default function Planner() {
           {/* Sidebar */}
           <div className="space-y-4">
             {/* Google Calendar Authentication */}
-            <GoogleAuthFix />
+            <ManualGoogleAuth />
             
             {/* Quick Actions */}
             <Card>
