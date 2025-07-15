@@ -11,7 +11,7 @@ export class AuthenticationFix {
    * Comprehensive authentication fix that handles session synchronization
    */
   static async fixAuthentication(): Promise<boolean> {
-    console.log('🔧 AUTHENTICATION FIX: Starting comprehensive fix...');
+    // Starting comprehensive authentication fix
     
     try {
       // Step 1: Clear all session-related cookies
@@ -24,15 +24,15 @@ export class AuthenticationFix {
       const isAuthenticated = await this.validateAuthenticationWithRetries();
       
       if (isAuthenticated) {
-        console.log('✅ Authentication fix successful!');
+        // Authentication fix successful
         return true;
       } else {
-        console.log('❌ Authentication fix failed, trying Google OAuth...');
+        // Authentication fix failed, trying Google OAuth
         return await this.startGoogleOAuth();
       }
       
     } catch (error) {
-      console.error('❌ Authentication fix failed:', error);
+      // Authentication fix failed
       return false;
     }
   }
@@ -60,7 +60,7 @@ export class AuthenticationFix {
       });
     });
     
-    console.log('✅ All session cookies cleared');
+    // All session cookies cleared
   }
   
   /**
@@ -94,7 +94,7 @@ export class AuthenticationFix {
    * Validate authentication with retry logic
    */
   private static async validateAuthenticationWithRetries(): Promise<boolean> {
-    console.log('🔍 Validating authentication with retries...');
+    // Validating authentication with retries
     
     for (let attempt = 1; attempt <= this.MAX_RETRIES; attempt++) {
       try {
@@ -109,22 +109,22 @@ export class AuthenticationFix {
         
         if (response.ok) {
           const data = await response.json();
-          console.log(`🔍 Auth validation attempt ${attempt}:`, data);
+          // Auth validation attempt completed
           
           if (data.isAuthenticated && data.user) {
-            console.log('✅ Authentication validated successfully');
+            // Authentication validated successfully
             return true;
           }
         }
         
         // Wait before retry
         if (attempt < this.MAX_RETRIES) {
-          console.log(`⏳ Waiting ${this.RETRY_DELAY}ms before retry ${attempt + 1}...`);
+          // Waiting before retry
           await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY));
         }
         
       } catch (error) {
-        console.warn(`⚠️ Auth validation attempt ${attempt} failed:`, error);
+        // Auth validation attempt failed
         
         if (attempt < this.MAX_RETRIES) {
           await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY));
@@ -132,7 +132,7 @@ export class AuthenticationFix {
       }
     }
     
-    console.log('❌ All authentication validation attempts failed');
+    // All authentication validation attempts failed
     return false;
   }
   
@@ -140,14 +140,14 @@ export class AuthenticationFix {
    * Start Google OAuth flow
    */
   private static async startGoogleOAuth(): Promise<boolean> {
-    console.log('🔄 Starting Google OAuth flow...');
+    // Starting Google OAuth flow
     
     try {
       // Redirect to Google OAuth
       window.location.href = '/api/auth/google';
       return true;
     } catch (error) {
-      console.error('❌ Google OAuth start failed:', error);
+      // Google OAuth start failed
       return false;
     }
   }
@@ -164,7 +164,7 @@ export class AuthenticationFix {
    * Test current authentication status
    */
   static async testAuthentication(): Promise<void> {
-    console.log('🔍 Testing current authentication status...');
+    // Testing current authentication status
     
     try {
       const response = await fetch('/api/auth/status', {
@@ -177,19 +177,19 @@ export class AuthenticationFix {
       
       if (response.ok) {
         const data = await response.json();
-        console.log('🔍 Current authentication status:', data);
+        // Current authentication status checked
         
         if (data.isAuthenticated) {
-          console.log('✅ User is authenticated:', data.user.email);
+          // User is authenticated
         } else {
-          console.log('❌ User is not authenticated');
-          console.log('💡 Recommendations:', data.recommendations || ['Try authentication fix']);
+          // User is not authenticated
+          // Recommendations available
         }
       } else {
-        console.error('❌ Authentication test failed:', response.status);
+        // Authentication test failed
       }
     } catch (error) {
-      console.error('❌ Authentication test error:', error);
+      // Authentication test error
     }
   }
 }

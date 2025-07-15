@@ -49,7 +49,7 @@ export const DailyView = ({
       
       // Validate that dates are valid
       if (!startTime || !endTime || isNaN(startTime.getTime()) || isNaN(endTime.getTime()) || isNaN(selectedDate.getTime())) {
-        console.warn('Invalid date detected:', { event: event.title, startTime: event.startTime, endTime: event.endTime });
+        // Invalid date detected
         return false;
       }
       
@@ -57,18 +57,18 @@ export const DailyView = ({
       const eventDateString = startTime.toDateString();
       const matches = eventDateString === selectedDateString;
 
-      console.log(`Event: ${event.title} on ${eventDateString}, Selected: ${selectedDateString}, Matches: ${matches}`);
+      // Event date matching checked
 
       return matches;
     } catch (error) {
-      console.warn('Invalid date in event:', event, error);
+      // Invalid date in event
       return false;
     }
   });
 
   // Null check for selectedDate before using
   if (!selectedDate) {
-    console.warn('DailyView: selectedDate is undefined');
+    // DailyView: selectedDate is undefined
     return (
       <div className="planner-container daily-planner">
         <div className="flex items-center justify-center h-64">
@@ -78,9 +78,7 @@ export const DailyView = ({
     );
   }
 
-  console.log(`Daily View - Selected date: ${selectedDate.toDateString()}`);
-  console.log(`Daily View - Total events: ${events.length}`);
-  console.log(`Daily View - Day events: ${dayEvents.length}`);
+  // Daily view event filtering completed
 
   // Calculate daily statistics with error handling
   const totalEvents = dayEvents.length;
@@ -92,7 +90,7 @@ export const DailyView = ({
       if (!startTime || !endTime || isNaN(startTime.getTime()) || isNaN(endTime.getTime())) return sum;
       return sum + (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
     } catch (error) {
-      console.warn('Error calculating event duration:', event.title, error);
+      // Error calculating event duration
       return sum;
     }
   }, 0);
@@ -112,7 +110,7 @@ export const DailyView = ({
     
     // Validate dates
     if (!eventStart || !eventEnd || isNaN(eventStart.getTime()) || isNaN(eventEnd.getTime())) {
-      console.warn('Invalid dates in event:', event.title);
+      // Invalid dates in event
       return { className: 'appointment', style: { display: 'none' } };
     }
     

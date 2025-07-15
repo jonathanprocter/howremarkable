@@ -39,7 +39,7 @@ export function AuthAuditSystem() {
       
       if (response.ok) {
         setAuditResults(data);
-        console.log('Audit results:', data);
+        // Audit results received
         toast({
           title: "Audit Complete",
           description: `Found ${data.summary.failed} issues, ${data.summary.warnings} warnings`,
@@ -48,7 +48,7 @@ export function AuthAuditSystem() {
         throw new Error(data.error || 'Audit failed');
       }
     } catch (error) {
-      console.error('Audit error:', error);
+      // Audit error occurred
       toast({
         title: "Audit Failed",
         description: error instanceof Error ? error.message : 'Unknown error',

@@ -24,26 +24,24 @@ export const ExportToPDF = ({
   onExportFullMonth,
   onExportToGoogleDrive
 }: ExportToPDFProps) => {
-  console.log('🔧 ExportToPDF component rendered');
-  console.log('🔧 onExportCurrentView:', typeof onExportCurrentView);
-  console.log('🔧 onExportDailyView:', typeof onExportDailyView);
+  // ExportToPDF component rendered
 
   // Make the export function globally available for testing
   (window as any).testDailyExport = () => {
-    console.log('🚀 GLOBAL TEST EXPORT CALLED!');
+    // Global test export called
     onExportCurrentView('Daily View');
   };
 
   // Also make it available with a simple name
   (window as any).export = () => {
-    console.log('🚀 SIMPLE EXPORT CALLED!');
+    // Simple export called
     onExportCurrentView('Daily View');
   };
 
   // Add simple PDF export test
   (window as any).testSimplePDF = async () => {
     try {
-      console.log('🧪 Testing Simple PDF Export');
+      // Testing Simple PDF Export
 
       // Import the simple PDF export function
       const { exportSimplePDF } = await import('../../utils/simplePDFExport');
@@ -56,15 +54,15 @@ export const ExportToPDF = ({
         return eventDate.toDateString() === testDate.toDateString();
       });
 
-      console.log('Exporting Simple PDF for date:', testDate.toDateString());
-      console.log('Events for this date:', todayEvents.length);
+      // Exporting Simple PDF for date
+      // Events for this date
 
       await exportSimplePDF(testDate, todayEvents);
 
-      console.log('✅ Simple PDF test completed successfully');
+      // Simple PDF test completed successfully
 
     } catch (error) {
-      console.error('❌ Simple PDF test failed:', error);
+      // Simple PDF test failed
     }
   };
 

@@ -214,7 +214,7 @@ export const AccessibilityProvider = ({ children }: AccessibilityProviderProps) 
         const parsed = JSON.parse(savedSettings);
         setSettings(prev => ({ ...prev, ...parsed }));
       } catch (error) {
-        console.warn('Failed to parse saved accessibility settings:', error);
+        // Failed to parse saved accessibility settings
       }
     }
   }, []);

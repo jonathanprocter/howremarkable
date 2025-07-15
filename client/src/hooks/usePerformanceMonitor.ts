@@ -70,18 +70,7 @@ export const usePerformanceMonitor = (
 
     setMetrics(newMetrics);
 
-    // Log performance warnings
-    if (renderTime > logThreshold) {
-      console.warn(
-        `Performance Warning: ${componentName} render took ${renderTime.toFixed(2)}ms (threshold: ${logThreshold}ms)`,
-        newMetrics
-      );
-    }
-
-    // Log detailed metrics in development
-    if (process.env.NODE_ENV === 'development' && renderCount.current % 10 === 0) {
-      console.log(`Performance Metrics for ${componentName}:`, newMetrics);
-    }
+    // Performance monitoring (logging disabled)
 
     renderStartTime.current = 0;
   };
@@ -101,17 +90,13 @@ export const usePerformanceMonitor = (
 
     const observer = new PerformanceObserver((list) => {
       const entries = list.getEntries();
-      entries.forEach((entry) => {
-        if (entry.entryType === 'measure' && entry.name.includes(componentName)) {
-          console.log(`Performance measure ${entry.name}: ${entry.duration}ms`);
-        }
-      });
+      // Performance measure logging disabled
     });
 
     try {
       observer.observe({ entryTypes: ['measure', 'navigation', 'resource'] });
     } catch (error) {
-      console.warn('Performance Observer not supported:', error);
+      // Performance Observer not supported
     }
 
     return () => observer.disconnect();
@@ -123,7 +108,7 @@ export const usePerformanceMonitor = (
       try {
         performance.mark(`${componentName}-${markName}`);
       } catch (error) {
-        console.warn('Performance marking failed:', error);
+        // Performance marking failed
       }
     }
   };
@@ -138,7 +123,7 @@ export const usePerformanceMonitor = (
           `${componentName}-${endMark}`
         );
       } catch (error) {
-        console.warn('Performance measurement failed:', error);
+        // Performance measurement failed
       }
     }
   };
