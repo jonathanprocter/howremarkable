@@ -16,6 +16,7 @@ import {
   handleGoogleCallback, 
   refreshTokens 
 } from "./clean-auth";
+import { createDirectGoogleAuth } from "./direct-google-auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
@@ -876,6 +877,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('OAuth callback error:', error);
       res.status(500).json({ error: 'OAuth callback failed' });
+    }
+  });
+
+  // Create direct Google auth instance
+  const directGoogleAuth = createDirectGoogleAuth();
+
+  // Direct Google OAuth routes
+  app.get("/api/auth/google", (req, res) => {
+    const authUrl = directGoogleAuth.getAuthUrl();
+    res.redirect(authUrl);
+  });
+
+  app.get("/api/auth/google/callback", async (req, res) => {
+    await directGoogleAuth.handleCallback(req, res);
+  });
+
+  // Google Auth Debug endpoint
+  app.get("/api/auth/google/debug", async (req, res) => {
+    try {
+      const tokenTest = await directGoogleAuth.testTokens(req);
+      
+      res.json({
+        success: tokenTest.valid,
+        environment: {
+          hasClientId: !!process.env.GOOGLE_CLIENT_ID,
+          hasClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
+          hasAccessToken: !!process.env.GOOGLE_ACCESS_TOKEN,
+          hasRefreshToken: !!process.env.GOOGLE_REFRESH_TOKEN
+        },
+        session: {
+          hasTokens: !!req.session?.googleTokens,
+          isAuthenticated: !!req.session?.isGoogleAuthenticated
+        },
+        tokenTest,
+        message: tokenTest.valid ? 'Google authentication is working' : 'Authentication required'
+      });
+    } catch (error) {
+      res.json({
+        success: false,
+        error: error.message || 'Authentication test failed',
+        environment: {
+          hasClientId: !!process.env.GOOGLE_CLIENT_ID,
+          hasClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
+          hasAccessToken: !!process.env.GOOGLE_ACCESS_TOKEN,
+          hasRefreshToken: !!process.env.GOOGLE_REFRESH_TOKEN
+        }
+      });
+    }
+  });
+
+  // Force Google Calendar Sync endpoint
+  app.post("/api/auth/google/force-sync", async (req, res) => {
+    try {
+      const syncResult = await directGoogleAuth.forceSync(req);
+      
+      // Save synced events to database
+      const userId = 1; // Use default user for development
+      let savedCount = 0;
+      
+      for (const event of syncResult.events) {
+        try {
+          await storage.upsertEvent(userId, event.id, {
+            title: event.title,
+            startTime: new Date(event.startTime),
+            endTime: new Date(event.endTime),
+            description: event.description,
+            location: event.location,
+            source: 'google',
+            calendarId: event.calendarId
+          });
+          savedCount++;
+        } catch (eventError) {
+          console.warn(`Failed to save event ${event.id}:`, eventError.message);
+        }
+      }
+      
+      res.json({
+        success: true,
+        stats: {
+          totalEvents: syncResult.eventCount,
+          calendarCount: syncResult.calendarCount,
+          savedEvents: savedCount,
+          googleEvents: syncResult.events.filter(e => e.source === 'google').length,
+          simplePracticeEvents: syncResult.events.filter(e => e.title.includes('Appointment')).length
+        },
+        message: `Successfully synced ${syncResult.eventCount} events from ${syncResult.calendarCount} calendars`
+      });
+    } catch (error) {
+      res.status(401).json({
+        success: false,
+        error: error.message || 'Failed to sync calendar events',
+        needsAuth: true
+      });
     }
   });
 
