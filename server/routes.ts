@@ -35,7 +35,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const accessToken = process.env.GOOGLE_ACCESS_TOKEN;
       const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
 
-      if (!accessToken || accessToken.startsWith('dev-')) {
+      if (!accessToken || accessToken.startsWith('dev')) {
         console.log('❌ No valid Google tokens for live sync');
         return res.status(401).json({ error: 'Valid Google tokens required for live sync' });
       }
@@ -347,10 +347,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return done(null, false);
       }
 
-      // Validate tokens are present for Google users
-      if (user.googleId && (!user.accessToken || user.accessToken === 'undefined')) {
-        user.accessToken = 'dev-access-token-' + Date.now();
-        user.refreshToken = 'dev-refresh-token-' + Date.now();
+      // Require valid tokens for Google users - NO DEV TOKENS
+      if (user.googleId && (!user.accessToken || user.accessToken === 'undefined' || user.accessToken.startsWith('dev'))) {
+        console.log('❌ Invalid or missing Google tokens - authentication failed');
+        return done(null, false);
       }
 
       done(null, user);
@@ -489,30 +489,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/token-refresh', tokenRefreshFix);
 
   app.get("/api/auth/status", (req, res) => {
-    let user = req.user as any;
-    let isAuthenticated = !!user;
-    let hasTokens = user && user.accessToken && user.refreshToken;
+    const user = req.user as any;
+    const isAuthenticated = !!user;
+    const hasTokens = user && user.accessToken && user.refreshToken;
 
-    // Development fallback - if no user found, create a temporary authenticated user
-    if (!user) {
-      user = {
-        id: 1,
-        email: 'jonathan.procter@gmail.com',
-        displayName: 'Jonathan Procter',
-        name: 'Jonathan Procter',
-        accessToken: 'dev_access_token',
-        refreshToken: 'dev_refresh_token'
-      };
-      isAuthenticated = true;
-      hasTokens = true;
-
-      // Set user in session for consistency
-      req.user = user;
-      req.session.passport = { user: user };
-      req.session.save();
-    }
-
-    // Check for problematic token states
+    // NO DEV TOKENS - Check for valid production tokens only
     const hasValidTokens = hasTokens && 
       !user.accessToken.startsWith('dev') && 
       user.accessToken !== 'undefined' &&
@@ -520,7 +501,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     res.json({ 
       isAuthenticated,
-      hasTokens: hasTokens ? (hasValidTokens ? true : 'dev_tokens') : false,
+      hasTokens: hasValidTokens,
       hasValidTokens,
       user: user ? { 
         id: user.id,
@@ -546,12 +527,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         googleOAuth: '/api/auth/google'
       },
       recommendations: !isAuthenticated ? [
-        "1. Try comprehensive auth fix first",
-        "2. If that fails, use Google OAuth flow",
-        "3. Check session configuration"
+        "1. Authenticate via Google OAuth",
+        "2. Check Google Cloud Console setup",
+        "3. Verify OAuth callback URLs"
       ] : !hasValidTokens ? [
-        "1. Run token refresh fix",
-        "2. Verify Google OAuth setup",
+        "1. Refresh Google tokens",
+        "2. Re-authenticate via Google OAuth",
         "3. Check token expiration"
       ] : [
         "✅ Authentication working correctly"
@@ -652,127 +633,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Development login endpoint
-  app.post("/api/auth/dev-login", async (req, res) => {
-    try {
-      console.log('🔍 Session Debug [POST /api/auth/dev-login]: User=' + (req.user ? 'true' : 'false') + ', Session=' + req.sessionID?.substring(0, 8) + '...');
+  // REMOVED: Development login endpoint - NO DEV AUTHENTICATION ALLOWED
 
-      // Create a development user with valid tokens
-      const devUser = {
-        id: '8',
-        googleId: 'dev-google-id',
-        email: 'dev@test.com',
-        name: 'Development User',
-        accessToken: 'dev-access-token-' + Date.now(),
-        refreshToken: 'dev-refresh-token-' + Date.now()
-      };
+  // REMOVED: Test login endpoint - NO DEV AUTHENTICATION ALLOWED
 
-      // Use passport's logIn method to properly authenticate
-      req.logIn(devUser, { session: true }, (err) => {
-        if (err) {
-          console.error('Dev login error:', err);
-          return res.status(500).json({ error: 'Login failed' });
-        }
-
-        // Ensure session structure is correct
-        req.session.passport = { user: devUser };
-        req.user = devUser;
-
-        // Force session save with callback
-        req.session.save((saveErr) => {
-          if (saveErr) {
-            console.error('Session save error:', saveErr);
-            return res.status(500).json({ error: 'Session save failed' });
-          }
-
-          console.log('Development user logged in:', devUser.email);
-          console.log('Session after dev login:', req.sessionID);
-          console.log('User object in session:', !!req.user);
-          console.log('Session passport:', !!req.session.passport);
-
-          res.json({ 
-            success: true, 
-            user: devUser,
-            sessionId: req.sessionID
-          });
-        });
-      });
-
-    } catch (error) {
-      console.error('Dev login error:', error);
-      res.status(500).json({ error: 'Login failed' });
-    }
-  });
-
-  // Simple login endpoint for testing
-  app.get("/api/auth/test-login", (req, res) => {
-    const testUser = {
-      id: '8',
-      googleId: 'test-google-id',
-      email: 'dev@test.com',
-      name: 'Test User',
-      accessToken: 'test-access-token-' + Date.now(),
-      refreshToken: 'test-refresh-token-' + Date.now()
-    };
-
-    req.logIn(testUser, { session: true }, (err) => {
-      if (err) {
-        console.error('Test login error:', err);
-        return res.status(500).json({ error: 'Test login failed', details: err.message });
-      }
-
-      // Ensure session data is set
-      req.session.passport = { user: testUser };
-      req.user = testUser;
-
-      req.session.save((saveErr) => {
-        if (saveErr) {
-          console.error('Test session save error:', saveErr);
-          return res.status(500).json({ error: 'Session save failed' });
-        }
-
-        console.log('✅ Test user logged in successfully:', testUser.email);
-        res.json({ 
-          success: true, 
-          user: testUser,
-          sessionId: req.sessionID,
-          message: 'Test login successful'
-        });
-      });
-    });
-  });
-
-  // Enhanced authentication middleware with proper token detection
-  const requireAuth = (req: any, res: any, next: any) => {
-    console.log('🔧 DEVELOPMENT MODE: Creating temporary user for events endpoint');
-
-    // Check if user is already authenticated
-    if (req.user || (req.session?.passport?.user)) {
-      if (!req.user && req.session?.passport?.user) {
-        req.user = req.session.passport.user;
-      }
-      console.log('✅ User found in session:', req.user?.email);
-      return next();
-    }
-
-    // Development fallback - create temporary authenticated user
-    const devUser = {
-      id: '1',
-      email: 'jonathan.procter@gmail.com',
-      displayName: 'Jonathan Procter',
-      name: 'Jonathan Procter',
-      accessToken: 'dev-access-token-' + Date.now(),
-      refreshToken: 'dev-refresh-token-' + Date.now()
-    };
-
-    req.user = devUser;
-    req.session.passport = { user: devUser };
-    console.log('🔧 Development user created:', devUser.email);
-    return next();
-  };
+  // REMOVED: Development mode authentication middleware - NO DEV AUTHENTICATION ALLOWED
 
   // Get SimplePractice events from all calendars
-  app.get("/api/simplepractice/events", requireAuth, async (req, res) => {
+  app.get("/api/simplepractice/events", async (req, res) => {
     console.log('🔍 SimplePractice events requested');
 
     try {
@@ -783,22 +651,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Start and end dates are required' });
       }
 
-      // For development mode or if tokens are dev tokens, use database
-      if (!user.accessToken || user.accessToken.startsWith('dev-') || user.accessToken === 'undefined' || user.accessToken === 'dev_access_token') {
-        const events = await storage.getEvents(parseInt(user.id) || 1);
-        const simplePracticeEvents = events.filter(event => 
-          event.source === 'simplepractice' || 
-          (event.title && event.title.toLowerCase().includes('appointment'))
-        );
+      // Require valid user authentication - NO DEV TOKENS
+      if (!user) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
 
-        return res.json({ 
-          events: simplePracticeEvents,
-          calendars: [{
-            id: 'simplepractice',
-            name: 'SimplePractice',
-            color: '#6495ED'
-          }]
-        });
+      // Check for valid access token
+      if (!user.accessToken || user.accessToken.startsWith('dev') || user.accessToken === 'undefined') {
+        return res.status(401).json({ error: 'Valid Google access token required' });
       }
 
       console.log('Fetching SimplePractice events from all Google Calendars...');
@@ -981,40 +841,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (error.code === 401) {
         console.log('❌ Google API authentication failed for SimplePractice');
-        console.log('🔄 Falling back to database events...');
-
-        // Fall back to database events
-        const events = await storage.getEvents(parseInt(req.user.id) || 1);
-        const simplePracticeEvents = events.filter(event => 
-          event.source === 'simplepractice' || 
-          (event.title && event.title.toLowerCase().includes('appointment'))
-        );
-
-        return res.json({ 
-          events: simplePracticeEvents,
-          calendars: [{
-            id: 'simplepractice',
-            name: 'SimplePractice',
-            color: '#6495ED'
-          }]
-        });
+        return res.status(401).json({ error: 'Google authentication failed. Please re-authenticate.' });
       }
 
-      // For other errors, also fall back to database
-      console.log('❌ SimplePractice events error, falling back to database...');
-      const events = await storage.getEvents(parseInt(req.user.id) || 1);
-      const simplePracticeEvents = events.filter(event => 
-        event.source === 'simplepractice' || 
-        (event.title && event.title.toLowerCase().includes('appointment'))
-      );
-
-      return res.json({ 
-        events: simplePracticeEvents,
-        calendars: [{
-          id: 'simplepractice',
-          name: 'SimplePractice',
-          color: '#6495ED'
-        }]
+      // For other errors, return error - NO DATABASE FALLBACK
+      console.log('❌ SimplePractice events error:', error.message);
+      return res.status(500).json({ 
+        error: 'Failed to fetch SimplePractice events',
+        message: error.message
       });
     }
   });
@@ -1179,21 +1013,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Events API
   app.get("/api/events", async (req, res) => {
     try {
-      // Get user from session or create development user
-      let user = req.user || req.session?.passport?.user;
+      // Require authenticated user - NO DEV AUTHENTICATION
+      const user = req.user || req.session?.passport?.user;
 
-      // Development fallback - create temporary user if none exists
       if (!user) {
-        console.log('🔧 DEVELOPMENT MODE: Creating temporary user for events endpoint');
-        user = {
-          id: 1,
-          email: 'jonathan.procter@gmail.com',
-          displayName: 'Jonathan Procter',
-          name: 'Jonathan Procter'
-        };
-
-        // Set user in request for consistency
-        req.user = user;
+        return res.status(401).json({ error: 'Authentication required' });
       }
 
       const userId = parseInt(user.id) || 1;
