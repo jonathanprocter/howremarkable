@@ -6,10 +6,15 @@
 import { Request, Response } from 'express';
 import { google } from 'googleapis';
 
+// Use production domain for OAuth compliance
+const baseURL = process.env.NODE_ENV === 'production' 
+  ? process.env.REPLIT_DEPLOYMENT_URL || process.env.REPLIT_DOMAINS?.split(',')[0]
+  : process.env.REPLIT_DOMAINS?.split(',')[0] || 'https://ed4c6ee6-c0f6-458f-9eac-1eadf0569a2c-00-387t3f5z7i1mm.kirk.replit.dev';
+
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'https://ed4c6ee6-c0f6-458f-9eac-1eadf0569a2c-00-387t3f5z7i1mm.kirk.replit.dev'}/api/auth/google/callback`
+  `${baseURL}/api/auth/google/callback`
 );
 
 export async function handleOAuthCallback(req: Request, res: Response) {

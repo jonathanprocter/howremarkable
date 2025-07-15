@@ -825,12 +825,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const authUrl = oauth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: [
-      'https://www.googleapis.com/auth/calendar',
+      'https://www.googleapis.com/auth/calendar.readonly',
+      'https://www.googleapis.com/auth/calendar.events',
       'https://www.googleapis.com/auth/drive.file',
-      'profile',
-      'email'
+      'https://www.googleapis.com/auth/userinfo.profile',
+      'https://www.googleapis.com/auth/userinfo.email',
+      'openid'
     ],
-    prompt: 'consent'
+    prompt: 'consent',
+    include_granted_scopes: true
   });
     console.log('🔗 Redirecting to Google OAuth:', authUrl);
     res.redirect(authUrl);
