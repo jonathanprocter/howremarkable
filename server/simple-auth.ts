@@ -30,8 +30,8 @@ export async function simpleDirectLogin(req: Request, res: Response) {
       email: user.email,
       displayName: user.displayName,
       name: user.displayName,
-      accessToken: process.env.GOOGLE_ACCESS_TOKEN || 'dev_access_token',
-      refreshToken: process.env.GOOGLE_REFRESH_TOKEN || 'dev_refresh_token'
+      accessToken: process.env.GOOGLE_ACCESS_TOKEN || '',
+      refreshToken: process.env.GOOGLE_REFRESH_TOKEN || ''
     };
     
     // Also add Google tokens to session for middleware compatibility
