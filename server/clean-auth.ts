@@ -128,7 +128,10 @@ passport.deserializeUser(async (sessionData: any, done) => {
 
 // Clean authentication middleware
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
-  if (req.isAuthenticated && req.isAuthenticated()) {
+  const user = req.user as any;
+  const isAuthenticated = (req.isAuthenticated && req.isAuthenticated()) || !!user;
+  
+  if (isAuthenticated) {
     return next();
   }
   
@@ -141,14 +144,18 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 
 // Clean auth status endpoint
 export function getAuthStatus(req: Request, res: Response) {
-  const isAuthenticated = req.isAuthenticated && req.isAuthenticated();
   const user = req.user as any;
+  
+  // Check both passport authentication and user object presence
+  const isAuthenticated = (req.isAuthenticated && req.isAuthenticated()) || !!user;
   
   console.log('🔍 Auth status check:', {
     isAuthenticated,
     hasUser: !!user,
     userEmail: user?.email,
-    hasTokens: !!(user?.accessToken && user?.refreshToken)
+    hasTokens: !!(user?.accessToken && user?.refreshToken),
+    passportAuth: req.isAuthenticated && req.isAuthenticated(),
+    sessionID: req.sessionID
   });
   
   res.json({
@@ -185,11 +192,31 @@ export function initiateGoogleOAuth(req: Request, res: Response, next: NextFunct
 // Clean OAuth callback handler
 export function handleGoogleCallback(req: Request, res: Response, next: NextFunction) {
   console.log('🔗 OAuth callback received');
+  console.log('🔗 Callback query params:', req.query);
+  console.log('🔗 Session ID:', req.sessionID);
   
-  passport.authenticate('google', { 
+  passport.authenticate('google', {
     failureRedirect: '/?error=oauth_failed',
     successRedirect: '/?auth=success'
-  })(req, res, next);
+  })(req, res, (err: any) => {
+    if (err) {
+      console.error('❌ OAuth callback error:', err);
+      return res.redirect('/?error=oauth_failed');
+    }
+    
+    console.log('✅ OAuth callback successful');
+    console.log('✅ User authenticated:', !!req.user);
+    
+    if (req.user) {
+      console.log('✅ User data:', { 
+        id: (req.user as any).id, 
+        email: (req.user as any).email,
+        name: (req.user as any).name
+      });
+    }
+    
+    res.redirect('/?auth=success');
+  });
 }
 
 // Clean token refresh

@@ -45,13 +45,37 @@ export default function Planner() {
   // Force refresh authentication after OAuth callback
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
+    
+    // Check for successful authentication
+    if (urlParams.get('auth') === 'success') {
+      console.log('✅ OAuth success detected, refreshing authentication...');
+      setTimeout(() => {
+        refetchAuth();
+        // Clear the URL parameters
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }, 1000);
+    }
+    
+    // Check for failed authentication
+    if (urlParams.get('error') === 'oauth_failed') {
+      console.log('❌ OAuth failed');
+      toast({
+        title: "Authentication Failed",
+        description: "Google OAuth authentication failed. Please try again.",
+        variant: "destructive"
+      });
+      // Clear the URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    
+    // Also check for Google OAuth callback parameters
     if (urlParams.has('code') && urlParams.has('scope')) {
-      // OAuth callback detected, refresh auth state after delay
+      console.log('🔄 OAuth callback detected, refreshing authentication...');
       setTimeout(() => {
         refetchAuth();
       }, 1000);
     }
-  }, [refetchAuth]);
+  }, [refetchAuth, toast]);
 
   // Add authentication refresh function for debugging
   const refreshAuth = async () => {
