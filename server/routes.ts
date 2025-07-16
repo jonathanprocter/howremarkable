@@ -5,24 +5,30 @@ import { storage } from "./storage";
 import { insertEventSchema, insertDailyNotesSchema, events } from "@shared/schema";
 import { and, gte, lte } from 'drizzle-orm';
 import { db } from './db';
-import passport from "passport";
-import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { google } from "googleapis";
 import { setupAuditRoutes } from "./audit-system";
-import { 
-  requireAuth, 
-  getAuthStatus, 
-  initiateGoogleOAuth, 
-  handleGoogleCallback, 
-  refreshTokens 
-} from "./clean-auth";
-import { createDirectGoogleAuth } from "./direct-google-auth";
-import { FreshGoogleAuth } from "./fresh-google-auth";
-import { runComprehensiveAudit } from "./comprehensive-audit";
+
+// Simple OAuth2 client configuration
+function createOAuth2Client() {
+  return new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    getRedirectURI()
+  );
+}
+
+function getRedirectURI() {
+  // Get current domain for redirect URI
+  const baseURL = process.env.REPLIT_DOMAINS 
+    ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
+    : 'https://ed4c6ee6-c0f6-458f-9eac-1eadf0569a2c-00-387t3f5z7i1mm.kirk.replit.dev';
+  
+  return `${baseURL}/api/auth/google/callback`;
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
-  // PUBLIC ENDPOINT - Live sync calendar events without authentication - MUST BE BEFORE AUTH MIDDLEWARE
+  // PUBLIC ENDPOINT - Live sync calendar events without authentication
   app.get("/api/live-sync/calendar/events", async (req, res) => {
     console.log('🚀 LIVE SYNC CALENDAR EVENTS - NO AUTH REQUIRED');
 
@@ -45,11 +51,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('✅ Using environment tokens for live sync');
 
       // Set up OAuth2 client with the tokens
-      const oauth2Client = new google.auth.OAuth2(
-        process.env.GOOGLE_CLIENT_ID,
-        process.env.GOOGLE_CLIENT_SECRET
-      );
-
+      const oauth2Client = createOAuth2Client();
       oauth2Client.setCredentials({
         access_token: accessToken,
         refresh_token: refreshToken
@@ -67,10 +69,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log('✅ Token refresh successful');
         } catch (refreshError) {
           console.log('❌ Token refresh failed:', refreshError.message);
-          // Fallback to database events for deployment reliability
-          console.log('🔄 Falling back to database events for deployment reliability');
-
-          // Return cached events from database as fallback
+          
+          // Fallback to database events
           const fallbackEvents = await db.select().from(events).where(
             and(
               gte(events.startTime, new Date(start as string)),
@@ -106,7 +106,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
-      // Get all calendars using OAuth2 client
+      // Get all calendars
       const calendarListResponse = await calendar.calendarList.list();
       const calendars = calendarListResponse.data.items || [];
 
@@ -161,7 +161,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`🎯 Total live Google Calendar events found: ${allGoogleEvents.length}`);
 
-      // Persist events for offline access using fallback user ID 1
+      // Persist events for offline access
       const userId = 1;
       let savedCount = 0;
       for (const evt of allGoogleEvents) {
@@ -206,9 +206,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Live sync error:', error);
 
-      // Fallback to database events for deployment reliability
-      console.log('🔄 Falling back to database events for deployment reliability');
-
+      // Fallback to database events
       try {
         const fallbackEvents = await db.select().from(events).where(
           and(
@@ -254,13 +252,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Initialize passport with clean authentication system
-  app.use(passport.initialize());
-  app.use(passport.session());
-
   // Enhanced session management middleware
   app.use((req, res, next) => {
-    // Ensure session exists and is properly configured
+    // Ensure session exists
     if (!req.session) {
       console.log('❌ No session found, creating new session');
       req.session = {} as any;
@@ -286,27 +280,153 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
-  // Clean Authentication System - Replace all auth chaos with simple OAuth
-  app.get("/api/auth/google", initiateGoogleOAuth);
-  app.get("/api/auth/google/callback", handleGoogleCallback);
-  app.post("/api/auth/token-refresh", refreshTokens);
-  app.get("/api/auth/status", getAuthStatus);
+  // CLEAN OAUTH IMPLEMENTATION - Single source of truth
+  
+  // 1. Start OAuth Flow
+  app.get("/api/auth/google", (req, res) => {
+    console.log('🚀 Starting Google OAuth flow...');
+    console.log('🔗 Redirect URI:', getRedirectURI());
 
-  // Simple login endpoint for development
-  app.post("/api/auth/simple-login", async (req, res) => {
+    const oauth2Client = createOAuth2Client();
+
+    const authUrl = oauth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: [
+        'https://www.googleapis.com/auth/calendar.readonly',
+        'https://www.googleapis.com/auth/calendar.events',
+        'https://www.googleapis.com/auth/drive.file',
+        'https://www.googleapis.com/auth/userinfo.profile',
+        'https://www.googleapis.com/auth/userinfo.email',
+        'openid'
+      ],
+      prompt: 'consent',
+      include_granted_scopes: true
+    });
+    
+    console.log('🔗 Redirecting to Google OAuth:', authUrl);
+    res.redirect(authUrl);
+  });
+
+  // 2. Handle OAuth Callback
+  app.get("/api/auth/google/callback", async (req, res) => {
+    console.log('📝 Google OAuth callback received');
+    console.log('🔍 Query params:', req.query);
+
     try {
-      });
+      const { code, error } = req.query;
+
+      if (error) {
+        console.error('❌ OAuth error:', error);
+        return res.redirect('/?error=oauth_failed');
+      }
+
+      if (!code) {
+        console.error('❌ No authorization code received');
+        return res.redirect('/?error=no_code');
+      }
+
+      const oauth2Client = createOAuth2Client();
+
+      // Exchange code for tokens
+      const { tokens } = await oauth2Client.getToken(code as string);
+      console.log('✅ Tokens received successfully');
+
+      // Get user info
+      oauth2Client.setCredentials(tokens);
+      const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
+      const userInfo = await oauth2.userinfo.get();
+
+      const user = {
+        id: '1', // Use consistent user ID
+        googleId: userInfo.data.id,
+        email: userInfo.data.email,
+        name: userInfo.data.name,
+        displayName: userInfo.data.name,
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+        provider: 'google'
+      };
+
+      // Store in session
+      req.session.passport = { user };
+      req.user = user;
+
+      console.log('✅ User authenticated:', user.email);
+      console.log('🎯 Tokens stored in session');
+
+      // Redirect to success page
+      res.redirect('/?auth=success');
+
     } catch (error) {
-      res.status(500).json({ 
-        error: 'Simple login failed',
-        message: error.message 
+      console.error('❌ OAuth callback error:', error);
+      res.redirect('/?error=callback_failed');
+    }
+  });
+
+  // 3. Check Auth Status
+  app.get("/api/auth/status", (req, res) => {
+    const user = req.user || req.session?.passport?.user;
+    
+    if (user) {
+      res.json({
+        authenticated: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          provider: user.provider
+        }
+      });
+    } else {
+      res.json({
+        authenticated: false,
+        user: null
       });
     }
   });
 
-  // Clean logout endpoint
+  // 4. Test Google Auth
+  app.get("/api/auth/google/test", async (req, res) => {
+    try {
+      const user = req.user || req.session?.passport?.user;
+      
+      if (!user?.accessToken) {
+        return res.json({
+          success: false,
+          error: 'No access token available',
+          needsAuth: true
+        });
+      }
+
+      const oauth2Client = createOAuth2Client();
+      oauth2Client.setCredentials({
+        access_token: user.accessToken,
+        refresh_token: user.refreshToken
+      });
+
+      // Test with a simple calendar list call
+      const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+      const response = await calendar.calendarList.list();
+
+      res.json({
+        success: true,
+        message: 'Google Calendar authentication working',
+        calendarCount: response.data.items?.length || 0
+      });
+
+    } catch (error) {
+      console.error('❌ Google auth test failed:', error);
+      res.json({
+        success: false,
+        error: error.message,
+        needsAuth: true
+      });
+    }
+  });
+
+  // 5. Logout
   app.post("/api/auth/logout", (req, res) => {
-    req.logout((err) => {
+    req.session.destroy((err) => {
       if (err) {
         return res.status(500).json({ error: "Logout failed" });
       }
@@ -316,8 +436,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get SimplePractice events from all calendars
   app.get("/api/simplepractice/events", requireAuth, async (req, res) => {
-    // SimplePractice events requested
-
     try {
       const user = req.user as any;
       const { start, end } = req.query;
@@ -344,79 +462,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Fetching SimplePractice events from all Google Calendars
+      const oauth2Client = createOAuth2Client();
+      oauth2Client.setCredentials({
+        access_token: user.accessToken,
+        refresh_token: user.refreshToken
+      });
 
-      const calendar = google.calendar({ version: 'v3' });
+      const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
-      // First get all available calendars
+      // Get all available calendars
       let calendarListResponse;
       try {
-        calendarListResponse = await calendar.calendarList.list({
-          access_token: user.accessToken
-        });
+        calendarListResponse = await calendar.calendarList.list();
       } catch (authError: any) {
-        // If we get 401, try to refresh the token
-        if (authError.code === 401 && user.refreshToken) {
-          // Try using environment tokens first as fallback
-          try {
-            const envAccessToken = process.env.GOOGLE_ACCESS_TOKEN;
-            const envRefreshToken = process.env.GOOGLE_REFRESH_TOKEN;
+        // Fall back to database events on auth error
+        const events = await storage.getEvents(parseInt(user.id) || 1);
+        const simplePracticeEvents = events.filter(event => 
+          event.source === 'simplepractice' || 
+          (event.title && event.title.toLowerCase().includes('appointment'))
+        );
 
-            if (envAccessToken && !envAccessToken.startsWith('dev-')) {
-
-              // Create new OAuth2 client with environment tokens
-              const envOAuth2Client = new google.auth.OAuth2(
-                process.env.GOOGLE_CLIENT_ID,
-                process.env.GOOGLE_CLIENT_SECRET
-              );
-
-              envOAuth2Client.setCredentials({
-                access_token: envAccessToken,
-                refresh_token: envRefreshToken
-              });
-
-              const envCalendar = google.calendar({ version: 'v3', auth: envOAuth2Client });
-
-              // Try with environment tokens
-              calendarListResponse = await envCalendar.calendarList.list();
-              // Calendar list retrieved with environment tokens
-            } else {
-              throw new Error('No valid environment tokens available');
-            }
-          } catch (envError) {
-            // Fall back to database events
-            const events = await storage.getEvents(parseInt(user.id) || 1);
-            const simplePracticeEvents = events.filter(event => 
-              event.source === 'simplepractice' || 
-              (event.title && event.title.toLowerCase().includes('appointment'))
-            );
-
-            return res.json({ 
-              events: simplePracticeEvents,
-              calendars: [{
-                id: 'simplepractice',
-                name: 'SimplePractice',
-                color: '#6495ED'
-              }]
-            });
-          }
-        } else {
-          // No valid refresh token or auth error, fall back to database
-          const events = await storage.getEvents(parseInt(user.id) || 1);
-          const simplePracticeEvents = events.filter(event => 
-            event.source === 'simplepractice' || 
-            (event.title && event.title.toLowerCase().includes('appointment'))
-          );
-
-          return res.json({ 
-            events: simplePracticeEvents,
-            calendars: [{
-              id: 'simplepractice',
-              name: 'SimplePractice',
-              color: '#6495ED'
-            }]
-          });
-        }
+        return res.json({ 
+          events: simplePracticeEvents,
+          calendars: [{
+            id: 'simplepractice',
+            name: 'SimplePractice',
+            color: '#6495ED'
+          }]
+        });
       }
 
       const calendars = calendarListResponse.data.items || [];
@@ -431,18 +504,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             timeMin: start as string,
             timeMax: end as string,
             singleEvents: true,
-            orderBy: 'startTime',
-            access_token: user.accessToken
+            orderBy: 'startTime'
           });
 
           const events = response.data.items || [];
 
-          // Filter for SimplePractice events (appointments, patient names, etc.)
+          // Filter for SimplePractice events
           const simplePracticeEvents = events.filter(event => {
             const title = event.summary || '';
             const description = event.description || '';
 
-            // Check if this looks like a SimplePractice appointment
             const isSimplePractice = 
               title.toLowerCase().includes('appointment') ||
               title.toLowerCase().includes('patient') ||
@@ -451,9 +522,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               title.toLowerCase().includes('consultation') ||
               description.toLowerCase().includes('simplepractice') ||
               description.toLowerCase().includes('appointment') ||
-              // Check for patient name patterns (First Last format)
-              /^[A-Z][a-z]+ [A-Z][a-z]+(\s|$)/.test(title.trim()) ||
-              // Check for common therapy/medical terms
+              /^[A-Z][a-z]+ [A-Z][a-z]+(\\s|$)/.test(title.trim()) ||
               title.toLowerCase().includes('counseling') ||
               title.toLowerCase().includes('supervision') ||
               title.toLowerCase().includes('intake') ||
@@ -476,7 +545,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             allSimplePracticeEvents.push(...formattedEvents);
 
-            // Track calendars that contain SimplePractice events
             if (!simplePracticeCalendars.find(c => c.id === cal.id)) {
               simplePracticeCalendars.push({
                 id: cal.id,
@@ -492,7 +560,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`🎯 Total SimplePractice events found: ${allSimplePracticeEvents.length}`);
 
-      // If no SimplePractice events found, still return the structure
       if (simplePracticeCalendars.length === 0) {
         simplePracticeCalendars = [{
           id: 'simplepractice',
@@ -509,29 +576,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('SimplePractice events error:', error);
 
-      if (error.code === 401) {
-        console.log('❌ Google API authentication failed for SimplePractice');
-        console.log('🔄 Falling back to database events...');
-
-        // Fall back to database events
-        const events = await storage.getEvents(parseInt(req.user.id) || 1);
-        const simplePracticeEvents = events.filter(event => 
-          event.source === 'simplepractice' || 
-          (event.title && event.title.toLowerCase().includes('appointment'))
-        );
-
-        return res.json({ 
-          events: simplePracticeEvents,
-          calendars: [{
-            id: 'simplepractice',
-            name: 'SimplePractice',
-            color: '#6495ED'
-          }]
-        });
-      }
-
-      // For other errors, also fall back to database
-      console.log('❌ SimplePractice events error, falling back to database...');
+      // Fall back to database events
       const events = await storage.getEvents(parseInt(req.user.id) || 1);
       const simplePracticeEvents = events.filter(event => 
         event.source === 'simplepractice' || 
@@ -549,17 +594,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get calendar events with live sync - forces fresh Google Calendar API calls
+  // Get calendar events with live sync
   app.get("/api/calendar/events", async (req, res) => {
     try {
-      // Use the new Google Calendar fix system
-      const { handleGoogleCalendarSync } = await import('./google-calendar-fix');
-      return await handleGoogleCalendarSync(req, res);
+      const user = req.user || req.session?.passport?.user;
+      const { start, end } = req.query;
+
+      if (!start || !end) {
+        return res.status(400).json({ error: 'Start and end dates are required' });
+      }
+
+      if (!user?.accessToken) {
+        // Fall back to database events
+        const events = await storage.getEvents(parseInt(user?.id) || 1);
+        const formattedEvents = events
+          .filter(event => event.source === 'google')
+          .map(event => ({
+            id: event.sourceId || event.id.toString(),
+            title: event.title,
+            startTime: event.startTime.toISOString(),
+            endTime: event.endTime.toISOString(),
+            description: event.description || '',
+            location: event.location || '',
+            source: event.source,
+            calendarId: event.calendarId || 'fallback'
+          }));
+
+        return res.json({
+          events: formattedEvents,
+          calendars: [{ id: 'fallback', name: 'Cached Events', color: '#4285f4' }],
+          syncTime: new Date().toISOString(),
+          isLiveSync: false
+        });
+      }
+
+      const oauth2Client = createOAuth2Client();
+      oauth2Client.setCredentials({
+        access_token: user.accessToken,
+        refresh_token: user.refreshToken
+      });
+
+      const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+      const calendarListResponse = await calendar.calendarList.list();
+      const calendars = calendarListResponse.data.items || [];
+
+      const allGoogleEvents = [];
+
+      for (const cal of calendars) {
+        try {
+          const eventsResponse = await calendar.events.list({
+            calendarId: cal.id,
+            timeMin: start as string,
+            timeMax: end as string,
+            maxResults: 2500,
+            singleEvents: true,
+            orderBy: 'startTime'
+          });
+
+          const events = eventsResponse.data.items || [];
+
+          const googleEvents = events.filter(event => {
+            const title = event.summary || '';
+            const isSimplePractice = title.toLowerCase().includes('appointment') || 
+                                     title.toLowerCase().includes('assessment');
+            return !isSimplePractice;
+          });
+
+          const formattedEvents = googleEvents.map(event => ({
+            id: event.id,
+            title: event.summary || 'Untitled Event',
+            startTime: event.start?.dateTime || event.start?.date,
+            endTime: event.end?.dateTime || event.end?.date,
+            description: event.description || '',
+            location: event.location || '',
+            source: 'google',
+            calendarId: cal.id
+          }));
+
+          allGoogleEvents.push(...formattedEvents);
+        } catch (calendarError) {
+          console.warn(`⚠️ Could not access calendar ${cal.summary}: ${calendarError.message}`);
+        }
+      }
+
+      res.json({
+        events: allGoogleEvents,
+        calendars: calendars.map(cal => ({
+          id: cal.id,
+          name: cal.summary,
+          color: cal.backgroundColor || '#4285f4'
+        })),
+        syncTime: new Date().toISOString(),
+        isLiveSync: true
+      });
+
     } catch (error) {
+      console.error('Calendar events error:', error);
       return res.status(500).json({ 
         error: 'Failed to fetch calendar events',
-        message: error.message,
-        details: error.code || 'unknown'
+        message: error.message
       });
     }
   });
@@ -574,11 +707,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { startTime, endTime, calendarId } = req.body;
       const user = req.user as any;
 
-      const oauth2Client = new google.auth.OAuth2(
-        process.env.GOOGLE_CLIENT_ID,
-        process.env.GOOGLE_CLIENT_SECRET
-      );
-
+      const oauth2Client = createOAuth2Client();
       oauth2Client.setCredentials({
         access_token: user.accessToken,
         refresh_token: user.refreshToken
@@ -636,11 +765,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { filename, content, mimeType } = req.body;
       const user = req.user as any;
 
-      const oauth2Client = new google.auth.OAuth2(
-        process.env.GOOGLE_CLIENT_ID,
-        process.env.GOOGLE_CLIENT_SECRET
-      );
-
+      const oauth2Client = createOAuth2Client();
       oauth2Client.setCredentials({
         access_token: user.accessToken,
         refresh_token: user.refreshToken
@@ -703,274 +828,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Test Google authentication status
-  app.get("/api/auth/google/test", async (req, res) => {
-    try {
-      const { testGoogleAuth } = await import('./google-calendar-fix');
-      return await testGoogleAuth(req, res);
-    } catch (error) {
-      console.error('Google auth test error:', error);
-      res.status(500).json({
-        error: 'Authentication test failed',
-        message: error.message,
-        needsAuth: true
-      });
-    }
-  });
-
-  // Debug Google authentication
-  app.get("/api/auth/google/debug", async (req, res) => {
-    try {
-      const { debugGoogleAuth } = await import('./google-auth-debug');
-      return await debugGoogleAuth(req, res);
-    } catch (error) {
-      console.error('Google auth debug error:', error);
-      res.status(500).json({
-        error: 'Debug failed',
-        message: error.message
-      });
-    }
-  });
-
-  // Force Google Calendar sync
-  app.post("/api/auth/google/force-sync", async (req, res) => {
-    try {
-      const { forceGoogleCalendarSync } = await import('./google-auth-debug');
-      return await forceGoogleCalendarSync(req, res);
-    } catch (error) {
-      console.error('Force sync error:', error);
-      res.status(500).json({
-        error: 'Force sync failed',
-        message: error.message
-      });
-    }
-  });
-
-  // FRESH GOOGLE AUTH ROUTES - New working OAuth flow
-  app.get("/api/auth/google/fresh", (req, res) => {
-    console.log('🚀 Starting fresh Google OAuth flow...');
-
-    // Use the current domain for redirect URI
-    const baseURL = process.env.REPLIT_DOMAINS 
-      ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
-      : 'https://ed4c6ee6-c0f6-458f-9eac-1eadf0569a2c-00-387t3f5z7i1mm.kirk.replit.dev';
-
-    const oauth2Client = new google.auth.OAuth2(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET,
-      `${baseURL}/api/auth/google/callback`
-    );
-
-    const authUrl = oauth2Client.generateAuthUrl({
-      access_type: 'offline',
-      scope: [
-        'https://www.googleapis.com/auth/calendar.readonly',
-        'https://www.googleapis.com/auth/calendar.events',
-        'https://www.googleapis.com/auth/drive.file',
-        'https://www.googleapis.com/auth/userinfo.profile',
-        'https://www.googleapis.com/auth/userinfo.email',
-        'openid'
-      ],
-      prompt: 'consent',
-      include_granted_scopes: true
-    });
-    console.log('🔗 Redirecting to Google OAuth:', authUrl);
-    res.redirect(authUrl);
-  });
-
-  app.get("/api/auth/google/callback", async (req, res) => {
-    console.log('📝 Google OAuth callback received');
-    const { handleOAuthCallback } = await import('./oauth-completion-handler');
-    await handleOAuthCallback(req, res);
-  });
-
-  // Test fresh Google Calendar connection
-  app.get("/api/auth/google/fresh-test", async (req, res) => {
-    try {
-      const startDate = new Date('2025-01-01').toISOString();
-      const endDate = new Date('2025-12-31').toISOString();
-
-      const events = await FreshGoogleAuth.fetchCalendarEvents(req, startDate, endDate);
-
-      res.json({
-        success: true,
-        message: `Fresh Google Calendar connected successfully!`,
-        eventCount: events.length,
-        events: events.slice(0, 5) // Show first 5 events as sample
-      });
-    } catch (error) {
-      console.error('❌ Fresh Google test failed:', error);
-      res.status(500).json({
-        success: false,
-        error: error.message
-      });
-    }
-  });
-
-  // COMPREHENSIVE AUDIT ENDPOINT
-  app.get("/api/audit/comprehensive", async (req, res) => {
-    try {
-      console.log('🔍 Running comprehensive application audit...');
-      const auditResults = await runComprehensiveAudit();
-
-      // Log the report to console
-      console.log('\n' + auditResults.report);
-
-      res.json({
-        success: true,
-        timestamp: new Date().toISOString(),
-        ...auditResults
-      });
-    } catch (error) {
-      console.error('❌ Comprehensive audit failed:', error);
-      res.status(500).json({
-        success: false,
-        error: error.message
-      });
-    }
-  });
-
-  // Create direct Google auth instance
-  const directGoogleAuth = createDirectGoogleAuth();
-
-  // Google OAuth routes using direct auth
-  app.get("/api/auth/google", (req, res) => {
-    console.log('🔄 OAuth initiation requested');
-    const authUrl = directGoogleAuth.getAuthUrl();
-    console.log('🔗 Generated auth URL:', authUrl);
-    res.redirect(authUrl);
-  });
-
-  app.get("/api/auth/google/callback", async (req, res) => {
-    console.log('🔄 OAuth callback hit with query:', req.query);
-    await directGoogleAuth.handleCallback(req, res);
-  });
-
-  // Test tokens endpoint
-  app.get('/api/auth/google/test-tokens', async (req, res) => {
-    try {
-      const result = await directGoogleAuth.testTokens(req);
-      res.json(result);
-    } catch (error) {
-      res.status(500).json({ 
-        valid: false, 
-        error: error.message 
-      });
-    }
-// OAuth scopes have been corrected, and redirect URI fix to address Google authentication issues.
-  });
-
-  // Google Auth Debug endpoint
-  app.get("/api/auth/google/debug", async (req, res) => {
-    try {
-      const tokenTest = await directGoogleAuth.testTokens(req);
-
-      res.json({
-        success: tokenTest.valid,
-        environment: {
-          hasClientId: !!process.env.GOOGLE_CLIENT_ID,
-          hasClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
-          hasAccessToken: !!process.env.GOOGLE_ACCESS_TOKEN,
-          hasRefreshToken: !!process.env.GOOGLE_REFRESH_TOKEN
-        },
-        session: {
-          hasTokens: !!req.session?.googleTokens,
-          isAuthenticated: !!req.session?.isGoogleAuthenticated
-        },
-        tokenTest,
-        message: tokenTest.valid ? 'Google authentication is working' : 'Authentication required'
-      });
-    } catch (error) {
-      res.json({
-        success: false,
-        error: error.message || 'Authentication test failed',
-        environment: {
-          hasClientId: !!process.env.GOOGLE_CLIENT_ID,
-          hasClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
-          hasAccessToken: !!process.env.GOOGLE_ACCESS_TOKEN,
-          hasRefreshToken: !!process.env.GOOGLE_REFRESH_TOKEN
-        }
-      });
-    }
-  });
-
-  // Force Google Calendar Sync endpoint
-  app.post("/api/auth/google/force-sync", async (req, res) => {
-    try {
-      const syncResult = await directGoogleAuth.forceSync(req);
-
-      // Save synced events to database
-      const userId = 1; // Use default user for development
-      let savedCount = 0;
-
-      for (const event of syncResult.events) {
-        try {
-          await storage.upsertEvent(userId, event.id, {
-            title: event.title,
-            startTime: new Date(event.startTime),
-            endTime: new Date(event.endTime),
-            description: event.description,
-            location: event.location,
-            source: 'google',
-            calendarId: event.calendarId
-          });
-          savedCount++;
-        } catch (eventError) {
-          console.warn(`Failed to save event ${event.id}:`, eventError.message);
-        }
-      }
-
-      res.json({
-        success: true,
-        stats: {
-          totalEvents: syncResult.eventCount,
-          calendarCount: syncResult.calendarCount,
-          savedEvents: savedCount,
-          googleEvents: syncResult.events.filter(e => e.source === 'google').length,
-          simplePracticeEvents: syncResult.events.filter(e => e.title.includes('Appointment')).length
-        },
-        message: `Successfully synced ${syncResult.eventCount} events from ${syncResult.calendarCount} calendars`
-      });
-    } catch (error) {
-      res.status(401).json({
-        success: false,
-        error: error.message || 'Failed to sync calendar events',
-        needsAuth: true
-      });
-    }
-  });
-
-  // Live sync endpoint that bypasses authentication
-  app.get("/api/live-sync/calendar/events", async (req, res) => {
-    try {
-      const { handleGoogleCalendarSync } = await import('./google-calendar-fix');
-      return await handleGoogleCalendarSync(req, res);
-    } catch (error) {
-      console.error('Live sync error:', error);
-      res.status(500).json({
-        error: 'Live sync failed',
-        message: error.message,
-        needsAuth: true
-      });
-    }
-  });
-
   // Events API
   app.get("/api/events", async (req, res) => {
     try {
       const user = req.user || req.session?.passport?.user;
       if (!user) {
+        return res.status(401).json({ error: "Not authenticated" });
       }
 
       const userId = parseInt(user.id) || 1;
       const events = await storage.getEvents(userId);
 
-      // Validate events response
       if (!Array.isArray(events)) {
         throw new Error('Invalid events response from storage');
       }
 
-      // Map database events to the expected format with validation
       const eventsFormatted = events.map(e => {
         if (!e || typeof e !== 'object') {
           throw new Error('Invalid event object in storage response');
@@ -993,7 +865,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(eventsFormatted);
     } catch (error) {
-      console.error('Database error in /api/events/:userId:', error);
+      console.error('Database error in /api/events:', error);
       if (!res.headersSent) {
         res.status(500).json({ 
           error: "Failed to fetch events", 
@@ -1007,7 +879,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const eventData = req.body;
 
-      // Validate required fields
       if (!eventData || typeof eventData !== 'object') {
         return res.status(400).json({ error: "Invalid request body" });
       }
@@ -1062,7 +933,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: 'Not authenticated' });
       }
 
-      // Validate updates object
       if (!updates || typeof updates !== 'object') {
         return res.status(400).json({ error: "Invalid update data" });
       }
@@ -1086,7 +956,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Validate date relationship if both are provided
       if (updates.startTime && updates.endTime && updates.startTime >= updates.endTime) {
         return res.status(400).json({ error: "Start time must be before end time" });
       }
@@ -1152,9 +1021,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const user = req.user || req.session?.passport?.user;
       if (!user) {
+        return res.status(401).json({ error: 'Not authenticated' });
       }
 
-      // Validate updates object
       if (!updates || typeof updates !== 'object') {
         return res.status(400).json({ error: "Invalid update data" });
       }
@@ -1228,17 +1097,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Clean authentication system is now integrated above
-
-  // Setup comprehensive audit system routes
+  // Setup audit system routes
   setupAuditRoutes(app);
 
   const httpServer = createServer(app);
-
   return httpServer;
 }
 
-// Simplified authentication middleware - always allow with fallback user
+// Simplified authentication middleware
 function requireAuth(req: any, res: any, next: any) {
   // Always ensure user exists to prevent connection issues
   if (!req.user) {
