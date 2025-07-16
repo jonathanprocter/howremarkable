@@ -7,26 +7,28 @@ import { and, gte, lte } from 'drizzle-orm';
 import { db } from './db';
 import { google } from "googleapis";
 import { setupAuditRoutes } from "./audit-system";
-
-// Simple OAuth2 client configuration
-function createOAuth2Client() {
-  return new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET,
-    getRedirectURI()
-  );
-}
-
-function getRedirectURI() {
-  // Get current domain for redirect URI
-  const baseURL = process.env.REPLIT_DOMAINS 
-    ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
-    : 'https://ed4c6ee6-c0f6-458f-9eac-1eadf0569a2c-00-387t3f5z7i1mm.kirk.replit.dev';
-  
-  return `${baseURL}/api/auth/google/callback`;
-}
+import { 
+  setupEnhancedOAuthRoutes, 
+  createDynamicOAuth2Client, 
+  getCurrentDeploymentURL,
+  validateOAuthConfiguration 
+} from "./oauth-fix";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+
+  // Validate OAuth configuration on startup
+  const oauthValidation = validateOAuthConfiguration();
+  if (!oauthValidation.valid) {
+    console.error('❌ OAuth Configuration Errors:');
+    oauthValidation.errors.forEach(error => console.error(`  - ${error}`));
+  }
+  if (oauthValidation.warnings.length > 0) {
+    console.warn('⚠️ OAuth Configuration Warnings:');
+    oauthValidation.warnings.forEach(warning => console.warn(`  - ${warning}`));
+  }
+
+  // Setup enhanced OAuth routes (replaces the old OAuth implementation)
+  setupEnhancedOAuthRoutes(app);
 
   // PUBLIC ENDPOINT - Live sync calendar events without authentication
   app.get("/api/live-sync/calendar/events", async (req, res) => {
@@ -50,8 +52,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('✅ Using environment tokens for live sync');
 
-      // Set up OAuth2 client with the tokens
-      const oauth2Client = createOAuth2Client();
+      // Set up OAuth2 client with the tokens using the enhanced version
+      const oauth2Client = createDynamicOAuth2Client();
       oauth2Client.setCredentials({
         access_token: accessToken,
         refresh_token: refreshToken
@@ -252,188 +254,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Enhanced session management middleware
-  app.use((req, res, next) => {
-    // Ensure session exists
-    if (!req.session) {
-      console.log('❌ No session found, creating new session');
-      req.session = {} as any;
-    }
-
-    // Auto-authenticate with known good user if no session
-    if (!req.session.passport && !req.user) {
-      const knownUser = {
-        id: '1',
-        googleId: '108011271571830226042',
-        email: 'jonathan.procter@gmail.com',
-        name: 'Jonathan Procter',
-        displayName: 'Jonathan Procter',
-        accessToken: process.env.GOOGLE_ACCESS_TOKEN || 'dev-access-token',
-        refreshToken: process.env.GOOGLE_REFRESH_TOKEN || 'dev-refresh-token',
-        provider: 'google'
-      };
-
-      req.session.passport = { user: knownUser };
-      req.user = knownUser;
-      console.log('✅ Auto-authenticated user:', knownUser.email);
-    }
-    next();
-  });
-
-  // CLEAN OAUTH IMPLEMENTATION - Single source of truth
-  
-  // 1. Start OAuth Flow
-  app.get("/api/auth/google", (req, res) => {
-    console.log('🚀 Starting Google OAuth flow...');
-    console.log('🔗 Redirect URI:', getRedirectURI());
-
-    const oauth2Client = createOAuth2Client();
-
-    const authUrl = oauth2Client.generateAuthUrl({
-      access_type: 'offline',
-      scope: [
-        'https://www.googleapis.com/auth/calendar.readonly',
-        'https://www.googleapis.com/auth/calendar.events',
-        'https://www.googleapis.com/auth/drive.file',
-        'https://www.googleapis.com/auth/userinfo.profile',
-        'https://www.googleapis.com/auth/userinfo.email',
-        'openid'
-      ],
-      prompt: 'consent',
-      include_granted_scopes: true
-    });
-    
-    console.log('🔗 Redirecting to Google OAuth:', authUrl);
-    res.redirect(authUrl);
-  });
-
-  // 2. Handle OAuth Callback
-  app.get("/api/auth/google/callback", async (req, res) => {
-    console.log('📝 Google OAuth callback received');
-    console.log('🔍 Query params:', req.query);
-
-    try {
-      const { code, error } = req.query;
-
-      if (error) {
-        console.error('❌ OAuth error:', error);
-        return res.redirect('/?error=oauth_failed');
-      }
-
-      if (!code) {
-        console.error('❌ No authorization code received');
-        return res.redirect('/?error=no_code');
-      }
-
-      const oauth2Client = createOAuth2Client();
-
-      // Exchange code for tokens
-      const { tokens } = await oauth2Client.getToken(code as string);
-      console.log('✅ Tokens received successfully');
-
-      // Get user info
-      oauth2Client.setCredentials(tokens);
-      const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
-      const userInfo = await oauth2.userinfo.get();
-
-      const user = {
-        id: '1', // Use consistent user ID
-        googleId: userInfo.data.id,
-        email: userInfo.data.email,
-        name: userInfo.data.name,
-        displayName: userInfo.data.name,
-        accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token,
-        provider: 'google'
-      };
-
-      // Store in session
-      req.session.passport = { user };
-      req.user = user;
-
-      console.log('✅ User authenticated:', user.email);
-      console.log('🎯 Tokens stored in session');
-
-      // Redirect to success page
-      res.redirect('/?auth=success');
-
-    } catch (error) {
-      console.error('❌ OAuth callback error:', error);
-      res.redirect('/?error=callback_failed');
-    }
-  });
-
-  // 3. Check Auth Status
-  app.get("/api/auth/status", (req, res) => {
-    const user = req.user || req.session?.passport?.user;
-    
-    if (user) {
-      res.json({
-        authenticated: true,
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          provider: user.provider
-        }
-      });
-    } else {
-      res.json({
-        authenticated: false,
-        user: null
-      });
-    }
-  });
-
-  // 4. Test Google Auth
-  app.get("/api/auth/google/test", async (req, res) => {
-    try {
-      const user = req.user || req.session?.passport?.user;
-      
-      if (!user?.accessToken) {
-        return res.json({
-          success: false,
-          error: 'No access token available',
-          needsAuth: true
-        });
-      }
-
-      const oauth2Client = createOAuth2Client();
-      oauth2Client.setCredentials({
-        access_token: user.accessToken,
-        refresh_token: user.refreshToken
-      });
-
-      // Test with a simple calendar list call
-      const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
-      const response = await calendar.calendarList.list();
-
-      res.json({
-        success: true,
-        message: 'Google Calendar authentication working',
-        calendarCount: response.data.items?.length || 0
-      });
-
-    } catch (error) {
-      console.error('❌ Google auth test failed:', error);
-      res.json({
-        success: false,
-        error: error.message,
-        needsAuth: true
-      });
-    }
-  });
-
-  // 5. Logout
-  app.post("/api/auth/logout", (req, res) => {
-    req.session.destroy((err) => {
-      if (err) {
-        return res.status(500).json({ error: "Logout failed" });
-      }
-      res.json({ success: true });
-    });
-  });
-
   // Get SimplePractice events from all calendars
   app.get("/api/simplepractice/events", requireAuth, async (req, res) => {
     try {
@@ -462,7 +282,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const oauth2Client = createOAuth2Client();
+      const oauth2Client = createDynamicOAuth2Client();
       oauth2Client.setCredentials({
         access_token: user.accessToken,
         refresh_token: user.refreshToken
@@ -522,7 +342,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               title.toLowerCase().includes('consultation') ||
               description.toLowerCase().includes('simplepractice') ||
               description.toLowerCase().includes('appointment') ||
-              /^[A-Z][a-z]+ [A-Z][a-z]+(\\s|$)/.test(title.trim()) ||
+              /^[A-Z][a-z]+ [A-Z][a-z]+(\s|$)/.test(title.trim()) ||
               title.toLowerCase().includes('counseling') ||
               title.toLowerCase().includes('supervision') ||
               title.toLowerCase().includes('intake') ||
@@ -628,7 +448,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const oauth2Client = createOAuth2Client();
+      const oauth2Client = createDynamicOAuth2Client();
       oauth2Client.setCredentials({
         access_token: user.accessToken,
         refresh_token: user.refreshToken
@@ -707,7 +527,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { startTime, endTime, calendarId } = req.body;
       const user = req.user as any;
 
-      const oauth2Client = createOAuth2Client();
+      const oauth2Client = createDynamicOAuth2Client();
       oauth2Client.setCredentials({
         access_token: user.accessToken,
         refresh_token: user.refreshToken
@@ -765,7 +585,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { filename, content, mimeType } = req.body;
       const user = req.user as any;
 
-      const oauth2Client = createOAuth2Client();
+      const oauth2Client = createDynamicOAuth2Client();
       oauth2Client.setCredentials({
         access_token: user.accessToken,
         refresh_token: user.refreshToken
@@ -1100,15 +920,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup audit system routes
   setupAuditRoutes(app);
 
+  // Add deployment info endpoint
+  app.get("/api/deployment/info", (req, res) => {
+    res.json({
+      deploymentUrl: getCurrentDeploymentURL(),
+      environment: process.env.NODE_ENV || 'development',
+      oauthConfig: validateOAuthConfiguration(),
+      timestamp: new Date().toISOString()
+    });
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
 
-// Simplified authentication middleware
+// Enhanced authentication middleware
 function requireAuth(req: any, res: any, next: any) {
   // Always ensure user exists to prevent connection issues
   if (!req.user) {
-    const sessionUser = req.session?.passport?.user;
+    const sessionUser = req.session?.passport?.user || req.session?.user;
 
     if (sessionUser) {
       req.user = sessionUser;
